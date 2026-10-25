@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Top One Analysis VM — Terminal Institutionnel</title>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Top One Analysis VM — Terminal Institutionnel Pro</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 :root {
@@ -139,30 +139,31 @@ textarea { resize: vertical; height: 90px; }
     <a href="#apercu">Aperçu &amp; Ticker</a>
     <a href="#paires">Paires &amp; Or</a>
     <a href="#force">Force des devises</a>
-    <div class="grp">MACRO &amp; FONDAMENTAL</div>
+    <div class="grp">MACRO &amp; PRO TOOLS</div>
     <a href="#bankConsensus">Consensus Banques</a>
-    <a href="#dotplot">Dot Plot &amp; Projections</a>
-    <a href="#indicateurs">Indicateurs &amp; Spreads</a>
+    <a href="#riskSentiment">Risk Sentiment &amp; Bank Pos.</a>
+    <a href="#ratesProba">Probabilités de Taux</a>
+    <a href="#macroGlobal">Macro Internationale G8</a>
     <a href="#cot">COT &amp; Retail Sentiment</a>
     <a href="#saisonnalite">Saisonnalité Or (20 ans)</a>
-    <a href="#newsFeed">Flux &amp; Squawk Live</a>
+    <a href="#newsFeed">Flux Live &amp; Squawk</a>
     <div class="grp">OUTILS &amp; PLAN</div>
-    <a href="#calc">Calculateur de Risque</a>
-    <a href="#quickNotes">Notes de Semaine</a>
+    <a href="#calc">VM Risk Engine (1%)</a>
+    <a href="#quickNotesPanel">Notes de Semaine</a>
   </div></nav>
 
   <div class="main" id="apercu">
     <header class="top">
-      <div class="brand"><span class="mark"></span>TOP ONE VM — TERMINAL INSTITUTIONNEL</div>
+      <div class="brand"><span class="mark"></span>TOP ONE VM — TERMINAL INSTITUTIONNEL PRO</div>
       <div class="clocks" id="clocks" aria-label="Heure"></div>
       <div class="status" id="status"><i></i><span id="statusText">Chargement…</span></div>
     </header>
 
-    <!-- 1. BANDEAU DE COTATIONS EN DIRECT -->
+    <!-- Ticker Supérieur en Temps Réel -->
     <div class="tape" id="tape" aria-label="Cours des paires"></div>
 
     <div class="grid">
-      <!-- COLONNE GAUCHE : Paires, XAU/USD & Sessions -->
+      <!-- COLONNE GAUCHE -->
       <div class="col">
         <section class="panel" id="paires">
           <div class="ph"><h2>Paires &amp; Marchés Clés</h2><span class="meta">clic = graphique</span></div>
@@ -181,12 +182,12 @@ textarea { resize: vertical; height: 90px; }
         </section>
 
         <section class="panel" id="sessions">
-          <div class="ph"><h2>Horloge Sessions &amp; Killzones</h2><span class="meta" id="fxState"></span></div>
+          <div class="ph"><h2>Sessions &amp; Killzones</h2><span class="meta" id="fxState"></span></div>
           <div class="sess" id="sess"></div>
         </section>
       </div>
 
-      <!-- COLONNE CENTRALE : Graphique, Force, Consensus & Projections Macro -->
+      <!-- COLONNE CENTRALE -->
       <div class="col">
         <section class="panel" id="selPanel">
           <div class="ph"><h2>Graphique &amp; Analyse Technique</h2><span class="meta" id="selMeta">3 mois</span></div>
@@ -206,9 +207,8 @@ textarea { resize: vertical; height: 90px; }
           </div>
         </section>
 
-        <!-- 2. CONSENSUS & PRÉVISIONS BANQUES D'INVESTISSEMENT -->
         <section class="panel" id="bankConsensus">
-          <div class="ph"><h2>Consensus &amp; Prévisions Banques (Morgan Stanley, GS...)</h2><span class="meta">Biais long terme</span></div>
+          <div class="ph"><h2>Consensus &amp; Prévisions Banques</h2><span class="meta">Biais long terme</span></div>
           <div class="tbl">
             <table>
               <thead><tr><th>Institution</th><th>Actif</th><th>Biais</th><th class="r">Cible / Anticipation</th></tr></thead>
@@ -222,33 +222,48 @@ textarea { resize: vertical; height: 90px; }
           </div>
         </section>
 
-        <!-- 3. DOT PLOT & PROJECTIONS ÉCONOMIQUES FED / BCE -->
-        <section class="panel" id="dotplot">
-          <div class="ph"><h2>Projections Économiques &amp; Dot Plot (Fed)</h2><span class="meta">Trajectoire des taux</span></div>
+        <!-- MODULE : RISK SENTIMENT & BANK POSITIONING -->
+        <section class="panel" id="riskSentiment">
+          <div class="ph"><h2>Risk Sentiment &amp; Bank Positioning</h2><span class="meta">Régime &amp; Smart Money</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Échéance</th><th>Taux Median Prévu</th><th>Pression / Anticipation Marché</th></tr></thead>
+              <thead><tr><th>Indicateur Pro</th><th>Valeur / Score</th><th class="r">Interprétation Institutionnelle</th></tr></thead>
               <tbody>
-                <tr><td><b>Fin 2026</b></td><td class="r num">3.75% – 4.00%</td><td><span class="tag hike">2 baisses de 25bps pricées</span></td></tr>
-                <tr><td><b>Fin 2027 (Long terme)</b></td><td class="r num">3.00% – 3.25%</td><td><span class="tag">Atterrissage en douceur (Soft Landing)</span></td></tr>
-                <tr><td><b>Neutre (R-Star)</b></td><td class="r num">2.80%</td><td><span class="tag">Seuil d'équilibre macroéconomique</span></td></tr>
+                <tr><td><b>Risk Sentiment Index</b></td><td class="r num">64 / 100</td><td><span class="badge on">Risk-On (Actifs risqués privilégiés)</span></td></tr>
+                <tr><td><b>Bank Positioning (XAU/USD)</b></td><td class="r num">Net Long Majoritaire</td><td><span class="badge on">Alignement acheteur institutionnel</span></td></tr>
+                <tr><td><b>Bank Positioning (EUR/USD)</b></td><td class="r num">Net Short / Neutre</td><td><span class="badge off">Pression baissière sur l'Euro</span></td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <!-- 8. COURBES DE TAUX & SPREADS -->
-        <section class="panel" id="indicateurs">
-          <div class="ph"><h2>Indicateurs Clés &amp; Spreads Obligataires</h2><span class="meta">Le carburant du Gold</span></div>
+        <!-- PROBABILITÉS DE TAUX EN DIRECT -->
+        <section class="panel" id="ratesProba">
+          <div class="ph"><h2>Probabilités de Taux &amp; Futures (Fed &amp; BCE)</h2><span class="meta">Pricing Marché</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Indicateur / Spread</th><th class="r">Actuel</th><th class="r">Consensus</th><th class="r">Impact Or / Forex</th></tr></thead>
+              <thead><tr><th>Réunion / Échéance</th><th>Scénario Dominant</th><th class="r">Probabilité Pricée</th></tr></thead>
               <tbody>
-                <tr><td>US 10Y - 2Y Spread</td><td class="r num">-15 bps</td><td class="r num">-10 bps</td><td class="r"><span class="badge off">Courbe Inversée (Risque récession)</span></td></tr>
-                <tr><td>US Real Yields (10Y TIPS)</td><td class="r num">+1.85%</td><td class="r num">+1.90%</td><td class="r"><span class="badge off">Corrélé inversement à l'Or</span></td></tr>
-                <tr><td>US CPI (Inflation y/y)</td><td class="r num">2.7%</td><td class="r num">2.6%</td><td class="r"><span class="badge off">Pression sur le Dollar</span></td></tr>
-                <tr><td>US Non-Farm Payrolls (NFP)</td><td class="r num">142K</td><td class="r num">165K</td><td class="r"><span class="badge on">Volatilité immédiate USD/Gold</span></td></tr>
-                <tr><td>Dollar Index (DXY)</td><td class="r num">106.80</td><td class="r num">106.50</td><td class="r"><span class="tag">Tendance haussière court terme</span></td></tr>
+                <tr><td><b>Fed — Prochaine Réunion</b></td><td>Maintien des taux (4.50%)</td><td class="r"><span class="tag hike">82.5%</span></td></tr>
+                <tr><td><b>Fed — Horizon Fin d'Année</b></td><td>1 baisse de 25 bps</td><td class="r"><span class="tag hike">64.0%</span></td></tr>
+                <tr><td><b>BCE — Prochaine Réunion</b></td><td>Baisse de 25 bps (3.00%)</td><td class="r"><span class="tag hike">88.0%</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- MODULE : MACRO INTERNATIONALE G8 -->
+        <section class="panel" id="macroGlobal">
+          <div class="ph"><h2>Macro Internationale (G8 &amp; Grandes Économies)</h2><span class="meta">Indicateurs clés</span></div>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>Zone / Pays</th><th>Banque Centrale</th><th class="r">Taux Directeur</th><th class="r">Inflation (CPI)</th></tr></thead>
+              <tbody>
+                <tr><td><b>United States</b></td><td>FED</td><td class="r num">4.50%</td><td class="r num">2.7%</td></tr>
+                <tr><td><b>Euro Zone</b></td><td>ECB</td><td class="r num">3.25%</td><td class="r num">2.2%</td></tr>
+                <tr><td><b>United Kingdom</b></td><td>BOE</td><td class="r num">4.75%</td><td class="r num">3.1%</td></tr>
+                <tr><td><b>Japan</b></td><td>BOJ</td><td class="r num">0.25%</td><td class="r num">2.5%</td></tr>
+                <tr><td><b>China</b></td><td>PBOC</td><td class="r num">3.10%</td><td class="r num">0.6%</td></tr>
               </tbody>
             </table>
           </div>
@@ -267,75 +282,72 @@ textarea { resize: vertical; height: 90px; }
         </section>
       </div>
 
-      <!-- COLONNE DROITE : Banques Centrales, COT, Retail, Saisonnalité & Actualités -->
+      <!-- COLONNE DROITE -->
       <div class="col">
         <section class="panel" id="banques">
-          <div class="ph"><h2>Banques Centrales &amp; Probabilités</h2><span class="meta">Taux directeurs</span></div>
+          <div class="ph"><h2>Banques Centrales &amp; Calendrier</h2><span class="meta">Politique monétaire</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Banque</th><th class="r">Taux</th><th>Anticipation Prochaine Réunion</th></tr></thead>
+              <thead><tr><th>Banque</th><th class="r">Taux Actuel</th><th>Prochaine Réunion</th></tr></thead>
               <tbody>
-                <tr><td><b>Fed (USD)</b></td><td class="r num">4.50%</td><td><span class="tag hike">80% Maintien / 20% Baisse</span></td></tr>
-                <tr><td><b>BCE (EUR)</b></td><td class="r num">3.25%</td><td><span class="tag hike">85% Baisse de 25 bps</span></td></tr>
-                <tr><td><b>BoE (GBP)</b></td><td class="r num">4.75%</td><td><span class="tag hike">70% Maintien des taux</span></td></tr>
-                <tr><td><b>BoJ (JPY)</b></td><td class="r num">0.25%</td><td><span class="tag hike">60% Hausse progressive</span></td></tr>
+                <tr><td><b>Fed (USD)</b></td><td class="r num">4.50%</td><td>28 Oct 2026</td></tr>
+                <tr><td><b>BCE (EUR)</b></td><td class="r num">3.25%</td><td>29 Oct 2026</td></tr>
+                <tr><td><b>BoE (GBP)</b></td><td class="r num">4.75%</td><td>05 Nov 2026</td></tr>
+                <tr><td><b>BoJ (JPY)</b></td><td class="r num">0.25%</td><td>30 Oct 2026</td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <!-- 6 & 7. RETAIL SENTIMENT & DONNÉES INSTITUTIONNELLES COT -->
         <section class="panel" id="cot">
           <div class="ph"><h2>Retail Sentiment &amp; Données COT (CFTC)</h2><span class="meta">Smart Money vs Crowd</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Actif</th><th class="r">Particuliers (Long/Short)</th><th>Smart Money / Fonds (COT)</th></tr></thead>
+              <thead><tr><th>Actif</th><th class="r">Particuliers (Long/Short)</th><th>Smart Money / Fonds</th></tr></thead>
               <tbody>
                 <tr><td><b>XAU/USD</b></td><td class="r num">32% / 68%</td><td><span class="badge on">Fonds Net Long Élevé</span></td></tr>
-                <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">Fonds Net Short / Commercials Long</span></td></tr>
-                <tr><td><b>NAS100</b></td><td class="r num">75% / 25%</td><td><span class="badge off">Retail Suracheté (Contrarian Sell)</span></td></tr>
+                <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">Fonds Net Short</span></td></tr>
+                <tr><td><b>NAS100</b></td><td class="r num">75% / 25%</td><td><span class="badge off">Retail Suracheté (Contrarian)</span></td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <!-- 9. SAISONNALITÉ HISTORIQUE (20 ANS) -->
         <section class="panel" id="saisonnalite">
-          <div class="ph"><h2>Saisonnalité Historique (XAU/USD)</h2><span class="meta">Statistiques 20 ans</span></div>
+          <div class="ph"><h2>Saisonnalité Historique (20 ans — XAU/USD)</h2><span class="meta">Statistiques MT</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Mois en cours</th><th>Taux de Réussite Haussier</th><th>Tendance Historique</th></tr></thead>
+              <thead><tr><th>Mois</th><th>Taux de Réussite Haussier</th><th>Tendance Historique</th></tr></thead>
               <tbody>
-                <tr><td><b>Octobre</b></td><td class="r num">62%</td><td><span class="badge on">Solide (Achats physiques &amp; refuges)</span></td></tr>
-                <tr><td><b>Novembre</b></td><td class="r num">68%</td><td><span class="badge on">Très Haussier (Rallye de fin d'année)</span></td></tr>
-                <tr><td><b>Décembre</b></td><td class="r num">70%</td><td><span class="badge on">Forte saisonnalité haussière Or</span></td></tr>
+                <tr><td><b>Octobre</b></td><td class="r num">62%</td><td><span class="badge on">Achats physiques &amp; refuges</span></td></tr>
+                <tr><td><b>Novembre</b></td><td class="r num">68%</td><td><span class="badge on">Rallye de fin d'année solide</span></td></tr>
+                <tr><td><b>Décembre</b></td><td class="r num">70%</td><td><span class="badge on">Forte récurrence haussière Or</span></td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <!-- 4. FLUX MACRO & DÉPÊCHES EN DIRECT (SQUAWK) -->
         <section class="panel" id="newsFeed">
-          <div class="ph"><h2>Flux Macro &amp; Dépêches Live (Squawk)</h2><span class="meta">Actualités temps réel</span></div>
+          <div class="ph"><h2>Flux Macro &amp; Dépêches Live (Squawk)</h2><span class="meta">Temps réel</span></div>
           <div class="news-feed">
             <div class="news-item">
-              <span class="news-time">11:15 UTC — RÉSULTATS US</span>
-              <span>Les rendements obligataires US se stabilisent avant l'adjudication du Trésor à 10 ans. L'or teste ses supports intraday.</span>
+              <span class="news-time">11:15 UTC — MARCHÉS US</span>
+              <span>Les rendements obligataires se stabilisent. L'or teste ses zones d'accumulation institutionnelle.</span>
             </div>
             <div class="news-item">
-              <span class="news-time">10:00 UTC — BCE / ZONE EURO</span>
-              <span>La présidente de la BCE insiste sur l'approche dépendante des données économiques pour la réunion de novembre.</span>
+              <span class="news-time">10:00 UTC — BCE</span>
+              <span>Les déclarations réitèrent une approche prudente face aux données d'inflation des services.</span>
             </div>
             <div class="news-item">
-              <span class="news-time">08:30 UTC — MARCHÉS ASIATIQUES</span>
-              <span>Achats continus de lingots par les banques centrales asiatiques signalés sur les marchés physiques de Shanghai.</span>
+              <span class="news-time">08:30 UTC — ASIE</span>
+              <span>Flux acheteurs persistants sur l'or physique en provenance de Shanghai.</span>
             </div>
           </div>
         </section>
       </div>
     </div>
 
-    <!-- 11. OUTILS DE TRADING & GESTION DU RISQUE (SANS JOURNAL DE TRADING) -->
+    <!-- OUTILS DE GESTION DU RISQUE ET NOTES (SANS JOURNAL DE TRADING) -->
     <div class="tools">
       <section class="panel" id="calc">
         <div class="ph"><h2>VM Risk Engine (Calculateur de Risque 1%)</h2><span class="meta">Gestion institutionnelle</span></div>
@@ -559,115 +571,3 @@ textarea { resize: vertical; height: 90px; }
   function renderPairs() {
     var h = '<div class="row head"><span>Paire</span><span class="r">Cours</span><span class="r">7 j</span><span></span></div>', tape = '<div class="t lbl">7 J</div>';
     PAIRS.forEach(function (p) {
-      var s = series(p), last = s[s.length - 1].v, c7 = change7(s);
-      h += '<button class="row" type="button" data-id="' + p.id + '" aria-pressed="' + (p.id === state.sel) + '"><span class="pn">' + p.n + '</span><span class="r">' + fmt(last, p.dec) +
-        '</span><span class="r ' + cls(c7) + '">' + pct(c7) + "</span>" + spark(s) + "</button>";
-      tape += '<div class="t"><b>' + p.n.replace("/", "") + "</b><span>" + fmt(last, p.dec) + '</span><small class="' + cls(c7) + '">' + pct(c7) + "</small></div>";
-    });
-    $("pairs").innerHTML = h; $("tape").innerHTML = tape;
-  }
-
-  var SESS = [["Sydney", "Australia/Sydney", 7, 16], ["Tokyo", "Asia/Tokyo", 9, 18], ["Londres", "Europe/London", 8, 17], ["New York", "America/New_York", 8, 17]];
-  function localParts(tz, now) {
-    var f = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hourCycle: "h23", weekday: "short", hour: "2-digit", minute: "2-digit" }).formatToParts(now), o = {};
-    f.forEach(function (x) { o[x.type] = x.value; });
-    return { wd: o.weekday, h: parseInt(o.hour, 10), m: o.minute };
-  }
-  function renderClocks() {
-    var now = new Date(), pad = function (n) { return String(n).padStart(2, "0"); };
-    $("clocks").innerHTML = "<span>UTC <b>" + pad(now.getUTCHours()) + ":" + pad(now.getUTCMinutes()) + ":" + pad(now.getUTCSeconds()) + "</b></span>";
-    var d = now.getUTCDay(), h = now.getUTCHours(), closed = d === 6 || (d === 5 && h >= 22) || (d === 0 && h < 22);
-    $("fxState").textContent = closed ? "Fermé" : "Ouvert";
-    $("sess").innerHTML = SESS.map(function (s) {
-      var p = localParts(s[1], now), open = p.wd !== "Sat" && p.wd !== "Sun" && p.h >= s[2] && p.h < s[3];
-      return '<div class="srow"><span>' + s[0] + '</span><span class="num" style="color:var(--muted)">' + pad(p.h) + ":" + p.m + '</span><span class="badge ' + (open ? "on" : "off") + '">' + (open ? "OUVERT" : "FERMÉ") + "</span></div>";
-    }).join("");
-  }
-
-  var touched = false;
-  function num(id) { return parseFloat(String($(id).value).replace(",", ".").replace(/\s/g, "")); }
-  function resetEntry() {
-    var p = pairOf($("cPair").value), s = series(p), price = s[s.length - 1].v, buy = $("cDir").value === "buy", d = 25 * pipSize(p);
-    $("cEntry").value = price.toFixed(p.dec === 2 ? 3 : 5);
-    $("cStop").value = (buy ? price - d : price + d).toFixed(p.dec === 2 ? 3 : 5);
-    touched = false;
-  }
-  function calc() {
-    var p = pairOf($("cPair").value), dates_ = dates(), rates = state.data[dates_[dates_.length - 1]];
-    var r = sizing({ balance: num("cBal"), riskPct: num("cRisk"), pair: p, dir: $("cDir").value, entry: num("cEntry"), stop: num("cStop"), rr: num("cRR"), rates: rates });
-    var out = $("cOut");
-    if (r.err) { out.innerHTML = '<div class="err">' + r.err + "</div>"; return; }
-    var dd = p.quote === "JPY" ? 3 : 5, money = function (v) { return "$" + v.toFixed(2).replace(".", ","); };
-    out.innerHTML =
-      '<div class="stat big"><small>Taille Position</small><b>' + fmt(r.lots, 2) + " lot(s)</b></div>" +
-      '<div class="stat"><small>Risque Réel (1%)</small><b class="down">' + money(r.realRisk) + "</b></div>" +
-      '<div class="stat"><small>Gain Visé</small><b class="up">' + money(r.reward) + "</b></div>" +
-      '<div class="stat"><small>Cible (Prix)</small><b>' + fmt(r.target, dd) + "</b></div>";
-  }
-  function initCalc() {
-    $("cPair").innerHTML = PAIRS.map(function (p) { return '<option value="' + p.id + '">' + p.n + "</option>"; }).join("");
-    resetEntry(); calc();
-    ["cBal", "cRisk", "cRR", "cStop"].forEach(function (id) { $(id).addEventListener("input", calc); });
-    $("cEntry").addEventListener("input", function () { touched = true; calc(); });
-    $("cPair").addEventListener("change", function () { resetEntry(); calc(); });
-    $("cDir").addEventListener("change", function () { resetEntry(); calc(); });
-  }
-
-  window.saveNotes = function() {
-    localStorage.setItem("vm_terminal_notes", $("quickNotes").value);
-  };
-  function loadNotes() {
-    var saved = localStorage.getItem("vm_terminal_notes");
-    if (saved) $("quickNotes").value = saved;
-  }
-
-  function setStatus() {
-    var ds = dates(), last = ds[ds.length - 1], s = $("status");
-    s.className = "status" + (state.live ? " live" : "");
-    $("statusText").textContent = state.live ? "EN DIRECT · " + shortD(last) : "INSTANTANÉ · " + shortD(last);
-  }
-  function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
-  function loadLive() {
-    var start = new Date(Date.now() - 95 * 864e5), ctl = typeof AbortController === "function" ? new AbortController() : null;
-    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 7000);
-    return fetch("https://api.frankfurter.dev/v1/" + iso(start) + "..?base=EUR&symbols=" + SYMS.join(","), ctl ? { signal: ctl.signal } : {})
-      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
-      .then(function (j) {
-        clearTimeout(timer);
-        if (!j || !j.rates) throw new Error();
-        state.data = j.rates; state.live = true;
-      });
-  }
-  function renderAll() {
-    setStatus(); renderPairs(); drawPair(); drawStrength();
-    if (!touched && $("cPair").options.length) { resetEntry(); calc(); } else if ($("cPair").options.length) calc();
-  }
-
-  $("pairs").addEventListener("click", function (e) {
-    var b = e.target.closest("button.row"); if (!b) return;
-    state.sel = b.getAttribute("data-id"); renderPairs(); drawPair();
-  });
-  var seg = document.querySelectorAll(".seg button[data-w]");
-  Array.prototype.forEach.call(seg, function (b) {
-    b.addEventListener("click", function () {
-      state.win = parseInt(b.getAttribute("data-w"), 10);
-      Array.prototype.forEach.call(seg, function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-      drawStrength();
-    });
-  });
-  function idx(e, svg, W, L, Rm, n) {
-    var r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, i = Math.round((x - L) / (W - L - Rm) * (n - 1));
-    return Math.max(0, Math.min(n - 1, i));
-  }
-  $("chart").addEventListener("pointermove", function (e) { if (cur) showPoint(idx(e, $("chart"), cur.W, cur.L, cur.Rm, cur.s.length), false); });
-  $("chart").addEventListener("pointerleave", function () { if (cur) showPoint(cur.s.length - 1, true); });
-  $("strength").addEventListener("pointermove", function (e) { if (SW) drawReadout(idx(e, $("strength"), SW.W, SW.L, SW.Rm, SW.n), false); });
-  $("strength").addEventListener("pointerleave", function () { if (SW) drawReadout(SW.n - 1, true); });
-
-  renderClocks(); setInterval(renderClocks, 1000);
-  loadNotes(); renderAll(); initCalc();
-  function refresh() { loadLive().then(renderAll).catch(function () {}); }
-  refresh();
-})();
-</script>
-</body></html>
