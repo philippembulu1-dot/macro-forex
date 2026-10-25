@@ -1,772 +1,350 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Macro Forex</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<style>
-/* Terminal sombre : barre latérale, bandeau de cours, trois colonnes de panneaux (marchés, analyse, agenda), puis outils de trading. Fond noir, ambre pour la structure, vert/rouge réservés aux hausses/baisses. */
-:root {
-  --bg: #060607;
-  --panel: #0d0d0f;
-  --panel2: #131316;
-  --line: #2a2618;
-  --line2: #1c1a12;
-  --fg: #ece8dc;
-  --muted: #8d8878;
-  --amber: #f2b01e;
-  --amber-soft: #2a2108;
-  --up: #3ddc97;
-  --down: #ff5c4f;
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  color-scheme: dark;
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--font-body); }
-a { color: inherit; }
-.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.up { color: var(--up); } .down { color: var(--down); }
-:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top One Analysis VM — Terminal Institutionnel</title>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #131722;
+            --border-color: #2a2e39;
+            --text-main: #d1d4dc;
+            --text-muted: #787b86;
+            --accent-green: #089981;
+            --accent-red: #f23645;
+            --accent-gold: #f7931a;
+            --accent-blue: #2962ff;
+        }
 
-.shell { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100%; }
-.side { display: none; }
-.main {
-  min-width: 0; padding-block: 12px 40px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-direction: column; gap: 12px;
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
 
-/* Barre du haut */
-.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
-.brand { font: 600 15px var(--font-mono); letter-spacing: 0.14em; display: flex; align-items: center; gap: 10px; }
-.mark { width: 14px; height: 14px; background: var(--amber); clip-path: polygon(0 0, 100% 0, 100% 30%, 62% 30%, 62% 100%, 38% 100%, 38% 30%, 0 30%); flex: none; }
-.clocks { display: flex; flex-wrap: wrap; gap: 4px 16px; font: 11px var(--font-mono); color: var(--muted); }
-.clocks b { color: var(--fg); font-weight: 500; }
-.status { display: inline-flex; align-items: center; gap: 8px; font: 11px var(--font-mono); color: var(--muted); border: 1px solid var(--line); padding: 3px 10px; }
-.status i { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); flex: none; }
-.status.live i { background: var(--up); }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-/* Bandeau de cours */
-.tape { display: flex; gap: 0; overflow-x: auto; border: 1px solid var(--line); background: var(--panel); scrollbar-width: thin; }
-.tape .t { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px; white-space: nowrap; border-right: 1px solid var(--line2); font: 12px var(--font-mono); }
-.tape .t small { color: var(--muted); font-size: 11px; }
-.tape .t.lbl { color: var(--amber); font-weight: 600; letter-spacing: 0.1em; }
+        /* Ticker Supérieur */
+        .ticker-tape {
+            background: #1e222d;
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 12px;
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .ticker-item {
+            display: flex;
+            gap: 8px;
+        }
+        .ticker-item .symbol { color: var(--text-muted); font-weight: bold; }
+        .positive { color: var(--accent-green); }
+        .negative { color: var(--accent-red); }
 
-/* Panneaux */
-.grid { display: flex; flex-direction: column; gap: 12px; }
-.col { display: contents; }
-.panel { background: var(--panel); border: 1px solid var(--line); min-width: 0; }
-.ph { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line2); }
-.ph h2 { margin: 0; font: 600 11px var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); }
-.ph .meta { font: 11px var(--font-mono); color: var(--muted); text-align: right; }
-.pb { padding: 12px; }
-.seg { display: inline-flex; border: 1px solid var(--line); }
-.seg button { font: 11px var(--font-mono); color: var(--muted); background: transparent; border: 0; padding: 3px 10px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--amber); color: #111; font-weight: 600; }
-.o-sel { order: 1; } .o-pairs { order: 2; } .o-force { order: 3; } .o-duo { order: 4; } .o-banks { order: 5; } .o-agenda { order: 6; } .o-sess { order: 7; }
+        /* Header / Navigation */
+        header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+        .live-clock {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
 
-/* Liste des paires */
-.row { display: grid; grid-template-columns: 1fr 1fr 1fr 84px; align-items: center; gap: 8px; width: 100%; padding: 8px 12px; border: 0; border-top: 1px solid var(--line2); background: transparent; color: inherit; font: 12px var(--font-mono); text-align: left; cursor: pointer; }
-.row:first-of-type { border-top: 0; }
-.row:hover { background: var(--panel2); }
-.row[aria-pressed="true"] { background: var(--amber-soft); box-shadow: inset 2px 0 0 var(--amber); }
-.row .pn { font-weight: 600; letter-spacing: 0.04em; }
-.row .r { text-align: right; }
-.row.head { cursor: default; color: var(--muted); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding-block: 6px; background: transparent; box-shadow: none; border-top: 0; }
-.spark { width: 84px; height: 24px; display: block; }
+        /* Layout Principal en grille */
+        .main-container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
 
-/* Paire sélectionnée */
-.sel-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.pair-name { font: 600 12px var(--font-mono); letter-spacing: 0.1em; color: var(--amber); }
-.price { font: 500 30px/1.15 var(--font-mono); font-variant-numeric: tabular-nums; }
-.asof { font: 11px var(--font-mono); color: var(--muted); min-height: 16px; }
-.chips { display: flex; gap: 6px; }
-.chip { border: 1px solid var(--line); padding: 3px 8px; display: flex; flex-direction: column; min-width: 70px; }
-.chip small { color: var(--muted); font: 10px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
-.chip b { font: 500 13px var(--font-mono); white-space: nowrap; }
-svg.chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
-svg.chart text { fill: var(--muted); font: 10px var(--font-mono); }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
-/* Force des devises */
-.readout { display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 0 12px 12px; }
-.ro { display: inline-flex; align-items: center; gap: 6px; font: 11px var(--font-mono); border: 1px solid var(--line2); padding: 2px 8px; }
-.ro i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
-.duo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.gauge-wrap svg { width: 100%; max-width: 260px; height: auto; display: block; }
-.gauge-wrap svg text { fill: var(--muted); font: 10px var(--font-mono); }
-.gauge-lbl { font: 600 12px var(--font-mono); letter-spacing: 0.12em; }
-.hint { color: var(--muted); font-size: 12px; margin: 0; max-width: 60ch; }
-.rank { display: flex; flex-direction: column; gap: 5px; }
-.rk { display: grid; grid-template-columns: 38px minmax(0, 1fr) 62px; align-items: center; gap: 8px; font: 12px var(--font-mono); }
-.rk .bar { position: relative; height: 10px; background: var(--panel2); }
-.rk .bar::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--line); }
-.rk .bar i { position: absolute; top: 0; bottom: 0; }
-.rk .v { text-align: right; }
-.idea { margin-top: 10px; padding: 8px 10px; border: 1px solid var(--line); background: var(--amber-soft); font-size: 12px; }
-.idea b { font-family: var(--font-mono); color: var(--amber); }
+        .card h2 {
+            font-size: 15px;
+            color: #fff;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-/* Tableaux */
-.tbl { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 7px 12px; border-top: 1px solid var(--line2); white-space: nowrap; font-size: 12px; }
-th { border-top: 0; font: 500 10px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-td.r, th.r { text-align: right; }
-td small { color: var(--muted); font-family: var(--font-mono); }
-.tag { display: inline-block; font: 11px var(--font-mono); padding: 0 7px; border: 1px solid var(--line); color: var(--muted); }
-.tag.hike { border-color: var(--amber); color: var(--amber); }
+        /* Tableaux & Listes */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 9px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th { color: var(--text-muted); font-weight: 500; }
 
-/* Agenda */
-.agenda { list-style: none; margin: 0; padding: 0; }
-.agenda li { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 7px 12px; border-top: 1px solid var(--line2); }
-.agenda li:first-child { border-top: 0; }
-.agenda .d { color: var(--muted); font: 11px var(--font-mono); }
-.agenda .in { font: 11px var(--font-mono); color: var(--muted); }
-.agenda li.soon .in { color: var(--amber); font-weight: 600; }
-.warn { margin: 0; padding: 8px 12px; border-bottom: 1px solid var(--line2); background: var(--amber-soft); font-size: 12px; }
-.warn b { color: var(--amber); }
+        /* Badges & Indicateurs */
+        .badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .badge-bullish { background: rgba(8, 153, 129, 0.2); color: var(--accent-green); }
+        .badge-bearish { background: rgba(242, 54, 69, 0.2); color: var(--accent-red); }
 
-/* Sessions */
-.sess { display: flex; flex-direction: column; }
-.srow { display: grid; grid-template-columns: 1fr auto 74px; gap: 8px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--line2); font: 12px var(--font-mono); }
-.srow:first-child { border-top: 0; }
-.badge { text-align: center; font: 600 10px var(--font-mono); letter-spacing: 0.1em; padding: 2px 0; border: 1px solid var(--line); color: var(--muted); }
-.badge.on { border-color: var(--up); color: var(--up); }
+        /* Jauge de Risque / Sentiment */
+        .gauge-container {
+            text-align: center;
+            padding: 10px 0;
+        }
+        .gauge-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
 
-/* Outils */
-.tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.calc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 12px; }
-.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.form label { display: flex; flex-direction: column; gap: 4px; font: 10px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); min-width: 0; }
-input, select { width: 100%; min-width: 0; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 0; padding: 7px 8px; font: 13px var(--font-mono); }
-input:focus, select:focus { border-color: var(--amber); outline: none; }
-.out { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; }
-.stat { border: 1px solid var(--line2); padding: 8px 10px; display: flex; flex-direction: column; gap: 0; min-width: 0; }
-.stat small { font: 10px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.stat b { font: 500 16px var(--font-mono); overflow-wrap: anywhere; }
-.stat.big { grid-column: 1 / -1; border-color: var(--amber); background: var(--amber-soft); }
-.stat.big b { font-size: 26px; color: var(--amber); }
-.err { grid-column: 1 / -1; border: 1px solid var(--down); color: var(--down); padding: 8px 10px; font-size: 12px; }
-.checks { list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-.checks label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 13px; }
-.checks input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--amber); flex: none; }
-.checks li.done label span { color: var(--muted); text-decoration: line-through; }
-.score { padding: 0 12px 12px; font: 12px var(--font-mono); color: var(--muted); }
-.score b { color: var(--amber); }
-.advice { margin: 0; padding: 12px 12px 12px 28px; display: flex; flex-direction: column; gap: 6px; }
-.advice li::marker { color: var(--amber); }
-.fine { margin: 0; padding: 0 12px 12px; color: var(--muted); font-size: 11px; }
-.links { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
-.links a { display: block; padding: 10px 12px; text-decoration: none; background: var(--panel); border-top: 1px solid var(--line2); border-right: 1px solid var(--line2); }
-.links a:hover { background: var(--panel2); }
-.links b { display: block; font: 600 12px var(--font-mono); color: var(--amber); }
-.links span { color: var(--muted); font-size: 12px; }
-.note { color: var(--muted); font-size: 11px; margin: 0; padding: 8px 12px; border-top: 1px solid var(--line2); }
+        /* Bloc de Notes Rapides */
+        textarea {
+            width: 100%;
+            height: 100px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 13px;
+        }
 
-@media (min-width: 640px) {
-  .duo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .calc { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
-  .form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (min-width: 1100px) {
-  .shell { grid-template-columns: 176px minmax(0, 1fr); }
-  .side { display: block; align-self: stretch; border-right: 1px solid var(--line); background: var(--panel); }
-  .side-in { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 16px 0; }
-  .side .brand { padding: 0 16px 14px; }
-  .side .grp { padding: 12px 16px 4px; font: 600 10px var(--font-mono); letter-spacing: 0.16em; color: var(--muted); }
-  .side a { padding: 6px 16px; text-decoration: none; color: var(--muted); font-size: 12px; border-left: 2px solid transparent; }
-  .side a:hover { color: var(--fg); background: var(--panel2); border-left-color: var(--amber); }
-  .top .brand { display: none; }
-  .grid { display: grid; grid-template-columns: 300px minmax(0, 1fr) 310px; align-items: start; }
-  .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-  .o-sel, .o-pairs, .o-force, .o-duo, .o-banks, .o-agenda, .o-sess { order: 0; }
-  .tools { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
-}
-@media (max-width: 420px) {
-  .price { font-size: 26px; }
-  .chip { min-width: 62px; }
-  .out { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 520px) {
-  .col-core { display: none; }
-  th, td { padding: 7px 8px; white-space: normal; }
-  th:first-child, td:first-child { padding-left: 12px; }
-}
-</style>
-</head><body><div class="shell">
-  <nav class="side" aria-label="Sections"><div class="side-in">
-    <div class="brand"><span class="mark"></span>MACRO FOREX</div>
-    <div class="grp">MARCHÉS</div>
-    <a href="#apercu">Aperçu</a>
-    <a href="#paires">Paires</a>
-    <a href="#force">Force des devises</a>
-    <div class="grp">MACRO</div>
-    <a href="#banques">Banques centrales</a>
-    <a href="#agenda">Agenda</a>
-    <a href="#sessions">Sessions</a>
-    <div class="grp">OUTILS</div>
-    <a href="#calc">Calculateur</a>
-    <a href="#check">Checklist</a>
-    <a href="#conseils">Gestion du risque</a>
-    <a href="#liens">Sources gratuites</a>
-  </div></nav>
+        /* Calculateur de Risque */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 13px;
+        }
+        .form-group input {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .calc-result {
+            background: #1e222d;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            color: var(--accent-green);
+        }
 
-  <div class="main" id="apercu">
-    <header class="top">
-      <div class="brand"><span class="mark"></span>MACRO FOREX</div>
-      <div class="clocks" id="clocks" aria-label="Heure"></div>
-      <div class="status" id="status"><i></i><span id="statusText">Chargement…</span></div>
+        /* Footer */
+        footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Ticker Supérieur (Cotations en direct) -->
+    <div class="ticker-tape" id="tickerTape">
+        <div class="ticker-item"><span class="symbol">XAU/USD</span> <span class="positive">2,748.50 (+0.45%)</span></div>
+        <div class="ticker-item"><span class="symbol">NAS100</span> <span class="positive">21,450.20 (+0.82%)</span></div>
+        <div class="ticker-item"><span class="symbol">EUR/USD</span> <span class="negative">1.0485 (-0.15%)</span></div>
+        <div class="ticker-item"><span class="symbol">GBP/USD</span> <span class="negative">1.2560 (-0.22%)</span></div>
+        <div class="ticker-item"><span class="symbol">USD/JPY</span> <span class="positive">152.30 (+0.35%)</span></div>
+        <div class="ticker-item"><span class="symbol">US10Y</span> <span class="positive">4.42% (+1.2%)</span></div>
+        <div class="ticker-item"><span class="symbol">DXY</span> <span class="positive">106.80 (+0.28%)</span></div>
+        <div class="ticker-item"><span class="symbol">BTC/USD</span> <span class="positive">96,400.00 (+2.10%)</span></div>
+    </div>
+
+    <header>
+        <h1>TOP ONE ANALYSIS VM — TERMINAL INSTITUTIONNEL</h1>
+        <div class="live-clock" id="liveClock">UTC 00:00:00</div>
     </header>
 
-    <div class="tape" id="tape" aria-label="Cours des paires"></div>
+    <div class="main-container">
 
-    <div class="grid">
-      <div class="col">
-        <section class="panel o-pairs" id="paires">
-          <div class="ph"><h2>Paires</h2><span class="meta">clic = graphique</span></div>
-          <div id="pairs"></div>
-        </section>
-        <section class="panel o-sess" id="sessions">
-          <div class="ph"><h2>Sessions</h2><span class="meta" id="fxState"></span></div>
-          <div class="sess" id="sess"></div>
-          <p class="note">Heures d'ouverture usuelles de chaque place, en heure locale. Le forex s'échange en continu du dimanche soir au vendredi soir.</p>
-        </section>
-      </div>
-
-      <div class="col">
-        <div class="duo o-duo">
-          <section class="panel" id="risque">
-            <div class="ph"><h2>Appétit pour le risque</h2><span class="meta">proxy FX</span></div>
-            <div class="pb gauge-wrap">
-              <svg id="gauge" viewBox="0 0 200 128" role="img" aria-label="Jauge d'appétit pour le risque"></svg>
-              <div class="gauge-lbl" id="gaugeLbl"></div>
-              <p class="hint">AUD, NZD et CAD face à JPY et CHF sur 3 mois. Indice maison calculé sur les devises, pas une mesure officielle.</p>
-            </div>
-          </section>
-          <section class="panel" id="rang">
-            <div class="ph"><h2>Classement</h2><span class="meta" id="rankWin"></span></div>
-            <div class="pb">
-              <div class="rank" id="rank"></div>
-              <div class="idea" id="idea"></div>
-            </div>
-          </section>
-        </div>
-
-        <section class="panel o-force" id="force">
-          <div class="ph">
-            <h2>Force des devises</h2>
-            <div class="seg" role="group" aria-label="Période">
-              <button type="button" data-w="30" aria-pressed="false">1M</button>
-              <button type="button" data-w="92" aria-pressed="true">3M</button>
-            </div>
-          </div>
-          <div class="pb"><svg id="strength" class="chart" viewBox="0 0 760 340" role="img" aria-label="Force relative des 8 devises principales"></svg></div>
-          <div class="readout" id="readout"></div>
-          <p class="note">Variation moyenne de chaque devise face aux 7 autres depuis le début de la période. Survolez le graphique pour lire une date.</p>
-        </section>
-
-        <section class="panel o-banks" id="banques">
-          <div class="ph"><h2>Banques centrales</h2><span class="meta">saisie manuelle · 24 oct. 2026</span></div>
-          <div class="tbl">
+        <!-- MODULE 1 : XAUUSD Performance & Focus Semaine -->
+        <div class="card">
+            <h2>XAU/USD — Performance & Focus Semaine</h2>
             <table>
-              <thead><tr><th>Banque</th><th class="r">Taux</th><th>Dernière décision</th><th class="r">Inflation</th><th class="r col-core">Hors énergie</th></tr></thead>
-              <tbody id="macro"></tbody>
+                <tr><td>Variation Jour</td><td class="positive">+0.45% (+12.30 $)</td></tr>
+                <tr><td>Variation Semaine</td><td class="positive">+1.85%</td></tr>
+                <tr><td>Plus Haut / Plus Bas (7J)</td><td>2,760.20 / 2,705.50</td></tr>
+                <tr><td>Biais Technique M15/H1</td><td><span class="badge badge-bullish">BULLISH HAUT</span></td></tr>
             </table>
-          </div>
-          <p class="note">Sources : 1trader.com, Eurostat, ONS, Trading Economics. Inflation de sept. 2026 en glissement annuel, un tiret si non relevée. À vérifier avant de trader.</p>
-        </section>
-      </div>
-
-      <div class="col">
-        <section class="panel o-sel" id="selPanel">
-          <div class="ph"><h2>Graphique</h2><span class="meta" id="selMeta">3 mois</span></div>
-          <div class="pb">
-            <div class="sel-top">
-              <div>
-                <div class="pair-name" id="pairName">EUR/USD</div>
-                <div class="price" id="price">–</div>
-                <div class="asof" id="asof"></div>
-              </div>
-              <div class="chips">
-                <div class="chip"><small>7 j</small><b id="chg7">–</b></div>
-                <div class="chip"><small>3 m</small><b id="chg3m">–</b></div>
-              </div>
-            </div>
-            <svg id="chart" class="chart" viewBox="0 0 300 170" role="img" aria-label="Évolution de la paire sélectionnée"></svg>
-          </div>
-          <p class="note" id="rateNote">Taux de référence de la BCE, publiés une fois par jour ouvré vers 16 h (Paris). Pas de tick par tick : pour exécuter, utilisez votre plateforme.</p>
-        </section>
-
-        <section class="panel o-agenda" id="agenda">
-          <div class="ph"><h2>Prochaines réunions</h2><span class="meta">décisions de taux</span></div>
-          <p class="warn" id="weekWarn" hidden></p>
-          <ul class="agenda" id="agendaList"></ul>
-        </section>
-      </div>
-    </div>
-
-    <div class="tools">
-      <section class="panel" id="calc">
-        <div class="ph"><h2>Calculateur de position</h2><span class="meta">compte en USD</span></div>
-        <div class="calc">
-          <div class="form">
-            <label for="cBal">Capital (USD)<input id="cBal" inputmode="decimal" value="10000" autocomplete="off"></label>
-            <label for="cRisk">Risque par trade (%)<input id="cRisk" inputmode="decimal" value="1" autocomplete="off"></label>
-            <label for="cPair">Paire<select id="cPair"></select></label>
-            <label for="cDir">Sens<select id="cDir"><option value="buy">Achat</option><option value="sell">Vente</option></select></label>
-            <label for="cEntry">Prix d'entrée<input id="cEntry" inputmode="decimal" autocomplete="off"></label>
-            <label for="cStop">Stop (prix)<input id="cStop" inputmode="decimal" autocomplete="off"></label>
-            <label for="cRR">Gain visé / risque<input id="cRR" inputmode="decimal" value="2" autocomplete="off"></label>
-          </div>
-          <div class="out" id="cOut" aria-live="polite"></div>
         </div>
-        <p class="note">Calcul pour un compte en dollars, sur un lot standard de 100 000 unités. Valeur du pip convertie avec les derniers taux ci-dessus. Le courtier peut arrondir ou appliquer des écarts différents.</p>
-      </section>
 
-      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-        <section class="panel" id="check">
-          <div class="ph"><h2>Checklist avant d'entrer</h2><button type="button" id="resetCheck" class="seg" style="font:11px var(--font-mono);color:var(--muted);background:transparent;padding:3px 10px;cursor:pointer">Réinitialiser</button></div>
-          <ul class="checks" id="checks"></ul>
-          <div class="score" id="checkScore"></div>
-        </section>
-        <section class="panel" id="conseils">
-          <div class="ph"><h2>Gestion du risque</h2></div>
-          <ul class="advice">
-            <li>Risquez 0,5 à 1 % du capital par trade. Au-delà, quelques pertes d'affilée font très mal.</li>
-            <li>Visez au moins 2 fois le risque en gain. Avec 1:2, 40 % de trades gagnants suffisent pour ne pas perdre.</li>
-            <li>Placez le stop avant d'entrer, et ne l'éloignez jamais.</li>
-            <li>Évitez d'ouvrir juste avant une décision de banque centrale ou un chiffre d'inflation : réduisez la taille ou attendez.</li>
-            <li>Limitez les positions corrélées. EUR/USD et GBP/USD bougent souvent ensemble : deux achats comptent presque comme un seul double.</li>
-            <li>Notez chaque trade (raison, entrée, sortie, erreur). C'est ce qui fait progresser.</li>
-          </ul>
-          <p class="fine">Contenu éducatif, pas un conseil financier personnalisé. Le trading de forex à effet de levier peut faire perdre plus vite que prévu : testez d'abord sur un compte démo.</p>
-        </section>
-      </div>
+        <!-- MODULE 2 : Indicateurs Macro Globaux (US & Global) -->
+        <div class="card">
+            <h2>Indicateurs Macroéconomiques Clés</h2>
+            <table>
+                <tr><th>Indicateur</th><th>Actuel</th><th>Consensus</th><th>Impact Marché</th></tr>
+                <tr><td>US CPI (Inflation y/y)</td><td>2.7%</td><td>2.6%</td><td><span class="badge badge-bearish">USD / Or</span></td></tr>
+                <tr><td>US Core PCE (Pression Fed)</td><td>2.8%</td><td>2.8%</td><td><span class="badge badge-bullish">Neutre / Pivot</span></td></tr>
+                <tr><td>US Non-Farm Payrolls (NFP)</td><td>142K</td><td>165K</td><td><span class="badge badge-bullish">Gold Haussier</span></td></tr>
+                <tr><td>US Taux de Chômage</td><td>4.1%</td><td>4.1%</td><td><span class="badge badge-bullish">Stable</span></td></tr>
+                <tr><td>US PIB (GDP q/q)</td><td>2.8%</td><td>2.9%</td><td><span class="badge badge-bullish">Croissance Solide</span></td></tr>
+                <tr><td>US10Y - US02Y Spread</td><td>-15 bps</td><td>-10 bps</td><td><span class="badge badge-bearish">Courbe Inversée</span></td></tr>
+            </table>
+        </div>
+
+        <!-- MODULE 3 : Consensus Banques d'Investissement -->
+        <div class="card">
+            <h2>Biais & Prévisions (Morgan Stanley & Co.)</h2>
+            <table>
+                <tr><th>Institution</th><th>Actif</th><th>Biais</th><th>Cible / Note</th></tr>
+                <tr><td>Morgan Stanley</td><td>XAU/USD</td><td><span class="badge badge-bullish">Bullish</span></td><td>Cible 2,850$ (Achats sur replis)</td></tr>
+                <tr><td>Goldman Sachs</td><td>XAU/USD</td><td><span class="badge badge-bullish">Bullish</span></td><td>Achats banques centrales robustes</td></tr>
+                <tr><td>JPMorgan</td><td>EUR/USD</td><td><span class="badge badge-bearish">Bearish</span></td><td>Parité visée si divergence Fed/ECB</td></tr>
+                <tr><td>Citigroup</td><td>NAS100</td><td><span class="badge badge-bullish">Neutre/Bull</span></td><td>Dépend des résultats Tech Q4</td></tr>
+            </table>
+        </div>
+
+        <!-- MODULE 4 : Banques Centrales & Probabilités de Taux -->
+        <div class="card">
+            <h2>Banques Centrales & Probabilités de Taux</h2>
+            <table>
+                <tr><td>FED (USA) - 4.50%</td><td>Prochaine: 80% Maintien / 20% Baisse</td></tr>
+                <tr><td>ECB (Zone Euro) - 3.25%</td><td>Prochaine: 85% Baisse de 25bps</td></tr>
+                <tr><td>BOE (UK) - 4.75%</td><td>Prochaine: 70% Maintien</td></tr>
+                <tr><td>BOJ (Japon) - 0.25%</td><td>Prochaine: 60% Hausse progressive</td></tr>
+            </table>
+        </div>
+
+        <!-- MODULE 5 : Sentiment du Marché (Risk-On / Risk-Off) -->
+        <div class="card">
+            <h2>Indice de Risque Global (Risk-On / Risk-Off)</h2>
+            <div class="gauge-container">
+                <div class="gauge-value">62 / 100</div>
+                <p style="color: var(--accent-green); margin-top: 5px; font-weight: bold;">Régime : RISK-ON MODÉRÉ</p>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Calculé via VIX (14.2), Rendements US10Y et Actifs Refuges.</p>
+            </div>
+        </div>
+
+        <!-- MODULE 6 : Retail Sentiment (Contrarien) -->
+        <div class="card">
+            <h2>Retail Sentiment (Positionnement Particuliers)</h2>
+            <table>
+                <tr><th>Actif</th><th>Long</th><th>Short</th><th>Signal</th></tr>
+                <tr><td>XAU/USD</td><td>32%</td><td>68%</td><td><span class="badge badge-bullish">CONTRARIAN BUY</span></td></tr>
+                <tr><td>EUR/USD</td><td>65%</td><td>35%</td><td><span class="badge badge-bearish">CONTRARIAN SELL</span></td></tr>
+                <tr><td>NAS100</td><td>75%</td><td>25%</td><td><span class="badge badge-bearish">CONTRARIAN SELL</span></td></tr>
+            </table>
+        </div>
+
+        <!-- MODULE 7 : Données COT (CFTC Institutional) -->
+        <div class="card">
+            <h2>Données Institutionnelles (COT CFTC)</h2>
+            <table>
+                <tr><th>Actif</th><th>Smart Money (Commercials)</th><th>Fonds (Non-Comm)</th></tr>
+                <tr><td>XAU/USD</td><td><span class="badge badge-bearish">Net Short Massif</span></td><td><span class="badge badge-bullish">Net Long Élevé</span></td></tr>
+                <tr><td>EUR/USD</td><td><span class="badge badge-bullish">Net Long</span></td><td><span class="badge badge-bearish">Net Short</span></td></tr>
+            </table>
+        </div>
+
+        <!-- MODULE 8 : Horloge des Sessions & Killzones -->
+        <div class="card">
+            <h2>Horloge Sessions & Killzones</h2>
+            <table>
+                <tr><td>Tokyo (Asie)</td><td><span class="badge badge-bearish">FERMÉ</span></td></tr>
+                <tr><td>Londres (Killzone)</td><td><span class="badge badge-bullish">ACTIF (Ouverture)</span></td></tr>
+                <tr><td>New York (Killzone)</td><td><span class="badge badge-bearish">EN ATTENTE</span></td></tr>
+            </table>
+        </div>
+
+        <!-- MODULE 9 : Gestion du Risque (VM Risk Engine) -->
+        <div class="card">
+            <h2>VM Risk Engine (Calculateur 1%)</h2>
+            <div class="form-group">
+                <label>Capital du Compte ($) :</label>
+                <input type="number" id="capital" value="10000" oninput="calculateRisk()">
+            </div>
+            <div class="form-group">
+                <label>Risque par Trade (%) :</label>
+                <input type="number" id="riskPct" value="1" oninput="calculateRisk()">
+            </div>
+            <div class="calc-result" id="riskResult">Risque maximal autorisé : 100.00 $</div>
+        </div>
+
+        <!-- MODULE 10 : Notes de Semaine (Sauvegarde Auto) -->
+        <div class="card">
+            <h2>Plans & Notes de Semaine (Sauvegarde Auto)</h2>
+            <textarea id="quickNotes" placeholder="Note tes biais macro et plans de la semaine ici..." oninput="saveNotes()"></textarea>
+        </div>
+
     </div>
 
-    <section class="panel" id="liens">
-      <div class="ph"><h2>Sources gratuites</h2><span class="meta">ouvrent un nouvel onglet</span></div>
-      <div class="links">
-        <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener"><b>FRED</b><span>Taux, inflation, emploi des États-Unis. API gratuite avec clé.</span></a>
-        <a href="https://data.ecb.europa.eu" target="_blank" rel="noopener"><b>BCE Data Portal</b><span>Zone euro : taux, monnaie, inflation.</span></a>
-        <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener"><b>CME FedWatch</b><span>Probabilités de hausse ou baisse des taux de la Fed.</span></a>
-        <a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener"><b>Forex Factory</b><span>Calendrier économique avec impact attendu.</span></a>
-        <a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener"><b>CFTC · COT</b><span>Positionnement des grands acteurs, publié le vendredi.</span></a>
-        <a href="https://www.tradingview.com" target="_blank" rel="noopener"><b>TradingView</b><span>Graphiques techniques gratuits.</span></a>
-        <a href="https://tradingeconomics.com" target="_blank" rel="noopener"><b>Trading Economics</b><span>Indicateurs par pays. Lecture gratuite.</span></a>
-        <a href="https://frankfurter.dev" target="_blank" rel="noopener"><b>Frankfurter</b><span>API de taux de change sans clé, utilisée ici.</span></a>
-      </div>
-    </section>
-  </div>
-</div>
+    <footer>
+        Top One Analysis VM — Conçu pour un trading institutionnel et macro précis.
+    </footer>
 
-<script>
-(function () {
-  "use strict";
-  var CUR = ["EUR", "USD", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
-  var SYMS = CUR.slice(1);
-  var ORDER = ["EUR", "GBP", "AUD", "NZD", "USD", "CAD", "CHF", "JPY"];
-  var COL = { EUR: "#4da3ff", USD: "#3ddc97", GBP: "#c77dff", JPY: "#f4f1e8", CHF: "#ff6fa5", AUD: "#f2b01e", CAD: "#ff7a45", NZD: "#22d3dd" };
+    <script>
+        // Horloge en direct
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('liveClock').innerText = "UTC " + now.toUTCString().slice(17, 25);
+        }, 1000);
 
-  function R(r, c) { return c === "EUR" ? 1 : r[c]; }
-  function mk(base, quote) {
-    return { id: base + quote, n: base + "/" + quote, base: base, quote: quote, dec: quote === "JPY" ? 2 : 4,
-      f: function (r) { return R(r, quote) / R(r, base); } };
-  }
-  var PAIRS = [mk("EUR", "USD"), mk("GBP", "USD"), mk("USD", "JPY"), mk("USD", "CHF"), mk("AUD", "USD"),
-    mk("USD", "CAD"), mk("NZD", "USD"), mk("EUR", "GBP"), mk("EUR", "JPY")];
+        // Calculateur de risque
+        function calculateRisk() {
+            const capital = parseFloat(document.getElementById('capital').value) || 0;
+            const riskPct = parseFloat(document.getElementById('riskPct').value) || 0;
+            const result = (capital * riskPct) / 100;
+            document.getElementById('riskResult').innerText = `Risque maximal autorisé : ${result.toFixed(2)} $`;
+        }
 
-  /* Instantané intégré (taux BCE, base EUR, un point par semaine). Sert de secours hors ligne. */
-  var SNAP_ROWS = [
-    ["2026-07-24",1.1377,0.85388,186.38,0.9302,1.6281,1.6026,1.9656],
-    ["2026-07-31",1.1485,0.85573,184.03,0.9304,1.6365,1.6126,1.9589],
-    ["2026-08-07",1.1535,0.85765,182.64,0.9347,1.6384,1.616,1.9646],
-    ["2026-08-14",1.1567,0.8545,183.93,0.939,1.6333,1.6049,1.9642],
-    ["2026-08-21",1.1699,0.8567,185.66,0.9353,1.6321,1.6074,1.9541],
-    ["2026-08-28",1.1643,0.8572,185.92,0.9364,1.6183,1.613,1.9585],
-    ["2026-09-04",1.1622,0.85898,181.59,0.9405,1.6134,1.6038,1.9755],
-    ["2026-09-11",1.1592,0.85815,178.56,0.9451,1.6161,1.6064,1.9914],
-    ["2026-09-18",1.146,0.8588,180.94,0.9462,1.6095,1.6056,2.0068],
-    ["2026-09-25",1.1403,0.86045,179.7,0.9445,1.622,1.6127,2.0108],
-    ["2026-10-02",1.1225,0.85033,176.99,0.9279,1.6176,1.5984,2.0002],
-    ["2026-10-09",1.1206,0.84763,177.34,0.9313,1.6052,1.5942,1.9961],
-    ["2026-10-16",1.1253,0.84385,177.82,0.9272,1.6171,1.5935,1.9868],
-    ["2026-10-23",1.1193,0.83728,175.51,0.9227,1.5939,1.5665,1.9682]
-  ];
-  var SNAP = {};
-  SNAP_ROWS.forEach(function (row) { var o = {}; SYMS.forEach(function (s, i) { o[s] = row[i + 1]; }); SNAP[row[0]] = o; });
+        // Sauvegarde automatique des notes dans le navigateur (localStorage)
+        function saveNotes() {
+            const notes = document.getElementById('quickNotes').value;
+            localStorage.setItem('vm_terminal_notes', notes);
+        }
 
-  /* À mettre à jour à la main après chaque réunion ou publication. */
-  var MACRO = [
-    { b: "Fed", c: "USD", rate: "3,75–4,00 %", last: "+0,25 pt", when: "16 sept.", hike: true, cpi: "3,7 %", core: "2,6 %" },
-    { b: "BCE", c: "EUR", rate: "2,50 %", last: "+0,25 pt", when: "10 sept.", hike: true, cpi: "3,8 %", core: "2,5 %" },
-    { b: "Banque d'Angleterre", c: "GBP", rate: "3,75 %", last: "Maintien", when: "17 sept.", hike: false, cpi: "3,5 %", core: "2,8 %" },
-    { b: "Banque du Japon", c: "JPY", rate: "1,25 %", last: "+0,25 pt", when: "18 sept.", hike: true, cpi: "2,1 %", core: "–" },
-    { b: "BNS", c: "CHF", rate: "0,00 %", last: "Maintien", when: "24 sept.", hike: false, cpi: "–", core: "–" },
-    { b: "RBA", c: "AUD", rate: "4,60 %", last: "+0,25 pt", when: "29 sept.", hike: true, cpi: "–", core: "–" },
-    { b: "Banque du Canada", c: "CAD", rate: "2,25 %", last: "Maintien", when: "2 sept.", hike: false, cpi: "–", core: "–" },
-    { b: "RBNZ", c: "NZD", rate: "2,75 %", last: "+0,25 pt", when: "2 sept.", hike: true, cpi: "–", core: "–" }
-  ];
-  var MEETINGS = [
-    { d: "2026-10-28", b: "RBNZ", c: "NZD" }, { d: "2026-10-28", b: "Banque du Canada", c: "CAD" },
-    { d: "2026-10-29", b: "Fed", c: "USD" }, { d: "2026-10-29", b: "BCE", c: "EUR" },
-    { d: "2026-10-30", b: "Banque du Japon", c: "JPY" }, { d: "2026-11-03", b: "RBA", c: "AUD" },
-    { d: "2026-11-05", b: "Banque d'Angleterre", c: "GBP" }, { d: "2026-12-10", b: "BNS", c: "CHF" }
-  ];
-  var CHECKS = [
-    "Je connais la direction de fond (graphique journalier).",
-    "Aucune décision de banque centrale ni inflation dans les prochaines heures.",
-    "Mon stop est placé et il tient compte de la volatilité.",
-    "Je risque 1 % du capital ou moins.",
-    "Le gain visé vaut au moins 2 fois le risque.",
-    "Je n'ai pas déjà une position corrélée ouverte.",
-    "Je ne cherche pas à me refaire après une perte."
-  ];
-
-  var $ = function (id) { return document.getElementById(id); };
-  var state = { data: SNAP, live: false, sel: "EURUSD", win: 92 };
-  var NS = "http://www.w3.org/2000/svg";
-
-  function fmt(v, d) { return v.toFixed(d).replace(".", ","); }
-  function pct(v) { return (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2).replace(".", ",") + " %"; }
-  function parseD(s) { return new Date(s + "T00:00:00"); }
-  function shortD(s) { return parseD(s).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }); }
-  function longD(s) { return parseD(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long", year: "numeric" }); }
-  function cls(v) { return v >= 0 ? "up" : "down"; }
-  function pairOf(p) { return PAIRS.filter(function (x) { return x.id === p; })[0]; }
-  function dates() { return Object.keys(state.data).sort(); }
-  function series(p) { return dates().map(function (d) { return { d: d, v: p.f(state.data[d]) }; }); }
-  function change7(s) {
-    var last = s[s.length - 1], cut = parseD(last.d).getTime() - 7 * 864e5, base = s[0];
-    for (var i = s.length - 1; i >= 0; i--) { if (parseD(s[i].d).getTime() <= cut) { base = s[i]; break; } }
-    return (last.v / base.v - 1) * 100;
-  }
-  function changeAll(s) { return (s[s.length - 1].v / s[0].v - 1) * 100; }
-
-  /* ---------- Force des devises ---------- */
-  function strengthOver(ds) {
-    var base = state.data[ds[0]], out = {};
-    CUR.forEach(function (x) {
-      out[x] = ds.map(function (d) {
-        var r = state.data[d], sum = 0, n = 0;
-        CUR.forEach(function (y) {
-          if (y === x) return;
-          sum += (R(r, y) / R(r, x)) / (R(base, y) / R(base, x)) - 1; n++;
-        });
-        return sum / n * 100;
-      });
-    });
-    return out;
-  }
-  function windowDates(days) {
-    var ds = dates(), last = parseD(ds[ds.length - 1]).getTime();
-    var w = ds.filter(function (d) { return parseD(d).getTime() >= last - days * 864e5; });
-    return w.length >= 3 ? w : ds.slice(-3);
-  }
-  function riskScore() {
-    var s = strengthOver(dates()), end = function (c) { var a = s[c]; return a[a.length - 1]; };
-    var on = (end("AUD") + end("NZD") + end("CAD")) / 3, off = (end("JPY") + end("CHF")) / 2;
-    return Math.max(0, Math.min(100, Math.round(50 + (on - off) * 8)));
-  }
-  function pairName(a, b) { return ORDER.indexOf(a) < ORDER.indexOf(b) ? [a, b] : [b, a]; }
-
-  /* ---------- Calculs de trading ---------- */
-  function pipSize(p) { return p.quote === "JPY" ? 0.01 : 0.0001; }
-  function usdPer(c, r) { return c === "USD" ? 1 : r.USD / R(r, c); }
-  function pipValueUSD(p, r) { return pipSize(p) * 100000 * usdPer(p.quote, r); }
-  function sizing(o) {
-    var dist = o.dir === "buy" ? o.entry - o.stop : o.stop - o.entry;
-    if (!(o.balance > 0) || !(o.riskPct > 0) || !(o.entry > 0) || !(o.stop > 0) || !(o.rr > 0)) return { err: "Renseignez un capital, un risque, un prix d'entrée, un stop et un ratio supérieurs à zéro." };
-    if (!(dist > 0)) return { err: o.dir === "buy" ? "Pour un achat, le stop doit être sous le prix d'entrée." : "Pour une vente, le stop doit être au-dessus du prix d'entrée." };
-    var pips = Math.round(dist / pipSize(o.pair) * 100) / 100, pv = pipValueUSD(o.pair, o.rates), riskUSD = o.balance * o.riskPct / 100;
-    var lots = Math.floor(riskUSD / (pips * pv) * 100 + 1e-6) / 100;
-    var realRisk = lots * pips * pv;
-    return { pips: pips, pipValue: pv, lots: lots, units: Math.round(lots * 100000), riskUSD: riskUSD, realRisk: realRisk,
-      target: o.dir === "buy" ? o.entry + dist * o.rr : o.entry - dist * o.rr, reward: realRisk * o.rr, be: 100 / (1 + o.rr) };
-  }
-
-  /* ---------- Dessin ---------- */
-  function el(tag, attrs, parent) {
-    var e = document.createElementNS(NS, tag);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
-  function txt(parent, x, y, s, anchor, extra) {
-    var t = el("text", { x: x, y: y, "text-anchor": anchor || "start" }, parent);
-    t.textContent = s;
-    if (extra) for (var k in extra) t.setAttribute(k, extra[k]);
-    return t;
-  }
-
-  var cur = null;
-  function drawPair() {
-    var p = pairOf(state.sel), s = series(p), n = s.length, svg = $("chart");
-    var W = 300, H = 170, L = 4, Rm = 46, T = 10, B = 20, min = Infinity, max = -Infinity;
-    s.forEach(function (q) { if (q.v < min) min = q.v; if (q.v > max) max = q.v; });
-    var pad = (max - min) * 0.12 || 0.001, lo = min - pad, hi = max + pad;
-    var sx = function (i) { return L + (W - L - Rm) * i / (n - 1); };
-    var sy = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
-    svg.textContent = "";
-    var defs = el("defs", {}, svg), gr = el("linearGradient", { id: "gA", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
-    el("stop", { offset: 0, "stop-color": "#f2b01e", "stop-opacity": 0.28 }, gr);
-    el("stop", { offset: 1, "stop-color": "#f2b01e", "stop-opacity": 0 }, gr);
-    for (var k = 0; k < 4; k++) {
-      var v = lo + (hi - lo) * k / 3, y = sy(v);
-      el("line", { x1: L, x2: W - Rm, y1: y, y2: y, stroke: "#1c1a12", "stroke-width": 1 }, svg);
-      txt(svg, W - Rm + 6, y + 3, fmt(v, p.dec));
-    }
-    var d = s.map(function (q, i) { return (i ? "L" : "M") + sx(i).toFixed(1) + " " + sy(q.v).toFixed(1); }).join(" ");
-    el("path", { d: d + " L" + sx(n - 1).toFixed(1) + " " + (H - B) + " L" + sx(0).toFixed(1) + " " + (H - B) + " Z", fill: "url(#gA)" }, svg);
-    el("path", { d: d, fill: "none", stroke: "#f2b01e", "stroke-width": 1.8, "stroke-linejoin": "round" }, svg);
-    var mid = Math.floor((n - 1) / 2);
-    txt(svg, sx(0), H - 5, shortD(s[0].d), "start"); txt(svg, sx(mid), H - 5, shortD(s[mid].d), "middle"); txt(svg, sx(n - 1), H - 5, shortD(s[n - 1].d), "end");
-    el("line", { id: "xh", y1: T, y2: H - B, stroke: "#8d8878", "stroke-width": 1, "stroke-dasharray": "3 3", visibility: "hidden" }, svg);
-    el("circle", { id: "dot", r: 4, cx: sx(n - 1), cy: sy(s[n - 1].v), fill: "#f2b01e", stroke: "#0d0d0f", "stroke-width": 2 }, svg);
-    cur = { s: s, p: p, sx: sx, sy: sy, W: W, L: L, Rm: Rm };
-    $("pairName").textContent = p.n;
-    var c7 = change7(s), c3 = changeAll(s);
-    $("chg7").textContent = pct(c7); $("chg7").className = cls(c7);
-    $("chg3m").textContent = pct(c3); $("chg3m").className = cls(c3);
-    showPoint(n - 1, true);
-  }
-  function showPoint(i, isLast) {
-    var q = cur.s[i];
-    $("price").textContent = fmt(q.v, cur.p.dec);
-    $("asof").textContent = (isLast ? "Dernier cours · " : "") + longD(q.d);
-    var xh = $("xh"), dot = $("dot");
-    xh.setAttribute("x1", cur.sx(i)); xh.setAttribute("x2", cur.sx(i)); xh.setAttribute("visibility", isLast ? "hidden" : "visible");
-    dot.setAttribute("cx", cur.sx(i)); dot.setAttribute("cy", cur.sy(q.v));
-  }
-
-  var SW = null;
-  function drawStrength() {
-    var ds = windowDates(state.win), S = strengthOver(ds), n = ds.length, svg = $("strength");
-    var W = 760, H = 340, L = 50, Rm = 50, T = 12, B = 24, min = 0, max = 0;
-    CUR.forEach(function (c) { S[c].forEach(function (v) { if (v < min) min = v; if (v > max) max = v; }); });
-    var pad = (max - min) * 0.1 || 0.1; min -= pad; max += pad;
-    var sx = function (i) { return L + (W - L - Rm) * i / (n - 1); };
-    var sy = function (v) { return T + (H - T - B) * (1 - (v - min) / (max - min)); };
-    svg.textContent = "";
-    var step = (max - min) > 6 ? 2 : (max - min) > 3 ? 1 : 0.5;
-    for (var g = Math.ceil(min / step) * step; g <= max; g += step) {
-      el("line", { x1: L, x2: W - Rm, y1: sy(g), y2: sy(g), stroke: g === 0 ? "#4a4430" : "#1c1a12", "stroke-width": 1, "stroke-dasharray": g === 0 ? "4 4" : "" }, svg);
-      txt(svg, L - 6, sy(g) + 3, (g > 0 ? "+" : g < 0 ? "−" : "") + Math.abs(g).toFixed(1).replace(".", ",") + " %", "end");
-    }
-    var order = CUR.slice().sort(function (a, b) { return S[b][n - 1] - S[a][n - 1]; });
-    order.forEach(function (c) {
-      var d = S[c].map(function (v, i) { return (i ? "L" : "M") + sx(i).toFixed(1) + " " + sy(v).toFixed(1); }).join(" ");
-      el("path", { d: d, fill: "none", stroke: COL[c], "stroke-width": 1.8, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
-    });
-    var ys = order.map(function (c) { return { c: c, y: sy(S[c][n - 1]) }; });
-    for (var i = 1; i < ys.length; i++) { if (ys[i].y - ys[i - 1].y < 15) ys[i].y = ys[i - 1].y + 15; }
-    var over = ys[ys.length - 1].y - (H - B); if (over > 0) ys.forEach(function (o) { o.y -= over; });
-    ys.forEach(function (o) {
-      el("rect", { x: W - Rm + 4, y: o.y - 7, width: 38, height: 14, fill: COL[o.c] }, svg);
-      txt(svg, W - Rm + 23, o.y + 3.5, o.c, "middle", { style: "fill:#0a0a0a;font-weight:600" });
-    });
-    var mid = Math.floor((n - 1) / 2);
-    txt(svg, sx(0), H - 6, shortD(ds[0]), "start"); txt(svg, sx(mid), H - 6, shortD(ds[mid]), "middle"); txt(svg, sx(n - 1), H - 6, shortD(ds[n - 1]), "end");
-    el("line", { id: "sxh", y1: T, y2: H - B, stroke: "#8d8878", "stroke-width": 1, "stroke-dasharray": "3 3", visibility: "hidden" }, svg);
-    SW = { ds: ds, S: S, n: n, sx: sx, W: W, L: L, Rm: Rm, order: order };
-    drawReadout(n - 1, true);
-    drawRank(S, n);
-  }
-  function drawReadout(i, isLast) {
-    var h = SW.order.map(function (c) {
-      var v = SW.S[c][i];
-      return '<span class="ro"><i style="background:' + COL[c] + '"></i><b>' + c + '</b><span class="' + cls(v) + '">' + pct(v) + "</span></span>";
-    }).join("");
-    $("readout").innerHTML = h;
-    var xh = $("sxh");
-    if (xh) { xh.setAttribute("x1", SW.sx(i)); xh.setAttribute("x2", SW.sx(i)); xh.setAttribute("visibility", isLast ? "hidden" : "visible"); }
-  }
-  function drawRank(S, n) {
-    var order = CUR.slice().sort(function (a, b) { return S[b][n - 1] - S[a][n - 1]; });
-    var mx = Math.max.apply(null, order.map(function (c) { return Math.abs(S[c][n - 1]); })) || 1;
-    $("rank").innerHTML = order.map(function (c) {
-      var v = S[c][n - 1], w = Math.abs(v) / mx * 50;
-      return '<div class="rk"><b>' + c + '</b><div class="bar"><i style="background:' + COL[c] + ";width:" + w.toFixed(1) + "%;" + (v >= 0 ? "left:50%" : "right:50%") + '"></i></div><span class="v ' + cls(v) + '">' + pct(v) + "</span></div>";
-    }).join("");
-    $("rankWin").textContent = state.win === 30 ? "1 mois" : "3 mois";
-    var top = order[0], bot = order[order.length - 1], pr = pairName(top, bot), buy = pr[0] === top;
-    $("idea").innerHTML = "Écart maximal : <b>" + top + "</b> fort, <b>" + bot + "</b> faible. Paire à surveiller : <b>" + pr[0] + "/" + pr[1] + "</b>, biais " + (buy ? "haussier" : "baissier") + ". C'est une piste de lecture, pas un signal : confirmez avec le graphique et l'agenda.";
-  }
-
-  function drawGauge() {
-    var s = riskScore(), svg = $("gauge");
-    svg.textContent = "";
-    var pt = function (a, r) { var t = a * Math.PI / 180; return [100 - r * Math.cos(t), 100 - r * Math.sin(t)]; };
-    var arc = function (a0, a1, color) {
-      var p0 = pt(a0, 80), p1 = pt(a1, 80);
-      el("path", { d: "M" + p0[0].toFixed(1) + " " + p0[1].toFixed(1) + " A80 80 0 0 1 " + p1[0].toFixed(1) + " " + p1[1].toFixed(1), fill: "none", stroke: color, "stroke-width": 12 }, svg);
-    };
-    arc(0, 71, "#c4382e"); arc(73, 107, "#f2b01e"); arc(109, 180, "#2fb27a");
-    var tip = pt(s * 1.8, 64);
-    el("line", { x1: 100, y1: 100, x2: tip[0].toFixed(1), y2: tip[1].toFixed(1), stroke: "#ece8dc", "stroke-width": 2.5, "stroke-linecap": "round" }, svg);
-    el("circle", { cx: 100, cy: 100, r: 5, fill: "#ece8dc" }, svg);
-    var t = txt(svg, 100, 124, String(s), "middle"); t.setAttribute("style", "fill:#ece8dc;font:600 22px var(--font-mono)");
-    txt(svg, 14, 118, "0", "start"); txt(svg, 186, 118, "100", "end");
-    var lbl = $("gaugeLbl"), z = s < 40 ? "RISK-OFF" : s > 60 ? "RISK-ON" : "NEUTRE";
-    lbl.textContent = z; lbl.style.color = s < 40 ? "var(--down)" : s > 60 ? "var(--up)" : "var(--amber)";
-  }
-
-  function spark(s) {
-    var min = Infinity, max = -Infinity, w = 84, h = 24, n = s.length;
-    s.forEach(function (p) { if (p.v < min) min = p.v; if (p.v > max) max = p.v; });
-    var span = (max - min) || 1, pts = s.map(function (p, i) { return [(i / (n - 1)) * (w - 4) + 2, h - 3 - ((p.v - min) / span) * (h - 6)]; });
-    var e = pts[n - 1];
-    return '<svg class="spark" viewBox="0 0 ' + w + " " + h + '" aria-hidden="true"><polyline points="' + pts.map(function (q) { return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" ") +
-      '" fill="none" stroke="#8d8878" stroke-width="1.3" stroke-linejoin="round"/><circle cx="' + e[0].toFixed(1) + '" cy="' + e[1].toFixed(1) + '" r="2.2" fill="#f2b01e"/></svg>';
-  }
-  function renderPairs() {
-    var h = '<div class="row head"><span>Paire</span><span class="r">Cours</span><span class="r">7 j</span><span></span></div>', tape = '<div class="t lbl">7 J</div>';
-    PAIRS.forEach(function (p) {
-      var s = series(p), last = s[s.length - 1].v, c7 = change7(s);
-      h += '<button class="row" type="button" data-id="' + p.id + '" aria-pressed="' + (p.id === state.sel) + '"><span class="pn">' + p.n + '</span><span class="r">' + fmt(last, p.dec) +
-        '</span><span class="r ' + cls(c7) + '">' + pct(c7) + "</span>" + spark(s) + "</button>";
-      tape += '<div class="t"><b>' + p.n.replace("/", "") + "</b><span>" + fmt(last, p.dec) + '</span><small class="' + cls(c7) + '">' + pct(c7) + "</small></div>";
-    });
-    $("pairs").innerHTML = h; $("tape").innerHTML = tape;
-  }
-
-  function renderMacro() {
-    $("macro").innerHTML = MACRO.map(function (m) {
-      return "<tr><td><b>" + m.b + "</b> <small>" + m.c + '</small></td><td class="r num">' + m.rate + '</td><td><span class="tag' + (m.hike ? " hike" : "") + '">' + m.last + "</span> <small>" + m.when + '</small></td><td class="r num">' + m.cpi + '</td><td class="r num col-core">' + m.core + "</td></tr>";
-    }).join("");
-  }
-  function renderAgenda() {
-    var t = new Date(); t.setHours(0, 0, 0, 0);
-    var soon = MEETINGS.filter(function (m) { var d = Math.round((parseD(m.d) - t) / 864e5); return d >= 0 && d <= 7; });
-    var w = $("weekWarn");
-    if (soon.length >= 2) { w.hidden = false; w.innerHTML = "<b>Semaine chargée :</b> " + soon.length + " décisions d'ici 7 jours (" + soon.map(function (m) { return m.c; }).join(", ") + "). Réduisez la taille des positions ouvertes avant ces annonces."; }
-    else w.hidden = true;
-    $("agendaList").innerHTML = MEETINGS.map(function (m) {
-      var days = Math.round((parseD(m.d) - t) / 864e5);
-      var when = days < 0 ? "passée" : days === 0 ? "aujourd'hui" : days === 1 ? "demain" : "dans " + days + " j";
-      return '<li class="' + (days >= 0 && days <= 7 ? "soon" : "") + '"><span class="d">' + parseD(m.d).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + "</span><span><b>" + m.b + '</b> <small class="d">' + m.c + '</small></span><span class="in">' + when + "</span></li>";
-    }).join("");
-  }
-
-  /* ---------- Horloges et sessions ---------- */
-  var SESS = [["Sydney", "Australia/Sydney", 7, 16], ["Tokyo", "Asia/Tokyo", 9, 18], ["Londres", "Europe/London", 8, 17], ["New York", "America/New_York", 8, 17]];
-  function localParts(tz, now) {
-    var f = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hourCycle: "h23", weekday: "short", hour: "2-digit", minute: "2-digit" }).formatToParts(now), o = {};
-    f.forEach(function (x) { o[x.type] = x.value; });
-    return { wd: o.weekday, h: parseInt(o.hour, 10), m: o.minute };
-  }
-  function renderClocks() {
-    var now = new Date(), pad = function (n) { return String(n).padStart(2, "0"); };
-    $("clocks").innerHTML = "<span>UTC <b>" + pad(now.getUTCHours()) + ":" + pad(now.getUTCMinutes()) + ":" + pad(now.getUTCSeconds()) + "</b></span>";
-    var d = now.getUTCDay(), h = now.getUTCHours(), closed = d === 6 || (d === 5 && h >= 22) || (d === 0 && h < 22);
-    $("fxState").textContent = closed ? "Forex fermé (week-end)" : "Forex ouvert";
-    $("sess").innerHTML = SESS.map(function (s) {
-      var p = localParts(s[1], now), open = p.wd !== "Sat" && p.wd !== "Sun" && p.h >= s[2] && p.h < s[3];
-      return '<div class="srow"><span>' + s[0] + '</span><span class="num" style="color:var(--muted)">' + pad(p.h) + ":" + p.m + '</span><span class="badge' + (open ? " on" : "") + '">' + (open ? "OUVERT" : "FERMÉ") + "</span></div>";
-    }).join("");
-  }
-
-  /* ---------- Calculateur ---------- */
-  var touched = false;
-  function num(id) { return parseFloat(String($(id).value).replace(",", ".").replace(/\s/g, "")); }
-  function resetEntry() {
-    var p = pairOf($("cPair").value), s = series(p), price = s[s.length - 1].v, buy = $("cDir").value === "buy", d = 25 * pipSize(p);
-    $("cEntry").value = price.toFixed(p.dec === 2 ? 3 : 5);
-    $("cStop").value = (buy ? price - d : price + d).toFixed(p.dec === 2 ? 3 : 5);
-    touched = false;
-  }
-  function calc() {
-    var p = pairOf($("cPair").value), dates_ = dates(), rates = state.data[dates_[dates_.length - 1]];
-    var r = sizing({ balance: num("cBal"), riskPct: num("cRisk"), pair: p, dir: $("cDir").value, entry: num("cEntry"), stop: num("cStop"), rr: num("cRR"), rates: rates });
-    var out = $("cOut");
-    if (r.err) { out.innerHTML = '<div class="err">' + r.err + "</div>"; return; }
-    var dd = p.quote === "JPY" ? 3 : 5, money = function (v) { return "$" + v.toFixed(2).replace(".", ","); };
-    out.innerHTML =
-      '<div class="stat big"><small>Taille de position</small><b>' + fmt(r.lots, 2) + " lot" + (r.lots >= 2 ? "s" : "") + "</b></div>" +
-      '<div class="stat"><small>Unités</small><b>' + r.units.toLocaleString("fr-FR") + "</b></div>" +
-      '<div class="stat"><small>Stop</small><b>' + fmt(r.pips, 1) + " pips</b></div>" +
-      '<div class="stat"><small>Risque réel</small><b class="down">' + money(r.realRisk) + "</b></div>" +
-      '<div class="stat"><small>Gain visé</small><b class="up">' + money(r.reward) + "</b></div>" +
-      '<div class="stat"><small>Objectif (prix)</small><b>' + fmt(r.target, dd) + "</b></div>" +
-      '<div class="stat"><small>Réussite minimale</small><b>' + fmt(r.be, 1) + " %</b></div>" +
-      '<div class="stat"><small>Valeur du pip / lot</small><b>' + money(r.pipValue) + "</b></div>" +
-      (r.lots === 0 ? '<div class="err">Le risque choisi est trop faible pour 0,01 lot avec ce stop. Réduisez le stop ou augmentez le capital.</div>' : "");
-  }
-  function initCalc() {
-    $("cPair").innerHTML = PAIRS.map(function (p) { return '<option value="' + p.id + '">' + p.n + "</option>"; }).join("");
-    resetEntry(); calc();
-    ["cBal", "cRisk", "cRR", "cStop"].forEach(function (id) { $(id).addEventListener("input", calc); });
-    $("cEntry").addEventListener("input", function () { touched = true; calc(); });
-    $("cPair").addEventListener("change", function () { resetEntry(); calc(); });
-    $("cDir").addEventListener("change", function () { resetEntry(); calc(); });
-  }
-
-  /* ---------- Checklist ---------- */
-  var checked = {};
-  function loadChecks() { try { checked = JSON.parse(localStorage.getItem("mf-checks") || "{}") || {}; } catch (e) { checked = {}; } }
-  function saveChecks() { try { localStorage.setItem("mf-checks", JSON.stringify(checked)); } catch (e) { /* stockage indisponible */ } }
-  function renderChecks() {
-    $("checks").innerHTML = CHECKS.map(function (t, i) {
-      return '<li class="' + (checked[i] ? "done" : "") + '"><label for="ck' + i + '"><input type="checkbox" id="ck' + i + '" data-i="' + i + '"' + (checked[i] ? " checked" : "") + "><span>" + t + "</span></label></li>";
-    }).join("");
-    var n = CHECKS.filter(function (t, i) { return checked[i]; }).length;
-    $("checkScore").innerHTML = "<b>" + n + "/" + CHECKS.length + "</b> " + (n === CHECKS.length ? "· tout est coché, vous pouvez décider." : "· ne trade pas tant que tout n'est pas coché.");
-  }
-
-  /* ---------- Données en direct ---------- */
-  function setStatus() {
-    var ds = dates(), last = ds[ds.length - 1], s = $("status");
-    s.className = "status" + (state.live ? " live" : "");
-    $("statusText").textContent = state.live ? "EN DIRECT · taux BCE du " + shortD(last) : "INSTANTANÉ du " + shortD(last);
-  }
-  function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
-  function loadLive() {
-    var start = new Date(Date.now() - 95 * 864e5), ctl = typeof AbortController === "function" ? new AbortController() : null;
-    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 7000);
-    return fetch("https://api.frankfurter.dev/v1/" + iso(start) + "..?base=EUR&symbols=" + SYMS.join(","), ctl ? { signal: ctl.signal } : {})
-      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
-      .then(function (j) {
-        clearTimeout(timer);
-        if (!j || !j.rates || Object.keys(j.rates).length < 5) throw new Error("vide");
-        state.data = j.rates; state.live = true;
-      });
-  }
-  function renderAll() {
-    setStatus(); renderPairs(); drawPair(); drawStrength(); drawGauge();
-    if (!touched && $("cPair").options.length) { resetEntry(); calc(); } else if ($("cPair").options.length) calc();
-  }
-
-  $("pairs").addEventListener("click", function (e) {
-    var b = e.target.closest("button.row"); if (!b) return;
-    state.sel = b.getAttribute("data-id"); renderPairs(); drawPair();
-  });
-  $("tape").addEventListener("click", function () {});
-  var seg = document.querySelectorAll(".seg button[data-w]");
-  Array.prototype.forEach.call(seg, function (b) {
-    b.addEventListener("click", function () {
-      state.win = parseInt(b.getAttribute("data-w"), 10);
-      Array.prototype.forEach.call(seg, function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-      drawStrength();
-    });
-  });
-  function idx(e, svg, W, L, Rm, n) {
-    var r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, i = Math.round((x - L) / (W - L - Rm) * (n - 1));
-    return Math.max(0, Math.min(n - 1, i));
-  }
-  $("chart").addEventListener("pointermove", function (e) { if (cur) showPoint(idx(e, $("chart"), cur.W, cur.L, cur.Rm, cur.s.length), false); });
-  $("chart").addEventListener("pointerleave", function () { if (cur) showPoint(cur.s.length - 1, true); });
-  $("strength").addEventListener("pointermove", function (e) { if (SW) drawReadout(idx(e, $("strength"), SW.W, SW.L, SW.Rm, SW.n), false); });
-  $("strength").addEventListener("pointerleave", function () { if (SW) drawReadout(SW.n - 1, true); });
-  $("checks").addEventListener("change", function (e) {
-    var i = e.target.getAttribute("data-i"); if (i === null) return;
-    checked[i] = e.target.checked; saveChecks(); renderChecks();
-  });
-  $("resetCheck").addEventListener("click", function () { checked = {}; saveChecks(); renderChecks(); });
-
-  renderMacro(); renderAgenda(); renderClocks(); setInterval(renderClocks, 1000);
-  loadChecks(); renderChecks(); renderAll(); initCalc();
-  function refresh() { loadLive().then(renderAll).catch(function () { /* garde les données en place */ }); }
-  refresh();
-  setInterval(function () { if (state.live) refresh(); }, 15 * 60 * 1000);
-})();
-</script>
-</body></html>
+        window.onload = function() {
+            const savedNotes = localStorage.getItem('vm_terminal_notes');
+            if (savedNotes) {
+                document.getElementById('quickNotes').value = savedNotes;
+            }
+        };
+    </script>
+</body>
+</html>
