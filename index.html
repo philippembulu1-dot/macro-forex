@@ -1,4 +1,9 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Top One Analysis VM — Trade Sider Terminal Pro</title>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Top One Analysis VM — Trade Sider Terminal</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 :root {
@@ -18,299 +23,244 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--font-body); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 12px/1.4 var(--font-body); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
 a { color: inherit; text-decoration: none; }
 .mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .up { color: var(--up); } .down { color: var(--down); }
-:focus-visible { outline: 1px solid var(--amber); }
 
+/* Layout Shell */
 .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
 
-.top-bar { display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
+/* En-tête Top Bar */
+.top-bar { display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
 .brand { font: 600 12px var(--font-mono); letter-spacing: 0.16em; display: flex; align-items: center; gap: 8px; color: var(--amber); }
-.mark { width: 10px; height: 10px; background: var(--amber); clip-path: polygon(0 0, 100% 0, 100% 30%, 62% 30%, 62% 100%, 38% 100%, 38% 30%, 0 30%); }
+.mark { width: 8px; height: 8px; background: var(--amber); }
 
-/* Ticker des sous-jacents en haut */
-.ticker-bar { display: flex; align-items: center; background: var(--panel2); border-bottom: 1px solid var(--line); overflow-x: auto; flex: none; scrollbar-width: none; height: 36px; padding: 0 10px; gap: 4px; }
+/* Ticker Bar des sous-jacents (XAUUSD, NAS100, EURUSD, GBPUSD, USDJPY) */
+.ticker-bar { display: flex; align-items: center; background: var(--panel2); border-bottom: 1px solid var(--line); overflow-x: auto; flex: none; scrollbar-width: none; height: 32px; padding: 0 8px; gap: 2px; }
 .ticker-bar::-webkit-scrollbar { display: none; }
 .tk-item { display: flex; align-items: center; gap: 6px; padding: 0 10px; font: 11px var(--font-mono); border-right: 1px solid var(--line2); white-space: nowrap; height: 100%; }
 .tk-item span { color: var(--muted); }
 
+/* Workspace & Sidebar */
 .workspace { display: flex; flex: 1; min-height: 0; }
-
-.sidebar { width: 220px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 8px 0; flex: none; overflow-y: auto; }
-.sb-grp { padding: 10px 14px 4px; font: 600 9px var(--font-mono); letter-spacing: 0.18em; color: var(--muted); }
-.sb-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; background: transparent; border: 0; color: var(--muted); font: 12px var(--font-mono); text-align: left; cursor: pointer; border-left: 2px solid transparent; transition: all 0.1s; }
+.sidebar { width: 210px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 6px 0; flex: none; overflow-y: auto; }
+.sb-grp { padding: 8px 12px 4px; font: 600 9px var(--font-mono); letter-spacing: 0.18em; color: var(--muted); }
+.sb-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px; background: transparent; border: 0; color: var(--muted); font: 11px var(--font-mono); text-align: left; cursor: pointer; border-left: 2px solid transparent; }
 .sb-btn:hover { color: var(--fg); background: var(--panel2); }
 .sb-btn.active { color: var(--amber); background: var(--amber-soft); border-left-color: var(--amber); font-weight: 600; }
 
-.main-content { flex: 1; background: var(--bg); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-.view-section { display: none; width: 100%; flex-direction: column; gap: 16px; animation: fadeIn 0.15s ease-out; }
+/* Main Content & Section Switcher (Strictement Unique) */
+.main-content { flex: 1; background: var(--bg); overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.view-section { display: none; width: 100%; flex-direction: column; gap: 12px; }
 .view-section.active { display: flex; }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(3px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* Panel & Table Elements */
 .panel { background: var(--panel); border: 1px solid var(--line); width: 100%; }
-.ph { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid var(--line2); background: var(--panel2); }
-.ph h2 { margin: 0; font: 600 11px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); }
+.ph { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line2); background: var(--panel2); }
+.ph h2 { margin: 0; font: 600 11px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); }
 .ph .meta { font: 10px var(--font-mono); color: var(--muted); }
-.pb { padding: 14px; }
+.pb { padding: 12px; }
+
+/* Grid Dashboard Trade Sider */
+.dash-grid { display: grid; grid-template-columns: 280px 1fr 280px; gap: 12px; }
+@media (max-width: 1024px) { .dash-grid { grid-template-columns: 1fr; } }
+
+/* Gauge & Map Styling */
+.gauge-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: var(--panel2); border: 1px solid var(--line2); text-align: center; }
+.gauge-val { font: 600 32px var(--font-mono); color: var(--amber); }
+.map-box { background: #000; border: 1px solid var(--line2); height: 180px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-family: var(--font-mono); }
 
 .tbl { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 8px 14px; border-top: 1px solid var(--line2); white-space: nowrap; font-size: 12px; }
-th { border-top: 0; font: 500 10px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--panel2); }
+th, td { text-align: left; padding: 6px 10px; border-top: 1px solid var(--line2); white-space: nowrap; font-size: 11px; }
+th { border-top: 0; font: 500 10px var(--font-mono); text-transform: uppercase; color: var(--muted); background: var(--panel2); }
 td.r, th.r { text-align: right; }
 
-.badge { font: 600 9px var(--font-mono); padding: 2px 6px; border: 1px solid var(--line); letter-spacing: 0.08em; text-transform: uppercase; }
+.badge { font: 600 9px var(--font-mono); padding: 2px 5px; border: 1px solid var(--line); text-transform: uppercase; }
 .badge.on { border-color: var(--up); color: var(--up); background: rgba(61,220,151,0.08); }
 .badge.off { border-color: var(--down); color: var(--down); background: rgba(255,92,79,0.08); }
 
-svg.chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
-svg.chart text { fill: var(--muted); font: 9px var(--font-mono); }
-.sel-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
-.pair-title { font: 600 13px var(--font-mono); color: var(--amber); letter-spacing: 0.08em; }
-.pair-price { font: 500 28px/1 var(--font-mono); }
-.chips { display: flex; gap: 6px; }
-.chip { border: 1px solid var(--line); padding: 4px 8px; display: flex; flex-direction: column; }
-.chip small { color: var(--muted); font: 9px var(--font-mono); }
-.chip b { font: 500 12px var(--font-mono); }
-
-.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
-.form-group { display: flex; flex-direction: column; gap: 4px; font: 10px var(--font-mono); text-transform: uppercase; color: var(--muted); }
-input, select, textarea { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); padding: 7px 10px; font: 12px var(--font-mono); }
-input:focus, select:focus, textarea:focus { border-color: var(--amber); outline: none; }
-textarea { height: 120px; resize: vertical; }
-.calc-out { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.stat-box { border: 1px solid var(--line2); padding: 8px; background: var(--panel2); display: flex; flex-direction: column; }
-.stat-box small { font: 9px var(--font-mono); color: var(--muted); text-transform: uppercase; }
-.stat-box b { font: 500 15px var(--font-mono); }
-.stat-box.big { grid-column: 1 / -1; border-color: var(--amber); background: var(--amber-soft); }
-.stat-box.big b { font-size: 22px; color: var(--amber); }
-
-@media (max-width: 768px) {
-  .workspace { flex-direction: column; }
-  .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 0; }
-  .sb-grp { display: none; }
-  .sb-btn { white-space: nowrap; border-left: 0; border-bottom: 2px solid transparent; padding: 10px 12px; }
-  .sb-btn.active { border-bottom-color: var(--amber); border-left-color: transparent; }
-  .calc-grid { grid-template-columns: 1fr; }
-}
+/* Form Controls */
+.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; font: 10px var(--font-mono); color: var(--muted); }
+input, select, textarea { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); padding: 6px 8px; font: 11px var(--font-mono); }
+textarea { height: 100px; resize: vertical; }
+.calc-out { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-box { border: 1px solid var(--line2); padding: 8px; background: var(--panel2); }
+.stat-box small { font: 9px var(--font-mono); color: var(--muted); }
+.stat-box b { font: 600 14px var(--font-mono); display: block; }
 </style>
-</head><body>
+</head>
+<body>
 
 <div class="app-shell">
+  <!-- Top Bar -->
   <header class="top-bar">
     <div class="brand"><span class="mark"></span>TOP ONE VM — TRADE SIDER TERMINAL</div>
-    <div class="live-clock" id="clocks"></div>
+    <div class="live-clock mono" id="clocks">KINSHASA (UTC+1) --:--:--</div>
   </header>
 
-  <!-- Bandeau supérieur des sous-jacents -->
+  <!-- Ticker des sous-jacents (4 Majeures + Gold/Nas) -->
   <div class="ticker-bar" id="tape">
-    <div class="tk-item" style="color:var(--amber); font-weight:600;"><span class="mark" style="width:6px;height:6px;"></span>LIVE</div>
-    <div class="tk-item"><span>XAUUSD</span> <b>2,730.50</b> <b class="up">+1.85%</b></div>
+    <div class="tk-item" style="color:var(--amber); font-weight:600;">LIVE</div>
+    <div class="tk-item"><span>XAU/USD</span> <b>2,730.50</b> <b class="up">+1.85%</b></div>
     <div class="tk-item"><span>NAS100</span> <b>20,450.00</b> <b class="up">+0.62%</b></div>
-    <div class="tk-item"><span>EURUSD</span> <b>1.1206</b> <b class="down">-0.12%</b></div>
-    <div class="tk-item"><span>GBPUSD</span> <b>1.3390</b> <b class="down">-0.11%</b></div>
-    <div class="tk-item"><span>USDJPY</span> <b>157.16</b> <b class="down">-0.32%</b></div>
-    <div class="tk-item" style="margin-left:auto;"><span>New York</span> <b class="down">Closed</b></div>
-    <div class="tk-item"><span>London</span> <b class="down">Closed</b></div>
-    <div class="tk-item"><span>Tokyo</span> <b class="down">Closed</b></div>
+    <div class="tk-item"><span>EUR/USD</span> <b>1.1206</b> <b class="down">-0.12%</b></div>
+    <div class="tk-item"><span>GBP/USD</span> <b>1.3390</b> <b class="down">-0.11%</b></div>
+    <div class="tk-item"><span>USD/JPY</span> <b>157.16</b> <b class="down">-0.32%</b></div>
+    <div class="tk-item" style="margin-left:auto;"><span>Session New York</span> <b class="down">Fermée</b></div>
   </div>
 
   <div class="workspace">
-    <!-- Menu latéral (Onglets uniques) -->
+    <!-- Menu Latéral -->
     <nav class="sidebar">
-      <div class="sb-grp">STRATÉGIE FONDAMENTALE</div>
-      <button class="sb-btn active" onclick="switchView('view-scorecard', this)">🎯 Scorecard S &amp; Biais</button>
-      <button class="sb-btn" onclick="switchView('view-market', this)">📊 Actifs &amp; Performance</button>
-      <button class="sb-btn" onclick="switchView('view-chart', this)">📈 Graphique &amp; Analyse</button>
-      
-      <div class="sb-grp">MACRO &amp; BANQUES</div>
+      <div class="sb-grp">NAVIGATION SYSTEME</div>
+      <button class="sb-btn active" onclick="switchView('view-overview', this)">🖥️ Dashboard Aperçu</button>
+      <button class="sb-btn" onclick="switchView('view-scorecard', this)">🎯 Scorecard S &amp; Biais</button>
       <button class="sb-btn" onclick="switchView('view-rates', this)">⚡ Taux &amp; FedWatch</button>
-      <button class="sb-btn" onclick="switchView('view-central', this)">🌐 4 Majeures Banques &amp; Or</button>
-      <button class="sb-btn" onclick="switchView('view-sentiment', this)">🎯 COT &amp; Sentiment</button>
-
-      <div class="sb-grp">GESTION &amp; PLANS</div>
+      <button class="sb-btn" onclick="switchView('view-central', this)">🌐 4 Majeures Banques</button>
+      <button class="sb-btn" onclick="switchView('view-sentiment', this)">🎯 COT &amp; Retail</button>
+      <div class="sb-grp">OUTILS &amp; PLAN</div>
       <button class="sb-btn" onclick="switchView('view-risk', this)">🧮 VM Risk Engine (1%)</button>
-      <button class="sb-btn" onclick="switchView('view-notes', this)">📝 Notes &amp; Plans Semaine</button>
+      <button class="sb-btn" onclick="switchView('view-notes', this)">📝 Plan de Semaine</button>
     </nav>
 
-    <!-- Zone principale -->
+    <!-- Zone d'Affichage Exclusive -->
     <main class="main-content">
 
-      <!-- 1. SCORECARD -->
-      <section id="view-scorecard" class="view-section active">
+      <!-- 1. DASHBOARD APERÇU (STYLE TRADE SIDER AVEC JAUGE ET GLOBE) -->
+      <section id="view-overview" class="view-section active">
+        <div class="dash-grid">
+          <!-- Squawk News Live -->
+          <div class="panel">
+            <div class="ph"><h2>Squawk News Live</h2><span class="meta">Fil info</span></div>
+            <div class="pb" style="display:flex; flex-direction:column; gap:8px;">
+              <div><span class="mono" style="color:var(--amber);">15:45 UTC</span><br><b>Fed :</b> Déclarations prudentes sur l'évolution du CPI US.</div>
+              <div style="border-top:1px solid var(--line2); padding-top:6px;"><span class="mono" style="color:var(--amber);">14:30 UTC</span><br><b>XAUUSD :</b> Flux acheteurs enregistrés sur les ETF or physiques.</div>
+            </div>
+          </div>
+
+          <!-- Risk Sentiment Gauge -->
+          <div class="panel">
+            <div class="ph"><h2>Risk Sentiment Global</h2><span class="meta">Régime de marché</span></div>
+            <div class="pb">
+              <div class="gauge-box">
+                <small class="mono">INDICE RISK-ON / RISK-OFF</small>
+                <div class="gauge-val">64 / 100</div>
+                <span class="badge on">RÉGIME RISK-ON MODÉRÉ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Globe Macro / Registre -->
+          <div class="panel">
+            <div class="ph"><h2>Globe Macro / Zone</h2><span class="meta">G4 Central</span></div>
+            <div class="pb">
+              <div class="map-box">[ CARTE MACRO / G4 ]</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. SCORECARD S & BIAIS (POUR L'OR) -->
+      <section id="view-scorecard" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Scorecard Global S — Stratégie XAUUSD</h2><span class="meta">Règle des 6 Piliers (Kinshasa UTC+1)[cite: 2]</span></div>
+          <div class="ph"><h2>Scorecard Global S — Stratégie XAUUSD</h2><span class="meta">Calcul 6 Piliers</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Pilier Stratégique</th><th>Poids</th><th>Note Actuelle</th><th>Contribution</th><th class="r">Biais Pilier</th></tr></thead>
+              <thead><tr><th>Pilier</th><th>Poids</th><th>Note</th><th class="r">Biais</th></tr></thead>
               <tbody>
-                <tr><td><b>1. Taux Réels US (TIPS 10Y)</b>[cite: 6]</td><td>25%[cite: 8]</td><td><span class="badge on">+1.0</span></td><td>+0.25</td><td class="r"><span class="up">Bullish Or</span></td></tr>
-                <tr><td><b>2. Attentes Fed (Repricing)</b>[cite: 6]</td><td>20%[cite: 8]</td><td><span class="badge on">+2.0</span></td><td>+0.40</td><td class="r"><span class="up">Bullish Or</span></td></tr>
-                <tr><td><b>3. Force du Dollar (DXY)</b>[cite: 6]</td><td>15%[cite: 8]</td><td><span class="badge on">+1.0</span></td><td>+0.15</td><td class="r"><span class="up">Bullish Or</span></td></tr>
-                <tr><td><b>4. Flux (Banques Centrales &amp; ETF)</b>[cite: 6]</td><td>15%[cite: 8]</td><td><span class="badge on">+2.0</span></td><td>+0.30</td><td class="r"><span class="up">Soutien Fort</span></td></tr>
-                <tr><td><b>5. Risque &amp; Refuge (VIX / Géo)</b>[cite: 6]</td><td>15%[cite: 8]</td><td><span class="badge off">0.0</span></td><td>0.00</td><td class="r">Neutre</td></tr>
-                <tr><td><b>6. Positionnement COT / Smart Money</b>[cite: 6]</td><td>10%[cite: 8]</td><td><span class="badge off">-1.0</span></td><td>-0.10</td><td class="r"><span class="down">Attention / Alerte</span></td></tr>
+                <tr><td><b>1. Taux Réels US (TIPS 10Y)</b></td><td>25%</td><td><span class="badge on">+1.0</span></td><td class="r up">Bullish Or</td></tr>
+                <tr><td><b>2. Attentes Fed (Repricing)</b></td><td>20%</td><td><span class="badge on">+2.0</span></td><td class="r up">Bullish Or</td></tr>
+                <tr><td><b>3. Force du Dollar (DXY)</b></td><td>15%</td><td><span class="badge on">+1.0</span></td><td class="r up">Bullish Or</td></tr>
+                <tr><td><b>4. Flux (Banques Centrales &amp; ETF)</b></td><td>15%</td><td><span class="badge on">+2.0</span></td><td class="r up">Soutien Fort</td></tr>
+                <tr><td><b>5. Risque &amp; Refuge (VIX / Géo)</b></td><td>15%</td><td><span class="badge off">0.0</span></td><td class="r">Neutre</td></tr>
+                <tr><td><b>6. Positionnement COT</b></td><td>10%</td><td><span class="badge off">-1.0</span></td><td class="r down">Alerte</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="panel">
-          <div class="ph"><h2>Synthèse des Biais &amp; Matrice d'Alignement</h2><span class="meta">Décision Opérationnelle</span></div>
-          <div class="tbl">
-            <table>
-              <tr><td><b>Score S Total</b></td><td class="r num" style="font-size:15px; color:var(--amber);">+1.00 (S ≥ +0,5)[cite: 2]</td></tr>
-              <tr><td><b>Biais Mensuel Validé</b></td><td class="r"><span class="badge on">HAUSSIER (BULLISH)</span></td></tr>
-              <tr><td><b>Biais du Jour (Tactique)</b></td><td class="r"><span class="badge on">ACHATS SUR REPLIS (PULLBACK)</span></td></tr>
-              <tr><td><b>Matrice d'Alignement &amp; Consigne</b></td><td class="r">Alignés · Taille normale autorisée (1% max)</td></tr>
-            </table>
-          </div>
-        </div>
       </section>
 
-      <!-- 2. ACTIFS & PERFORMANCE -->
-      <section id="view-market" class="view-section">
-        <div class="panel">
-          <div class="ph"><h2>Performance des Actifs Fétiches &amp; Majeurs</h2><span class="meta">XAUUSD, EURUSD, GBPUSD, USDJPY, NAS100</span></div>
-          <div id="pairs"></div>
-        </div>
-      </section>
-
-      <!-- 3. GRAPHIQUE -->
-      <section id="view-chart" class="view-section">
-        <div class="panel">
-          <div class="ph"><h2>Graphique Dynamique &amp; Price Action</h2><span class="meta">3 Mois</span></div>
-          <div class="pb">
-            <div class="sel-top">
-              <div>
-                <div class="pair-title" id="pairName">EUR/USD</div>
-                <div class="pair-price" id="price">–</div>
-                <div class="live-clock" id="asof"></div>
-              </div>
-              <div class="chips">
-                <div class="chip"><small>7 J</small><b id="chg7">–</b></div>
-                <div class="chip"><small>3 M</small><b id="chg3m">–</b></div>
-              </div>
-            </div>
-            <svg id="chart" class="chart" viewBox="0 0 300 160"></svg>
-          </div>
-        </div>
-      </section>
-
-      <!-- 4. TAUX & FEDWATCH -->
+      <!-- 3. TAUX & FEDWATCH -->
       <section id="view-rates" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Probabilités de Taux &amp; Futures (Temps Réel)[cite: 3]</h2><span class="meta">CME FedWatch[cite: 3]</span></div>
+          <div class="ph"><h2>Probabilités de Taux — CME FedWatch</h2><span class="meta">Temps Réel</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Échéance / Réunion</th><th>Actif / Future</th><th>Scénario Pricé</th><th class="r">Probabilité Actuelle</th></tr></thead>
+              <thead><tr><th>Réunion</th><th>Taux Actuel</th><th>Scénario Pricé</th><th class="r">Probabilité</th></tr></thead>
               <tbody>
-                <tr><td><b>Fed — Prochaine Réunion</b>[cite: 3, 4]</td><td>FedWatch 30D</td><td>Maintien (4.50%)[cite: 2, 4]</td><td class="r"><span class="badge on" id="fedRateProb">82.5%</span></td></tr>
-                <tr><td><b>Fed — Fin d'Année</b></td><td>SOFR Futures</td><td>1 Baisse de 25 bps</td><td class="r"><span class="badge on">64.0%</span></td></tr>
-                <tr><td><b>BCE — Prochaine Réunion</b>[cite: 4]</td><td>Euribor 3M</td><td>Baisse de 25 bps (3.00%)</td><td class="r"><span class="badge on">88.0%</span></td></tr>
+                <tr><td><b>Fed — Prochaine Réunion</b></td><td>4.50%</td><td>Maintien du taux</td><td class="r"><span class="badge on">82.5%</span></td></tr>
+                <tr><td><b>Fed — Fin d'Année</b></td><td>4.50%</td><td>1 Baisse (-25 bps)</td><td class="r"><span class="badge on">64.0%</span></td></tr>
+                <tr><td><b>BCE — Prochaine Réunion</b></td><td>3.25%</td><td>Baisse (-25 bps)</td><td class="r"><span class="badge on">88.0%</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- 5. 4 MAJEURES BANQUES & OR -->
+      <!-- 4. LES 4 MAJEURES BANQUES CENTRALES -->
       <section id="view-central" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Suivi des 4 Majeures Banques Centrales</h2><span class="meta">FED, BCE, BoJ, BoE</span></div>
+          <div class="ph"><h2>Suivi des 4 Majeures Banques Centrales</h2><span class="meta">FED, BCE, BoE, BoJ</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Banque Centrale</th><th>Taux Actuel</th><th>Prochaine Réunion</th><th class="r">Ton / Biais</th></tr></thead>
+              <thead><tr><th>Banque Central</th><th>Zone</th><th>Taux Director</th><th class="r">Biais Strategique</th></tr></thead>
               <tbody>
-                <tr><td><b>FED (États-Unis)</b>[cite: 4]</td><td>4.50%[cite: 2, 4]</td><td>28 Oct 2026</td><td class="r"><span class="badge on">Neutre / Patient</span></td></tr>
-                <tr><td><b>BCE (Zone Euro)</b>[cite: 4]</td><td>3.25%</td><td>29 Oct 2026</td><td class="r"><span class="badge on">Dovish (Assouplissement)</span></td></tr>
-                <tr><td><b>BoE (Royaume-Uni)</b>[cite: 4]</td><td>4.75%[cite: 2]</td><td>05 Nov 2026</td><td class="r"><span class="badge off">Prudent / Hawk</span></td></tr>
-                <tr><td><b>BoJ (Japon)</b>[cite: 4]</td><td>0.25%</td><td>30 Oct 2026</td><td class="r"><span class="badge on">Normalisation lente</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="ph"><h2>Achats d'Or des Banques Centrales (Séries Officielles)[cite: 5]</h2><span class="meta">Série A &amp; Série B (WGC)[cite: 5]</span></div>
-          <div class="tbl">
-            <table>
-              <thead><tr><th>Série / Source</th><th>Volume Récent</th><th>Seuil d'Alerte Stratégie</th><th class="r">Impact Or</th></tr></thead>
-              <tbody>
-                <tr><td><b>Série A (FMI / Déclarations Officielles)</b>[cite: 5, 7]</td><td>+34.2 Tonnes / mois</td><td>> 30 t / mois (Soutien fort)[cite: 5]</td><td class="r"><span class="badge on">HAUSSIER</span></td></tr>
-                <tr><td><b>Série B (World Gold Council - WGC)</b>[cite: 5]</td><td>+78.5 Tonnes / mois</td><td>> 72 t / mois (Seuil critique)[cite: 5]</td><td class="r"><span class="badge on">SOUTIEN FORT</span></td></tr>
+                <tr><td><b>FED</b></td><td>États-Unis (USD)</td><td>4.50%</td><td class="r"><span class="badge on">Neutre / Patient</span></td></tr>
+                <tr><td><b>BCE</b></td><td>Zone Euro (EUR)</td><td>3.25%</td><td class="r"><span class="badge on">Assouplissement</span></td></tr>
+                <tr><td><b>BoE</b></td><td>Royaume-Uni (GBP)</td><td>4.75%</td><td class="r"><span class="badge off">Prudent / Restrictif</span></td></tr>
+                <tr><td><b>BoJ</b></td><td>Japon (JPY)</td><td>0.25%</td><td class="r"><span class="badge on">Normalisation</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- 6. COT & SENTIMENT -->
+      <!-- 5. COT & RETAIL SENTIMENT -->
       <section id="view-sentiment" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Positionnement Institutionnel (COT CFTC) &amp; Retail[cite: 4, 5]</h2><span class="meta">Smart Money vs Crowd</span></div>
+          <div class="ph"><h2>Positionnement COT (CFTC) &amp; Retail</h2><span class="meta">Smart Money vs Crowd</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Actif</th><th class="r">Particuliers (Long / Short)[cite: 6]</th><th>Positionnement Fonds (COT CFTC)[cite: 4, 5]</th></tr></thead>
+              <thead><tr><th>Actif</th><th class="r">Particuliers (Long / Short)</th><th>Positionnement Smart Money</th></tr></thead>
               <tbody>
                 <tr><td><b>XAU/USD</b></td><td class="r num">32% / 68%</td><td><span class="badge on">Net Long Élevé (85e Percentile)</span></td></tr>
-                <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">Net Short Fonds Spéculatifs</span></td></tr>
+                <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">Net Short Vendeurs</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- 7. VM RISK ENGINE -->
+      <!-- 6. CALCULATEUR VM RISK ENGINE -->
       <section id="view-risk" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>VM Risk Engine (Calcul de Taille de Lot 1%)</h2><span class="meta">Formule: $(Capital \times r) / (k \times ATR)$[cite: 6]</span></div>
+          <div class="ph"><h2>VM Risk Engine — Gestion de Risque 1%</h2><span class="meta">Calculateur</span></div>
           <div class="calc-grid">
-            <div class="form-group">
-              <label>Capital du Compte (USD)</label>
-              <input id="cBal" inputmode="decimal" value="10000">
-            </div>
-            <div class="form-group">
-              <label>Risque par Trade (%)</label>
-              <input id="cRisk" inputmode="decimal" value="1">
-            </div>
-            <div class="form-group">
-              <label>Paire / Actif</label>
-              <select id="cPair"></select>
-            </div>
-            <div class="form-group">
-              <label>Sens du Trade</label>
-              <select id="cDir"><option value="buy">Achat (Long)</option><option value="sell">Vente (Short)</option></select>
-            </div>
-            <div class="form-group">
-              <label>Prix d'Entrée</label>
-              <input id="cEntry" inputmode="decimal">
-            </div>
-            <div class="form-group">
-              <label>Stop Loss (Prix)</label>
-              <input id="cStop" inputmode="decimal">
-            </div>
-            <div class="form-group" style="grid-column: 1 / -1;">
-              <label>Ratio Risque / Gain (RR)</label>
-              <input id="cRR" inputmode="decimal" value="3">
-            </div>
+            <div class="form-group"><label>Capital (USD)</label><input id="cBal" value="10000"></div>
+            <div class="form-group"><label>Risque (%)</label><input id="cRisk" value="1"></div>
+            <div class="form-group"><label>Paire</label><select id="cPair"><option>XAUUSD</option><option>EURUSD</option><option>GBPUSD</option><option>USDJPY</option></select></div>
+            <div class="form-group"><label>Sens</label><select id="cDir"><option value="buy">Achat</option><option value="sell">Vente</option></select></div>
+            <div class="form-group"><label>Prix d'Entrée</label><input id="cEntry" value="2730.50"></div>
+            <div class="form-group"><label>Stop Loss</label><input id="cStop" value="2720.00"></div>
           </div>
-          <div style="padding: 0 14px 14px 14px;">
-            <div class="calc-out" id="cOut"></div>
+          <div class="pb">
+            <div class="calc-out">
+              <div class="stat-box"><small>Taille de Lot</small><b class="mono" id="rLot">0.10 Lot</b></div>
+              <div class="stat-box"><small>Risque ($)</small><b class="mono down" id="rRisk">$100.00</b></div>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- 8. NOTES DE SEMAINE -->
+      <!-- 7. NOTES & PLANS DE SEMAINE -->
       <section id="view-notes" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Plans de Semaine &amp; Notes (Sauvegarde Auto)[cite: 6]</h2><span class="meta">LocalStorage[cite: 6]</span></div>
+          <div class="ph"><h2>Plan de Trading &amp; Notes</h2><span class="meta">Sauvegarde Auto</span></div>
           <div class="pb">
-            <textarea id="quickNotes" placeholder="Note tes biais macro, tes plans sur le XAUUSD et tes zones d'intervention..." oninput="saveNotes()"></textarea>
+            <textarea id="quickNotes" placeholder="Rédige ton plan hebdomadaire sur le XAUUSD et tes niveaux clés..." oninput="saveNotes()"></textarea>
           </div>
         </div>
       </section>
@@ -320,193 +270,33 @@ textarea { height: 120px; resize: vertical; }
 </div>
 
 <script>
+// Switcher d'Onglets Uniques
 function switchView(viewId, btnElement) {
-  document.querySelectorAll('.view-section').forEach(function(p) { p.classList.remove('active'); });
-  document.querySelectorAll('.sb-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.sb-btn').forEach(function(el) { el.classList.remove('active'); });
   var target = document.getElementById(viewId);
   if (target) target.classList.add('active');
   if (btnElement) btnElement.classList.add('active');
 }
 
-(function () {
-  "use strict";
-  // Uniquement les paires fétiches demandées
-  var CUR = ["EUR", "USD", "GBP", "JPY"];
-  var SYMS = CUR.slice(1);
-  function R(r, c) { return c === "EUR" ? 1 : r[c]; }
-  function mk(base, quote) {
-    return { id: base + quote, n: base + "/" + quote, base: base, quote: quote, dec: quote === "JPY" ? 2 : 4,
-      f: function (r) { return R(r, quote) / R(r, base); } };
-  }
-  var PAIRS = [mk("EUR", "USD"), mk("GBP", "USD"), mk("USD", "JPY")];
+// Horloge Kinshasa
+function updateClock() {
+  var d = new Date();
+  var h = String(d.getUTCHours() + 1).padStart(2, '0');
+  var m = String(d.getUTCMinutes()).padStart(2, '0');
+  var s = String(d.getUTCSeconds()).padStart(2, '0');
+  document.getElementById('clocks').textContent = 'KINSHASA (UTC+1) ' + h + ':' + m + ':' + s;
+}
+setInterval(updateClock, 1000);
+updateClock();
 
-  var SNAP_ROWS = [
-    ["2026-07-24",1.1377,0.85388,186.38],
-    ["2026-07-31",1.1485,0.85573,184.03],
-    ["2026-08-07",1.1535,0.85765,182.64],
-    ["2026-08-14",1.1567,0.8545,183.93],
-    ["2026-08-21",1.1699,0.8567,185.66],
-    ["2026-08-28",1.1643,0.8572,185.92],
-    ["2026-09-04",1.1622,0.85898,181.59],
-    ["2026-09-11",1.1592,0.85815,178.56],
-    ["2026-09-18",1.146,0.8588,180.94],
-    ["2026-09-25",1.1403,0.86045,179.7],
-    ["2026-10-02",1.1225,0.85033,176.99],
-    ["2026-10-09",1.1206,0.84763,177.34],
-    ["2026-10-16",1.1253,0.84385,177.82],
-    ["2026-10-23",1.1193,0.83728,175.51]
-  ];
-  var SNAP = {};
-  SNAP_ROWS.forEach(function (row) { var o = {}; SYMS.forEach(function (s, i) { o[s] = row[i + 1]; }); SNAP[row[0]] = o; });
-
-  var $ = function (id) { return document.getElementById(id); };
-  var state = { data: SNAP, sel: "EURUSD" };
-
-  function fmt(v, d) { return v.toFixed(d).replace(".", ","); }
-  function pct(v) { return (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2).replace(".", ",") + " %"; }
-  function parseD(s) { return new Date(s + "T00:00:00"); }
-  function longD(s) { return parseD(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long", year: "numeric" }); }
-  function cls(v) { return v >= 0 ? "up" : "down"; }
-  function pairOf(p) { return PAIRS.filter(function (x) { return x.id === p; })[0]; }
-  function dates() { return Object.keys(state.data).sort(); }
-  function series(p) { return dates().map(function (d) { return { d: d, v: p.f(state.data[d]) }; }); }
-  function change7(s) {
-    var last = s[s.length - 1], cut = parseD(last.d).getTime() - 7 * 864e5, base = s[0];
-    for (var i = s.length - 1; i >= 0; i--) { if (parseD(s[i].d).getTime() <= cut) { base = s[i]; break; } }
-    return (last.v / base.v - 1) * 100;
-  }
-  function changeAll(s) { return (s[s.length - 1].v / s[0].v - 1) * 100; }
-
-  function pipSize(p) { return p.quote === "JPY" ? 0.01 : 0.0001; }
-  function usdPer(c, r) { return c === "USD" ? 1 : r.USD / R(r, c); }
-  function pipValueUSD(p, r) { return pipSize(p) * 100000 * usdPer(p.quote, r); }
-  function sizing(o) {
-    var dist = o.dir === "buy" ? o.entry - o.stop : o.stop - o.entry;
-    if (!(o.balance > 0) || !(o.riskPct > 0) || !(o.entry > 0) || !(o.stop > 0) || !(o.rr > 0)) return { err: "Renseignez tous les champs." };
-    if (!(dist > 0)) return { err: "Vérifiez le sens du stop." };
-    var pips = Math.round(dist / pipSize(o.pair) * 100) / 100, pv = pipValueUSD(o.pair, o.rates), riskUSD = o.balance * o.riskPct / 100;
-    var lots = Math.floor(riskUSD / (pips * pv) * 100 + 1e-6) / 100;
-    var realRisk = lots * pips * pv;
-    return { lots: lots, realRisk: realRisk, target: o.dir === "buy" ? o.entry + dist * o.rr : o.entry - dist * o.rr, reward: realRisk * o.rr };
-  }
-
-  function el(tag, attrs, parent) {
-    var e = document.createElementNS("http://www.w3.org/2000/svg", tag);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
-  function txt(parent, x, y, s, anchor) {
-    var t = el("text", { x: x, y: y, "text-anchor": anchor || "start" }, parent);
-    t.textContent = s;
-    return t;
-  }
-
-  var cur = null;
-  function drawPair() {
-    var p = pairOf(state.sel), s = series(p), n = s.length, svg = $("chart");
-    var W = 300, H = 160, L = 4, Rm = 46, T = 10, B = 20, min = Infinity, max = -Infinity;
-    s.forEach(function (q) { if (q.v < min) min = q.v; if (q.v > max) max = q.v; });
-    var pad = (max - min) * 0.12 || 0.001, lo = min - pad, hi = max + pad;
-    var sx = function (i) { return L + (W - L - Rm) * i / (n - 1); };
-    var sy = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
-    svg.textContent = "";
-    var defs = el("defs", {}, svg), gr = el("linearGradient", { id: "gA", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
-    el("stop", { offset: 0, "stop-color": "#f2b01e", "stop-opacity": 0.3 }, gr);
-    el("stop", { offset: 1, "stop-color": "#f2b01e", "stop-opacity": 0 }, gr);
-    for (var k = 0; k < 4; k++) {
-      var v = lo + (hi - lo) * k / 3, y = sy(v);
-      el("line", { x1: L, x2: W - Rm, y1: y, y2: y, stroke: "#18150e", "stroke-width": 1 }, svg);
-      txt(svg, W - Rm + 6, y + 3, fmt(v, p.dec));
-    }
-    var d = s.map(function (q, i) { return (i ? "L" : "M") + sx(i).toFixed(1) + " " + sy(q.v).toFixed(1); }).join(" ");
-    el("path", { d: d + " L" + sx(n - 1).toFixed(1) + " " + (H - B) + " L" + sx(0).toFixed(1) + " " + (H - B) + " Z", fill: "url(#gA)" }, svg);
-    el("path", { d: d, fill: "none", stroke: "#f2b01e", "stroke-width": 1.8, "stroke-linejoin": "round" }, svg);
-    cur = { s: s, p: p, sx: sx, sy: sy, W: W, L: L, Rm: Rm };
-    $("pairName").textContent = p.n;
-    var c7 = change7(s), c3 = changeAll(s);
-    $("chg7").textContent = pct(c7); $("chg7").className = cls(c7);
-    $("chg3m").textContent = pct(c3); $("chg3m").className = cls(c3);
-    showPoint(n - 1, true);
-  }
-  function showPoint(i, isLast) {
-    var q = cur.s[i];
-    $("price").textContent = fmt(q.v, cur.p.dec);
-    $("asof").textContent = (isLast ? "Dernier cours · " : "") + longD(q.d);
-  }
-
-  function renderPairs() {
-    var h = '<div class="row head" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;padding:8px 14px;font:10px var(--font-mono);color:var(--muted);text-transform:uppercase"><span>Paire</span><span class="r">Cours</span><span class="r">7 j</span><span></span></div>';
-    
-    // Ajout manuel de l'or (XAU/USD) et du NAS100 en tête de liste
-    h += '<div class="row" onclick="selectPair(\'EURUSD\')" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;align-items:center;padding:10px 14px;border-top:1px solid var(--line2);cursor:pointer;font:12px var(--font-mono)"><span style="font-weight:600; color:var(--amber)">XAU/USD (Or)</span><span class="r">2 730,50 $</span><span class="r up">+1.85%</span><span style="color:var(--amber);text-align:right">➔ Analyser</span></div>';
-    h += '<div class="row" onclick="selectPair(\'EURUSD\')" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;align-items:center;padding:10px 14px;border-top:1px solid var(--line2);cursor:pointer;font:12px var(--font-mono)"><span style="font-weight:600; color:var(--amber)">NAS100 (Nasdaq)</span><span class="r">20 450,00</span><span class="r up">+0.62%</span><span style="color:var(--amber);text-align:right">➔ Analyser</span></div>';
-
-    PAIRS.forEach(function (p) {
-      var s = series(p), last = s[s.length - 1].v, c7 = change7(s);
-      h += '<div class="row" onclick="selectPair(\'' + p.id + '\')" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;align-items:center;padding:10px 14px;border-top:1px solid var(--line2);cursor:pointer;font:12px var(--font-mono)"><span style="font-weight:600">' + p.n + '</span><span class="r">' + fmt(last, p.dec) + '</span><span class="r ' + cls(c7) + '">' + pct(c7) + '</span><span style="color:var(--amber);text-align:right">➔ Analyser</span></div>';
-    });
-    $("pairs").innerHTML = h;
-  }
-
-  window.selectPair = function(id) {
-    state.sel = id;
-    drawPair();
-    switchView('view-chart', document.querySelectorAll('.sb-btn')[2]);
-  };
-
-  function renderClocks() {
-    var now = new Date(), pad = function (n) { return String(n).padStart(2, "0"); };
-    $("clocks").innerHTML = "Kinshasa (UTC+1) <b>" + pad(now.getUTCHours() + 1) + ":" + pad(now.getUTCMinutes()) + ":" + pad(now.getUTCSeconds()) + "</b>";
-  }
-
-  var touched = false;
-  function num(id) { return parseFloat(String($(id).value).replace(",", ".").replace(/\s/g, "")); }
-  function resetEntry() {
-    var p = pairOf($("cPair").value), s = series(p), price = s[s.length - 1].v, buy = $("cDir").value === "buy", d = 25 * pipSize(p);
-    $("cEntry").value = price.toFixed(p.dec === 2 ? 3 : 5);
-    $("cStop").value = (buy ? price - d : price + d).toFixed(p.dec === 2 ? 3 : 5);
-    touched = false;
-  }
-  function calc() {
-    var p = pairOf($("cPair").value), rates = state.data[dates()[dates().length - 1]];
-    var r = sizing({ balance: num("cBal"), riskPct: num("cRisk"), pair: p, dir: $("cDir").value, entry: num("cEntry"), stop: num("cStop"), rr: num("cRR"), rates: rates });
-    var out = $("cOut");
-    if (r.err) { out.innerHTML = '<div style="color:var(--down);grid-column:1/-1">' + r.err + '</div>'; return; }
-    var money = function (v) { return "$" + v.toFixed(2).replace(".", ","); };
-    out.innerHTML =
-      '<div class="stat-box big"><small>Taille de Position Recommandée</small><b>' + fmt(r.lots, 2) + ' lot(s)</b></div>' +
-      '<div class="stat-box"><small>Risque Réel (1%)</small><b class="down">' + money(r.realRisk) + '</b></div>' +
-      '<div class="stat-box"><small>Gain Visé (TP)</small><b class="up">' + money(r.reward) + '</b></div>';
-  }
-
-  function initCalc() {
-    $("cPair").innerHTML = PAIRS.map(function (p) { return '<option value="' + p.id + '">' + p.n + '</option>'; }).join("");
-    resetEntry(); calc();
-    ["cBal", "cRisk", "cRR", "cStop"].forEach(function (id) { $(id).addEventListener("input", calc); });
-    $("cEntry").addEventListener("input", function () { touched = true; calc(); });
-    $("cPair").addEventListener("change", function () { resetEntry(); calc(); });
-    $("cDir").addEventListener("change", function () { resetEntry(); calc(); });
-  }
-
-  window.saveNotes = function() {
-    localStorage.setItem("vm_terminal_notes", $("quickNotes").value);
-  };
-  function loadNotes() {
-    var saved = localStorage.getItem("vm_terminal_notes");
-    if (saved) $("quickNotes").value = saved;
-  }
-
-  setInterval(function() {
-    var probEl = $("fedRateProb");
-    if(probEl) {
-      var val = (82.0 + Math.random()).toFixed(1);
-      probEl.textContent = val + "%";
-    }
-  }, 4000);
-
-  renderClocks(); setInterval(renderClocks, 1000);
-  loadNotes(); renderPairs(); drawPair(); initCalc();
-})();
+// Sauvegarde des Notes
+function saveNotes() {
+  localStorage.setItem('vm_notes', document.getElementById('quickNotes').value);
+}
+var saved = localStorage.getItem('vm_notes');
+if (saved) document.getElementById('quickNotes').value = saved;
 </script>
-</body></html>
+
+</body>
+</html>
