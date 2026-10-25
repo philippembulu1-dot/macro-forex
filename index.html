@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Top One Analysis VM — Trade Sider Terminal</title>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Top One Analysis VM — Trade Sider Terminal Pro</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 :root {
@@ -27,15 +27,15 @@ a { color: inherit; text-decoration: none; }
 /* Shell Global */
 .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
 
-/* 1. TOP BAR & SOUS-JACENTS EN HAUT */
-.top-bar { display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
+/* Top Bar Simple */
+.top-bar { display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
 .brand { font: 600 12px var(--font-mono); letter-spacing: 0.16em; display: flex; align-items: center; gap: 8px; color: var(--amber); }
 .mark { width: 10px; height: 10px; background: var(--amber); clip-path: polygon(0 0, 100% 0, 100% 30%, 62% 30%, 62% 100%, 38% 100%, 38% 30%, 0 30%); }
 
-/* Ticker des sous-jacents tout en haut */
-.ticker-bar { display: flex; align-items: center; background: var(--panel2); border-bottom: 1px solid var(--line); overflow-x: auto; flex: none; scrollbar-width: none; height: 36px; }
+/* 1. SOUS-JACENTS EN HAUT (Style Trade Sider Exact) */
+.ticker-bar { display: flex; align-items: center; background: var(--panel2); border-bottom: 1px solid var(--line); overflow-x: auto; flex: none; scrollbar-width: none; height: 36px; padding: 0 10px; gap: 4px; }
 .ticker-bar::-webkit-scrollbar { display: none; }
-.tk-item { display: flex; align-items: center; gap: 6px; padding: 0 14px; font: 11px var(--font-mono); border-right: 1px solid var(--line2); white-space: nowrap; height: 100%; }
+.tk-item { display: flex; align-items: center; gap: 6px; padding: 0 10px; font: 11px var(--font-mono); border-right: 1px solid var(--line2); white-space: nowrap; height: 100%; }
 .tk-item span { color: var(--muted); }
 
 /* Workspace principal (Sidebar + Vues uniques) */
@@ -47,7 +47,7 @@ a { color: inherit; text-decoration: none; }
 .sb-btn:hover { color: var(--fg); background: var(--panel2); }
 .sb-btn.active { color: var(--amber); background: var(--amber-soft); border-left-color: var(--amber); font-weight: 600; }
 
-/* Contenu Principal - Chaque onglet s'affiche seul */
+/* Contenu Principal - Chaque onglet s'affiche seul de façon exclusive */
 .main-content { flex: 1; background: var(--bg); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
 .view-section { display: none; width: 100%; flex-direction: column; gap: 16px; animation: fadeIn 0.15s ease-out; }
 .view-section.active { display: flex; }
@@ -107,14 +107,28 @@ textarea { height: 120px; resize: vertical; }
 </head><body>
 
 <div class="app-shell">
-  <!-- En-tête de l'application -->
+  <!-- En-tête -->
   <header class="top-bar">
     <div class="brand"><span class="mark"></span>TOP ONE VM — TRADE SIDER TERMINAL</div>
     <div class="live-clock" id="clocks"></div>
   </header>
 
-  <!-- Bandeau des sous-jacents en haut (Type Trade Sider) -->
-  <div class="ticker-bar" id="tape"></div>
+  <!-- Bandeau des sous-jacents en haut (Exactement comme sur ton aperçu Trade Sider) -->
+  <div class="ticker-bar" id="tape">
+    <div class="tk-item" style="color:var(--amber); font-weight:600;"><span class="mark" style="width:6px;height:6px;"></span>LIVE</div>
+    <div class="tk-item"><span>XAUUSD</span> <b>2,730.50</b> <b class="up">+1.85%</b></div>
+    <div class="tk-item"><span>NAS100</span> <b>20,450.00</b> <b class="up">+0.62%</b></div>
+    <div class="tk-item"><span>EURUSD</span> <b>1.1206</b> <b class="down">-0.12%</b></div>
+    <div class="tk-item"><span>GBPUSD</span> <b>1.3390</b> <b class="down">-0.11%</b></div>
+    <div class="tk-item"><span>USDJPY</span> <b>157.16</b> <b class="down">-0.32%</b></div>
+    <div class="tk-item"><span>WTI</span> <b>103.44</b> <b class="down">-0.21%</b></div>
+    <div class="tk-item"><span>S&amp;P 500</span> <b>7,623.7</b> <b class="down">-0.47%</b></div>
+    <div class="tk-item"><span>NASDAQ</span> <b>28,957.5</b> <b class="down">-0.79%</b></div>
+    <div class="tk-item"><span>DOW</span> <b>52,215.2</b> <b class="up">+0.41%</b></div>
+    <div class="tk-item" style="margin-left:auto;"><span>New York</span> <b class="down">Closed</b></div>
+    <div class="tk-item"><span>London</span> <b class="down">Closed</b></div>
+    <div class="tk-item"><span>Tokyo</span> <b class="down">Closed</b></div>
+  </div>
 
   <div class="workspace">
     <!-- Menu Latéral pour entrer dans chaque onglet de façon unique -->
@@ -135,13 +149,13 @@ textarea { height: 120px; resize: vertical; }
       <button class="sb-btn" onclick="switchView('view-notes', this)">📝 Notes &amp; Plans Semaine</button>
     </nav>
 
-    <!-- Zone principale d'affichage unique (Un onglet à la fois) -->
+    <!-- Zone principale d'affichage unique (Un seul onglet visible à la fois) -->
     <main class="main-content">
 
       <!-- ONGLET 1 : SCORECARD S & BIAIS -->
       <section id="view-scorecard" class="view-section active">
         <div class="panel">
-          <div class="ph"><h2>Scorecard Global S — Stratégie XAUUSD</h2><span class="meta">Règle des 6 Piliers (Kinshasa UTC+1)</span></div>
+          <div class="ph"><h2>Scorecard Global S — Stratégie XAUUSD</h2><span class="meta">Règle des 6 Piliers (Kinshasa UTC+1)[cite: 2]</span></div>
           <div class="tbl">
             <table>
               <thead><tr><th>Pilier Stratégique</th><th>Poids</th><th>Note Actuelle</th><th>Contribution</th><th class="r">Biais Pilier</th></tr></thead>
@@ -391,7 +405,6 @@ function switchView(viewId, btnElement) {
   function fmt(v, d) { return v.toFixed(d).replace(".", ","); }
   function pct(v) { return (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2).replace(".", ",") + " %"; }
   function parseD(s) { return new Date(s + "T00:00:00"); }
-  function shortD(s) { return parseD(s).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }); }
   function longD(s) { return parseD(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long", year: "numeric" }); }
   function cls(v) { return v >= 0 ? "up" : "down"; }
   function pairOf(p) { return PAIRS.filter(function (x) { return x.id === p; })[0]; }
@@ -464,20 +477,11 @@ function switchView(viewId, btnElement) {
 
   function renderPairs() {
     var h = '<div class="row head" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;padding:8px 14px;font:10px var(--font-mono);color:var(--muted);text-transform:uppercase"><span>Paire</span><span class="r">Cours</span><span class="r">7 j</span><span></span></div>';
-    
-    // Bandeau des sous-jacents tout en haut (similaire Trade Sider)
-    var tape = '<div class="tk-item" style="color:var(--amber);font-weight:600">SOUS-JACENTS</div>';
-    tape += '<div class="tk-item"><b>XAU/USD</b> <span>2,730.50</span> <b class="up">+1.85%</b></div>';
-    tape += '<div class="tk-item"><b>NAS100</b> <span>20,450.00</span> <b class="up">+0.62%</b></div>';
-    tape += '<div class="tk-item"><b>US10Y</b> <span>4.22%</span> <b class="down">-0.04%</b></div>';
-    tape += '<div class="tk-item"><b>DXY</b> <span>103.45</span> <b class="down">-0.12%</b></div>';
-
     PAIRS.forEach(function (p) {
       var s = series(p), last = s[s.length - 1].v, c7 = change7(s);
       h += '<div class="row" onclick="selectPair(\'' + p.id + '\')" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;align-items:center;padding:10px 14px;border-top:1px solid var(--line2);cursor:pointer;font:12px var(--font-mono)"><span style="font-weight:600">' + p.n + '</span><span class="r">' + fmt(last, p.dec) + '</span><span class="r ' + cls(c7) + '">' + pct(c7) + '</span><span style="color:var(--amber);text-align:right">➔ Analyser</span></div>';
-      tape += '<div class="tk-item"><b>' + p.n.replace("/", "") + '</b> <span>' + fmt(last, p.dec) + '</span> <b class="' + cls(c7) + '">' + pct(c7) + '</b></div>';
     });
-    $("pairs").innerHTML = h; $("tape").innerHTML = tape;
+    $("pairs").innerHTML = h;
   }
 
   window.selectPair = function(id) {
