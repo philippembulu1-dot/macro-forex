@@ -77,6 +77,9 @@ a { color: inherit; text-decoration: none; }
 .chip b { font: 500 13px var(--font-mono); white-space: nowrap; }
 svg.chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
 svg.chart text { fill: var(--muted); font: 10px var(--font-mono); }
+.readout { display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 12px; border-top: 1px solid var(--line2); font: 11px var(--font-mono); background: var(--panel2); }
+.ro { display: inline-flex; align-items: center; gap: 4px; }
+.ro i { width: 6px; height: 6px; border-radius: 50%; }
 
 .tbl { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
@@ -186,7 +189,6 @@ textarea { resize: vertical; height: 90px; }
           <div class="sess" id="sess"></div>
         </section>
       </div>
-
       <!-- COLONNE CENTRALE -->
       <div class="col">
         <section class="panel" id="selPanel">
@@ -281,7 +283,6 @@ textarea { resize: vertical; height: 90px; }
           <div class="readout" id="readout"></div>
         </section>
       </div>
-
       <!-- COLONNE DROITE -->
       <div class="col">
         <section class="panel" id="banques">
@@ -571,3 +572,7 @@ textarea { resize: vertical; height: 90px; }
   function renderPairs() {
     var h = '<div class="row head"><span>Paire</span><span class="r">Cours</span><span class="r">7 j</span><span></span></div>', tape = '<div class="t lbl">7 J</div>';
     PAIRS.forEach(function (p) {
+      var s = series(p), last = s[s.length - 1].v, c7 = change7(s);
+      h += '<button class="row" type="button" data-id="' + p.id + '" aria-pressed="' + (p.id === state.sel) + '"><span class="pn">' + p.n + '</span><span class="r">' + fmt(last, p.dec) +
+        '</span><span class="r ' + cls(c7) + '">' + pct(c7) + "</span>" + spark(s) + "</button>";
+      tape += '<div class="t"><b>' + p.n.replace("/", "") + "</b><span>" + fmt(last, p.dec) + '</span><small class="' + cls(c7) + '">'
