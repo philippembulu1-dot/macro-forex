@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Top One Analysis VM — Trade Sider Pro</title>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Top One Analysis VM — Terminal Fondamental XAUUSD</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 :root {
@@ -37,7 +37,7 @@ a { color: inherit; text-decoration: none; }
 .tk-item span { color: var(--muted); }
 
 .workspace { display: flex; flex: 1; min-height: 0; }
-.sidebar { width: 220px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 8px 0; flex: none; overflow-y: auto; }
+.sidebar { width: 230px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 8px 0; flex: none; overflow-y: auto; }
 .sb-grp { padding: 10px 14px 4px; font: 600 9px var(--font-mono); letter-spacing: 0.18em; color: var(--muted); }
 .sb-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; background: transparent; border: 0; color: var(--muted); font: 12px var(--font-mono); text-align: left; cursor: pointer; border-left: 2px solid transparent; transition: all 0.1s; }
 .sb-btn:hover { color: var(--fg); background: var(--panel2); }
@@ -103,7 +103,7 @@ textarea { height: 120px; resize: vertical; }
 
 <div class="app-shell">
   <header class="top-bar">
-    <div class="brand"><span class="mark"></span>TOP ONE VM — TRADE SIDER PRO</div>
+    <div class="brand"><span class="mark"></span>TOP ONE VM — TERMINAL FONDAMENTAL XAUUSD</div>
     <div class="live-clock" id="clocks"></div>
   </header>
 
@@ -111,22 +111,57 @@ textarea { height: 120px; resize: vertical; }
 
   <div class="workspace">
     <nav class="sidebar">
-      <div class="sb-grp">NAVIGATION PRO</div>
-      <button class="sb-btn active" onclick="switchTab('tab-overview', this)">📊 Aperçu &amp; Marchés</button>
-      <button class="sb-btn" onclick="switchTab('tab-chart', this)">📈 Graphique &amp; Analyse</button>
-      <button class="sb-btn" onclick="switchTab('tab-rates', this)">⚡ Taux &amp; Pricing Live</button>
-      <button class="sb-btn" onclick="switchTab('tab-macro', this)">🌐 Macro G8 &amp; Banques</button>
+      <div class="sb-grp">STRATÉGIE &amp; BIAIS</div>
+      <button class="sb-btn active" onclick="switchTab('tab-scorecard', this)">🎯 Scorecard S &amp; Biais</button>
+      <button class="sb-btn" onclick="switchTab('tab-overview', this)">📊 Marché Live &amp; Blocs</button>
+      <button class="sb-btn" onclick="switchTab('tab-chart', this)">📈 Graphique &amp; Price Action</button>
+      
+      <div class="sb-grp">FONDAMENTAL G8</div>
+      <button class="sb-btn" onclick="switchTab('tab-rates', this)">⚡ Taux, TIPS &amp; FedWatch</button>
+      <button class="sb-btn" onclick="switchTab('tab-macro', this)">🌐 Banques Centrales &amp; Or</button>
       <button class="sb-btn" onclick="switchTab('tab-sentiment', this)">🎯 COT &amp; Retail Sentiment</button>
-      <button class="sb-btn" onclick="switchTab('tab-news', this)">📰 Flux News &amp; Squawk</button>
+      <button class="sb-btn" onclick="switchTab('tab-news', this)">📰 Flux News &amp; Calendrier</button>
+
       <div class="sb-grp">OUTILS DE GESTION</div>
       <button class="sb-btn" onclick="switchTab('tab-risk', this)">🧮 VM Risk Engine (1%)</button>
-      <button class="sb-btn" onclick="switchTab('tab-notes', this)">📝 Notes de Semaine</button>
+      <button class="sb-btn" onclick="switchTab('tab-notes', this)">📝 Notes &amp; Plans Semaine</button>
     </nav>
 
     <main class="main-content">
 
-      <!-- 1. APERÇU -->
-      <div id="tab-overview" class="view-panel active">
+      <!-- 1. SCORECARD S & BIAIS (Noyau de la stratégie) -->
+      <div id="tab-scorecard" class="view-panel active">
+        <div class="panel">
+          <div class="ph"><h2>Scorecard Global S — Stratégie XAUUSD</h2><span class="meta">Règle des 6 Piliers (Kinshasa UTC+1)</span></div>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>Pilier Stratégique</th><th>Poids</th><th>Note Actuelle</th><th>Contribution au Score S</th><th class="r">Biais Pilier</th></tr></thead>
+              <tbody>
+                <tr><td><b>1. Taux Réels US (TIPS 10Y)</b></td><td>25%</td><td><span class="badge on">+1.0</span></td><td>+0.25</td><td class="r"><span class="up">Bullish Or</span></td></tr>
+                <tr><td><b>2. Attentes Fed (Repricing)</b></td><td>20%</td><td><span class="badge on">+2.0</span></td><td>+0.40</td><td class="r"><span class="up">Bullish Or</span></td></tr>
+                <tr><td><b>3. Force du Dollar (DXY)</b></td><td>15%</td><td><span class="badge on">+1.0</span></td><td>+0.15</td><td class="r"><span class="up">Bullish Or</span></td></tr>
+                <tr><td><b>4. Flux (Banques Centrales &amp; ETF)</b></td><td>15%</td><td><span class="badge on">+2.0</span></td><td>+0.30</td><td class="r"><span class="up">Soutien Fort</span></td></tr>
+                <tr><td><b>5. Risque &amp; Refuge (VIX / Géo)</b></td><td>15%</td><td><span class="badge off">0.0</span></td><td>0.00</td><td class="r">Neutre</td></tr>
+                <tr><td><b>6. Positionnement COT / Smart Money</b></td><td>10%</td><td><span class="badge off">-1.0</span></td><td>-0.10</td><td class="r"><span class="down">Attention / Alerte</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h2>Synthèse des Biais &amp; Matrice d'Alignement</h2><span class="meta">Décision Opérationnelle</span></div>
+          <div class="tbl">
+            <table>
+              <tr><td><b>Score S Total</b></td><td class="r num" style="font-size:16px; color:var(--amber);">+1.00 (S ≥ +0,5)</td></tr>
+              <tr><td><b>Biais Mensuel Validé</b></td><td class="r"><span class="badge on">HAUSSIER (BULLISH)</span></td></tr>
+              <tr><td><b>Biais du Jour (Tactique)</b></td><td class="r"><span class="badge on">ACHATS SUR REPLIS (PULLBACK)</span></td></tr>
+              <tr><td><b>Matrice d'Alignement &amp; Consigne</b></td><td class="r">Alignés · Taille normale autorisée (1% max)</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. MARCHÉ LIVE -->
+      <div id="tab-overview" class="view-panel">
         <div class="panel">
           <div class="ph"><h2>Paires &amp; Actifs Institutionnels</h2><span class="meta">Cliquez pour analyser</span></div>
           <div id="pairs"></div>
@@ -135,15 +170,15 @@ textarea { height: 120px; resize: vertical; }
           <div class="ph"><h2>XAU/USD — Focus Stratégique Semaine</h2><span class="meta">Or / Actif Refuge</span></div>
           <div class="tbl">
             <table>
-              <tr><td>Variation Jour / Semaine</td><td class="r"><span class="up">+0.45%</span> / <span class="up">+1.85%</span></td></tr>
-              <tr><td>Plus Haut / Plus Bas (7J)</td><td class="r num">2 760.20 $ / 2 705.50 $</td></tr>
-              <tr><td>Biais Institutionnel VM</td><td class="r"><span class="badge on">BULLISH HAUT</span></td></tr>
+              <tr><td>Variation Jour / Semaine</td><td class="r"><span class="up">+0.45%</span> / <span class="up">+1.85%</span>[cite: 2]</td></tr>
+              <tr><td>Plus Haut / Plus Bas (7J)</td><td class="r num">2 760.20 $ / 2 705.50 $[cite: 2]</td></tr>
+              <tr><td>Biais Institutionnel VM</td><td class="r"><span class="badge on">BULLISH HAUT</span>[cite: 2]</td></tr>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- 2. GRAPHIQUE -->
+      <!-- 3. GRAPHIQUE -->
       <div id="tab-chart" class="view-panel">
         <div class="panel">
           <div class="ph"><h2>Graphique Dynamique &amp; Price Action</h2><span class="meta">3 mois</span></div>
@@ -164,111 +199,102 @@ textarea { height: 120px; resize: vertical; }
         </div>
       </div>
 
-      <!-- 3. TAUX & PRICING LIVE -->
+      <!-- 4. TAUX & PRICING LIVE -->
       <div id="tab-rates" class="view-panel">
         <div class="panel">
-          <div class="ph"><h2>Probabilités de Taux &amp; Futures (Temps Réel)</h2><span class="meta">Pricing Marché</span></div>
+          <div class="ph"><h2>Probabilités de Taux &amp; Futures (Temps Réel)[cite: 3]</h2><span class="meta">CME FedWatch[cite: 3]</span></div>
           <div class="tbl">
             <table>
               <thead><tr><th>Échéance / Réunion</th><th>Actif / Future</th><th>Scénario Pricé</th><th class="r">Probabilité Actuelle</th></tr></thead>
               <tbody>
-                <tr><td><b>Fed — Prochaine Réunion</b></td><td>FedWatch 30D</td><td>Maintien (4.50%)</td><td class="r"><span class="badge on" id="fedRateProb">82.5%</span></td></tr>
+                <tr><td><b>Fed — Prochaine Réunion</b>[cite: 3, 4]</td><td>FedWatch 30D</td><td>Maintien (4.50%)[cite: 2, 4]</td><td class="r"><span class="badge on" id="fedRateProb">82.5%</span></td></tr>
                 <tr><td><b>Fed — Fin d'Année</b></td><td>SOFR Futures</td><td>1 Baisse de 25 bps</td><td class="r"><span class="badge on">64.0%</span></td></tr>
-                <tr><td><b>BCE — Prochaine Réunion</b></td><td>Euribor 3M</td><td>Baisse de 25 bps (3.00%)</td><td class="r"><span class="badge on">88.0%</span></td></tr>
-                <tr><td><b>BoE — Prochaine Réunion</b></td><td>SONIA Futures</td><td>Maintien (4.75%)</td><td class="r"><span class="badge off">75.0%</span></td></tr>
+                <tr><td><b>BCE — Prochaine Réunion</b>[cite: 4]</td><td>Euribor 3M</td><td>Baisse de 25 bps (3.00%)</td><td class="r"><span class="badge on">88.0%</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
         <div class="panel">
-          <div class="ph"><h2>Spreads Obligataires &amp; Actifs Corrélés</h2><span class="meta">Carburant Gold &amp; Forex</span></div>
+          <div class="ph"><h2>TIPS 10 Ans &amp; Spreads Obligataires</h2><span class="meta">Le Carburant Fondamental du Gold</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Spread / Indicateur</th><th>Valeur Actuelle</th><th class="r">Impact Directionnel</th></tr></thead>
+              <thead><tr><th>Indicateur Clé</th><th>Valeur Actuelle</th><th class="r">Impact sur le Score S</th></tr></thead>
               <tbody>
-                <tr><td><b>US 10Y - US 02Y</b></td><td>+18 bps</td><td class="r"><span class="badge on">Normalisation (Favorable Or)</span></td></tr>
-                <tr><td><b>Dollar Index (DXY)</b></td><td>103.45</td><td class="r"><span class="badge off">Pression baissière relative</span></td></tr>
-                <tr><td><b>Rendement Réel US 10Y</b></td><td>1.92%</td><td class="r"><span class="badge on">Support haussier métaux précieux</span></td></tr>
+                <tr><td><b>DFII10 (TIPS 10 ans réel)</b></td><td>1.92%</td><td class="r"><span class="badge on">Support Haussier (-15pb/5s)</span></td></tr>
+                <tr><td><b>US 10Y - US 02Y (Courbe 2s10s)</b>[cite: 2]</td><td>+18 bps</td><td class="r"><span class="badge on">Normalisation favorable</span></td></tr>
+                <tr><td><b>Breakeven 10 ans</b>[cite: 2]</td><td>2.35%</td><td class="r"><span class="badge on">Inflation ancrée</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- 4. MACRO G8 -->
+      <!-- 5. BANQUES CENTRALES & ACHATS D'OR -->
       <div id="tab-macro" class="view-panel">
         <div class="panel">
-          <div class="ph"><h2>Macro Fondamentale G8 &amp; Consensus Banques</h2><span class="meta">Biais long terme</span></div>
+          <div class="ph"><h2>Achats d'Or des Banques Centrales (Séries Officielles)[cite: 5]</h2><span class="meta">Série A (Déclarés) &amp; Série B (WGC)</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Zone / Pays</th><th>Banque Centrale</th><th class="r">Taux Directeur</th><th class="r">Inflation CPI</th><th class="r">GDP Croissance</th></tr></thead>
+              <thead><tr><th>Série / Source</th><th>Volume Récent</th><th>Seuil d'Alerte Stratégie</th><th class="r">Impact Or</th></tr></thead>
               <tbody>
-                <tr><td><b>États-Unis (USD)</b></td><td>FED</td><td class="r num">4.50%</td><td class="r num">2.7%</td><td class="r num">+2.8%</td></tr>
-                <tr><td><b>Zone Euro (EUR)</b></td><td>BCE</td><td class="r num">3.25%</td><td class="r num">2.2%</td><td class="r num">+0.9%</td></tr>
-                <tr><td><b>Royaume-Uni (GBP)</b></td><td>BoE</td><td class="r num">4.75%</td><td class="r num">3.1%</td><td class="r num">+1.2%</td></tr>
-                <tr><td><b>Japon (JPY)</b></td><td>BoJ</td><td class="r num">0.25%</td><td class="r num">2.5%</td><td class="r num">+0.5%</td></tr>
-                <tr><td><b>Chine (CNY)</b></td><td>PBoC</td><td class="r num">3.10%</td><td class="r num">0.6%</td><td class="r num">+4.8%</td></tr>
+                <tr><td><b>Série A (FMI / Déclarations Officielles)</b>[cite: 5, 7]</td><td>+34.2 Tonnes / mois</td><td>> 30 t / mois (Soutien fort)[cite: 5]</td><td class="r"><span class="badge on">HAUSSIER</span></td></tr>
+                <tr><td><b>Série B (World Gold Council - WGC)</b>[cite: 5]</td><td>+78.5 Tonnes / mois</td><td>> 72 t / mois (Seuil critique)[cite: 5]</td><td class="r"><span class="badge on">SOUTIEN FORT</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
         <div class="panel">
-          <div class="ph"><h2>Veille Fondamentale (Morgan Stanley, Goldman Sachs...)</h2><span class="meta">Biais Institutionnel</span></div>
+          <div class="ph"><h2>Macro G8 &amp; Consensus Banques (Goldman, JPMorgan...)[cite: 5]</h2><span class="meta">Biais Institutionnel Long Terme</span></div>
           <div class="tbl">
             <table>
               <thead><tr><th>Institution</th><th>Actif</th><th>Biais</th><th class="r">Cible / Anticipation</th></tr></thead>
               <tbody>
-                <tr><td><b>Morgan Stanley</b></td><td>XAU/USD</td><td><span class="badge on">Bullish</span></td><td class="r num">Cible 2 850$ (Achats sur replis)</td></tr>
-                <tr><td><b>Goldman Sachs</b></td><td>XAU/USD</td><td><span class="badge on">Bullish</span></td><td class="r num">Soutenu par achats Banques Centrales</td></tr>
-                <tr><td><b>JPMorgan</b></td><td>EUR/USD</td><td><span class="badge off">Bearish</span></td><td class="r num">Parité visée si divergence Fed/BCE</td></tr>
+                <tr><td><b>Morgan Stanley</b>[cite: 5]</td><td>XAU/USD</td><td><span class="badge on">Bullish</span>[cite: 5]</td><td class="r num">Cible 2 850$ (Achats sur replis)</td></tr>
+                <tr><td><b>Goldman Sachs</b>[cite: 5]</td><td>XAU/USD</td><td><span class="badge on">Bullish</span>[cite: 5]</td><td class="r num">Soutenu par achats Banques Centrales</td></tr>
+                <tr><td><b>JPMorgan</b>[cite: 5]</td><td>EUR/USD</td><td><span class="badge off">Bearish</span>[cite: 5]</td><td class="r num">Parité visée si divergence Fed/BCE</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- 5. COT & SENTIMENT -->
+      <!-- 6. COT & RETAIL SENTIMENT -->
       <div id="tab-sentiment" class="view-panel">
         <div class="panel">
-          <div class="ph"><h2>Retail Sentiment vs Smart Money (COT CFTC)</h2><span class="meta">Indicateur Contrarian</span></div>
+          <div class="ph"><h2>Positionnement Institutionnel (COT CFTC) &amp; Retail[cite: 4, 5]</h2><span class="meta">Smart Money vs Crowd</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Actif</th><th class="r">Particuliers (Long / Short)</th><th>Positionnement Fonds (Smart Money)</th></tr></thead>
+              <thead><tr><th>Actif</th><th class="r">Particuliers (Long / Short)[cite: 6]</th><th>Positionnement Fonds (COT CFTC)[cite: 4, 5]</th></tr></thead>
               <tbody>
-                <tr><td><b>XAU/USD</b></td><td class="r num">32% / 68%</td><td><span class="badge on">Net Long Institutionnel Élevé</span></td></tr>
+                <tr><td><b>XAU/USD</b></td><td class="r num">32% / 68%</td><td><span class="badge on">Net Long Élevé (85e Percentile)</span></td></tr>
                 <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">Net Short Fonds Spéculatifs</span></td></tr>
-                <tr><td><b>NAS100</b></td><td class="r num">75% / 25%</td><td><span class="badge off">Retail Suracheté (Attention)</span></td></tr>
+                <tr><td><b>NAS100</b></td><td class="r num">75% / 25%</td><td><span class="badge off">Retail Suracheté (Contrarian)[cite: 6]</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- 6. FLUX NEWS -->
+      <!-- 7. FLUX NEWS & CALENDRIER -->
       <div id="tab-news" class="view-panel">
         <div class="panel">
-          <div class="ph"><h2>Flux Macro &amp; Dépêches Live (Squawk)</h2><span class="meta">Temps Réel</span></div>
-          <div class="news-feed" style="display:flex;flex-direction:column;max-height:400px;overflow-y:auto">
-            <div class="news-item" style="padding:12px 14px; border-bottom:1px solid var(--line2)">
-              <span style="font:10px var(--font-mono); color:var(--amber)">11:15 UTC — MARCHÉS US</span><br>
-              <span>Les rendements obligataires se stabilisent. L'or teste ses zones d'accumulation institutionnelle.</span>
-            </div>
-            <div class="news-item" style="padding:12px 14px; border-bottom:1px solid var(--line2)">
-              <span style="font:10px var(--font-mono); color:var(--amber)">10:00 UTC — BCE</span><br>
-              <span>Les déclarations réitèrent une approche prudente face aux données d'inflation des services.</span>
-            </div>
-            <div class="news-item" style="padding:12px 14px; border-bottom:1px solid var(--line2)">
-              <span style="font:10px var(--font-mono); color:var(--amber)">08:30 UTC — ASIE</span><br>
-              <span>Flux acheteurs persistants sur l'or physique en provenance de Shanghai.</span>
-            </div>
+          <div class="ph"><h2>Calendrier Économique (Heure de Kinshasa UTC+1)[cite: 2]</h2><span class="meta">Filtre Impact US &amp; BCE[cite: 2, 4]</span></div>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>Heure (Kinshasa)</th><th>Événement / Indicateur[cite: 2]</th><th>Consensus</th><th>Réel</th><th class="r">Surprise / Impact</th></tr></thead>
+              <tbody>
+                <tr><td>14:30</td><td><b>US Core PCE (Mensuel)</b>[cite: 2]</td><td>+0.2%</td><td>+0.2%</td><td class="r"><span class="badge off">Neutre</span></td></tr>
+                <tr><td>16:00</td><td><b>ISM Manufacturing US</b>[cite: 2]</td><td>47.5</td><td>47.2</td><td class="r"><span class="badge on">Dovish USD</span></td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <!-- 7. RISK ENGINE -->
+      <!-- 8. RISK ENGINE -->
       <div id="tab-risk" class="view-panel">
         <div class="panel">
-          <div class="ph"><h2>VM Risk Engine (Calculateur de Risque 1%)</h2><span class="meta">Gestion Stricte</span></div>
+          <div class="ph"><h2>VM Risk Engine (Calcul de Taille de Lot 1%)</h2><span class="meta">Formule: $(Capital \times r) / (k \times ATR)$[cite: 6]</span></div>
           <div class="calc-grid">
             <div class="form-group">
               <label>Capital du Compte (USD)</label>
@@ -305,10 +331,10 @@ textarea { height: 120px; resize: vertical; }
         </div>
       </div>
 
-      <!-- 8. NOTES -->
+      <!-- 9. NOTES -->
       <div id="tab-notes" class="view-panel">
         <div class="panel">
-          <div class="ph"><h2>Plans de Semaine &amp; Notes (Sauvegarde Auto)</h2><span class="meta">LocalStorage</span></div>
+          <div class="ph"><h2>Plans de Semaine &amp; Notes (Sauvegarde Auto)[cite: 6]</h2><span class="meta">LocalStorage[cite: 6]</span></div>
           <div class="pb">
             <textarea id="quickNotes" placeholder="Note tes biais macro, tes plans sur le XAUUSD et tes zones d'intervention..." oninput="saveNotes()"></textarea>
           </div>
@@ -437,7 +463,7 @@ function switchTab(tabId, btnElement) {
   }
 
   function renderPairs() {
-    var h = '<div class="row head" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;padding:8px 14px;font:10px var(--font-mono);color:var(--muted);text-transform:uppercase"><span>Paire</span><span class="r">Cours</span><span class="r">7 j</span><span></span></div>', tape = '<div class="tk-item" style="color:var(--amber);font-weight:600">TICKER LIVE</div>';
+    var h = '<div class="row head" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;padding:8px 14px;font:10px var(--font-mono);color:var(--muted);text-transform:uppercase"><span>Paire</span><span class="r">Cours</span><span class="r">7 j</span><span></span></div>', tape = '<div class="tk-item" style="color:var(--amber);font-weight:600">KINSHASA UTC+1</div>';
     PAIRS.forEach(function (p) {
       var s = series(p), last = s[s.length - 1].v, c7 = change7(s);
       h += '<div class="row" onclick="selectPair(\'' + p.id + '\')" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;align-items:center;padding:10px 14px;border-top:1px solid var(--line2);cursor:pointer;font:12px var(--font-mono)"><span style="font-weight:600">' + p.n + '</span><span class="r">' + fmt(last, p.dec) + '</span><span class="r ' + cls(c7) + '">' + pct(c7) + '</span><span style="color:var(--amber);text-align:right">➔ Analyser</span></div>';
@@ -449,12 +475,12 @@ function switchTab(tabId, btnElement) {
   window.selectPair = function(id) {
     state.sel = id;
     drawPair();
-    switchTab('tab-chart', document.querySelectorAll('.sb-btn')[1]);
+    switchTab('tab-chart', document.querySelectorAll('.sb-btn')[2]);
   };
 
   function renderClocks() {
     var now = new Date(), pad = function (n) { return String(n).padStart(2, "0"); };
-    $("clocks").innerHTML = "UTC <b>" + pad(now.getUTCHours()) + ":" + pad(now.getUTCMinutes()) + ":" + pad(now.getUTCSeconds()) + "</b>";
+    $("clocks").innerHTML = "Heure Kinshasa (UTC+1) <b>" + pad(now.getUTCHours() + 1) + ":" + pad(now.getUTCMinutes()) + ":" + pad(now.getUTCSeconds()) + "</b>";
   }
 
   var touched = false;
