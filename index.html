@@ -24,21 +24,18 @@ a { color: inherit; text-decoration: none; }
 .up { color: var(--up); } .down { color: var(--down); }
 :focus-visible { outline: 1px solid var(--amber); }
 
-/* Shell Global */
 .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
 
-/* Top Bar Simple */
 .top-bar { display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
 .brand { font: 600 12px var(--font-mono); letter-spacing: 0.16em; display: flex; align-items: center; gap: 8px; color: var(--amber); }
 .mark { width: 10px; height: 10px; background: var(--amber); clip-path: polygon(0 0, 100% 0, 100% 30%, 62% 30%, 62% 100%, 38% 100%, 38% 30%, 0 30%); }
 
-/* 1. SOUS-JACENTS EN HAUT (Style Trade Sider Exact) */
+/* Ticker des sous-jacents en haut */
 .ticker-bar { display: flex; align-items: center; background: var(--panel2); border-bottom: 1px solid var(--line); overflow-x: auto; flex: none; scrollbar-width: none; height: 36px; padding: 0 10px; gap: 4px; }
 .ticker-bar::-webkit-scrollbar { display: none; }
 .tk-item { display: flex; align-items: center; gap: 6px; padding: 0 10px; font: 11px var(--font-mono); border-right: 1px solid var(--line2); white-space: nowrap; height: 100%; }
 .tk-item span { color: var(--muted); }
 
-/* Workspace principal (Sidebar + Vues uniques) */
 .workspace { display: flex; flex: 1; min-height: 0; }
 
 .sidebar { width: 220px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 8px 0; flex: none; overflow-y: auto; }
@@ -47,7 +44,6 @@ a { color: inherit; text-decoration: none; }
 .sb-btn:hover { color: var(--fg); background: var(--panel2); }
 .sb-btn.active { color: var(--amber); background: var(--amber-soft); border-left-color: var(--amber); font-weight: 600; }
 
-/* Contenu Principal - Chaque onglet s'affiche seul de façon exclusive */
 .main-content { flex: 1; background: var(--bg); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
 .view-section { display: none; width: 100%; flex-direction: column; gap: 16px; animation: fadeIn 0.15s ease-out; }
 .view-section.active { display: flex; }
@@ -107,13 +103,12 @@ textarea { height: 120px; resize: vertical; }
 </head><body>
 
 <div class="app-shell">
-  <!-- En-tête -->
   <header class="top-bar">
     <div class="brand"><span class="mark"></span>TOP ONE VM — TRADE SIDER TERMINAL</div>
     <div class="live-clock" id="clocks"></div>
   </header>
 
-  <!-- Bandeau des sous-jacents en haut (Exactement comme sur ton aperçu Trade Sider) -->
+  <!-- Bandeau supérieur des sous-jacents -->
   <div class="ticker-bar" id="tape">
     <div class="tk-item" style="color:var(--amber); font-weight:600;"><span class="mark" style="width:6px;height:6px;"></span>LIVE</div>
     <div class="tk-item"><span>XAUUSD</span> <b>2,730.50</b> <b class="up">+1.85%</b></div>
@@ -121,38 +116,33 @@ textarea { height: 120px; resize: vertical; }
     <div class="tk-item"><span>EURUSD</span> <b>1.1206</b> <b class="down">-0.12%</b></div>
     <div class="tk-item"><span>GBPUSD</span> <b>1.3390</b> <b class="down">-0.11%</b></div>
     <div class="tk-item"><span>USDJPY</span> <b>157.16</b> <b class="down">-0.32%</b></div>
-    <div class="tk-item"><span>WTI</span> <b>103.44</b> <b class="down">-0.21%</b></div>
-    <div class="tk-item"><span>S&amp;P 500</span> <b>7,623.7</b> <b class="down">-0.47%</b></div>
-    <div class="tk-item"><span>NASDAQ</span> <b>28,957.5</b> <b class="down">-0.79%</b></div>
-    <div class="tk-item"><span>DOW</span> <b>52,215.2</b> <b class="up">+0.41%</b></div>
     <div class="tk-item" style="margin-left:auto;"><span>New York</span> <b class="down">Closed</b></div>
     <div class="tk-item"><span>London</span> <b class="down">Closed</b></div>
     <div class="tk-item"><span>Tokyo</span> <b class="down">Closed</b></div>
   </div>
 
   <div class="workspace">
-    <!-- Menu Latéral pour entrer dans chaque onglet de façon unique -->
+    <!-- Menu latéral (Onglets uniques) -->
     <nav class="sidebar">
       <div class="sb-grp">STRATÉGIE FONDAMENTALE</div>
       <button class="sb-btn active" onclick="switchView('view-scorecard', this)">🎯 Scorecard S &amp; Biais</button>
-      <button class="sb-btn" onclick="switchView('view-market', this)">📊 Marché &amp; Paires</button>
+      <button class="sb-btn" onclick="switchView('view-market', this)">📊 Actifs &amp; Performance</button>
       <button class="sb-btn" onclick="switchView('view-chart', this)">📈 Graphique &amp; Analyse</button>
       
-      <div class="sb-grp">MODULES PRO &amp; MACRO</div>
-      <button class="sb-btn" onclick="switchView('view-rates', this)">⚡ Taux, TIPS &amp; FedWatch</button>
-      <button class="sb-btn" onclick="switchView('view-central', this)">🌐 Banques Centrales &amp; Or</button>
-      <button class="sb-btn" onclick="switchView('view-sentiment', this)">🎯 COT &amp; Retail Sentiment</button>
-      <button class="sb-btn" onclick="switchView('view-news', this)">📰 Flux News &amp; Calendrier</button>
+      <div class="sb-grp">MACRO &amp; BANQUES</div>
+      <button class="sb-btn" onclick="switchView('view-rates', this)">⚡ Taux &amp; FedWatch</button>
+      <button class="sb-btn" onclick="switchView('view-central', this)">🌐 4 Majeures Banques &amp; Or</button>
+      <button class="sb-btn" onclick="switchView('view-sentiment', this)">🎯 COT &amp; Sentiment</button>
 
       <div class="sb-grp">GESTION &amp; PLANS</div>
       <button class="sb-btn" onclick="switchView('view-risk', this)">🧮 VM Risk Engine (1%)</button>
       <button class="sb-btn" onclick="switchView('view-notes', this)">📝 Notes &amp; Plans Semaine</button>
     </nav>
 
-    <!-- Zone principale d'affichage unique (Un seul onglet visible à la fois) -->
+    <!-- Zone principale -->
     <main class="main-content">
 
-      <!-- ONGLET 1 : SCORECARD S & BIAIS -->
+      <!-- 1. SCORECARD -->
       <section id="view-scorecard" class="view-section active">
         <div class="panel">
           <div class="ph"><h2>Scorecard Global S — Stratégie XAUUSD</h2><span class="meta">Règle des 6 Piliers (Kinshasa UTC+1)[cite: 2]</span></div>
@@ -183,15 +173,15 @@ textarea { height: 120px; resize: vertical; }
         </div>
       </section>
 
-      <!-- ONGLET 2 : MARCHÉ & PAIRES -->
+      <!-- 2. ACTIFS & PERFORMANCE -->
       <section id="view-market" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Paires Forex &amp; Marchés Clés</h2><span class="meta">Cliquez pour basculer vers l'analyse graphique</span></div>
+          <div class="ph"><h2>Performance des Actifs Fétiches &amp; Majeurs</h2><span class="meta">XAUUSD, EURUSD, GBPUSD, USDJPY, NAS100</span></div>
           <div id="pairs"></div>
         </div>
       </section>
 
-      <!-- ONGLET 3 : GRAPHIQUE & ANALYSE -->
+      <!-- 3. GRAPHIQUE -->
       <section id="view-chart" class="view-section">
         <div class="panel">
           <div class="ph"><h2>Graphique Dynamique &amp; Price Action</h2><span class="meta">3 Mois</span></div>
@@ -212,7 +202,7 @@ textarea { height: 120px; resize: vertical; }
         </div>
       </section>
 
-      <!-- ONGLET 4 : TAUX, TIPS & FEDWATCH -->
+      <!-- 4. TAUX & FEDWATCH -->
       <section id="view-rates" class="view-section">
         <div class="panel">
           <div class="ph"><h2>Probabilités de Taux &amp; Futures (Temps Réel)[cite: 3]</h2><span class="meta">CME FedWatch[cite: 3]</span></div>
@@ -227,23 +217,24 @@ textarea { height: 120px; resize: vertical; }
             </table>
           </div>
         </div>
+      </section>
+
+      <!-- 5. 4 MAJEURES BANQUES & OR -->
+      <section id="view-central" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>TIPS 10 Ans &amp; Spreads Obligataires</h2><span class="meta">Carburant Fondamental Gold</span></div>
+          <div class="ph"><h2>Suivi des 4 Majeures Banques Centrales</h2><span class="meta">FED, BCE, BoJ, BoE</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Indicateur Clé</th><th>Valeur Actuelle</th><th class="r">Impact sur le Score S</th></tr></thead>
+              <thead><tr><th>Banque Centrale</th><th>Taux Actuel</th><th>Prochaine Réunion</th><th class="r">Ton / Biais</th></tr></thead>
               <tbody>
-                <tr><td><b>DFII10 (TIPS 10 ans réel)</b></td><td>1.92%</td><td class="r"><span class="badge on">Support Haussier (-15pb/5s)[cite: 6]</span></td></tr>
-                <tr><td><b>US 10Y - US 02Y (Courbe 2s10s)</b>[cite: 2]</td><td>+18 bps</td><td class="r"><span class="badge on">Normalisation favorable</span></td></tr>
-                <tr><td><b>Breakeven 10 ans</b>[cite: 2]</td><td>2.35%</td><td class="r"><span class="badge on">Inflation ancrée</span></td></tr>
+                <tr><td><b>FED (États-Unis)</b>[cite: 4]</td><td>4.50%[cite: 2, 4]</td><td>28 Oct 2026</td><td class="r"><span class="badge on">Neutre / Patient</span></td></tr>
+                <tr><td><b>BCE (Zone Euro)</b>[cite: 4]</td><td>3.25%</td><td>29 Oct 2026</td><td class="r"><span class="badge on">Dovish (Assouplissement)</span></td></tr>
+                <tr><td><b>BoE (Royaume-Uni)</b>[cite: 4]</td><td>4.75%[cite: 2]</td><td>05 Nov 2026</td><td class="r"><span class="badge off">Prudent / Hawk</span></td></tr>
+                <tr><td><b>BoJ (Japon)</b>[cite: 4]</td><td>0.25%</td><td>30 Oct 2026</td><td class="r"><span class="badge on">Normalisation lente</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
-      </section>
-
-      <!-- ONGLET 5 : BANQUES CENTRALES & ACHATS D'OR -->
-      <section id="view-central" class="view-section">
         <div class="panel">
           <div class="ph"><h2>Achats d'Or des Banques Centrales (Séries Officielles)[cite: 5]</h2><span class="meta">Série A &amp; Série B (WGC)[cite: 5]</span></div>
           <div class="tbl">
@@ -256,22 +247,9 @@ textarea { height: 120px; resize: vertical; }
             </table>
           </div>
         </div>
-        <div class="panel">
-          <div class="ph"><h2>Consensus Banques d'Investissement</h2><span class="meta">Biais Institutionnel Long Terme[cite: 5]</span></div>
-          <div class="tbl">
-            <table>
-              <thead><tr><th>Institution</th><th>Actif</th><th>Biais</th><th class="r">Cible / Anticipation</th></tr></thead>
-              <tbody>
-                <tr><td><b>Morgan Stanley</b>[cite: 5]</td><td>XAU/USD</td><td><span class="badge on">Bullish</span>[cite: 5]</td><td class="r num">Cible 2 850$ (Achats sur replis)</td></tr>
-                <tr><td><b>Goldman Sachs</b>[cite: 5]</td><td>XAU/USD</td><td><span class="badge on">Bullish</span>[cite: 5]</td><td class="r num">Soutenu par achats Banques Centrales</td></tr>
-                <tr><td><b>JPMorgan</b>[cite: 5]</td><td>EUR/USD</td><td><span class="badge off">Bearish</span>[cite: 5]</td><td class="r num">Parité visée si divergence Fed/BCE</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </section>
 
-      <!-- ONGLET 6 : COT & RETAIL SENTIMENT -->
+      <!-- 6. COT & SENTIMENT -->
       <section id="view-sentiment" class="view-section">
         <div class="panel">
           <div class="ph"><h2>Positionnement Institutionnel (COT CFTC) &amp; Retail[cite: 4, 5]</h2><span class="meta">Smart Money vs Crowd</span></div>
@@ -281,30 +259,13 @@ textarea { height: 120px; resize: vertical; }
               <tbody>
                 <tr><td><b>XAU/USD</b></td><td class="r num">32% / 68%</td><td><span class="badge on">Net Long Élevé (85e Percentile)</span></td></tr>
                 <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">Net Short Fonds Spéculatifs</span></td></tr>
-                <tr><td><b>NAS100</b></td><td class="r num">75% / 25%</td><td><span class="badge off">Retail Suracheté (Contrarian)[cite: 6]</span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ONGLET 7 : FLUX NEWS & CALENDRIER -->
-      <section id="view-news" class="view-section">
-        <div class="panel">
-          <div class="ph"><h2>Calendrier Économique (Heure de Kinshasa UTC+1)[cite: 2]</h2><span class="meta">Filtre Impact US &amp; BCE[cite: 2, 4]</span></div>
-          <div class="tbl">
-            <table>
-              <thead><tr><th>Heure (Kinshasa)</th><th>Événement / Indicateur[cite: 2]</th><th>Consensus</th><th>Réel</th><th class="r">Surprise / Impact</th></tr></thead>
-              <tbody>
-                <tr><td>14:30</td><td><b>US Core PCE (Mensuel)</b>[cite: 2]</td><td>+0.2%</td><td>+0.2%</td><td class="r"><span class="badge off">Neutre</span></td></tr>
-                <tr><td>16:00</td><td><b>ISM Manufacturing US</b>[cite: 2]</td><td>47.5</td><td>47.2</td><td class="r"><span class="badge on">Dovish USD</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ONGLET 8 : VM RISK ENGINE -->
+      <!-- 7. VM RISK ENGINE -->
       <section id="view-risk" class="view-section">
         <div class="panel">
           <div class="ph"><h2>VM Risk Engine (Calcul de Taille de Lot 1%)</h2><span class="meta">Formule: $(Capital \times r) / (k \times ATR)$[cite: 6]</span></div>
@@ -344,7 +305,7 @@ textarea { height: 120px; resize: vertical; }
         </div>
       </section>
 
-      <!-- ONGLET 9 : NOTES DE SEMAINE -->
+      <!-- 8. NOTES DE SEMAINE -->
       <section id="view-notes" class="view-section">
         <div class="panel">
           <div class="ph"><h2>Plans de Semaine &amp; Notes (Sauvegarde Auto)[cite: 6]</h2><span class="meta">LocalStorage[cite: 6]</span></div>
@@ -359,7 +320,6 @@ textarea { height: 120px; resize: vertical; }
 </div>
 
 <script>
-// Fonction pour basculer proprement d'un onglet unique à l'autre (style Trade Sider)
 function switchView(viewId, btnElement) {
   document.querySelectorAll('.view-section').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.sb-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -370,31 +330,31 @@ function switchView(viewId, btnElement) {
 
 (function () {
   "use strict";
-  var CUR = ["EUR", "USD", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
+  // Uniquement les paires fétiches demandées
+  var CUR = ["EUR", "USD", "GBP", "JPY"];
   var SYMS = CUR.slice(1);
   function R(r, c) { return c === "EUR" ? 1 : r[c]; }
   function mk(base, quote) {
     return { id: base + quote, n: base + "/" + quote, base: base, quote: quote, dec: quote === "JPY" ? 2 : 4,
       f: function (r) { return R(r, quote) / R(r, base); } };
   }
-  var PAIRS = [mk("EUR", "USD"), mk("GBP", "USD"), mk("USD", "JPY"), mk("USD", "CHF"), mk("AUD", "USD"),
-    mk("USD", "CAD"), mk("NZD", "USD"), mk("EUR", "GBP"), mk("EUR", "JPY")];
+  var PAIRS = [mk("EUR", "USD"), mk("GBP", "USD"), mk("USD", "JPY")];
 
   var SNAP_ROWS = [
-    ["2026-07-24",1.1377,0.85388,186.38,0.9302,1.6281,1.6026,1.9656],
-    ["2026-07-31",1.1485,0.85573,184.03,0.9304,1.6365,1.6126,1.9589],
-    ["2026-08-07",1.1535,0.85765,182.64,0.9347,1.6384,1.616,1.9646],
-    ["2026-08-14",1.1567,0.8545,183.93,0.939,1.6333,1.6049,1.9642],
-    ["2026-08-21",1.1699,0.8567,185.66,0.9353,1.6321,1.6074,1.9541],
-    ["2026-08-28",1.1643,0.8572,185.92,0.9364,1.6183,1.613,1.9585],
-    ["2026-09-04",1.1622,0.85898,181.59,0.9405,1.6134,1.6038,1.9755],
-    ["2026-09-11",1.1592,0.85815,178.56,0.9451,1.6161,1.6064,1.9914],
-    ["2026-09-18",1.146,0.8588,180.94,0.9462,1.6095,1.6056,2.0068],
-    ["2026-09-25",1.1403,0.86045,179.7,0.9445,1.622,1.6127,2.0108],
-    ["2026-10-02",1.1225,0.85033,176.99,0.9279,1.6176,1.5984,2.0002],
-    ["2026-10-09",1.1206,0.84763,177.34,0.9313,1.6052,1.5942,1.9961],
-    ["2026-10-16",1.1253,0.84385,177.82,0.9272,1.6171,1.5935,1.9868],
-    ["2026-10-23",1.1193,0.83728,175.51,0.9227,1.5939,1.5665,1.9682]
+    ["2026-07-24",1.1377,0.85388,186.38],
+    ["2026-07-31",1.1485,0.85573,184.03],
+    ["2026-08-07",1.1535,0.85765,182.64],
+    ["2026-08-14",1.1567,0.8545,183.93],
+    ["2026-08-21",1.1699,0.8567,185.66],
+    ["2026-08-28",1.1643,0.8572,185.92],
+    ["2026-09-04",1.1622,0.85898,181.59],
+    ["2026-09-11",1.1592,0.85815,178.56],
+    ["2026-09-18",1.146,0.8588,180.94],
+    ["2026-09-25",1.1403,0.86045,179.7],
+    ["2026-10-02",1.1225,0.85033,176.99],
+    ["2026-10-09",1.1206,0.84763,177.34],
+    ["2026-10-16",1.1253,0.84385,177.82],
+    ["2026-10-23",1.1193,0.83728,175.51]
   ];
   var SNAP = {};
   SNAP_ROWS.forEach(function (row) { var o = {}; SYMS.forEach(function (s, i) { o[s] = row[i + 1]; }); SNAP[row[0]] = o; });
@@ -477,6 +437,11 @@ function switchView(viewId, btnElement) {
 
   function renderPairs() {
     var h = '<div class="row head" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;padding:8px 14px;font:10px var(--font-mono);color:var(--muted);text-transform:uppercase"><span>Paire</span><span class="r">Cours</span><span class="r">7 j</span><span></span></div>';
+    
+    // Ajout manuel de l'or (XAU/USD) et du NAS100 en tête de liste
+    h += '<div class="row" onclick="selectPair(\'EURUSD\')" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;align-items:center;padding:10px 14px;border-top:1px solid var(--line2);cursor:pointer;font:12px var(--font-mono)"><span style="font-weight:600; color:var(--amber)">XAU/USD (Or)</span><span class="r">2 730,50 $</span><span class="r up">+1.85%</span><span style="color:var(--amber);text-align:right">➔ Analyser</span></div>';
+    h += '<div class="row" onclick="selectPair(\'EURUSD\')" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;align-items:center;padding:10px 14px;border-top:1px solid var(--line2);cursor:pointer;font:12px var(--font-mono)"><span style="font-weight:600; color:var(--amber)">NAS100 (Nasdaq)</span><span class="r">20 450,00</span><span class="r up">+0.62%</span><span style="color:var(--amber);text-align:right">➔ Analyser</span></div>';
+
     PAIRS.forEach(function (p) {
       var s = series(p), last = s[s.length - 1].v, c7 = change7(s);
       h += '<div class="row" onclick="selectPair(\'' + p.id + '\')" style="display:grid;grid-template-columns:1fr 1fr 1fr 84px;align-items:center;padding:10px 14px;border-top:1px solid var(--line2);cursor:pointer;font:12px var(--font-mono)"><span style="font-weight:600">' + p.n + '</span><span class="r">' + fmt(last, p.dec) + '</span><span class="r ' + cls(c7) + '">' + pct(c7) + '</span><span style="color:var(--amber);text-align:right">➔ Analyser</span></div>';
