@@ -39,8 +39,7 @@ a { color: inherit; text-decoration: none; }
 .clocks { display: flex; flex-wrap: wrap; gap: 4px 16px; font: 11px var(--font-mono); color: var(--muted); }
 .clocks b { color: var(--fg); font-weight: 500; }
 .status { display: inline-flex; align-items: center; gap: 8px; font: 11px var(--font-mono); color: var(--muted); border: 1px solid var(--line); padding: 3px 10px; }
-.status i { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); flex: none; }
-.status.live i { background: var(--up); }
+.status i { width: 7px; height: 7px; border-radius: 50%; background: var(--up); flex: none; }
 
 .tape { display: flex; gap: 0; overflow-x: auto; border: 1px solid var(--line); background: var(--panel); scrollbar-width: thin; }
 .tape .t { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px; white-space: nowrap; border-right: 1px solid var(--line2); font: 12px var(--font-mono); }
@@ -86,7 +85,6 @@ table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 7px 12px; border-top: 1px solid var(--line2); white-space: nowrap; font-size: 12px; }
 th { border-top: 0; font: 500 10px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 td.r, th.r { text-align: right; }
-td small { color: var(--muted); font-family: var(--font-mono); }
 .tag { display: inline-block; font: 11px var(--font-mono); padding: 0 7px; border: 1px solid var(--line); color: var(--muted); }
 .tag.hike { border-color: var(--amber); color: var(--amber); }
 .badge { text-align: center; font: 600 10px var(--font-mono); letter-spacing: 0.1em; padding: 2px 6px; border: 1px solid var(--line); color: var(--muted); }
@@ -134,8 +132,7 @@ textarea { resize: vertical; height: 90px; }
   .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 }
 </style>
-</head>
-<body><div class="shell">
+</head><body><div class="shell">
   <nav class="side" aria-label="Sections"><div class="side-in">
     <div class="brand"><span class="mark"></span>TOP ONE VM</div>
     <div class="grp">MARCHÉS</div>
@@ -159,10 +156,10 @@ textarea { resize: vertical; height: 90px; }
     <header class="top">
       <div class="brand"><span class="mark"></span>TOP ONE VM — TERMINAL INSTITUTIONNEL PRO</div>
       <div class="clocks" id="clocks" aria-label="Heure"></div>
-      <div class="status" id="status"><i></i><span id="statusText">Chargement…</span></div>
+      <div class="status" id="status"><i></i><span id="statusText">STABLE · MODE PRO</span></div>
     </header>
 
-    <!-- Ticker Supérieur en Temps Réel -->
+    <!-- Ticker Supérieur -->
     <div class="tape" id="tape" aria-label="Cours des paires"></div>
 
     <div class="grid">
@@ -189,6 +186,7 @@ textarea { resize: vertical; height: 90px; }
           <div class="sess" id="sess"></div>
         </section>
       </div>
+
       <!-- COLONNE CENTRALE -->
       <div class="col">
         <section class="panel" id="selPanel">
@@ -283,6 +281,7 @@ textarea { resize: vertical; height: 90px; }
           <div class="readout" id="readout"></div>
         </section>
       </div>
+
       <!-- COLONNE DROITE -->
       <div class="col">
         <section class="panel" id="banques">
@@ -348,7 +347,7 @@ textarea { resize: vertical; height: 90px; }
       </div>
     </div>
 
-    <!-- OUTILS DE GESTION DU RISQUE ET NOTES (SANS JOURNAL DE TRADING) -->
+    <!-- OUTILS DE GESTION DU RISQUE ET NOTES -->
     <div class="tools">
       <section class="panel" id="calc">
         <div class="ph"><h2>VM Risk Engine (Calculateur de Risque 1%)</h2><span class="meta">Gestion institutionnelle</span></div>
@@ -383,7 +382,6 @@ textarea { resize: vertical; height: 90px; }
   "use strict";
   var CUR = ["EUR", "USD", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
   var SYMS = CUR.slice(1);
-  var ORDER = ["EUR", "GBP", "AUD", "NZD", "USD", "CAD", "CHF", "JPY"];
   var COL = { EUR: "#4da3ff", USD: "#3ddc97", GBP: "#c77dff", JPY: "#f4f1e8", CHF: "#ff6fa5", AUD: "#f2b01e", CAD: "#ff7a45", NZD: "#22d3dd" };
 
   function R(r, c) { return c === "EUR" ? 1 : r[c]; }
@@ -414,7 +412,7 @@ textarea { resize: vertical; height: 90px; }
   SNAP_ROWS.forEach(function (row) { var o = {}; SYMS.forEach(function (s, i) { o[s] = row[i + 1]; }); SNAP[row[0]] = o; });
 
   var $ = function (id) { return document.getElementById(id); };
-  var state = { data: SNAP, live: false, sel: "EURUSD", win: 92 };
+  var state = { data: SNAP, sel: "EURUSD", win: 92 };
   var NS = "http://www.w3.org/2000/svg";
 
   function fmt(v, d) { return v.toFixed(d).replace(".", ","); }
@@ -575,4 +573,92 @@ textarea { resize: vertical; height: 90px; }
       var s = series(p), last = s[s.length - 1].v, c7 = change7(s);
       h += '<button class="row" type="button" data-id="' + p.id + '" aria-pressed="' + (p.id === state.sel) + '"><span class="pn">' + p.n + '</span><span class="r">' + fmt(last, p.dec) +
         '</span><span class="r ' + cls(c7) + '">' + pct(c7) + "</span>" + spark(s) + "</button>";
-      tape += '<div class="t"><b>' + p.n.replace("/", "") + "</b><span>" + fmt(last, p.dec) + '</span><small class="' + cls(c7) + '">'
+      tape += '<div class="t"><b>' + p.n.replace("/", "") + "</b><span>" + fmt(last, p.dec) + '</span><small class="' + cls(c7) + '">' + pct(c7) + "</small></div>";
+    });
+    $("pairs").innerHTML = h; $("tape").innerHTML = tape;
+  }
+
+  var SESS = [["Sydney", "Australia/Sydney", 7, 16], ["Tokyo", "Asia/Tokyo", 9, 18], ["Londres", "Europe/London", 8, 17], ["New York", "America/New_York", 8, 17]];
+  function localParts(tz, now) {
+    var f = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hourCycle: "h23", weekday: "short", hour: "2-digit", minute: "2-digit" }).formatToParts(now), o = {};
+    f.forEach(function (x) { o[x.type] = x.value; });
+    return { wd: o.weekday, h: parseInt(o.hour, 10), m: o.minute };
+  }
+  function renderClocks() {
+    var now = new Date(), pad = function (n) { return String(n).padStart(2, "0"); };
+    $("clocks").innerHTML = "<span>UTC <b>" + pad(now.getUTCHours()) + ":" + pad(now.getUTCMinutes()) + ":" + pad(now.getUTCSeconds()) + "</b></span>";
+    var d = now.getUTCDay(), h = now.getUTCHours(), closed = d === 6 || (d === 5 && h >= 22) || (d === 0 && h < 22);
+    $("fxState").textContent = closed ? "Fermé" : "Ouvert";
+    $("sess").innerHTML = SESS.map(function (s) {
+      var p = localParts(s[1], now), open = p.wd !== "Sat" && p.wd !== "Sun" && p.h >= s[2] && p.h < s[3];
+      return '<div class="srow"><span>' + s[0] + '</span><span class="num" style="color:var(--muted)">' + pad(p.h) + ":" + p.m + '</span><span class="badge ' + (open ? "on" : "off") + '">' + (open ? "OUVERT" : "FERMÉ") + "</span></div>";
+    }).join("");
+  }
+
+  var touched = false;
+  function num(id) { return parseFloat(String($(id).value).replace(",", ".").replace(/\s/g, "")); }
+  function resetEntry() {
+    var p = pairOf($("cPair").value), s = series(p), price = s[s.length - 1].v, buy = $("cDir").value === "buy", d = 25 * pipSize(p);
+    $("cEntry").value = price.toFixed(p.dec === 2 ? 3 : 5);
+    $("cStop").value = (buy ? price - d : price + d).toFixed(p.dec === 2 ? 3 : 5);
+    touched = false;
+  }
+  function calc() {
+    var p = pairOf($("cPair").value), dates_ = dates(), rates = state.data[dates_[dates_.length - 1]];
+    var r = sizing({ balance: num("cBal"), riskPct: num("cRisk"), pair: p, dir: $("cDir").value, entry: num("cEntry"), stop: num("cStop"), rr: num("cRR"), rates: rates });
+    var out = $("cOut");
+    if (r.err) { out.innerHTML = '<div class="err">' + r.err + "</div>"; return; }
+    var dd = p.quote === "JPY" ? 3 : 5, money = function (v) { return "$" + v.toFixed(2).replace(".", ","); };
+    out.innerHTML =
+      '<div class="stat big"><small>Taille Position</small><b>' + fmt(r.lots, 2) + " lot(s)</b></div>" +
+      '<div class="stat"><small>Risque Réel (1%)</small><b class="down">' + money(r.realRisk) + "</b></div>" +
+      '<div class="stat"><small>Gain Visé</small><b class="up">' + money(r.reward) + "</b></div>" +
+      '<div class="stat"><small>Cible (Prix)</small><b>' + fmt(r.target, dd) + "</b></div>";
+  }
+  function initCalc() {
+    $("cPair").innerHTML = PAIRS.map(function (p) { return '<option value="' + p.id + '">' + p.n + "</option>"; }).join("");
+    resetEntry(); calc();
+    ["cBal", "cRisk", "cRR", "cStop"].forEach(function (id) { $(id).addEventListener("input", calc); });
+    $("cEntry").addEventListener("input", function () { touched = true; calc(); });
+    $("cPair").addEventListener("change", function () { resetEntry(); calc(); });
+    $("cDir").addEventListener("change", function () { resetEntry(); calc(); });
+  }
+
+  window.saveNotes = function() {
+    localStorage.setItem("vm_terminal_notes", $("quickNotes").value);
+  };
+  function loadNotes() {
+    var saved = localStorage.getItem("vm_terminal_notes");
+    if (saved) $("quickNotes").value = saved;
+  }
+
+  $("pairs").addEventListener("click", function (e) {
+    var b = e.target.closest("button.row"); if (!b) return;
+    state.sel = b.getAttribute("data-id"); renderPairs(); drawPair();
+  });
+  var seg = document.querySelectorAll(".seg button[data-w]");
+  Array.prototype.forEach.call(seg, function (b) {
+    b.addEventListener("click", function () {
+      state.win = parseInt(b.getAttribute("data-w"), 10);
+      Array.prototype.forEach.call(seg, function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      drawStrength();
+    });
+  });
+  function idx(e, svg, W, L, Rm, n) {
+    var r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, i = Math.round((x - L) / (W - L - Rm) * (n - 1));
+    return Math.max(0, Math.min(n - 1, i));
+  }
+  $("chart").addEventListener("pointermove", function (e) { if (cur) showPoint(idx(e, $("chart"), cur.W, cur.L, cur.Rm, cur.s.length), false); });
+  $("chart").addEventListener("pointerleave", function () { if (cur) showPoint(cur.s.length - 1, true); });
+  $("strength").addEventListener("pointermove", function (e) { if (SW) drawReadout(idx(e, $("strength"), SW.W, SW.L, SW.Rm, SW.n), false); });
+  $("strength").addEventListener("pointerleave", function () { if (SW) drawReadout(SW.n - 1, true); });
+
+  renderClocks(); setInterval(renderClocks, 1000);
+  loadNotes();
+  renderPairs();
+  drawPair();
+  drawStrength();
+  initCalc();
+})();
+</script>
+</body></html>
