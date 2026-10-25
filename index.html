@@ -19,7 +19,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--font-body); }
-a { color: inherit; }
+a { color: inherit; text-decoration: none; }
 .mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .up { color: var(--up); } .down { color: var(--down); }
 :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
@@ -78,16 +78,6 @@ a { color: inherit; }
 svg.chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
 svg.chart text { fill: var(--muted); font: 10px var(--font-mono); }
 
-.readout { display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 0 12px 12px; }
-.ro { display: inline-flex; align-items: center; gap: 6px; font: 11px var(--font-mono); border: 1px solid var(--line2); padding: 2px 8px; }
-.ro i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
-.duo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.gauge-wrap svg { width: 100%; max-width: 260px; height: auto; display: block; }
-.gauge-wrap svg text { fill: var(--muted); font: 10px var(--font-mono); }
-.gauge-lbl { font: 600 12px var(--font-mono); letter-spacing: 0.12em; }
-.hint { color: var(--muted); font-size: 12px; margin: 0; max-width: 60ch; }
-
 .tbl { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 7px 12px; border-top: 1px solid var(--line2); white-space: nowrap; font-size: 12px; }
@@ -100,14 +90,10 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .badge.on { border-color: var(--up); color: var(--up); background: rgba(61,220,151,0.1); }
 .badge.off { border-color: var(--down); color: var(--down); background: rgba(255,92,79,0.1); }
 
-.agenda { list-style: none; margin: 0; padding: 0; }
-.agenda li { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 7px 12px; border-top: 1px solid var(--line2); }
-.agenda li:first-child { border-top: 0; }
-.agenda .d { color: var(--muted); font: 11px var(--font-mono); }
-.agenda .in { font: 11px var(--font-mono); color: var(--muted); }
-.agenda li.soon .in { color: var(--amber); font-weight: 600; }
-.warn { margin: 0; padding: 8px 12px; border-bottom: 1px solid var(--line2); background: var(--amber-soft); font-size: 12px; }
-.warn b { color: var(--amber); }
+.news-feed { display: flex; flex-direction: column; max-height: 220px; overflow-y: auto; }
+.news-item { padding: 8px 12px; border-top: 1px solid var(--line2); display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.news-item:first-child { border-top: 0; }
+.news-time { font: 10px var(--font-mono); color: var(--amber); }
 
 .sess { display: flex; flex-direction: column; }
 .srow { display: grid; grid-template-columns: 1fr auto 74px; gap: 8px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--line2); font: 12px var(--font-mono); }
@@ -117,8 +103,9 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .calc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 12px; }
 .form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .form label { display: flex; flex-direction: column; gap: 4px; font: 10px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); min-width: 0; }
-input, select { width: 100%; min-width: 0; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 0; padding: 7px 8px; font: 13px var(--font-mono); }
-input:focus, select:focus { border-color: var(--amber); outline: none; }
+input, select, textarea { width: 100%; min-width: 0; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 0; padding: 7px 8px; font: 13px var(--font-mono); }
+input:focus, select:focus, textarea:focus { border-color: var(--amber); outline: none; }
+textarea { resize: vertical; height: 90px; }
 .out { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; }
 .stat { border: 1px solid var(--line2); padding: 8px 10px; display: flex; flex-direction: column; gap: 0; min-width: 0; }
 .stat small { font: 10px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
@@ -126,20 +113,10 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
 .stat.big { grid-column: 1 / -1; border-color: var(--amber); background: var(--amber-soft); }
 .stat.big b { font-size: 26px; color: var(--amber); }
 .err { grid-column: 1 / -1; border: 1px solid var(--down); color: var(--down); padding: 8px 10px; font-size: 12px; }
-.checks { list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-.checks label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 13px; }
-.checks input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--amber); flex: none; }
-.checks li.done label span { color: var(--muted); text-decoration: line-through; }
-.score { padding: 0 12px 12px; font: 12px var(--font-mono); color: var(--muted); }
-.score b { color: var(--amber); }
-.advice { margin: 0; padding: 12px 12px 12px 28px; display: flex; flex-direction: column; gap: 6px; }
-.advice li::marker { color: var(--amber); }
 .note { color: var(--muted); font-size: 11px; margin: 0; padding: 8px 12px; border-top: 1px solid var(--line2); }
 
 @media (min-width: 640px) {
-  .duo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .calc { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
-  .form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 1100px) {
   .shell { grid-template-columns: 176px minmax(0, 1fr); }
@@ -159,46 +136,60 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
   <nav class="side" aria-label="Sections"><div class="side-in">
     <div class="brand"><span class="mark"></span>TOP ONE VM</div>
     <div class="grp">MARCHÉS</div>
-    <a href="#apercu">Aperçu</a>
+    <a href="#apercu">Aperçu &amp; Ticker</a>
     <a href="#paires">Paires &amp; Or</a>
     <a href="#force">Force des devises</a>
-    <div class="grp">MACRO &amp; BANQUES</div>
-    <a href="#banques">Banques &amp; Prévisions</a>
-    <a href="#indicateurs">Indicateurs clés</a>
-    <a href="#retail">Retail &amp; COT</a>
-    <a href="#agenda">Agenda</a>
-    <div class="grp">OUTILS</div>
-    <a href="#calc">Calculateur</a>
-    <a href="#check">Checklist</a>
-    <a href="#conseils">Gestion du risque</a>
+    <div class="grp">MACRO &amp; FONDAMENTAL</div>
+    <a href="#bankConsensus">Consensus Banques</a>
+    <a href="#dotplot">Dot Plot &amp; Projections</a>
+    <a href="#indicateurs">Indicateurs &amp; Spreads</a>
+    <a href="#cot">COT &amp; Retail Sentiment</a>
+    <a href="#saisonnalite">Saisonnalité Or (20 ans)</a>
+    <a href="#newsFeed">Flux &amp; Squawk Live</a>
+    <div class="grp">OUTILS &amp; PLAN</div>
+    <a href="#calc">Calculateur de Risque</a>
+    <a href="#quickNotes">Notes de Semaine</a>
   </div></nav>
 
   <div class="main" id="apercu">
     <header class="top">
-      <div class="brand"><span class="mark"></span>TOP ONE VM</div>
+      <div class="brand"><span class="mark"></span>TOP ONE VM — TERMINAL INSTITUTIONNEL</div>
       <div class="clocks" id="clocks" aria-label="Heure"></div>
       <div class="status" id="status"><i></i><span id="statusText">Chargement…</span></div>
     </header>
 
+    <!-- 1. BANDEAU DE COTATIONS EN DIRECT -->
     <div class="tape" id="tape" aria-label="Cours des paires"></div>
 
     <div class="grid">
-      <!-- COLONNE GAUCHE : Paires & Sessions -->
+      <!-- COLONNE GAUCHE : Paires, XAU/USD & Sessions -->
       <div class="col">
         <section class="panel" id="paires">
-          <div class="ph"><h2>Paires &amp; Marchés</h2><span class="meta">clic = graphique</span></div>
+          <div class="ph"><h2>Paires &amp; Marchés Clés</h2><span class="meta">clic = graphique</span></div>
           <div id="pairs"></div>
         </section>
+
+        <section class="panel" id="xauFocus">
+          <div class="ph"><h2>XAU/USD — Focus Semaine</h2><span class="meta">Or / Actif refuge</span></div>
+          <div class="tbl">
+            <table>
+              <tr><td>Variation Jour / Semaine</td><td class="r"><span class="up">+0.45%</span> / <span class="up">+1.85%</span></td></tr>
+              <tr><td>Plus Haut / Plus Bas (7J)</td><td class="r num">2 760.20 $ / 2 705.50 $</td></tr>
+              <tr><td>Biais Technique Institutionnel</td><td class="r"><span class="badge on">BULLISH HAUT</span></td></tr>
+            </table>
+          </div>
+        </section>
+
         <section class="panel" id="sessions">
-          <div class="ph"><h2>Sessions</h2><span class="meta" id="fxState"></span></div>
+          <div class="ph"><h2>Horloge Sessions &amp; Killzones</h2><span class="meta" id="fxState"></span></div>
           <div class="sess" id="sess"></div>
         </section>
       </div>
 
-      <!-- COLONNE CENTRALE : Graphique, Force, Banques & Prévisions -->
+      <!-- COLONNE CENTRALE : Graphique, Force, Consensus & Projections Macro -->
       <div class="col">
         <section class="panel" id="selPanel">
-          <div class="ph"><h2>Graphique &amp; Analyse</h2><span class="meta" id="selMeta">3 mois</span></div>
+          <div class="ph"><h2>Graphique &amp; Analyse Technique</h2><span class="meta" id="selMeta">3 mois</span></div>
           <div class="pb">
             <div class="sel-top">
               <div>
@@ -215,47 +206,49 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
           </div>
         </section>
 
-        <!-- XAU/USD Performance & Focus Semaine -->
-        <section class="panel" id="xauFocus">
-          <div class="ph"><h2>XAU/USD — Focus &amp; Performance Semaine</h2><span class="meta">Or / Macro</span></div>
-          <div class="tbl">
-            <table>
-              <tr><td>Variation Jour / Semaine</td><td class="r"><span class="up">+0.45%</span> / <span class="up">+1.85%</span></td></tr>
-              <tr><td>Plus Haut / Plus Bas (7J)</td><td class="r num">2 760.20 $ / 2 705.50 $</td></tr>
-              <tr><td>Biais Technique Institutionnel</td><td class="r"><span class="badge on">BULLISH HAUT</span></td></tr>
-            </table>
-          </div>
-        </section>
-
-        <!-- Consensus & Prévisions Banques -->
+        <!-- 2. CONSENSUS & PRÉVISIONS BANQUES D'INVESTISSEMENT -->
         <section class="panel" id="bankConsensus">
-          <div class="ph"><h2>Consensus &amp; Prévisions (Morgan Stanley &amp; Co.)</h2><span class="meta">Veille fondamentale</span></div>
+          <div class="ph"><h2>Consensus &amp; Prévisions Banques (Morgan Stanley, GS...)</h2><span class="meta">Biais long terme</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Institution</th><th>Actif</th><th>Biais</th><th class="r">Cible / Note</th></tr></thead>
+              <thead><tr><th>Institution</th><th>Actif</th><th>Biais</th><th class="r">Cible / Anticipation</th></tr></thead>
               <tbody>
-                <tr><td><b>Morgan Stanley</b></td><td>XAU/USD</td><td><span class="badge on">Bullish</span></td><td class="r num">Cible 2 850$ (Achats replis)</td></tr>
-                <tr><td><b>Goldman Sachs</b></td><td>XAU/USD</td><td><span class="badge on">Bullish</span></td><td class="r num">Achats Banques Centrales robustes</td></tr>
-                <tr><td><b>JPMorgan</b></td><td>EUR/USD</td><td><span class="badge off">Bearish</span></td><td class="r num">Parité visée si divergence Fed</td></tr>
-                <tr><td><b>Citigroup</b></td><td>NAS100</td><td><span class="badge on">Neutre/Bull</span></td><td class="r num">Dépend des résultats Tech Q4</td></tr>
+                <tr><td><b>Morgan Stanley</b></td><td>XAU/USD</td><td><span class="badge on">Bullish</span></td><td class="r num">Cible 2 850$ (Achats sur replis)</td></tr>
+                <tr><td><b>Goldman Sachs</b></td><td>XAU/USD</td><td><span class="badge on">Bullish</span></td><td class="r num">Soutenu par les achats des Banques Centrales</td></tr>
+                <tr><td><b>JPMorgan</b></td><td>EUR/USD</td><td><span class="badge off">Bearish</span></td><td class="r num">Parité visée si divergence Fed / BCE</td></tr>
+                <tr><td><b>Citigroup</b></td><td>NAS100</td><td><span class="badge on">Neutre/Bull</span></td><td class="r num">Sensible aux perspectives de résultats Tech</td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <!-- Indicateurs Macro Étendus -->
-        <section class="panel" id="indicateurs">
-          <div class="ph"><h2>Indicateurs Macroéconomiques Clés (US &amp; Global)</h2><span class="meta">Fondamentaux</span></div>
+        <!-- 3. DOT PLOT & PROJECTIONS ÉCONOMIQUES FED / BCE -->
+        <section class="panel" id="dotplot">
+          <div class="ph"><h2>Projections Économiques &amp; Dot Plot (Fed)</h2><span class="meta">Trajectoire des taux</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Indicateur</th><th class="r">Actuel</th><th class="r">Consensus</th><th class="r">Impact Marché</th></tr></thead>
+              <thead><tr><th>Échéance</th><th>Taux Median Prévu</th><th>Pression / Anticipation Marché</th></tr></thead>
               <tbody>
-                <tr><td>US CPI (Inflation y/y)</td><td class="r num">2.7%</td><td class="r num">2.6%</td><td class="r"><span class="badge off">USD / Or</span></td></tr>
-                <tr><td>US Core PCE (Pression Fed)</td><td class="r num">2.8%</td><td class="r num">2.8%</td><td class="r"><span class="badge on">Pivot</span></td></tr>
-                <tr><td>US Non-Farm Payrolls (NFP)</td><td class="r num">142K</td><td class="r num">165K</td><td class="r"><span class="badge on">Gold Haussier</span></td></tr>
-                <tr><td>US Taux de Chômage</td><td class="r num">4.1%</td><td class="r num">4.1%</td><td class="r"><span class="badge on">Stable</span></td></tr>
-                <tr><td>US PIB (GDP q/q)</td><td class="r num">2.8%</td><td class="r num">2.9%</td><td class="r"><span class="badge on">Solide</span></td></tr>
-                <tr><td>US10Y - US02Y Spread</td><td class="r num">-15 bps</td><td class="r num">-10 bps</td><td class="r"><span class="badge off">Courbe Inversée</span></td></tr>
+                <tr><td><b>Fin 2026</b></td><td class="r num">3.75% – 4.00%</td><td><span class="tag hike">2 baisses de 25bps pricées</span></td></tr>
+                <tr><td><b>Fin 2027 (Long terme)</b></td><td class="r num">3.00% – 3.25%</td><td><span class="tag">Atterrissage en douceur (Soft Landing)</span></td></tr>
+                <tr><td><b>Neutre (R-Star)</b></td><td class="r num">2.80%</td><td><span class="tag">Seuil d'équilibre macroéconomique</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 8. COURBES DE TAUX & SPREADS -->
+        <section class="panel" id="indicateurs">
+          <div class="ph"><h2>Indicateurs Clés &amp; Spreads Obligataires</h2><span class="meta">Le carburant du Gold</span></div>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>Indicateur / Spread</th><th class="r">Actuel</th><th class="r">Consensus</th><th class="r">Impact Or / Forex</th></tr></thead>
+              <tbody>
+                <tr><td>US 10Y - 2Y Spread</td><td class="r num">-15 bps</td><td class="r num">-10 bps</td><td class="r"><span class="badge off">Courbe Inversée (Risque récession)</span></td></tr>
+                <tr><td>US Real Yields (10Y TIPS)</td><td class="r num">+1.85%</td><td class="r num">+1.90%</td><td class="r"><span class="badge off">Corrélé inversement à l'Or</span></td></tr>
+                <tr><td>US CPI (Inflation y/y)</td><td class="r num">2.7%</td><td class="r num">2.6%</td><td class="r"><span class="badge off">Pression sur le Dollar</span></td></tr>
+                <tr><td>US Non-Farm Payrolls (NFP)</td><td class="r num">142K</td><td class="r num">165K</td><td class="r"><span class="badge on">Volatilité immédiate USD/Gold</span></td></tr>
+                <tr><td>Dollar Index (DXY)</td><td class="r num">106.80</td><td class="r num">106.50</td><td class="r"><span class="tag">Tendance haussière court terme</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -263,7 +256,7 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
 
         <section class="panel" id="force">
           <div class="ph">
-            <h2>Force des devises</h2>
+            <h2>Force relative des devises</h2>
             <div class="seg" role="group" aria-label="Période">
               <button type="button" data-w="30" aria-pressed="false">1M</button>
               <button type="button" data-w="92" aria-pressed="true">3M</button>
@@ -274,88 +267,100 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
         </section>
       </div>
 
-      <!-- COLONNE DROITE : Banques Centrales, Retail, COT & Agenda -->
+      <!-- COLONNE DROITE : Banques Centrales, COT, Retail, Saisonnalité & Actualités -->
       <div class="col">
         <section class="panel" id="banques">
-          <div class="ph"><h2>Banques Centrales &amp; Taux</h2><span class="meta">Politique monétaire</span></div>
+          <div class="ph"><h2>Banques Centrales &amp; Probabilités</h2><span class="meta">Taux directeurs</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Banque</th><th class="r">Taux</th><th>Prochaine / Prob.</th></tr></thead>
+              <thead><tr><th>Banque</th><th class="r">Taux</th><th>Anticipation Prochaine Réunion</th></tr></thead>
               <tbody>
-                <tr><td><b>Fed (USD)</b></td><td class="r num">4.50%</td><td><span class="tag hike">80% Maintien</span></td></tr>
-                <tr><td><b>BCE (EUR)</b></td><td class="r num">3.25%</td><td><span class="tag hike">85% Baisse</span></td></tr>
-                <tr><td><b>BoE (GBP)</b></td><td class="r num">4.75%</td><td><span class="tag hike">70% Maintien</span></td></tr>
-                <tr><td><b>BoJ (JPY)</b></td><td class="r num">0.25%</td><td><span class="tag hike">60% Hausse</span></td></tr>
+                <tr><td><b>Fed (USD)</b></td><td class="r num">4.50%</td><td><span class="tag hike">80% Maintien / 20% Baisse</span></td></tr>
+                <tr><td><b>BCE (EUR)</b></td><td class="r num">3.25%</td><td><span class="tag hike">85% Baisse de 25 bps</span></td></tr>
+                <tr><td><b>BoE (GBP)</b></td><td class="r num">4.75%</td><td><span class="tag hike">70% Maintien des taux</span></td></tr>
+                <tr><td><b>BoJ (JPY)</b></td><td class="r num">0.25%</td><td><span class="tag hike">60% Hausse progressive</span></td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <!-- Retail Sentiment & COT -->
-        <section class="panel" id="retail">
-          <div class="ph"><h2>Retail Sentiment &amp; COT</h2><span class="meta">Contrarian / Smart Money</span></div>
+        <!-- 6 & 7. RETAIL SENTIMENT & DONNÉES INSTITUTIONNELLES COT -->
+        <section class="panel" id="cot">
+          <div class="ph"><h2>Retail Sentiment &amp; Données COT (CFTC)</h2><span class="meta">Smart Money vs Crowd</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Actif</th><th class="r">Long / Short</th><th>Signal / COT</th></tr></thead>
+              <thead><tr><th>Actif</th><th class="r">Particuliers (Long/Short)</th><th>Smart Money / Fonds (COT)</th></tr></thead>
               <tbody>
-                <tr><td><b>XAU/USD</b></td><td class="r num">32% / 68%</td><td><span class="badge on">CONTRARIAN BUY</span></td></tr>
-                <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">CONTRARIAN SELL</span></td></tr>
-                <tr><td><b>NAS100</b></td><td class="r num">75% / 25%</td><td><span class="badge off">CONTRARIAN SELL</span></td></tr>
+                <tr><td><b>XAU/USD</b></td><td class="r num">32% / 68%</td><td><span class="badge on">Fonds Net Long Élevé</span></td></tr>
+                <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">Fonds Net Short / Commercials Long</span></td></tr>
+                <tr><td><b>NAS100</b></td><td class="r num">75% / 25%</td><td><span class="badge off">Retail Suracheté (Contrarian Sell)</span></td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <section class="panel" id="risque">
-          <div class="ph"><h2>Appétit pour le risque</h2><span class="meta">proxy FX</span></div>
-          <div class="pb gauge-wrap">
-            <svg id="gauge" viewBox="0 0 200 128" role="img" aria-label="Jauge d'appétit pour le risque"></svg>
-            <div class="gauge-lbl" id="gaugeLbl"></div>
-            <p class="hint">AUD, NZD et CAD face à JPY et CHF.</p>
+        <!-- 9. SAISONNALITÉ HISTORIQUE (20 ANS) -->
+        <section class="panel" id="saisonnalite">
+          <div class="ph"><h2>Saisonnalité Historique (XAU/USD)</h2><span class="meta">Statistiques 20 ans</span></div>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>Mois en cours</th><th>Taux de Réussite Haussier</th><th>Tendance Historique</th></tr></thead>
+              <tbody>
+                <tr><td><b>Octobre</b></td><td class="r num">62%</td><td><span class="badge on">Solide (Achats physiques &amp; refuges)</span></td></tr>
+                <tr><td><b>Novembre</b></td><td class="r num">68%</td><td><span class="badge on">Très Haussier (Rallye de fin d'année)</span></td></tr>
+                <tr><td><b>Décembre</b></td><td class="r num">70%</td><td><span class="badge on">Forte saisonnalité haussière Or</span></td></tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
-        <section class="panel" id="agenda">
-          <div class="ph"><h2>Prochaines réunions</h2><span class="meta">décisions</span></div>
-          <p class="warn" id="weekWarn" hidden></p>
-          <ul class="agenda" id="agendaList"></ul>
+        <!-- 4. FLUX MACRO & DÉPÊCHES EN DIRECT (SQUAWK) -->
+        <section class="panel" id="newsFeed">
+          <div class="ph"><h2>Flux Macro &amp; Dépêches Live (Squawk)</h2><span class="meta">Actualités temps réel</span></div>
+          <div class="news-feed">
+            <div class="news-item">
+              <span class="news-time">11:15 UTC — RÉSULTATS US</span>
+              <span>Les rendements obligataires US se stabilisent avant l'adjudication du Trésor à 10 ans. L'or teste ses supports intraday.</span>
+            </div>
+            <div class="news-item">
+              <span class="news-time">10:00 UTC — BCE / ZONE EURO</span>
+              <span>La présidente de la BCE insiste sur l'approche dépendante des données économiques pour la réunion de novembre.</span>
+            </div>
+            <div class="news-item">
+              <span class="news-time">08:30 UTC — MARCHÉS ASIATIQUES</span>
+              <span>Achats continus de lingots par les banques centrales asiatiques signalés sur les marchés physiques de Shanghai.</span>
+            </div>
+          </div>
         </section>
       </div>
     </div>
 
-    <!-- OUTILS DE TRADING -->
+    <!-- 11. OUTILS DE TRADING & GESTION DU RISQUE (SANS JOURNAL DE TRADING) -->
     <div class="tools">
       <section class="panel" id="calc">
-        <div class="ph"><h2>Calculateur de position</h2><span class="meta">compte en USD</span></div>
+        <div class="ph"><h2>VM Risk Engine (Calculateur de Risque 1%)</h2><span class="meta">Gestion institutionnelle</span></div>
         <div class="calc">
           <div class="form">
-            <label for="cBal">Capital (USD)<input id="cBal" inputmode="decimal" value="10000" autocomplete="off"></label>
-            <label for="cRisk">Risque par trade (%)<input id="cRisk" inputmode="decimal" value="1" autocomplete="off"></label>
-            <label for="cPair">Paire<select id="cPair"></select></label>
-            <label for="cDir">Sens<select id="cDir"><option value="buy">Achat</option><option value="sell">Vente</option></select></label>
-            <label for="cEntry">Prix d'entrée<input id="cEntry" inputmode="decimal" autocomplete="off"></label>
-            <label for="cStop">Stop (prix)<input id="cStop" inputmode="decimal" autocomplete="off"></label>
-            <label for="cRR">Gain visé / risque<input id="cRR" inputmode="decimal" value="2" autocomplete="off"></label>
+            <label for="cBal">Capital du Compte (USD)<input id="cBal" inputmode="decimal" value="10000" autocomplete="off"></label>
+            <label for="cRisk">Risque par Trade (%)<input id="cRisk" inputmode="decimal" value="1" autocomplete="off"></label>
+            <label for="cPair">Paire / Actif<select id="cPair"></select></label>
+            <label for="cDir">Sens du Trade<select id="cDir"><option value="buy">Achat (Long)</option><option value="sell">Vente (Short)</option></select></label>
+            <label for="cEntry">Prix d'Entrée<input id="cEntry" inputmode="decimal" autocomplete="off"></label>
+            <label for="cStop">Stop Loss (Prix)<input id="cStop" inputmode="decimal" autocomplete="off"></label>
+            <label for="cRR">Ratio Risque / Gain (RR)<input id="cRR" inputmode="decimal" value="3" autocomplete="off"></label>
           </div>
           <div class="out" id="cOut" aria-live="polite"></div>
         </div>
+        <p class="note">Respect strict de la règle des 1% de risque maximum par position avec objectifs calculés.</p>
       </section>
 
-      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-        <section class="panel" id="check">
-          <div class="ph"><h2>Checklist avant d'entrer</h2><button type="button" id="resetCheck" class="seg" style="font:11px var(--font-mono);color:var(--muted);background:transparent;padding:3px 10px;cursor:pointer">Réinitialiser</button></div>
-          <ul class="checks" id="checks"></ul>
-          <div class="score" id="checkScore"></div>
-        </section>
-        <section class="panel" id="conseils">
-          <div class="ph"><h2>Gestion du risque</h2></div>
-          <ul class="advice">
-            <li>Risquez 0,5 à 1 % du capital par trade.</li>
-            <li>Visez au moins 2 fois le risque en gain (1:2).</li>
-            <li>Placez toujours votre stop avant d'entrer sur le marché.</li>
-          </ul>
-        </section>
-      </div>
+      <section class="panel" id="quickNotesPanel">
+        <div class="ph"><h2>Plans de Semaine &amp; Notes (Sauvegarde Auto)</h2><span class="meta">LocalStorage</span></div>
+        <div class="pb">
+          <textarea id="quickNotes" placeholder="Note tes biais macro, tes plans sur le XAUUSD et tes zones d'intervention pour la semaine ici..." oninput="saveNotes()"></textarea>
+        </div>
+        <p class="note">Tes notes sont sauvegardées automatiquement dans ton navigateur.</p>
+      </section>
     </div>
   </div>
 </div>
@@ -394,20 +399,6 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
   ];
   var SNAP = {};
   SNAP_ROWS.forEach(function (row) { var o = {}; SYMS.forEach(function (s, i) { o[s] = row[i + 1]; }); SNAP[row[0]] = o; });
-
-  var MEETINGS = [
-    { d: "2026-10-28", b: "RBNZ", c: "NZD" }, { d: "2026-10-28", b: "Banque du Canada", c: "CAD" },
-    { d: "2026-10-29", b: "Fed", c: "USD" }, { d: "2026-10-29", b: "BCE", c: "EUR" },
-    { d: "2026-10-30", b: "Banque du Japon", c: "JPY" }, { d: "2026-11-03", b: "RBA", c: "AUD" },
-    { d: "2026-11-05", b: "Banque d'Angleterre", c: "GBP" }, { d: "2026-12-10", b: "BNS", c: "CHF" }
-  ];
-  var CHECKS = [
-    "Je connais la direction de fond (graphique journalier).",
-    "Aucune décision de banque centrale ni inflation dans les prochaines heures.",
-    "Mon stop est placé et il tient compte de la volatilité.",
-    "Je risque 1 % du capital ou moins.",
-    "Le gain visé vaut au moins 2 fois le risque."
-  ];
 
   var $ = function (id) { return document.getElementById(id); };
   var state = { data: SNAP, live: false, sel: "EURUSD", win: 92 };
@@ -448,11 +439,6 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
     var w = ds.filter(function (d) { return parseD(d).getTime() >= last - days * 864e5; });
     return w.length >= 3 ? w : ds.slice(-3);
   }
-  function riskScore() {
-    var s = strengthOver(dates()), end = function (c) { var a = s[c]; return a[a.length - 1]; };
-    var on = (end("AUD") + end("NZD") + end("CAD")) / 3, off = (end("JPY") + end("CHF")) / 2;
-    return Math.max(0, Math.min(100, Math.round(50 + (on - off) * 8)));
-  }
 
   function pipSize(p) { return p.quote === "JPY" ? 0.01 : 0.0001; }
   function usdPer(c, r) { return c === "USD" ? 1 : r.USD / R(r, c); }
@@ -465,7 +451,7 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
     var lots = Math.floor(riskUSD / (pips * pv) * 100 + 1e-6) / 100;
     var realRisk = lots * pips * pv;
     return { pips: pips, pipValue: pv, lots: lots, units: Math.round(lots * 100000), riskUSD: riskUSD, realRisk: realRisk,
-      target: o.dir === "buy" ? o.entry + dist * o.rr : o.entry - dist * o.rr, reward: realRisk * o.rr, be: 100 / (1 + o.rr) };
+      target: o.dir === "buy" ? o.entry + dist * o.rr : o.entry - dist * o.rr, reward: realRisk * o.rr };
   }
 
   function el(tag, attrs, parent) {
@@ -562,23 +548,6 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
     if (xh) { xh.setAttribute("x1", SW.sx(i)); xh.setAttribute("x2", SW.sx(i)); xh.setAttribute("visibility", isLast ? "hidden" : "visible"); }
   }
 
-  function drawGauge() {
-    var s = riskScore(), svg = $("gauge");
-    svg.textContent = "";
-    var pt = function (a, r) { var t = a * Math.PI / 180; return [100 - r * Math.cos(t), 100 - r * Math.sin(t)]; };
-    var arc = function (a0, a1, color) {
-      var p0 = pt(a0, 80), p1 = pt(a1, 80);
-      el("path", { d: "M" + p0[0].toFixed(1) + " " + p0[1].toFixed(1) + " A80 80 0 0 1 " + p1[0].toFixed(1) + " " + p1[1].toFixed(1), fill: "none", stroke: color, "stroke-width": 12 }, svg);
-    };
-    arc(0, 71, "#c4382e"); arc(73, 107, "#f2b01e"); arc(109, 180, "#2fb27a");
-    var tip = pt(s * 1.8, 64);
-    el("line", { x1: 100, y1: 100, x2: tip[0].toFixed(1), y2: tip[1].toFixed(1), stroke: "#ece8dc", "stroke-width": 2.5, "stroke-linecap": "round" }, svg);
-    el("circle", { cx: 100, cy: 100, r: 5, fill: "#ece8dc" }, svg);
-    var t = txt(svg, 100, 124, String(s), "middle"); t.setAttribute("style", "fill:#ece8dc;font:600 22px var(--font-mono)");
-    var lbl = $("gaugeLbl"), z = s < 40 ? "RISK-OFF" : s > 60 ? "RISK-ON" : "NEUTRE";
-    lbl.textContent = z; lbl.style.color = s < 40 ? "var(--down)" : s > 60 ? "var(--up)" : "var(--amber)";
-  }
-
   function spark(s) {
     var min = Infinity, max = -Infinity, w = 84, h = 24, n = s.length;
     s.forEach(function (p) { if (p.v < min) min = p.v; if (p.v > max) max = p.v; });
@@ -596,19 +565,6 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
       tape += '<div class="t"><b>' + p.n.replace("/", "") + "</b><span>" + fmt(last, p.dec) + '</span><small class="' + cls(c7) + '">' + pct(c7) + "</small></div>";
     });
     $("pairs").innerHTML = h; $("tape").innerHTML = tape;
-  }
-
-  function renderAgenda() {
-    var t = new Date(); t.setHours(0, 0, 0, 0);
-    var soon = MEETINGS.filter(function (m) { var d = Math.round((parseD(m.d) - t) / 864e5); return d >= 0 && d <= 7; });
-    var w = $("weekWarn");
-    if (soon.length >= 2) { w.hidden = false; w.innerHTML = "<b>Semaine chargée :</b> " + soon.length + " réunions (" + soon.map(function (m) { return m.c; }).join(", ") + ")."; }
-    else w.hidden = true;
-    $("agendaList").innerHTML = MEETINGS.map(function (m) {
-      var days = Math.round((parseD(m.d) - t) / 864e5);
-      var when = days < 0 ? "passée" : days === 0 ? "aujourd'hui" : days === 1 ? "demain" : "dans " + days + " j";
-      return '<li class="' + (days >= 0 && days <= 7 ? "soon" : "") + '"><span class="d">' + parseD(m.d).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + "</span><span><b>" + m.b + '</b> <small class="d">' + m.c + '</small></span><span class="in">' + when + "</span></li>";
-    }).join("");
   }
 
   var SESS = [["Sydney", "Australia/Sydney", 7, 16], ["Tokyo", "Asia/Tokyo", 9, 18], ["Londres", "Europe/London", 8, 17], ["New York", "America/New_York", 8, 17]];
@@ -643,10 +599,10 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
     if (r.err) { out.innerHTML = '<div class="err">' + r.err + "</div>"; return; }
     var dd = p.quote === "JPY" ? 3 : 5, money = function (v) { return "$" + v.toFixed(2).replace(".", ","); };
     out.innerHTML =
-      '<div class="stat big"><small>Taille</small><b>' + fmt(r.lots, 2) + " lot(s)</b></div>" +
-      '<div class="stat"><small>Risque réel</small><b class="down">' + money(r.realRisk) + "</b></div>" +
-      '<div class="stat"><small>Gain visé</small><b class="up">' + money(r.reward) + "</b></div>" +
-      '<div class="stat"><small>Cible (prix)</small><b>' + fmt(r.target, dd) + "</b></div>";
+      '<div class="stat big"><small>Taille Position</small><b>' + fmt(r.lots, 2) + " lot(s)</b></div>" +
+      '<div class="stat"><small>Risque Réel (1%)</small><b class="down">' + money(r.realRisk) + "</b></div>" +
+      '<div class="stat"><small>Gain Visé</small><b class="up">' + money(r.reward) + "</b></div>" +
+      '<div class="stat"><small>Cible (Prix)</small><b>' + fmt(r.target, dd) + "</b></div>";
   }
   function initCalc() {
     $("cPair").innerHTML = PAIRS.map(function (p) { return '<option value="' + p.id + '">' + p.n + "</option>"; }).join("");
@@ -657,15 +613,12 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
     $("cDir").addEventListener("change", function () { resetEntry(); calc(); });
   }
 
-  var checked = {};
-  function loadChecks() { try { checked = JSON.parse(localStorage.getItem("mf-checks") || "{}") || {}; } catch (e) { checked = {}; } }
-  function saveChecks() { try { localStorage.setItem("mf-checks", JSON.stringify(checked)); } catch (e) {} }
-  function renderChecks() {
-    $("checks").innerHTML = CHECKS.map(function (t, i) {
-      return '<li class="' + (checked[i] ? "done" : "") + '"><label for="ck' + i + '"><input type="checkbox" id="ck' + i + '" data-i="' + i + '"' + (checked[i] ? " checked" : "") + "><span>" + t + "</span></label></li>";
-    }).join("");
-    var n = CHECKS.filter(function (t, i) { return checked[i]; }).length;
-    $("checkScore").innerHTML = "<b>" + n + "/" + CHECKS.length + "</b> validés.";
+  window.saveNotes = function() {
+    localStorage.setItem("vm_terminal_notes", $("quickNotes").value);
+  };
+  function loadNotes() {
+    var saved = localStorage.getItem("vm_terminal_notes");
+    if (saved) $("quickNotes").value = saved;
   }
 
   function setStatus() {
@@ -686,7 +639,7 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
       });
   }
   function renderAll() {
-    setStatus(); renderPairs(); drawPair(); drawStrength(); drawGauge();
+    setStatus(); renderPairs(); drawPair(); drawStrength();
     if (!touched && $("cPair").options.length) { resetEntry(); calc(); } else if ($("cPair").options.length) calc();
   }
 
@@ -710,14 +663,9 @@ input:focus, select:focus { border-color: var(--amber); outline: none; }
   $("chart").addEventListener("pointerleave", function () { if (cur) showPoint(cur.s.length - 1, true); });
   $("strength").addEventListener("pointermove", function (e) { if (SW) drawReadout(idx(e, $("strength"), SW.W, SW.L, SW.Rm, SW.n), false); });
   $("strength").addEventListener("pointerleave", function () { if (SW) drawReadout(SW.n - 1, true); });
-  $("checks").addEventListener("change", function (e) {
-    var i = e.target.getAttribute("data-i"); if (i === null) return;
-    checked[i] = e.target.checked; saveChecks(); renderChecks();
-  });
-  $("resetCheck").addEventListener("click", function () { checked = {}; saveChecks(); renderChecks(); });
 
-  renderAgenda(); renderClocks(); setInterval(renderClocks, 1000);
-  loadChecks(); renderChecks(); renderAll(); initCalc();
+  renderClocks(); setInterval(renderClocks, 1000);
+  loadNotes(); renderAll(); initCalc();
   function refresh() { loadLive().then(renderAll).catch(function () {}); }
   refresh();
 })();
