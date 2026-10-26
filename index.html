@@ -28,21 +28,20 @@ a { color: inherit; text-decoration: none; }
 .mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .up { color: var(--up); } .down { color: var(--down); }
 
-/* Shell Layout Pro */
 .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
 
-/* Top Bar */
+/* En-tête */
 .top-bar { display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
 .brand { font: 600 12px var(--font-mono); letter-spacing: 0.16em; display: flex; align-items: center; gap: 8px; color: var(--amber); }
 .mark { width: 8px; height: 8px; background: var(--amber); }
 
-/* Ticker Bar Supérieur Multi-Actifs */
+/* Bandeau Ticker Supérieur */
 .ticker-bar { display: flex; align-items: center; background: var(--panel2); border-bottom: 1px solid var(--line); overflow-x: auto; flex: none; scrollbar-width: none; height: 34px; padding: 0 10px; gap: 2px; }
 .ticker-bar::-webkit-scrollbar { display: none; }
 .tk-item { display: flex; align-items: center; gap: 6px; padding: 0 12px; font: 11px var(--font-mono); border-right: 1px solid var(--line2); white-space: nowrap; height: 100%; }
 .tk-item span { color: var(--muted); }
 
-/* Workspace Principal */
+/* Workspace */
 .workspace { display: flex; flex: 1; min-height: 0; }
 .sidebar { width: 230px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 8px 0; flex: none; overflow-y: auto; }
 .sb-grp { padding: 10px 14px 4px; font: 600 9px var(--font-mono); letter-spacing: 0.18em; color: var(--muted); }
@@ -50,7 +49,7 @@ a { color: inherit; text-decoration: none; }
 .sb-btn:hover { color: var(--fg); background: var(--panel2); }
 .sb-btn.active { color: var(--amber); background: var(--amber-soft); border-left-color: var(--amber); font-weight: 600; }
 
-/* Contenu Exclusif par Onglet */
+/* Contenu Principal (Onglets Uniques) */
 .main-content { flex: 1; background: var(--bg); overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
 .view-section { display: none; width: 100%; flex-direction: column; gap: 14px; }
 .view-section.active { display: flex; }
@@ -62,11 +61,8 @@ a { color: inherit; text-decoration: none; }
 .ph .meta { font: 10px var(--font-mono); color: var(--muted); }
 .pb { padding: 14px; }
 
-.dash-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 1024px) { .dash-grid { grid-template-columns: 1fr; } }
-
-.gauge-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: var(--panel2); border: 1px solid var(--line2); text-align: center; }
-.gauge-val { font: 600 32px var(--font-mono); color: var(--amber); margin: 6px 0; }
 
 .tbl { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
@@ -99,8 +95,8 @@ textarea { height: 130px; resize: vertical; }
   </header>
 
   <!-- Ticker Bar Actifs Clés -->
-  <div class="ticker-bar" id="tape">
-    <div class="tk-item" style="color:var(--amber); font-weight:600;">LIVE</div>
+  <div class="ticker-bar">
+    <div class="tk-item" style="color:var(--amber); font-weight:600;">LIVE PRO</div>
     <div class="tk-item"><span>XAUUSD</span> <b>2,730.50</b> <b class="up">+1.85%</b></div>
     <div class="tk-item"><span>NAS100</span> <b>20,450.00</b> <b class="up">+0.62%</b></div>
     <div class="tk-item"><span>EURUSD</span> <b>1.1206</b> <b class="down">-0.12%</b></div>
@@ -108,18 +104,17 @@ textarea { height: 130px; resize: vertical; }
     <div class="tk-item"><span>USDJPY</span> <b>157.16</b> <b class="down">-0.32%</b></div>
     <div class="tk-item"><span>US10Y</span> <b>4.22%</b> <b class="down">-0.04%</b></div>
     <div class="tk-item"><span>DXY</span> <b>103.45</b> <b class="down">-0.12%</b></div>
-    <div class="tk-item"><span>BTC</span> <b>68,400.0</b> <b class="up">+1.40%</b></div>
     <div class="tk-item" style="margin-left:auto;"><span>New York</span> <b class="down">Fermée</b></div>
   </div>
 
   <div class="workspace">
-    <!-- Menu Latéral -->
+    <!-- Menu Latéral Exclusif -->
     <nav class="sidebar">
-      <div class="sb-grp">STATION PRINCIPALE</div>
-      <button class="sb-btn active" onclick="switchView('view-overview', this)">🖥️ Dashboard &amp; Sentiment</button>
+      <div class="sb-grp">STATION INSTITUTIONNELLE</div>
+      <button class="sb-btn active" onclick="switchView('view-overview', this)">🖥️ Dashboard &amp; Macro Live</button>
       <button class="sb-btn" onclick="switchView('view-scorecard', this)">🎯 Scorecard S (6 Piliers)</button>
+      <button class="sb-btn" onclick="switchView('view-banks', this)">🏛️ Consensus Banques (Or/Forex)</button>
       <button class="sb-btn" onclick="switchView('view-rates', this)">⚡ Taux &amp; FedWatch</button>
-      <button class="sb-btn" onclick="switchView('view-central', this)">🌐 4 Majeures Banques</button>
       <button class="sb-btn" onclick="switchView('view-sentiment', this)">🎯 COT &amp; Retail Sentiment</button>
       
       <div class="sb-grp">OUTILS &amp; PLANS</div>
@@ -130,45 +125,38 @@ textarea { height: 130px; resize: vertical; }
     <!-- Affichage Exclusif par Onglet -->
     <main class="main-content">
 
-      <!-- 1. DASHBOARD & SENSITIVE -->
+      <!-- 1. DASHBOARD & MACRO LIVE -->
       <section id="view-overview" class="view-section active">
         <div class="dash-grid">
           <div class="panel">
-            <div class="ph"><h2>Squawk News Live</h2><span class="meta">Fil d'actualité</span></div>
-            <div class="pb" style="display:flex; flex-direction:column; gap:10px;">
-              <div><span class="mono" style="color:var(--amber);">15:45 UTC</span><br><b>Fed :</b> Discours prudent sur l'inflation des services.</div>
-              <div style="border-top:1px solid var(--line2); padding-top:8px;"><span class="mono" style="color:var(--amber);">14:30 UTC</span><br><b>Or (XAUUSD) :</b> Demande physique soutenue à Shanghai.</div>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="ph"><h2>Risk Sentiment Global</h2><span class="meta">Indicateur composite</span></div>
-            <div class="pb">
-              <div class="gauge-box">
-                <small class="mono">INDICE RISK-ON / RISK-OFF</small>
-                <div class="gauge-val">64 / 100</div>
-                <span class="badge on">RÉGIME RISK-ON MODÉRÉ</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="ph"><h2>Spreads &amp; Carburant Gold</h2><span class="meta">Obligations US</span></div>
+            <div class="ph"><h2>Indicateurs Macro Fondamentaux (Carburant Or)</h2><span class="meta">US Yields &amp; Spreads</span></div>
             <div class="tbl">
               <table>
-                <tr><td><b>US 10Y - US 02Y</b></td><td class="r">+18 bps</td></tr>
-                <tr><td><b>TIPS 10Y (DFII10)</b></td><td class="r">1.92%</td></tr>
-                <tr><td><b>Dollar Index (DXY)</b></td><td class="r">103.45</td></tr>
+                <thead><tr><th>Indicateur Clé</th><th>Valeur</th><th class="r">Impact XAUUSD</th></tr></thead>
+                <tbody>
+                  <tr><td><b>DFII10 (TIPS Réel 10Y)</b></td><td>1.92%</td><td class="r"><span class="badge on">Support Haussier</span></td></tr>
+                  <tr><td><b>US 10Y - US 02Y (Spread)</b></td><td>+18 bps</td><td class="r"><span class="badge on">Normalisation</span></td></tr>
+                  <tr><td><b>Dollar Index (DXY)</b></td><td>103.45</td><td class="r"><span class="badge on">Corrélation Inverse</span></td></tr>
+                  <tr><td><b>VIX (Volatilité Marché)</b></td><td>16.40</td><td class="r">Neutre / Calme</td></tr>
+                </tbody>
               </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph"><h2>Squawk News &amp; Flux Institutionnel</h2><span class="meta">Temps Réel</span></div>
+            <div class="pb" style="display:flex; flex-direction:column; gap:10px;">
+              <div><span class="mono" style="color:var(--amber);">15:45 UTC</span><br><b>Fed :</b> Signal d'une pause prolongée sur les taux directeurs.</div>
+              <div style="border-top:1px solid var(--line2); padding-top:8px;"><span class="mono" style="color:var(--amber);">14:30 UTC</span><br><b>Or (XAUUSD) :</b> Flux acheteurs massifs enregistrés sur les contrats spot.</div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 2. SCORECARD S -->
+      <!-- 2. SCORECARD S (6 PILIERS) -->
       <section id="view-scorecard" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Scorecard Global S — Stratégie XAUUSD</h2><span class="meta">Évaluation Fondamentale</span></div>
+          <div class="ph"><h2>Scorecard Global S — Stratégie XAUUSD</h2><span class="meta">Modèle VM v3.1</span></div>
           <div class="tbl">
             <table>
               <thead><tr><th>Pilier Stratégique</th><th>Poids</th><th>Note Actuelle</th><th class="r">Biais Pilier</th></tr></thead>
@@ -185,10 +173,28 @@ textarea { height: 130px; resize: vertical; }
         </div>
       </section>
 
-      <!-- 3. TAUX & FEDWATCH -->
+      <!-- 3. CONSENSUS DES BANQUES D'INVESTISSEMENT -->
+      <section id="view-banks" class="view-section">
+        <div class="panel">
+          <div class="ph"><h2>Consensus &amp; Prévisions des Banques d'Investissement</h2><span class="meta">Biais Institutionnel Long Terme</span></div>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>Institution</th><th>Actif</th><th>Biais Fondamental</th><th class="r">Cible / Anticipation</th></tr></thead>
+              <tbody>
+                <tr><td><b>Goldman Sachs</b></td><td>XAU/USD</td><td><span class="badge on">Bullish Fort</span></td><td class="r num">Achats soutenus par les Banques Centrales</td></tr>
+                <tr><td><b>Morgan Stanley</b></td><td>XAU/USD</td><td><span class="badge on">Bullish</span></td><td class="r num">Cible 2 850$ (Stratégie d'achat sur repli)</td></tr>
+                <tr><td><b>JPMorgan</b></td><td>EUR/USD</td><td><span class="badge off">Bearish</span></td><td class="r num">Parité visée si divergence Fed/BCE</td></tr>
+                <tr><td><b>Citigroup</b></td><td>NAS100</td><td><span class="badge on">Neutre / Volatil</span></td><td class="r num">Consolidation sur les sommets</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. TAUX & FEDWATCH -->
       <section id="view-rates" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Probabilités de Taux — CME FedWatch</h2><span class="meta">Temps Réel</span></div>
+          <div class="ph"><h2>Probabilités de Taux — CME FedWatch &amp; BCE</h2><span class="meta">Temps Réel</span></div>
           <div class="tbl">
             <table>
               <thead><tr><th>Échéance / Réunion</th><th>Taux Actuel</th><th>Scénario Pricé</th><th class="r">Probabilité</th></tr></thead>
@@ -202,34 +208,17 @@ textarea { height: 130px; resize: vertical; }
         </div>
       </section>
 
-      <!-- 4. 4 MAJEURES BANQUES -->
-      <section id="view-central" class="view-section">
-        <div class="panel">
-          <div class="ph"><h2>Suivi des 4 Majeures Banques Centrales</h2><span class="meta">FED, BCE, BoE, BoJ</span></div>
-          <div class="tbl">
-            <table>
-              <thead><tr><th>Banque</th><th>Zone / Devise</th><th>Taux Directeur</th><th class="r">Biais Stratégique</th></tr></thead>
-              <tbody>
-                <tr><td><b>FED</b></td><td>États-Unis (USD)</td><td>4.50%</td><td class="r"><span class="badge on">Neutre / Patient</span></td></tr>
-                <tr><td><b>BCE</b></td><td>Zone Euro (EUR)</td><td>3.25%</td><td class="r"><span class="badge on">Assouplissement</span></td></tr>
-                <tr><td><b>BoE</b></td><td>Royaume-Uni (GBP)</td><td>4.75%</td><td class="r"><span class="badge off">Prudent / Restrictif</span></td></tr>
-                <tr><td><b>BoJ</b></td><td>Japon (JPY)</td><td>0.25%</td><td class="r"><span class="badge on">Normalisation lente</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
       <!-- 5. COT & SENTIMENT -->
       <section id="view-sentiment" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>Positionnement COT &amp; Retail Sentiment</h2><span class="meta">Smart Money vs Crowd</span></div>
+          <div class="ph"><h2>Positionnement COT (CFTC) &amp; Retail Sentiment</h2><span class="meta">Smart Money vs Crowd</span></div>
           <div class="tbl">
             <table>
-              <thead><tr><th>Actif</th><th class="r">Particuliers (Long / Short)</th><th>Positionnement Smart Money</th></tr></thead>
+              <thead><tr><th>Actif</th><th class="r">Particuliers (Long / Short)</th><th>Positionnement Smart Money (Fonds)</th></tr></thead>
               <tbody>
                 <tr><td><b>XAU/USD</b></td><td class="r num">32% / 68%</td><td><span class="badge on">Net Long Élevé (85e Percentile)</span></td></tr>
                 <tr><td><b>EUR/USD</b></td><td class="r num">65% / 35%</td><td><span class="badge off">Net Short Fonds Spéculatifs</span></td></tr>
+                <tr><td><b>NAS100</b></td><td class="r num">75% / 25%</td><td><span class="badge off">Retail Suracheté (Contrarian)</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -239,7 +228,7 @@ textarea { height: 130px; resize: vertical; }
       <!-- 6. VM RISK ENGINE -->
       <section id="view-risk" class="view-section">
         <div class="panel">
-          <div class="ph"><h2>VM Risk Engine — Gestion de Risque Stricte (1%)</h2><span class="meta">Calculateur</span></div>
+          <div class="ph"><h2>VM Risk Engine — Gestion de Risque Stricte (1%)</h2><span class="meta">Calculateur Professionnel</span></div>
           <div class="calc-grid">
             <div class="form-group"><label>Capital (USD)</label><input id="cBal" value="10000"></div>
             <div class="form-group"><label>Risque (%)</label><input id="cRisk" value="1"></div>
@@ -272,7 +261,6 @@ textarea { height: 130px; resize: vertical; }
 </div>
 
 <script>
-// Fonction de navigation par onglets isolés
 function switchView(viewId, btnElement) {
   document.querySelectorAll('.view-section').forEach(function(el) { el.classList.remove('active'); });
   document.querySelectorAll('.sb-btn').forEach(function(el) { el.classList.remove('active'); });
@@ -281,7 +269,6 @@ function switchView(viewId, btnElement) {
   if (btnElement) btnElement.classList.add('active');
 }
 
-// Horloge temps réel Kinshasa UTC+1
 function updateClock() {
   var d = new Date();
   var h = String(d.getUTCHours() + 1).padStart(2, '0');
@@ -292,7 +279,6 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// Gestion de la sauvegarde automatique des notes
 function saveNotes() {
   localStorage.setItem('vm_terminal_notes', document.getElementById('quickNotes').value);
 }
