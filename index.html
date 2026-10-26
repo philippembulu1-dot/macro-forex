@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top One Analysis VM - Terminal Macro Institutionnel</title>
+    <title>Top One Analysis VM - Terminal Institutionnel Macro & 3D</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Three.js et Globe.gl CDNs -->
+    <!-- Three.js & Globe.gl CDNs -->
     <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
     <script src="https://unpkg.com/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
     <!-- FontAwesome CDN -->
@@ -20,14 +20,15 @@
             theme: {
                 extend: {
                     colors: {
-                        terminalBg: '#08090d',
-                        panelBg: '#11131f',
-                        panelHeader: '#181b2a',
-                        terminalBorder: '#1f2438',
+                        terminalBg: '#05070a',
+                        panelBg: '#0d111a',
+                        panelHeader: '#141a29',
+                        terminalBorder: '#1c253b',
                         accentAmber: '#f59e0b',
                         accentGold: '#fbbf24',
                         bullish: '#10b981',
                         bearish: '#ef4444',
+                        geoRisk: '#dc2626'
                     }
                 }
             }
@@ -36,32 +37,33 @@
     
     <style>
         body {
-            background-color: #08090d;
+            background-color: #05070a;
             color: #d1d5db;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow-x: hidden;
         }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: #08090d; }
-        ::-webkit-scrollbar-thumb { background: #1f2438; border-radius: 2px; }
+        ::-webkit-scrollbar-track { background: #05070a; }
+        ::-webkit-scrollbar-thumb { background: #1c253b; border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
         
         .panel-box {
-            background-color: #11131f;
-            border: 1px solid #1f2438;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            transition: border-color 0.2s ease-in-out;
+            background-color: #0d111a;
+            border: 1px solid #1c253b;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            transition: all 0.2s ease-in-out;
         }
         .panel-box:hover {
-            border-color: rgba(245, 158, 11, 0.4);
+            border-color: rgba(245, 158, 11, 0.45);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.08);
         }
         .clickable-row {
             cursor: pointer;
             transition: background-color 0.15s ease;
         }
         .clickable-row:hover {
-            background-color: rgba(245, 158, 11, 0.08) !important;
+            background-color: rgba(245, 158, 11, 0.1) !important;
         }
         .live-dot {
             width: 8px;
@@ -69,7 +71,7 @@
             background-color: #10b981;
             border-radius: 50%;
             display: inline-block;
-            box-shadow: 0 0 8px #10b981;
+            box-shadow: 0 0 10px #10b981;
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
@@ -77,18 +79,32 @@
             70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
+        .guide-badge {
+            cursor: pointer;
+            background-color: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            transition: all 0.2s;
+        }
+        .guide-badge:hover {
+            background-color: #f59e0b;
+            color: #000;
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-xs select-none">
 
-    <!-- 1. BANDEAU SUPERIEUR TICKER TAPE -->
+    <!-- 1. BANDEAU DE COTATIONS EN DIRECT (TICKER TAPE) -->
     <div id="ticker-tape-container" class="w-full bg-panelHeader border-b border-terminalBorder h-10 overflow-hidden">
         <div class="tradingview-widget-container">
             <div class="tradingview-widget-container__widget"></div>
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
             {
                 "symbols": [
-                    {"proName": "OANDA:XAUUSD", "title": "GOLD XAUUSD"},
+                    {"proName": "OANDA:XAUUSD", "title": "GOLD XAU/USD"},
                     {"proName": "GLOBALDATA:US10Y", "title": "US10Y YIELD"},
                     {"proName": "CAPITALCOM:DXY", "title": "DOLLAR INDEX"},
                     {"proName": "FX:EURUSD", "title": "EUR/USD"},
@@ -111,58 +127,54 @@
     <div class="flex flex-1 overflow-hidden">
         
         <!-- BARRE DE NAVIGATION LATÉRALE (STYLE TRADE SIDER) -->
-        <aside class="w-56 bg-panelBg border-r border-terminalBorder flex flex-col justify-between hidden md:flex">
+        <aside class="w-60 bg-panelBg border-r border-terminalBorder flex flex-col justify-between hidden md:flex">
             <div class="p-3">
-                <div class="flex items-center space-x-2 pb-3 mb-3 border-b border-terminalBorder">
-                    <i class="fa-solid fa-chart-line text-accentGold text-base"></i>
+                <div class="flex items-center space-x-2.5 pb-3 mb-3 border-b border-terminalBorder">
+                    <i class="fa-solid fa-cube text-accentGold text-lg"></i>
                     <div>
                         <h1 class="font-bold text-white tracking-wider text-sm">TOP ONE ANALYSIS</h1>
-                        <span class="text-[10px] text-accentAmber font-mono">INSTITUTIONAL VM</span>
+                        <span class="text-[10px] text-accentAmber font-mono">PRO MACRO TERMINAL</span>
                     </div>
                 </div>
 
                 <nav class="space-y-1 font-medium">
-                    <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center space-x-2 px-2.5 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition active">
-                        <i class="fa-solid fa-table-cells-large w-4"></i>
+                    <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition active">
+                        <i class="fa-solid fa-gauge-high w-4"></i>
                         <span>Vue Globale (Overview)</span>
                     </button>
-                    <button onclick="switchTab('globe')" class="nav-btn w-full flex items-center space-x-2 px-2.5 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
-                        <i class="fa-solid fa-earth-americas w-4"></i>
-                        <span>Globe Macro 3D</span>
+                    <button onclick="switchTab('globe')" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
+                        <i class="fa-solid fa-earth-americas w-4 text-accentAmber"></i>
+                        <span>Globe 3D Macro & Géopo</span>
                     </button>
-                    <button onclick="switchTab('calendar')" class="nav-btn w-full flex items-center space-x-2 px-2.5 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
+                    <button onclick="switchTab('calendar')" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
                         <i class="fa-solid fa-calendar-days w-4"></i>
-                        <span>Calendrier Économique</span>
+                        <span>Calendrier USD & EUR</span>
                     </button>
-                    <button onclick="switchTab('heatmap')" class="nav-btn w-full flex items-center space-x-2 px-2.5 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
+                    <button onclick="switchTab('news')" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
+                        <i class="fa-solid fa-newspaper w-4"></i>
+                        <span>Dépêches Live Macro</span>
+                    </button>
+                    <button onclick="switchTab('heatmap')" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
                         <i class="fa-solid fa-fire w-4 text-accentAmber"></i>
-                        <span>Market Heatmap & Pulse</span>
+                        <span>Market Heatmap Forex</span>
                     </button>
-                    <button onclick="switchTab('central-banks')" class="nav-btn w-full flex items-center space-x-2 px-2.5 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
-                        <i class="fa-solid fa-building-columns w-4"></i>
-                        <span>Banques Centrales & Taux</span>
-                    </button>
-                    <button onclick="switchTab('bank-research')" class="nav-btn w-full flex items-center space-x-2 px-2.5 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
-                        <i class="fa-solid fa-briefcase w-4"></i>
-                        <span>Bank Consensus & Research</span>
-                    </button>
-                    <button onclick="switchTab('cot-sentiment')" class="nav-btn w-full flex items-center space-x-2 px-2.5 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
+                    <button onclick="switchTab('cot-sentiment')" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
                         <i class="fa-solid fa-users-between-lines w-4"></i>
-                        <span>COT Data & Retail Sentiment</span>
+                        <span>Positions COT & Retail</span>
                     </button>
-                    <button onclick="switchTab('yields-seasonality')" class="nav-btn w-full flex items-center space-x-2 px-2.5 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
+                    <button onclick="switchTab('yields-seasonality')" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded text-gray-300 hover:text-accentGold hover:bg-panelHeader transition">
                         <i class="fa-solid fa-chart-area w-4"></i>
-                        <span>Yield Spreads & Saisonnalité</span>
+                        <span>Spread US & Saisonnalité</span>
                     </button>
                 </nav>
             </div>
 
             <div class="p-3 border-t border-terminalBorder bg-panelHeader text-[11px]">
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-gray-400">STATUS TERMINAL</span>
-                    <span class="flex items-center space-x-1 text-bullish font-semibold"><span class="live-dot"></span> <span>ONLINE</span></span>
+                    <span class="text-gray-400">STATUS DU FLUX</span>
+                    <span class="flex items-center space-x-1 text-bullish font-semibold"><span class="live-dot"></span> <span>TEMPS RÉEL</span></span>
                 </div>
-                <div class="text-gray-500 font-mono text-[10px]">DATA FEED: LIVE / WEBSOCKET</div>
+                <div class="text-gray-500 font-mono text-[10px]">DATA: LIVE WEBSOCKET & TV API</div>
             </div>
         </aside>
 
@@ -174,129 +186,40 @@
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center space-x-1.5">
                         <i class="fa-regular fa-clock text-accentGold"></i>
-                        <span class="font-bold text-white uppercase font-mono" id="utc-clock">00:00:00 UTC</span>
+                        <span class="font-bold text-white uppercase font-mono text-xs" id="utc-clock">00:00:00 UTC</span>
                     </div>
                     <div class="h-4 w-px bg-terminalBorder"></div>
-                    <div class="flex items-center space-x-3 font-mono text-[11px]">
-                        <span id="session-sydney" class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">SYD: OFF</span>
-                        <span id="session-tokyo" class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">TYO: OFF</span>
-                        <span id="session-london" class="px-1.5 py-0.5 rounded bg-bullish/20 text-bullish border border-bullish/40 font-bold">LDN: ACTIVE</span>
-                        <span id="session-newyork" class="px-1.5 py-0.5 rounded bg-accentAmber/20 text-accentGold border border-accentAmber/40 font-bold">NY: KILLZONE</span>
+                    <div class="flex items-center space-x-2 font-mono text-[11px]">
+                        <span id="session-sydney" class="px-2 py-0.5 rounded bg-gray-800 text-gray-400">SYD: OFF</span>
+                        <span id="session-tokyo" class="px-2 py-0.5 rounded bg-gray-800 text-gray-400">TYO: OFF</span>
+                        <span id="session-london" class="px-2 py-0.5 rounded bg-bullish/20 text-bullish border border-bullish/40 font-bold">LDN: ACTIVE</span>
+                        <span id="session-newyork" class="px-2 py-0.5 rounded bg-accentAmber/20 text-accentGold border border-accentAmber/40 font-bold">NY: KILLZONE</span>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <span class="text-gray-400 font-semibold">RISK SENTIMENT:</span>
-                    <div class="flex items-center space-x-2 bg-terminalBg px-2.5 py-1 rounded border border-terminalBorder">
+                    <span class="text-gray-400 font-semibold">RÉGIME GLOBAL DE RISQUE:</span>
+                    <div class="flex items-center space-x-2 bg-terminalBg px-3 py-1 rounded border border-terminalBorder">
                         <span id="risk-score-val" class="font-bold text-accentGold font-mono text-sm">64 / 100</span>
-                        <span id="risk-badge" class="px-1.5 py-0.5 text-[10px] rounded font-bold bg-bullish/20 text-bullish border border-bullish/50">MODERATE RISK-ON</span>
+                        <span id="risk-badge" class="px-2 py-0.5 text-[10px] rounded font-bold bg-bullish/20 text-bullish border border-bullish/50">MODERATE RISK-ON</span>
                     </div>
                 </div>
             </header>
 
-            <!-- TAB 1: DASHBOARD OVERVIEW -->
+            <!-- TAB 1: VUE GLOBALE (OVERVIEW) -->
             <div id="tab-dashboard" class="tab-content space-y-3">
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div class="panel-box p-3 lg:col-span-2 flex flex-col justify-between">
-                        <div class="flex justify-between items-center mb-2">
-                            <h2 class="font-bold text-white flex items-center space-x-2">
-                                <i class="fa-solid fa-wave-square text-accentAmber"></i>
-                                <span>FORCE RELATIVE DES DEVISES MAJEURES (G8)</span>
-                            </h2>
-                            <span class="text-[10px] text-gray-400">VARIATION RELATIVE (1H / 4H / 1D)</span>
-                        </div>
-                        <div class="h-52 w-full">
-                            <canvas id="currencyStrengthChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="panel-box p-3 flex flex-col justify-between">
                         <div class="flex justify-between items-center mb-2 border-b border-terminalBorder pb-2">
                             <h2 class="font-bold text-white flex items-center space-x-2">
-                                <i class="fa-solid fa-satellite-dish text-accentGold"></i>
-                                <span>MACRO SQUAWK LIVE WIRE</span>
+                                <i class="fa-solid fa-wave-square text-accentAmber"></i>
+                                <span>FORCE RELATIVE DES DEVISES (FORCE MATRICIELLE G8)</span>
                             </h2>
-                            <span class="flex items-center space-x-1 text-bullish"><span class="live-dot"></span><span class="text-[10px] font-mono">REAL-TIME</span></span>
+                            <button onclick="explainTool('currency')" class="guide-badge"><i class="fa-solid fa-circle-question"></i> Comprendre</button>
                         </div>
-                        <div id="squawk-feed-list" class="space-y-2 overflow-y-auto max-h-52 pr-1">
-                            <div class="p-1.5 bg-terminalBg rounded border-l-2 border-accentAmber text-[11px] clickable-row" onclick="openModal('Macro Update: US CPI', 'L\'inflation américaine CPI ressort à 3.7% YoY contre 3.6% attendu. Les pressions sur les rendements réels soutiennent le DXY et pèsent temporairement sur XAU/USD.')">
-                                <div class="flex justify-between text-gray-400 font-mono text-[10px]"><span>12:14:05</span><span class="text-accentAmber font-bold">HIGH IMPACT</span></div>
-                                <div class="text-gray-200 font-medium mt-0.5">FED: Warsh signale un maintien hawkish face à la persistance de l'inflation sous-jacente.</div>
-                            </div>
-                            <div class="p-1.5 bg-terminalBg rounded border-l-2 border-bullish text-[11px] clickable-row" onclick="openModal('ECB Rate Path', 'La BCE conserve un ton restrictif avec un taux de dépôt maintenu à 2.50%. Les frictions énergétiques soutiennent la trajectoire de l\'HICP.')">
-                                <div class="flex justify-between text-gray-400 font-mono text-[10px]"><span>11:45:22</span><span class="text-bullish font-bold">ECB</span></div>
-                                <div class="text-gray-200 font-medium mt-0.5">BCE Lagarde: Les risques d'inflation restent orientés à la hausse vers le T4.</div>
-                            </div>
-                            <div class="p-1.5 bg-terminalBg rounded border-l-2 border-bearish text-[11px] clickable-row" onclick="openModal('BoJ FX Intervention Risk', 'Le gouverneur Ueda laisse entendre une possible hausse des taux en décembre pour stabiliser le pair USD/JPY au-dessus de 158.00.')">
-                                <div class="flex justify-between text-gray-400 font-mono text-[10px]"><span>10:30:10</span><span class="text-bearish font-bold">BOJ / JPY</span></div>
-                                <div class="text-gray-200 font-medium mt-0.5">BOJ: Risque d'intervention et spéculation de hausse des taux pour défendre le Yen.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                    <div class="panel-box p-3 lg:col-span-2">
-                        <div class="flex justify-between items-center mb-2">
-                            <h2 class="font-bold text-white flex items-center space-x-2">
-                                <i class="fa-solid fa-landmark text-accentGold"></i>
-                                <span>TAUX DIRECTEURS & PROBABILITÉS DE MARCHÉ (PRICING OIS)</span>
-                            </h2>
-                            <span class="text-[10px] text-gray-400">CLIQUEZ SUR UNE BANQUE POUR LES DÉTAILS</span>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="border-b border-terminalBorder text-gray-400 text-[10px] uppercase bg-panelHeader">
-                                        <th class="py-1.5 px-2">Banque Centrale</th>
-                                        <th class="py-1.5 px-2">Taux Actuel</th>
-                                        <th class="py-1.5 px-2">Prochaine Réunion</th>
-                                        <th class="py-1.5 px-2 text-center">Cut (%)</th>
-                                        <th class="py-1.5 px-2 text-center">Hold (%)</th>
-                                        <th class="py-1.5 px-2 text-center">Hike (%)</th>
-                                        <th class="py-1.5 px-2">Biais Target</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-terminalBorder font-mono text-[11px]">
-                                    <tr class="clickable-row" onclick="openCentralBankModal('FED')">
-                                        <td class="py-2 px-2 font-bold text-white flex items-center space-x-1.5"><span>🇺🇸 FED (USD)</span></td>
-                                        <td class="py-2 px-2 text-accentGold font-bold">3.75% - 4.00%</td>
-                                        <td class="py-2 px-2 text-gray-300">28 Oct 2026</td>
-                                        <td class="py-2 px-2 text-center text-gray-400">0.0%</td>
-                                        <td class="py-2 px-2 text-center text-bullish font-bold">85.0%</td>
-                                        <td class="py-2 px-2 text-center text-bearish">15.0%</td>
-                                        <td class="py-2 px-2 text-accentAmber font-bold">HAWKISH HOLD</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="openCentralBankModal('ECB')">
-                                        <td class="py-2 px-2 font-bold text-white flex items-center space-x-1.5"><span>🇪🇺 BCE (EUR)</span></td>
-                                        <td class="py-2 px-2 text-accentGold font-bold">2.50%</td>
-                                        <td class="py-2 px-2 text-gray-300">29 Oct 2026</td>
-                                        <td class="py-2 px-2 text-center text-gray-400">0.0%</td>
-                                        <td class="py-2 px-2 text-center text-bullish font-bold">96.8%</td>
-                                        <td class="py-2 px-2 text-center text-bearish">3.2%</td>
-                                        <td class="py-2 px-2 text-bearish font-bold">HAWKISH TIGHT</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="openCentralBankModal('BOE')">
-                                        <td class="py-2 px-2 font-bold text-white flex items-center space-x-1.5"><span>🇬🇧 BoE (GBP)</span></td>
-                                        <td class="py-2 px-2 text-accentGold font-bold">3.75%</td>
-                                        <td class="py-2 px-2 text-gray-300">05 Nov 2026</td>
-                                        <td class="py-2 px-2 text-center text-gray-400">0.0%</td>
-                                        <td class="py-2 px-2 text-center text-gray-400">5.6%</td>
-                                        <td class="py-2 px-2 text-center text-bearish font-bold">94.4%</td>
-                                        <td class="py-2 px-2 text-bearish font-bold">HIKE PRICED</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="openCentralBankModal('BOJ')">
-                                        <td class="py-2 px-2 font-bold text-white flex items-center space-x-1.5"><span>🇯🇵 BoJ (JPY)</span></td>
-                                        <td class="py-2 px-2 text-accentGold font-bold">1.25%</td>
-                                        <td class="py-2 px-2 text-gray-300">30 Oct 2026</td>
-                                        <td class="py-2 px-2 text-center text-gray-400">0.0%</td>
-                                        <td class="py-2 px-2 text-center text-bullish font-bold">97.2%</td>
-                                        <td class="py-2 px-2 text-center text-bearish">2.8%</td>
-                                        <td class="py-2 px-2 text-bullish font-bold">NORMALIZING</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="h-56 w-full">
+                            <canvas id="currencyStrengthChart"></canvas>
                         </div>
                     </div>
 
@@ -307,67 +230,124 @@
                                     <i class="fa-solid fa-coins text-accentGold"></i>
                                     <span>INSTITUTIONAL GOLD (XAU/USD)</span>
                                 </h2>
-                                <span class="px-2 py-0.5 rounded bg-accentGold/20 text-accentGold font-mono font-bold text-[10px]">BULLISH BIAS</span>
+                                <span class="px-2 py-0.5 rounded bg-bullish/20 text-bullish font-mono font-bold text-[10px]">HAUSSIER STRUCTUREL</span>
                             </div>
-                            <div class="space-y-2 mt-3 font-mono">
+                            <div class="space-y-2 mt-3 font-mono text-[11px]">
                                 <div class="flex justify-between items-center border-b border-terminalBorder pb-1">
-                                    <span class="text-gray-400">PRIX SPOT COMPACT:</span>
-                                    <span class="text-white font-bold text-sm">$2,738.50 / oz</span>
+                                    <span class="text-gray-400">BIAIS BANQUES CENTRALES:</span>
+                                    <span class="text-bullish font-bold">ACHAT (TARGET $2,850)</span>
                                 </div>
                                 <div class="flex justify-between items-center border-b border-terminalBorder pb-1">
-                                    <span class="text-gray-400">VAR. 7D / 1M:</span>
-                                    <span class="text-bullish font-bold">+2.45% / +4.10%</span>
+                                    <span class="text-gray-400">RENDEMENT RÉEL US10Y:</span>
+                                    <span class="text-accentGold font-bold">FAVORABLE (-14 bps)</span>
                                 </div>
                                 <div class="flex justify-between items-center border-b border-terminalBorder pb-1">
-                                    <span class="text-gray-400">US10Y REAL YIELD IMPACT:</span>
-                                    <span class="text-accentAmber font-bold">SUPPORTIVE (-12 bps)</span>
+                                    <span class="text-gray-400">POSITION SMART MONEY (COT):</span>
+                                    <span class="text-bullish font-bold">+245K NET LONG</span>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-400">COT NET COMMERCIAUX:</span>
-                                    <span class="text-bullish font-bold">+245,800 contracts</span>
+                                    <span class="text-gray-400">SAISONNALITÉ DÉCEMBRE:</span>
+                                    <span class="text-bullish font-bold">80% WIN RATE</span>
                                 </div>
                             </div>
                         </div>
-                        <button onclick="openModal('XAU/USD Macro Matrix', 'L\'or reste fortement soutenu par la demande structurelle des banques centrales et l\'incertitude géopolitique globale. La compression des rendements réels réaffirmée sous les 2.0% soutient les objectifs d\'achat institutionnels vers $2,850/oz.')" class="w-full mt-3 py-1.5 bg-accentAmber hover:bg-accentGold text-black font-bold rounded transition text-center">
-                            VOIR ANALYSE DÉTAILLÉE GOLD
+                        <button onclick="openModal('Matrice Fondamentale Or (XAU/USD)', 'L\'Or est soutenu par trois piliers majeurs :<br><br>1. <b>Baisse des Taux Réels US :</b> La baisse des rendements corrigés de l\'inflation diminue le coût d\'opportunité de l\'Or.<br>2. <b>Achats des Banques Centrales :</b> Diversification massive hors du Dollar US.<br>3. <b>Couverture Géopolitique :</b> Protection contre les tensions au Moyen-Orient et les frictions commerciales.')" class="w-full mt-3 py-2 bg-accentAmber hover:bg-accentGold text-black font-bold rounded transition text-center text-xs">
+                            EXAMINER L'ANALYSE COMPLÈTE DU GOLD
                         </button>
+                    </div>
+                </div>
+
+                <div class="panel-box p-3">
+                    <div class="flex justify-between items-center mb-2 border-b border-terminalBorder pb-2">
+                        <h2 class="font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-landmark text-accentGold"></i>
+                            <span>MATRICE DES BANQUES CENTRALES & ANTICIPATIONS DE TAUX (OIS)</span>
+                        </h2>
+                        <span class="text-[10px] text-gray-400 font-mono">CLIQUEZ SUR UNE LIGNE POUR OUVRIR L'ANALYSE</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-terminalBorder text-gray-400 text-[10px] uppercase bg-panelHeader">
+                                    <th class="py-2 px-3">Institution</th>
+                                    <th class="py-2 px-3">Taux Actuel</th>
+                                    <th class="py-2 px-3">Prochaine Réunion</th>
+                                    <th class="py-2 px-3 text-center">Baisse (%)</th>
+                                    <th class="py-2 px-3 text-center">Maintien (%)</th>
+                                    <th class="py-2 px-3 text-center">Hausse (%)</th>
+                                    <th class="py-2 px-3">Orientation Monétaire</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-terminalBorder font-mono text-[11px]">
+                                <tr class="clickable-row" onclick="openCentralBankModal('FED')">
+                                    <td class="py-2.5 px-3 font-bold text-white flex items-center space-x-2"><span>🇺🇸 Fed (Réserve Fédérale)</span></td>
+                                    <td class="py-2.5 px-3 text-accentGold font-bold">3.75% - 4.00%</td>
+                                    <td class="py-2.5 px-3 text-gray-300">28 Oct 2026</td>
+                                    <td class="py-2.5 px-3 text-center text-gray-500">0.0%</td>
+                                    <td class="py-2.5 px-3 text-center text-bullish font-bold">85.0%</td>
+                                    <td class="py-2.5 px-3 text-center text-bearish">15.0%</td>
+                                    <td class="py-2.5 px-3 text-accentAmber font-bold">HAWKISH HOLD</td>
+                                </tr>
+                                <tr class="clickable-row" onclick="openCentralBankModal('ECB')">
+                                    <td class="py-2.5 px-3 font-bold text-white flex items-center space-x-2"><span>🇪🇺 BCE (Banque Centrale Européenne)</span></td>
+                                    <td class="py-2.5 px-3 text-accentGold font-bold">2.50%</td>
+                                    <td class="py-2.5 px-3 text-gray-300">29 Oct 2026</td>
+                                    <td class="py-2.5 px-3 text-center text-gray-500">0.0%</td>
+                                    <td class="py-2.5 px-3 text-center text-bullish font-bold">96.8%</td>
+                                    <td class="py-2.5 px-3 text-center text-bearish">3.2%</td>
+                                    <td class="py-2.5 px-3 text-bearish font-bold">HAWKISH TIGHT</td>
+                                </tr>
+                                <tr class="clickable-row" onclick="openCentralBankModal('BOJ')">
+                                    <td class="py-2.5 px-3 font-bold text-white flex items-center space-x-2"><span>🇯🇵 BoJ (Banque du Japon)</span></td>
+                                    <td class="py-2.5 px-3 text-accentGold font-bold">1.25%</td>
+                                    <td class="py-2.5 px-3 text-gray-300">30 Oct 2026</td>
+                                    <td class="py-2.5 px-3 text-center text-gray-500">0.0%</td>
+                                    <td class="py-2.5 px-3 text-center text-bullish font-bold">97.2%</td>
+                                    <td class="py-2.5 px-3 text-center text-bearish">2.8%</td>
+                                    <td class="py-2.5 px-3 text-bullish font-bold">NORMALISATION (HAUSSE)</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
             </div>
 
-            <!-- TAB 2: GLOBE MACRO 3D INTERACTIF -->
+            <!-- TAB 2: GLOBE MACRO 3D GÉOPOLITIQUE ENRIOS -->
             <div id="tab-globe" class="tab-content hidden space-y-3">
                 <div class="panel-box p-3">
                     <div class="flex justify-between items-center mb-2">
                         <div>
                             <h2 class="font-bold text-white text-sm flex items-center space-x-2">
                                 <i class="fa-solid fa-earth-americas text-accentGold"></i>
-                                <span>GLOBE MACROÉCONOMIQUE 3D INTERACTIF (82 ÉCONOMIES)</span>
+                                <span>GLOBE 3D MACROÉCONOMIQUE & NOCES GÉOPOLITIQUES</span>
                             </h2>
-                            <p class="text-gray-400 text-[11px]">Cliquez sur un nœud géographique pour afficher le profil économique complet du pays.</p>
+                            <p class="text-gray-400 text-[11px]">Visualisation dynamique 3D : Cliquez sur les capitales ou les zones de tension géopolitique.</p>
                         </div>
                         <div class="flex space-x-2 font-mono text-[10px]">
-                            <span class="px-2 py-1 rounded bg-bearish/20 text-bearish border border-bearish/30">RED: Hawkish / High Rate</span>
-                            <span class="px-2 py-1 rounded bg-bullish/20 text-bullish border border-bullish/30">GREEN: Easing / Low Rate</span>
+                            <span class="px-2 py-1 rounded bg-geoRisk/30 text-red-400 border border-geoRisk/50">🔴 Zone de Tension Géopolitique</span>
+                            <span class="px-2 py-1 rounded bg-accentAmber/30 text-accentGold border border-accentAmber/50">🟡 Pôle Monétaire Central</span>
                         </div>
                     </div>
-                    <div id="globeViz" class="w-full h-[550px] bg-terminalBg rounded border border-terminalBorder flex items-center justify-center relative overflow-hidden">
+                    <div id="globeViz" class="w-full h-[600px] bg-terminalBg rounded border border-terminalBorder flex items-center justify-center relative overflow-hidden">
                         <div id="globe-loading" class="text-accentGold font-mono text-sm flex items-center space-x-2">
                             <i class="fa-solid fa-circle-notch fa-spin"></i>
-                            <span>CHARGEMENT DU GLOBE MACRO 3D...</span>
+                            <span>INITIALISATION DE LA SPHÈRE 3D ET DU MAILLAGE...</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 3: CALENDRIER ÉCONOMIQUE AVANCÉ -->
+            <!-- TAB 3: CALENDRIER ÉCONOMIQUE FILTRÉ USD ET EUR EN FRANÇAIS -->
             <div id="tab-calendar" class="tab-content hidden space-y-3">
-                <div class="panel-box p-3 h-[650px] flex flex-col">
-                    <h2 class="font-bold text-white mb-2 flex items-center space-x-2">
-                        <i class="fa-solid fa-calendar-days text-accentGold"></i>
-                        <span>CALENDRIER ÉCONOMIQUE INSTANTANÉ & FILTRABLE</span>
-                    </h2>
+                <div class="panel-box p-3 h-[680px] flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-calendar-days text-accentGold"></i>
+                            <span>CALENDRIER ÉCONOMIQUE INSTITUTIONNEL (FILTRÉ : USD & EUR - FRANÇAIS)</span>
+                        </h2>
+                        <span class="text-[10px] text-bullish font-mono flex items-center space-x-1"><span class="live-dot"></span><span>LIVE API FEED</span></span>
+                    </div>
                     <div class="flex-1 w-full bg-terminalBg rounded overflow-hidden">
                         <div class="tradingview-widget-container" style="height:100%;width:100%">
                             <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
@@ -379,7 +359,7 @@
                                 "height": "100%",
                                 "locale": "fr",
                                 "importanceFilter": "-1,0,1",
-                                "currencyFilter": "USD,EUR,GBP,JPY,AUD,CAD,CHF"
+                                "currencyFilter": "USD,EUR"
                             }
                             </script>
                         </div>
@@ -387,12 +367,41 @@
                 </div>
             </div>
 
-            <!-- TAB 4: MARKET HEATMAP & PULSE -->
+            <!-- TAB 4: FLUX DE NEWS MACRO REELLES (TIMELINE) -->
+            <div id="tab-news" class="tab-content hidden space-y-3">
+                <div class="panel-box p-3 h-[680px] flex flex-col">
+                    <div class="flex justify-between items-center mb-2 border-b border-terminalBorder pb-2">
+                        <h2 class="font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-newspaper text-accentGold"></i>
+                            <span>DÉPÊCHES & FLUX DE NEWS MACRO EN TEMPS RÉEL</span>
+                        </h2>
+                        <span class="text-[10px] text-gray-400 font-mono">ACTUALITÉS REUTERS / BLOOMBERG EN DIRECT</span>
+                    </div>
+                    <div class="flex-1 w-full bg-terminalBg rounded overflow-hidden">
+                        <div class="tradingview-widget-container" style="height:100%;width:100%">
+                            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+                            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+                            {
+                                "feedMode": "all_symbols",
+                                "colorTheme": "dark",
+                                "isTransparent": true,
+                                "displayMode": "regular",
+                                "width": "100%",
+                                "height": "100%",
+                                "locale": "fr"
+                            }
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: HEATMAP FOREX -->
             <div id="tab-heatmap" class="tab-content hidden space-y-3">
-                <div class="panel-box p-3 h-[650px] flex flex-col">
+                <div class="panel-box p-3 h-[680px] flex flex-col">
                     <h2 class="font-bold text-white mb-2 flex items-center space-x-2">
                         <i class="fa-solid fa-fire text-accentAmber"></i>
-                        <span>CARTE THERMIQUE DU MARCHÉ (FOREX & ASSET HEATMAP)</span>
+                        <span>CARTE THERMIQUE DES MARCHÉS FOREX & MATIÈRES PREMIÈRES</span>
                     </h2>
                     <div class="flex-1 w-full bg-terminalBg rounded overflow-hidden">
                         <div class="tradingview-widget-container" style="height:100%;width:100%">
@@ -412,115 +421,46 @@
                 </div>
             </div>
 
-            <!-- TAB 5: BANQUES CENTRALES & TAUX -->
-            <div id="tab-central-banks" class="tab-content hidden space-y-3">
-                <div class="panel-box p-3">
-                    <h2 class="font-bold text-white mb-3 text-sm flex items-center space-x-2">
-                        <i class="fa-solid fa-building-columns text-accentGold"></i>
-                        <span>BASE DE DONNÉES DES TAUX DIRECTEURS G8 & ÉMERGENTS</span>
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div class="p-3 bg-panelHeader rounded border border-terminalBorder clickable-row" onclick="openCentralBankModal('FED')">
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-white">🇺🇸 Federal Reserve (Fed)</span>
-                                <span class="text-accentGold font-mono font-bold">3.75% - 4.00%</span>
-                            </div>
-                            <p class="text-gray-400 text-[11px] mt-1">Inflation CPI: 3.7% | Target: 2.0%</p>
-                        </div>
-                        <div class="p-3 bg-panelHeader rounded border border-terminalBorder clickable-row" onclick="openCentralBankModal('ECB')">
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-white">🇪🇺 European Central Bank (BCE)</span>
-                                <span class="text-accentGold font-mono font-bold">2.50%</span>
-                            </div>
-                            <p class="text-gray-400 text-[11px] mt-1">Inflation HICP: 3.8% | Target: 2.0%</p>
-                        </div>
-                        <div class="p-3 bg-panelHeader rounded border border-terminalBorder clickable-row" onclick="openCentralBankModal('BOE')">
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-white">🇬🇧 Bank of England (BoE)</span>
-                                <span class="text-accentGold font-mono font-bold">3.75%</span>
-                            </div>
-                            <p class="text-gray-400 text-[11px] mt-1">Inflation CPI: 3.1% | Target: 2.0%</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 6: BANK RESEARCH & CONSENSUS -->
-            <div id="tab-bank-research" class="tab-content hidden space-y-3">
-                <div class="panel-box p-3">
-                    <h2 class="font-bold text-white mb-3 text-sm flex items-center space-x-2">
-                        <i class="fa-solid fa-briefcase text-accentGold"></i>
-                        <span>CONSENSUS & CIBLES DES BANQUES D'INVESTISSEMENT</span>
-                    </h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse font-mono text-[11px]">
-                            <thead>
-                                <tr class="border-b border-terminalBorder text-gray-400 uppercase bg-panelHeader">
-                                    <th class="py-2 px-3">Actif</th>
-                                    <th class="py-2 px-3">Morgan Stanley</th>
-                                    <th class="py-2 px-3">Goldman Sachs</th>
-                                    <th class="py-2 px-3">JPMorgan</th>
-                                    <th class="py-2 px-3">Citigroup</th>
-                                    <th class="py-2 px-3">Consensus Biais</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-terminalBorder">
-                                <tr class="clickable-row" onclick="openModal('Gold Target Analysis', 'Les banques majeures réaffirment des objectifs d\'achat entre $2,750 et $2,900/oz en raison de la diversification des réserves des banques centrales et du risque géopolitique.')">
-                                    <td class="py-2 px-3 font-bold text-white">XAU / USD (GOLD)</td>
-                                    <td class="py-2 px-3 text-bullish font-bold">$2,750</td>
-                                    <td class="py-2 px-3 text-bullish font-bold">$2,850</td>
-                                    <td class="py-2 px-3 text-bullish font-bold">$2,800</td>
-                                    <td class="py-2 px-3 text-bullish font-bold">$2,900</td>
-                                    <td class="py-2 px-3"><span class="px-2 py-0.5 rounded bg-bullish/20 text-bullish font-bold">STRONG BULLISH</span></td>
-                                </tr>
-                                <tr class="clickable-row" onclick="openModal('EURUSD Consensus', 'Biais neutre à légèrement haussier alors que le différentiel de taux BCE vs Fed se stabilise.')">
-                                    <td class="py-2 px-3 font-bold text-white">EUR / USD</td>
-                                    <td class="py-2 px-3 text-gray-300">1.0850</td>
-                                    <td class="py-2 px-3 text-bullish font-bold">1.1200</td>
-                                    <td class="py-2 px-3 text-gray-300">1.0950</td>
-                                    <td class="py-2 px-3 text-bullish font-bold">1.1100</td>
-                                    <td class="py-2 px-3"><span class="px-2 py-0.5 rounded bg-accentAmber/20 text-accentGold font-bold">NEUTRAL / BULLISH</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 7: COT DATA & RETAIL SENTIMENT -->
+            <!-- TAB 6: COT DATA & RETAIL SENTIMENT -->
             <div id="tab-cot-sentiment" class="tab-content hidden space-y-3">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div class="panel-box p-3">
-                        <h2 class="font-bold text-white mb-2 flex items-center space-x-2">
-                            <i class="fa-solid fa-chart-bar text-accentGold"></i>
-                            <span>POSITIONS NETTES CFTC (SMART MONEY vs SPECULATORS)</span>
-                        </h2>
-                        <div class="h-60 w-full">
+                        <div class="flex justify-between items-center mb-2 border-b border-terminalBorder pb-2">
+                            <h2 class="font-bold text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-bar text-accentGold"></i>
+                                <span>POSITIONS NETTES CFTC (COT REPORT)</span>
+                            </h2>
+                            <button onclick="explainTool('cot')" class="guide-badge"><i class="fa-solid fa-graduation-cap"></i> Guide COT</button>
+                        </div>
+                        <div class="h-64 w-full">
                             <canvas id="cotChart"></canvas>
                         </div>
                     </div>
                     <div class="panel-box p-3 flex flex-col justify-between">
-                        <h2 class="font-bold text-white mb-2 flex items-center space-x-2">
-                            <i class="fa-solid fa-users text-accentAmber"></i>
-                            <span>RETAIL SENTIMENT (CONTRARIAN INDICATOR)</span>
-                        </h2>
-                        <div class="space-y-3 font-mono">
+                        <div class="flex justify-between items-center mb-2 border-b border-terminalBorder pb-2">
+                            <h2 class="font-bold text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-users text-accentAmber"></i>
+                                <span>RETAIL SENTIMENT (INDICATEUR CONTRARIEN)</span>
+                            </h2>
+                            <button onclick="explainTool('retail')" class="guide-badge"><i class="fa-solid fa-circle-info"></i> Guide Retail</button>
+                        </div>
+                        <div class="space-y-4 font-mono">
                             <div>
                                 <div class="flex justify-between text-[11px] mb-1">
-                                    <span class="text-white font-bold">EUR/USD (78% SHORT)</span>
-                                    <span class="text-bullish font-bold">BULLISH SIGNAL</span>
+                                    <span class="text-white font-bold">EUR/USD (78% SHORT PARTICULIERS)</span>
+                                    <span class="text-bullish font-bold">SIGNAL HAUSSIER INSTITUTIONNEL</span>
                                 </div>
-                                <div class="w-full h-3 bg-bearish/40 rounded overflow-hidden flex">
+                                <div class="w-full h-3.5 bg-bearish/40 rounded overflow-hidden flex border border-terminalBorder">
                                     <div class="h-full bg-bullish" style="width: 22%"></div>
                                     <div class="h-full bg-bearish" style="width: 78%"></div>
                                 </div>
                             </div>
                             <div>
                                 <div class="flex justify-between text-[11px] mb-1">
-                                    <span class="text-white font-bold">XAU/USD (65% LONG)</span>
-                                    <span class="text-bearish font-bold">BEARISH RETRACEMENT SIGNAL</span>
+                                    <span class="text-white font-bold">XAU/USD (65% LONG PARTICULIERS)</span>
+                                    <span class="text-accentGold font-bold">RETRACEMENT TEMPORAIRE POSSIBLE</span>
                                 </div>
-                                <div class="w-full h-3 bg-bearish/40 rounded overflow-hidden flex">
+                                <div class="w-full h-3.5 bg-bearish/40 rounded overflow-hidden flex border border-terminalBorder">
                                     <div class="h-full bg-bullish" style="width: 65%"></div>
                                     <div class="h-full bg-bearish" style="width: 35%"></div>
                                 </div>
@@ -530,24 +470,30 @@
                 </div>
             </div>
 
-            <!-- TAB 8: YIELD SPREADS & SAISONNALITÉ -->
+            <!-- TAB 7: YIELD SPREADS & SAISONNALITÉ HISTORIQUE -->
             <div id="tab-yields-seasonality" class="tab-content hidden space-y-3">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div class="panel-box p-3">
-                        <h2 class="font-bold text-white mb-2 flex items-center space-x-2">
-                            <i class="fa-solid fa-chart-line text-accentGold"></i>
-                            <span>US YIELD CURVE SPREAD (US10Y - US02Y)</span>
-                        </h2>
-                        <div class="h-56 w-full">
+                        <div class="flex justify-between items-center mb-2 border-b border-terminalBorder pb-2">
+                            <h2 class="font-bold text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-line text-accentGold"></i>
+                                <span>US YIELD CURVE SPREAD (US10Y - US02Y)</span>
+                            </h2>
+                            <button onclick="explainTool('yield')" class="guide-badge"><i class="fa-solid fa-graduation-cap"></i> Guide Spread</button>
+                        </div>
+                        <div class="h-64 w-full">
                             <canvas id="yieldSpreadChart"></canvas>
                         </div>
                     </div>
                     <div class="panel-box p-3">
-                        <h2 class="font-bold text-white mb-2 flex items-center space-x-2">
-                            <i class="fa-solid fa-calendar-check text-accentGold"></i>
-                            <span>SAISONNALITÉ HISTORIQUE XAU/USD (20 ANS)</span>
-                        </h2>
-                        <div class="h-56 w-full">
+                        <div class="flex justify-between items-center mb-2 border-b border-terminalBorder pb-2">
+                            <h2 class="font-bold text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-calendar-check text-accentGold"></i>
+                                <span>SAISONNALITÉ HISTORIQUE XAU/USD (20 ANS)</span>
+                            </h2>
+                            <button onclick="explainTool('seasonality')" class="guide-badge"><i class="fa-solid fa-circle-info"></i> Guide Saison</button>
+                        </div>
+                        <div class="h-64 w-full">
                             <canvas id="seasonalityChart"></canvas>
                         </div>
                     </div>
@@ -557,10 +503,10 @@
         </main>
     </div>
 
-    <!-- FENÊTRE MODALE UNIVERSELLE DRILL-DOWN -->
-    <div id="universalModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="panel-box bg-panelHeader border border-accentAmber/50 w-11/12 max-w-2xl p-5 rounded-lg shadow-2xl relative">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-base">
+    <!-- FENÊTRE MODALE UNIVERSELLE DRILL-DOWN EN FRANÇAIS -->
+    <div id="universalModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        <div class="panel-box bg-panelHeader border border-accentAmber/50 w-11/12 max-w-2xl p-6 rounded-xl shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <div class="border-b border-terminalBorder pb-3 mb-4">
@@ -569,12 +515,12 @@
                     <span>TITRE MODALE DÉTAILS</span>
                 </h3>
             </div>
-            <div id="modal-body" class="text-gray-300 space-y-3 text-xs leading-relaxed font-sans max-h-96 overflow-y-auto pr-1">
-                <p>Chargement des données détaillées...</p>
+            <div id="modal-body" class="text-gray-300 space-y-3 text-xs leading-relaxed font-sans max-h-96 overflow-y-auto pr-2">
+                <p>Chargement des métriques institutionnelles...</p>
             </div>
-            <div class="mt-5 pt-3 border-t border-terminalBorder flex justify-end">
-                <button onclick="closeModal()" class="px-4 py-1.5 bg-accentAmber hover:bg-accentGold text-black font-bold rounded transition">
-                    FERMER
+            <div class="mt-6 pt-3 border-t border-terminalBorder flex justify-end">
+                <button onclick="closeModal()" class="px-5 py-2 bg-accentAmber hover:bg-accentGold text-black font-bold rounded-lg transition text-xs">
+                    COMPRIS / FERMER
                 </button>
             </div>
         </div>
@@ -582,7 +528,7 @@
 
     <!-- SCRIPTS DE CONTRÔLE ET LOGIQUE GRAPHIQUE -->
     <script>
-        // 1. Horloge UTC et Gestionnaire des Killzones
+        // 1. Horloge UTC & Gestionnaire des Sessions
         function updateClockAndSessions() {
             const now = new Date();
             const utcString = now.toUTCString().split(' ')[4] + ' UTC';
@@ -603,17 +549,17 @@
         function updateSessionBadge(elementId, label, isActive) {
             const el = document.getElementById(elementId);
             if (isActive) {
-                el.className = "px-1.5 py-0.5 rounded bg-bullish/20 text-bullish border border-bullish/40 font-bold";
+                el.className = "px-2 py-0.5 rounded bg-bullish/20 text-bullish border border-bullish/40 font-bold";
                 el.innerText = `${label}: ACTIVE`;
             } else {
-                el.className = "px-1.5 py-0.5 rounded bg-gray-800 text-gray-500";
+                el.className = "px-2 py-0.5 rounded bg-gray-800 text-gray-500";
                 el.innerText = `${label}: OFF`;
             }
         }
         setInterval(updateClockAndSessions, 1000);
         updateClockAndSessions();
 
-        // 2. Gestionnaire des Onglets
+        // 2. Gestionnaire d'Onglets
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -623,7 +569,7 @@
             }
         }
 
-        // 3. Gestionnaire de Fenêtre Modale
+        // 3. Gestionnaire des Modales & Explications Pédagogiques
         function openModal(title, bodyHtml) {
             document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-circle-info text-accentGold"></i> <span>${title}</span>`;
             document.getElementById('modal-body').innerHTML = bodyHtml;
@@ -634,30 +580,67 @@
             document.getElementById('universalModal').classList.add('hidden');
         }
 
+        function explainTool(toolType) {
+            if (toolType === 'cot') {
+                openModal('Guide d\'Analyse du Rapport COT (CFTC)', 
+                    `<b>Comment utiliser le Rapport COT en trading institutionnel ?</b><br><br>` +
+                    `1. <b>Commercials (Smart Money - Vert) :</b> Ce sont les banques d'investissement et les producteurs. Ils se couvrent contre les risques. Quand leur position acheteuse atteint un sommet historique, c'est un <b>signal d'achat institutionnel majeur</b>.<br><br>` +
+                    `2. <b>Non-Commercials (Spéculateurs - Rouge) :</b> Ce sont les fonds Hedge Funds qui suivent les tendances. Ils ont souvent tort aux extrêmes de marché.<br><br>` +
+                    `<b>Règle d'or :</b> Cherchez les divergences où la Smart Money achète massivement pendant que les spéculateurs vendeurs s'épuisent.`
+                );
+            } else if (toolType === 'yield') {
+                openModal('Guide du Spread de Taux US (US10Y - US02Y)', 
+                    `<b>Qu'est-ce que le Spread de Taux et comment l'utiliser ?</b><br><br>` +
+                    `Le spread mesure la différence entre le rendement de l'obligation 10 ans et 2 ans de l'État américain.<br><br>` +
+                    `1. <b>Zone Négative (&lt; 0 bps) :</b> Inversion de la courbe. Alerte de récession à venir.<br><br>` +
+                    `2. <b>Remontée / Désinversement (Steepening) :</b> Lorsque la ligne monte au-dessus de 0, la Fed baisse ses taux. Cela provoque une baisse du Dollar Index (DXY) et déclenche la <b>plus forte hausse historique sur l'Or (XAU/USD)</b>.`
+                );
+            } else if (toolType === 'seasonality') {
+                openModal('Guide de la Saisonnalité sur 20 Ans (Or XAU/USD)', 
+                    `<b>Comment interpréter le taux de réussite historique (% Win Rate) ?</b><br><br>` +
+                    `Ce graphique calcule le pourcentage d'années où le mois s'est terminé dans le vert au cours des 20 dernières années.<br><br>` +
+                    `• <b>Décembre (80% Win Rate) & Janvier (70%) :</b> Mois historiquement les plus haussiers pour l'Or.<br>` +
+                    `• <b>Juin (40%) :</b> Mois historiquement neutre ou de consolidation.`
+                );
+            } else if (toolType === 'currency') {
+                openModal('Guide de la Force Relative des Devises (G8)', 
+                    `<b>Comment lire la courbe multi-devises ?</b><br><br>` +
+                    `Le graphique mesure l'accélération relative des 8 devises majeures.<br><br>` +
+                    `<b>Stratégie :</b> Achetez la devise la plus forte (courbe du haut en hausse) contre la devise la plus faible (courbe du bas en baisse).`
+                );
+            } else if (toolType === 'retail') {
+                openModal('Guide du Retail Sentiment (Indicateur Contrarien)', 
+                    `<b>Pourquoi utiliser le positionnement des particuliers à l'envers ?</b><br><br>` +
+                    `Plus de 70% à 80% des traders particuliers sont perdants à long terme.<br><br>` +
+                    `• Si <b>78% des particuliers sont SHORT</b> sur EUR/USD, le signal institutionnel est <b>ACHETEUR (BULLISH)</b>.`
+                );
+            }
+        }
+
         function openCentralBankModal(bankCode) {
             const bankDetails = {
-                'FED': { title: 'Réserve Fédérale Américaine (Fed)', body: '<b>Taux Directeur:</b> 3.75% - 4.00%<br><b>Inflation CPI:</b> 3.7%<br><b>Dernière Décision:</b> Maintien des taux.<br><b>Analyse Macro:</b> Hawkish Hold motivé par la persistance de l\'inflation de base et la hausse des matières premières.' },
-                'ECB': { title: 'Banque Centrale Européenne (BCE)', body: '<b>Taux Dépôt:</b> 2.50%<br><b>Inflation HICP:</b> 3.8%<br><b>Analyse Macro:</b> La BCE préserve une approche restrictive face au rebond des coûts énergétiques.' },
-                'BOE': { title: 'Banque d\'Angleterre (BoE)', body: '<b>Taux Directeur:</b> 3.75%<br><b>Inflation CPI:</b> 3.1%<br><b>Market Pricing:</b> Swaps OIS intégrant 94% de probabilité d\'ajustement haussier.' },
-                'BOJ': { title: 'Banque du Japon (BoJ)', body: '<b>Taux Directeur:</b> 1.25%<br><b>Focus:</b> Normalisation progressive de la courbe pour enrayer la dépréciation du Yen.' }
+                'FED': { title: 'Réserve Fédérale Américaine (Fed)', body: '<b>Taux Directeur:</b> 3.75% - 4.00%<br><b>Inflation CPI:</b> 3.7%<br><b>Analyse Macro:</b> Hawkish Hold. La Fed maintient ses taux élevés pour stabiliser l\'inflation sous-jacente.' },
+                'ECB': { title: 'Banque Centrale Européenne (BCE)', body: '<b>Taux Dépôt:</b> 2.50%<br><b>Inflation HICP:</b> 3.8%<br><b>Analyse Macro:</b> Ton restrictif maintenu face à la remontée des coûts énergétiques.' },
+                'BOJ': { title: 'Banque du Japon (BoJ)', body: '<b>Taux Directeur:</b> 1.25%<br><b>Analyse Macro:</b> Phase de normalisation pour freiner la dépréciation du Yen par rapport au Dollar.' }
             };
-            const bank = bankDetails[bankCode] || { title: 'Détails Banque Centrale', body: 'Données indisponibles.' };
+            const bank = bankDetails[bankCode] || { title: 'Banque Centrale', body: 'Données indisponibles.' };
             openModal(bank.title, bank.body);
         }
 
         // 4. Initialisation des Graphiques Chart.js
         window.addEventListener('load', () => {
+            // Chart 1: Force Relative Devises
             const ctxCS = document.getElementById('currencyStrengthChart').getContext('2d');
             new Chart(ctxCS, {
                 type: 'line',
                 data: {
                     labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
                     datasets: [
-                        { label: 'USD', data: [0.1, 0.4, 0.8, 1.2, 0.9, 1.1], borderColor: '#f59e0b', tension: 0.3 },
-                        { label: 'EUR', data: [-0.2, -0.4, -0.1, -0.6, -0.5, -0.3], borderColor: '#3b82f6', tension: 0.3 },
-                        { label: 'GBP', data: [0.3, 0.5, 0.2, 0.7, 0.6, 0.8], borderColor: '#8b5cf6', tension: 0.3 },
-                        { label: 'JPY', data: [-0.8, -1.0, -0.7, -1.2, -1.1, -0.9], borderColor: '#ef4444', tension: 0.3 },
-                        { label: 'AUD', data: [0.5, 0.8, 1.1, 0.9, 1.3, 1.5], borderColor: '#10b981', tension: 0.3 }
+                        { label: 'USD', data: [0.1, 0.4, 0.8, 1.2, 0.9, 1.1], borderColor: '#f59e0b', tension: 0.35, borderWidth: 2 },
+                        { label: 'EUR', data: [-0.2, -0.4, -0.1, -0.6, -0.5, -0.3], borderColor: '#3b82f6', tension: 0.35, borderWidth: 2 },
+                        { label: 'GBP', data: [0.3, 0.5, 0.2, 0.7, 0.6, 0.8], borderColor: '#8b5cf6', tension: 0.35, borderWidth: 2 },
+                        { label: 'JPY', data: [-0.8, -1.0, -0.7, -1.2, -1.1, -0.9], borderColor: '#ef4444', tension: 0.35, borderWidth: 2 },
+                        { label: 'AUD', data: [0.5, 0.8, 1.1, 0.9, 1.3, 1.5], borderColor: '#10b981', tension: 0.35, borderWidth: 2 }
                     ]
                 },
                 options: {
@@ -665,20 +648,21 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { labels: { color: '#9ca3af', font: { size: 10 } } } },
                     scales: {
-                        x: { grid: { color: '#1f2438' }, ticks: { color: '#9ca3af' } },
-                        y: { grid: { color: '#1f2438' }, ticks: { color: '#9ca3af' } }
+                        x: { grid: { color: '#1c253b' }, ticks: { color: '#9ca3af' } },
+                        y: { grid: { color: '#1c253b' }, ticks: { color: '#9ca3af' } }
                     }
                 }
             });
 
+            // Chart 2: Positions CFTC COT
             const ctxCOT = document.getElementById('cotChart').getContext('2d');
             new Chart(ctxCOT, {
                 type: 'bar',
                 data: {
-                    labels: ['Gold', 'EUR', 'GBP', 'JPY', 'AUD'],
+                    labels: ['Gold (XAU)', 'EUR', 'GBP', 'JPY', 'AUD'],
                     datasets: [
-                        { label: 'Commercials (Smart Money)', data: [245, 85, -30, 42, -15], backgroundColor: '#10b981' },
-                        { label: 'Non-Commercials (Speculators)', data: [-210, -72, 25, -38, 10], backgroundColor: '#ef4444' }
+                        { label: 'Commercials (Smart Money)', data: [245, 85, -30, 42, -15], backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'Non-Commercials (Spéculateurs)', data: [-210, -72, 25, -38, 10], backgroundColor: '#ef4444', borderRadius: 4 }
                     ]
                 },
                 options: {
@@ -686,71 +670,90 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { labels: { color: '#9ca3af', font: { size: 10 } } } },
                     scales: {
-                        x: { grid: { color: '#1f2438' }, ticks: { color: '#9ca3af' } },
-                        y: { grid: { color: '#1f2438' }, ticks: { color: '#9ca3af' } }
+                        x: { grid: { color: '#1c253b' }, ticks: { color: '#9ca3af' } },
+                        y: { grid: { color: '#1c253b' }, ticks: { color: '#9ca3af' } }
                     }
                 }
             });
 
+            // Chart 3: Yield Spread US10Y-US02Y
             const ctxYS = document.getElementById('yieldSpreadChart').getContext('2d');
             new Chart(ctxYS, {
                 type: 'line',
                 data: {
                     labels: ['Jan', 'Mar', 'Mai', 'Juil', 'Sep', 'Oct'],
-                    datasets: [{ label: 'Spread US10Y-US02Y (bps)', data: [-20, -10, 5, 12, 18, 24], borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', fill: true }]
+                    datasets: [{ label: 'Spread US10Y-US02Y (bps)', data: [-20, -10, 5, 12, 18, 24], borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.12)', fill: true, tension: 0.3, borderWidth: 2 }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { labels: { color: '#9ca3af' } } },
-                    scales: { x: { grid: { color: '#1f2438' } }, y: { grid: { color: '#1f2438' } } }
+                    scales: { x: { grid: { color: '#1c253b' }, ticks: { color: '#9ca3af' } }, y: { grid: { color: '#1c253b' }, ticks: { color: '#9ca3af' } } }
                 }
             });
 
+            // Chart 4: Saisonnalité Or 20 Ans
             const ctxS = document.getElementById('seasonalityChart').getContext('2d');
             new Chart(ctxS, {
                 type: 'bar',
                 data: {
                     labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
-                    datasets: [{ label: 'Win Rate Historique Gold %', data: [70, 55, 45, 60, 50, 40, 65, 75, 50, 55, 60, 80], backgroundColor: '#f59e0b' }]
+                    datasets: [{ label: 'Win Rate Historique Gold %', data: [70, 55, 45, 60, 50, 40, 65, 75, 50, 55, 60, 80], backgroundColor: '#f59e0b', borderRadius: 4 }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { labels: { color: '#9ca3af' } } },
-                    scales: { x: { grid: { color: '#1f2438' } }, y: { grid: { color: '#1f2438' } } }
+                    scales: { x: { grid: { color: '#1c253b' }, ticks: { color: '#9ca3af' } }, y: { grid: { color: '#1c253b' }, ticks: { color: '#9ca3af' } } }
                 }
             });
         });
 
-        // 5. Moteur WebGL Globe 3D
+        // 5. Globe 3D WebGL Enrichi avec Zones Géopolitiques
         window.globeInitialized = false;
         function initGlobe3D() {
             const container = document.getElementById('globeViz');
             document.getElementById('globe-loading').style.display = 'none';
 
-            const macroData = [
-                { lat: 38.8951, lng: -77.0364, name: "États-Unis (Fed)", rate: "3.75-4.00%", cpi: "3.7%", color: "#f59e0b" },
-                { lat: 50.1109, lng: 8.6821, name: "Zone Euro (BCE)", rate: "2.50%", cpi: "3.8%", color: "#ef4444" },
-                { lat: 51.5074, lng: -0.1278, name: "Royaume-Uni (BoE)", rate: "3.75%", cpi: "3.1%", color: "#ef4444" },
-                { lat: 35.6762, lng: 139.6503, name: "Japon (BoJ)", rate: "1.25%", cpi: "1.7%", color: "#10b981" },
-                { lat: -35.2809, lng: 149.1300, name: "Australie (RBA)", rate: "4.60%", cpi: "3.6%", color: "#ef4444" }
+            const macroAndGeoData = [
+                // Capitales Financières
+                { lat: 38.8951, lng: -77.0364, name: "🇺🇸 Washington (Fed)", details: "Taux: 3.75%-4.00% | CPI: 3.7%", color: "#f59e0b", radius: 0.9 },
+                { lat: 50.1109, lng: 8.6821, name: "🇪🇺 Francfort (BCE)", details: "Taux: 2.50% | HICP: 3.8%", color: "#ef4444", radius: 0.9 },
+                { lat: 51.5074, lng: -0.1278, name: "🇬🇧 Londres (BoE)", details: "Taux: 3.75% | CPI: 3.1%", color: "#ef4444", radius: 0.9 },
+                { lat: 35.6762, lng: 139.6503, name: "🇯🇵 Tokyo (BoJ)", details: "Taux: 1.25% | CPI: 1.7%", color: "#10b981", radius: 0.9 },
+                // Hotspots Géopolitiques
+                { lat: 26.5667, lng: 56.2500, name: "🔴 Détroit d'Hormuz (Moyen-Orient)", details: "ZONE DE TENSION GÉOPOLITIQUE: Risque d'approvisionnement brut & inflation d'énergie.", color: "#dc2626", radius: 1.4 },
+                { lat: 50.4501, lng: 30.5234, name: "🔴 Corridor Est-Européen", details: "ZONE DE TENSION: Impact direct sur le gaz TTF et les budgets de la zone Euro.", color: "#dc2626", radius: 1.3 }
+            ];
+
+            // Arcs de flux commerciaux et financiers
+            const arcsData = [
+                { startLat: 38.8951, startLng: -77.0364, endLat: 50.1109, endLng: 8.6821, color: '#f59e0b' },
+                { startLat: 26.5667, startLng: 56.2500, endLat: 35.6762, endLng: 139.6503, color: '#dc2626' }
             ];
 
             const world = Globe()
                 (container)
                 .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
-                .pointsData(macroData)
+                .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+                .pointsData(macroAndGeoData)
                 .pointColor('color')
-                .pointAltitude(0.06)
-                .pointRadius(0.8)
-                .pointLabel(d => `<b>${d.name}</b><br>Taux: ${d.rate}<br>CPI: ${d.cpi}`)
+                .pointAltitude(0.08)
+                .pointRadius('radius')
+                .pointLabel(d => `<div style="background:#0d111a; border:1px solid #f59e0b; padding:6px; border-radius:4px; font-family:monospace;"><b>${d.name}</b><br><span style="color:#d1d5db;">${d.details}</span></div>`)
+                .arcsData(arcsData)
+                .arcColor('color')
+                .arcDashLength(0.4)
+                .arcDashGap(0.2)
+                .arcDashInitialGap(() => Math.random())
+                .arcDashAnimateTime(1800)
+                .arcStroke(0.6)
                 .onPointClick(point => {
-                    openModal(`Métriques Macro: ${point.name}`, `<b>Taux Directeur:</b> ${point.rate}<br><b>Inflation CPI:</b> ${point.cpi}<br><b>Biais Monétaire:</b> Analyse sous contrôle du réseau institutionnel.`);
+                    openModal(`Fiche d'Analyse: ${point.name}`, `<b>Détails Macro & Risque :</b><br>${point.details}<br><br><i>Ce nœud est surveillé en permanence par le réseau institutionnel.</i>`);
                 });
 
             world.controls().autoRotate = true;
-            world.controls().autoRotateSpeed = 0.6;
+            world.controls().autoRotateSpeed = 0.5;
             window.globeInitialized = true;
         }
     </script>
