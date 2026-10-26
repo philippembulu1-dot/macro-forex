@@ -2,128 +2,1241 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VM TERMINAL - Trade Sider Clone 4D</title>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090a08">
+<title>TOP ONE ANALYSIS VM | Institutional Terminal</title>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
+
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0e17;color:#e5e7eb;font-family:Inter,Arial;display:flex;height:100vh;overflow:hidden}
-.sidebar{width:190px;background:#000;border-right:1px solid #1e293b;padding:14px;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
-.sidebar h2{font-size:16px;color:#fff}.sidebar h2 span{color:#facc15}
-.sidebar button{background:transparent;border:0;color:#94a3b8;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px}
-.sidebar button.active,.sidebar button:hover{background:#1e293b;color:#fff;border-left:3px solid #facc15}
-.sidebar .sec{font-size:10px;color:#64748b;margin-top:14px;letter-spacing:1px}
-.sidebar .val{color:#f5c518;font-weight:700}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{display:flex;gap:18px;background:#111827;border-bottom:1px solid #1e293b;padding:8px 14px;overflow-x:auto;white-space:nowrap}
-.topbar div{font-size:12px}.topbar b{color:#fff}.up{color:#22c55e}.down{color:#ef4444}
-.grid{flex:1;display:grid;grid-template-columns:1fr 1fr 340px;grid-template-rows:52% 48%;gap:8px;padding:8px}
-.card{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:10px;position:relative}
-.card h3{font-size:12px;color:#facc15;letter-spacing:.5px}
-.chart{width:100%;height:calc(100% - 22px)}
-.right-col{display:flex;flex-direction:column;gap:8px}
-.mini-table{font-size:11px;width:100%;border-collapse:collapse} .mini-table td{padding:4px;border-bottom:1px solid #1e293b}
-.badge{font-size:10px;padding:2px 6px;border-radius:4px}.badge-high{background:#dc2626}.badge-med{background:#f59e0b;color:#000}
-@media(max-width:900px){.sidebar{display:none}.grid{grid-template-columns:1fr;grid-template-rows:auto;overflow:auto}body{overflow:auto;height:auto}}
+:root {
+    --bg:#080907;
+    --panel:#0c0d0a;
+    --panel2:#11120e;
+    --border:#38351b;
+    --yellow:#ffd400;
+    --green:#00df91;
+    --red:#ff5364;
+    --cyan:#23d9ed;
+    --text:#d9d7c8;
+    --muted:#777768;
+}
+*{box-sizing:border-box}
+body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:Arial,Helvetica,sans-serif;font-size:12px;
+}
+button,input,select{font:inherit}
+button,select,input{
+    color:var(--yellow);background:#14150f;
+    border:1px solid var(--border);padding:8px;
+}
+button{cursor:pointer}
+button:hover,.nav-item:hover{background:#29240a}
+header{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:12px;padding:14px 20px;
+    background:#0b0c09;border-bottom:1px solid var(--yellow);
+}
+.logo{font-size:22px;font-weight:900;color:white}
+.logo span{color:var(--yellow)}
+.status{color:var(--green);letter-spacing:1px}
+.ticker{
+    overflow:hidden;white-space:nowrap;padding:11px;
+    border-bottom:1px solid var(--border);
+    background:#10110d;color:var(--muted);
+}
+.ticker span{margin-right:26px}
+.positive{color:var(--green)!important}
+.negative{color:var(--red)!important}
+.warning{color:var(--yellow)!important}
+.layout{display:grid;grid-template-columns:215px minmax(0,1fr)}
+.sidebar{
+    position:sticky;top:99px;height:calc(100vh - 99px);
+    overflow:auto;border-right:1px solid var(--border);
+    padding:12px;background:#0a0b08;
+}
+.nav-heading{
+    margin:18px 8px 7px;color:#8f8b6b;
+    font-size:10px;letter-spacing:2px;
+}
+.nav-item{
+    display:block;width:100%;text-align:left;
+    color:#b8b49a;background:transparent;
+    border:0;border-left:2px solid transparent;margin:2px 0;
+    padding:11px 9px;
+}
+.nav-item.active{background:#28230a;color:var(--yellow);border-left-color:var(--yellow)}
+main{padding:14px;min-width:0}
+.market-summary{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;margin-bottom:12px;
+}
+.stat,.panel{
+    background:var(--panel);border:1px solid var(--border);
+    min-width:0;
+}
+.stat{padding:14px}
+.stat label{display:block;color:var(--muted);margin-bottom:10px}
+.stat strong{font-size:21px;color:var(--yellow)}
+.stat small{display:block;margin-top:8px;color:var(--muted)}
+.dashboard-grid{
+    display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
+    gap:12px;
+}
+.panel{padding:12px;grid-column:span 6}
+.panel.full{grid-column:1/-1}
+.panel.third{grid-column:span 4}
+.panel-title{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:8px;color:var(--yellow);
+    font-size:12px;font-weight:bold;letter-spacing:1.6px;
+    border-bottom:1px solid #292719;padding-bottom:12px;margin-bottom:10px;
+}
+.badge{
+    font-size:9px;padding:5px 7px;border:1px solid var(--border);
+    color:var(--yellow);letter-spacing:1px;
+}
+.chart{width:100%;height:310px}
+.chart.tall{height:410px}
+.chart.short{height:220px}
+.controls{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.controls button.active{background:var(--yellow);color:#111}
+.muted{color:var(--muted);line-height:1.6}
+.table-wrap{overflow:auto;max-height:530px}
+table{border-collapse:collapse;width:100%;font-size:11px}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #29291e;white-space:nowrap}
+th{position:sticky;top:0;background:#14150f;color:#aaa68a;z-index:1}
+td strong{color:#eee}
+input[type=search]{min-width:160px}
+select{max-width:100%}
+.heatmap{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;
+}
+.heat-cell{
+    min-height:85px;padding:12px 8px;display:flex;
+    flex-direction:column;justify-content:space-between;
+    border:1px solid #27271d;background:#14150f;
+}
+.heat-cell strong{color:white;font-size:12px}
+.heat-cell .change{font-size:17px;font-weight:bold}
+.heat-cell small{color:#ccc}
+.country-list{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;
+    max-height:300px;overflow:auto;
+}
+.country-btn{text-align:left;color:var(--text);font-size:10px}
+.country-btn.active{border-color:var(--yellow);color:var(--yellow)}
+.metric-grid{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+.metric{
+    padding:10px;background:#12130f;border:1px solid #29291e;
+}
+.metric label{display:block;color:var(--muted);margin-bottom:9px}
+.metric strong{font-size:17px}
+.footer{
+    text-align:center;color:var(--muted);padding:22px;
+    border-top:1px solid var(--border);margin-top:18px;
+}
+.hidden{display:none!important}
+@media(max-width:1000px){
+    .layout{grid-template-columns:1fr}
+    .sidebar{position:relative;top:0;height:auto;display:flex;gap:5px;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--border)}
+    .nav-heading{width:100%}
+    .nav-item{width:auto}
+    .panel,.panel.third{grid-column:span 12}
+}
+@media(max-width:600px){
+    header{position:relative}
+    .market-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .heatmap{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .country-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+    main{padding:7px}
+    .chart{height:270px}
+}
 </style>
 </head>
+
 <body>
-<div class="sidebar">
-<h2>⚡ Trade <span>Sider</span> <small style="color:#64748b">VM</small></h2>
-<div class="sec">MENU</div>
-<button class="active">📊 Dashboard</button><button>🌍 Global Macro</button><button>💹 Forex</button><button>🥇 Gold XAUUSD</button><button>📅 Calendar</button>
-<div class="sec">MY WATCHLIST</div>
-<button>XAUUSD <span class="val">2,634.10 +1.2%</span></button>
-<button>EURUSD <span>1.0852 +0.4%</span></button>
-<button>GBPUSD <span>1.2710 -0.3%</span></button>
-<button>USDJPY <span>151.40 -0.8%</span></button>
-<button>US10Y <span class="val">4.42%</span></button>
-<button>DXY <span>104.20</span></button>
-<div class="sec">CENTRAL BANK</div>
-<button>FED 5.50% <span class="up">HOLD</span></button>
-<button>ECB 4.50% <span class="down">CUT?</span></button>
-<button>BOE 5.25%</button>
-<div style="margin-top:auto;font-size:11px;color:#64748b">Top One Analysis VM<br>Mode 4K • Live</div>
+
+<header>
+    <div class="logo"><span>▶</span> TOP ONE ANALYSIS <span>VM</span></div>
+    <div class="status">● TERMINAL EN LIGNE</div>
+    <div id="clock">--:--:-- UTC</div>
+    <button id="refreshButton">↻ ACTUALISER</button>
+</header>
+
+<div class="ticker" id="ticker">
+    <span>MODE DEMO — les valeurs affichées ne sont pas des cotations live.</span>
 </div>
 
-<div class="main">
-<div class="topbar">
-<div>XAUUSD <b>2,634.10</b> <span class="up">+1.24%</span></div>
-<div>EURUSD <b>1.0852</b> <span class="up">+0.42%</span></div>
-<div>GBPUSD <b>1.2710</b> <span class="down">-0.31%</span></div>
-<div>USDJPY <b>151.40</b> <span class="down">-0.82%</span></div>
-<div>US10Y <b>4.42%</b> <span class="down">-0.13</span></div>
-<div>DXY <b>104.20</b> <span class="down">-0.55%</span></div>
-<div>BTC <b>97,420</b> <span class="up">+3.4%</span></div>
-<div>NAS100 <b>21,402</b> <span class="up">+0.9%</span></div>
-<div>VIX <b>14.2</b> <span class="down">-2.6</span></div>
+<div class="layout">
+<aside class="sidebar">
+    <div class="nav-heading">GLOBAL</div>
+    <button class="nav-item active" data-target="overview">▦ Overview</button>
+    <button class="nav-item" data-target="macro">▤ Macro Dashboard</button>
+    <button class="nav-item" data-target="markets">⌁ Market Heatmap</button>
+    <button class="nav-item" data-target="charts">⌁ Charts 4D</button>
+    <button class="nav-item" data-target="yield">⌁ Yield Curve 3D</button>
+    <button class="nav-item" data-target="correlation">▦ Correlation Matrix</button>
+    <div class="nav-heading">GLOBAL ECONOMY</div>
+    <button class="nav-item" data-target="globe">◉ Globe Macro 3D</button>
+    <button class="nav-item" data-target="calendar">▦ Economic Calendar</button>
+    <button class="nav-item" data-target="banks">▤ Central Banks</button>
+    <div class="nav-heading">RISK MANAGEMENT</div>
+    <button class="nav-item" data-target="risk">⚖ Risk Engine</button>
+    <div class="nav-heading">CONFIGURATION</div>
+    <button class="nav-item" data-target="config">⚙ API Configuration</button>
+</aside>
+
+<main>
+<div class="market-summary" id="overview">
+    <div class="stat">
+        <label>GOLD · XAUUSD</label>
+        <strong id="goldPrice">4,120.50</strong>
+        <small class="positive">+0.42% · DEMO</small>
+    </div>
+    <div class="stat">
+        <label>US DOLLAR INDEX · DXY</label>
+        <strong id="dxyPrice">98.24</strong>
+        <small class="negative">-0.18% · DEMO</small>
+    </div>
+    <div class="stat">
+        <label>US 10Y YIELD</label>
+        <strong id="yieldPrice">4.12%</strong>
+        <small>RENDEMENT ILLUSTRATIF</small>
+    </div>
+    <div class="stat">
+        <label>RISK SENTIMENT</label>
+        <strong id="riskValue">42 / 100</strong>
+        <small class="warning" id="riskLabel">NEUTRAL</small>
+    </div>
 </div>
 
-<div class="grid">
-<!-- CHART 1 - CENTRAL -->
-<div class="card"><h3>TRADE SENTIMENT — MULTI ASSET 4D • Lissé Bézier + Glow</h3><div id="chart1" class="chart"></div></div>
-<!-- GLOBE -->
-<div class="card"><h3>GLOBAL MAP — 82 ECONOMIES • Click Pays → Macro</h3><div id="globe" class="chart"></div><div style="font-size:11px;display:flex;gap:10px;margin-top:6px"><span>🟢 Risk-On</span><span>🟡 Neutral</span><span>🔴 Risk-Off</span><span style="margin-left:auto">USA: CPI 3.2% | NFP 175K</span></div></div>
-<!-- RIGHT TOP -->
-<div class="card" style="display:flex;flex-direction:column"><h3>🔥 MACRO DASHBOARD — Banques</h3><div style="overflow:auto;flex:1"><table class="mini-table" id="macroTable"></table></div></div>
+<div class="dashboard-grid">
 
-<!-- CHART 2 -->
-<div class="card"><h3>CURRENCY STRENGTH — 3M • 4D SMOOTH</h3><div id="chart2" class="chart"></div></div>
-<!-- CALENDAR -->
-<div class="card"><h3>📅 ECONOMIC CALENDAR — High Impact</h3><table class="mini-table"><tr><td>14:30</td><td>USD CPI YoY</td><td><span class="badge badge-high">HIGH</span></td><td>3.2% vs 3.3%</td></tr><tr><td>14:30</td><td>USD NFP</td><td><span class="badge badge-high">HIGH</span></td><td>175K</td></tr><tr><td>16:00</td><td>USD ISM</td><td><span class="badge badge-med">MED</span></td><td>52.5</td></tr><tr><td>10:00</td><td>EUR PIB</td><td><span class="badge badge-high">HIGH</span></td><td>0.3%</td></tr></table><div style="margin-top:8px;font-size:11px">Spread 10Y-2Y: <b style="color:#facc15">-0.42% Inversion = Bullish GOLD</b></div></div>
-<!-- RIGHT BOTTOM -->
-<div class="card"><h3>🏦 CENTRAL BANK & COT</h3><table class="mini-table"><tr><td>FED</td><td>5.50%</td><td>Prob CUT Dec: 62%</td></tr><tr><td>ECB</td><td>4.50%</td><td>Prob CUT: 78%</td></tr><tr><td>XAU COT</td><td>Non-Com +180K</td><td style="color:#22c55e">Bullish</td></tr><tr><td>Retail XAU</td><td>68% Long</td><td style="color:#ef4444">Contrarien Bearish</td></tr></table><div style="margin-top:8px"><input id="bal" placeholder="Capital $ 5000" style="width:100%;background:#0b1220;border:1px solid #334155;color:#fff;padding:7px;border-radius:6px"><input id="sl" placeholder="SL pips 50" style="width:100%;background:#0b1220;border:1px solid #334155;color:#fff;padding:7px;border-radius:6px;margin-top:4px"><button onclick="calc()" style="width:100%;background:#facc15;border:0;padding:8px;border-radius:6px;font-weight:800;margin-top:4px">VM RISK 1% → LOT</button><div id="res" style="font-size:12px;margin-top:6px"></div></div></div>
+<section class="panel full" id="macro">
+    <div class="panel-title">
+        <span>MACRO DASHBOARD · 82 ÉCONOMIES</span>
+        <span class="badge">WORLD BANK + FRED</span>
+    </div>
+    <div class="controls">
+        <select id="countrySelect"></select>
+        <select id="familySelect">
+            <option value="ALL">Toutes les familles</option>
+            <option value="Croissance">Croissance</option>
+            <option value="Inflation">Inflation</option>
+            <option value="Emploi">Emploi</option>
+            <option value="Consommation">Consommation & confiance</option>
+            <option value="Immobilier">Immobilier & dette</option>
+            <option value="Taux">Taux & liquidité</option>
+            <option value="Marché">Marché & risque</option>
+            <option value="Surprises">Surprises économiques</option>
+        </select>
+        <input id="macroSearch" type="search" placeholder="Rechercher un indicateur…">
+        <button id="loadMacro">CHARGER DONNÉES WORLD BANK</button>
+    </div>
+    <div id="macroCountryInfo" class="muted"></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Famille</th>
+                    <th>Indicateur</th>
+                    <th>Valeur actuelle</th>
+                    <th>Précédent</th>
+                    <th>Consensus</th>
+                    <th>Impact XAUUSD</th>
+                    <th>Source / statut</th>
+                </tr>
+            </thead>
+            <tbody id="macroTable"></tbody>
+        </table>
+    </div>
+    <p class="muted">
+        Les indicateurs en mode DEMO sont fictifs. Le consensus et l'impact
+        sur l'or ne peuvent pas être déduits de manière fiable sans données
+        réelles, attentes de marché et contexte macroéconomique.
+    </p>
+</section>
+
+<section class="panel" id="charts">
+    <div class="panel-title">
+        <span>RELATIVE STRENGTH · MULTI-TIMEFRAME</span>
+        <span class="badge">ECHARTS</span>
+    </div>
+    <div class="controls" id="chartPeriods">
+        <button data-period="1D">1D</button>
+        <button data-period="1W">1W</button>
+        <button data-period="1M" class="active">1M</button>
+        <button data-period="3M">3M</button>
+        <button data-period="1Y">1Y</button>
+        <button data-period="5Y">5Y</button>
+        <button id="playChart">▶ PLAY</button>
+    </div>
+    <div id="relativeChart" class="chart"></div>
+    <div id="chartValue" class="muted">Déplace le curseur sur le graphique.</div>
+</section>
+
+<section class="panel">
+    <div class="panel-title">
+        <span>RISK SENTIMENT</span><span class="badge">0–100</span>
+    </div>
+    <div id="riskChart" class="chart"></div>
+    <div class="metric-grid">
+        <div class="metric"><label>RISK SCORE</label><strong id="riskScore2">42</strong></div>
+        <div class="metric"><label>POSITION</label><strong class="warning">NEUTRAL</strong></div>
+    </div>
+</section>
+
+<section class="panel full" id="markets">
+    <div class="panel-title">
+        <span>MARKET HEATMAP & PULSE</span><span class="badge">DEMO</span>
+    </div>
+    <div class="controls">
+        <select id="heatCategory">
+            <option value="ALL">Tous les marchés</option>
+            <option value="FOREX">Forex</option>
+            <option value="INDICES">Indices</option>
+            <option value="COMMODITIES">Commodities</option>
+            <option value="CRYPTO">Crypto</option>
+        </select>
+    </div>
+    <div class="heatmap" id="heatmap"></div>
+</section>
+
+<section class="panel full" id="globe">
+    <div class="panel-title">
+        <span>GLOBAL MACRO · INTERACTIVE 3D GLOBE</span>
+        <span class="badge">ECHARTS-GL</span>
+    </div>
+    <div id="globeChart" class="chart tall"></div>
+    <p class="muted" id="globeInfo">
+        Sélectionne une économie pour afficher ses informations macroéconomiques.
+    </p>
+    <div id="countryList" class="country-list"></div>
+</section>
+
+<section class="panel" id="yield">
+    <div class="panel-title">
+        <span>YIELD CURVE · 3D</span><span class="badge">ILLUSTRATION</span>
+    </div>
+    <div class="controls">
+        <select id="yieldCountry">
+            <option value="USA">États-Unis</option>
+            <option value="DEU">Allemagne</option>
+            <option value="GBR">Royaume-Uni</option>
+        </select>
+        <button id="rotateYield">▶ ANIMATION</button>
+    </div>
+    <div id="yieldChart" class="chart tall"></div>
+</section>
+
+<section class="panel" id="correlation">
+    <div class="panel-title">
+        <span>CORRELATION MATRIX</span><span class="badge">DEMO</span>
+    </div>
+    <div class="controls">
+        <select id="corrPeriod">
+            <option value="30">30 jours</option>
+            <option value="90">90 jours</option>
+        </select>
+    </div>
+    <div id="corrChart" class="chart"></div>
+    <p class="muted">
+        Corrélations illustratives. La sélection de période ne produit
+        pas de nouveaux calculs tant que les historiques ne sont pas connectés.
+    </p>
+</section>
+
+<section class="panel full" id="calendar">
+    <div class="panel-title">
+        <span>ECONOMIC CALENDAR</span><span class="badge">EXEMPLES DEMO</span>
+    </div>
+    <div class="controls">
+        <select id="calendarImpact">
+            <option value="ALL">Tous les impacts</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
+        <select id="calendarCountry">
+            <option value="ALL">Tous les pays</option>
+            <option value="USA">États-Unis</option>
+            <option value="GBR">Royaume-Uni</option>
+            <option value="EUR">Zone euro</option>
+            <option value="JPN">Japon</option>
+        </select>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Date UTC</th><th>Pays</th><th>Événement</th><th>Impact</th><th>Compte à rebours</th><th>Source</th></tr>
+            </thead>
+            <tbody id="calendarTable"></tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel" id="banks">
+    <div class="panel-title">
+        <span>CENTRAL BANKS</span><span class="badge">DONNÉES ILLUSTRATIVES</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Banque</th><th>Taux</th><th>Prochaine réunion</th></tr></thead>
+            <tbody id="bankTable"></tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel" id="risk">
+    <div class="panel-title"><span>VM RISK ENGINE</span></div>
+    <div class="controls">
+        <label>Capital <input type="number" id="capital" value="10000" min="0"></label>
+        <label>Risque % <input type="number" id="riskPercent" value="1" min="0.01" max="100" step="0.1"></label>
+        <label>Stop-loss (pips/points) <input type="number" id="stopDistance" value="50" min="0.01" step="0.1"></label>
+        <label>Valeur du point par lot <input type="number" id="pointValue" value="10" min="0.01" step="0.1"></label>
+    </div>
+    <div class="metric-grid">
+        <div class="metric"><label>RISQUE MONÉTAIRE</label><strong id="riskMoney">100</strong></div>
+        <div class="metric"><label>TAILLE CALCULÉE (LOTS)</label><strong id="lotSize">0.20</strong></div>
+    </div>
+    <p class="muted">Le résultat dépend de la valeur du point, de la devise du compte, du contrat et du courtier. Vérifie ces paramètres avant toute utilisation réelle.</p>
+</section>
+
+<section class="panel full" id="config">
+    <div class="panel-title">
+        <span>API CONFIGURATION</span><span class="badge">LOCAL STORAGE</span>
+    </div>
+    <p class="muted">
+        Les clés sont enregistrées dans le stockage local de ce navigateur.
+        Sur un site public, elles peuvent être consultées par les visiteurs
+        ayant accès au navigateur ou au code. Pour une clé sensible,
+        utilise un proxy backend sécurisé.
+    </p>
+    <div class="controls">
+        <label>Clé FRED <input type="password" id="fredKey" placeholder="Clé FRED"></label>
+        <label>Clé fournisseur prix <input type="password" id="priceKey" placeholder="Twelve Data / autre"></label>
+        <button id="saveConfig">ENREGISTRER</button>
+        <button id="clearConfig">EFFACER</button>
+    </div>
+    <p id="configStatus" class="muted"></p>
+    <p class="muted">
+        Sources : FRED pour de nombreuses séries américaines, World Bank
+        pour les séries macro internationales, CFTC pour les positions
+        réglementaires, et fournisseur licencié pour les cotations et le
+        calendrier. La disponibilité des API, les clés et les droits de
+        redistribution doivent être vérifiés auprès de chaque fournisseur.
+    </p>
+</section>
+
 </div>
+
+<div class="footer">
+    TOP ONE ANALYSIS VM · INSTITUTIONAL MACRO TERMINAL<br>
+    Mode démonstration — ne constitue pas un conseil financier.
+</div>
+</main>
 </div>
 
 <script>
-// CONFIG FRED + WORLD BANK
-const FRED_KEY=""; // Mets ta clé gratuite ici: fred.stlouisfed.org/docs/api/api_key.html
+"use strict";
 
-// MACRO TABLE
-const macro=[
-["CPI USA","3.2%","3.3%","Baissier XAU"],
-["PCE Core","2.8%","2.9%","Haussier XAU"],
-["NFP","175K","185K","Haussier XAU"],
-["Chômage","4.0%","3.9%","Haussier XAU"],
-["US10Y","4.42%","4.55%","Haussier XAU"],
-["DXY","104.2","105.1","Haussier XAU"],
-["VIX","14.2","16.8","Risk-On"],
-["MOVE","112","118","Calme"],
-["M2","21.0T","20.9T","Bullish LT"],
-["JOLTS","8.1M","8.3M","Haussier"],
+/* ============================================================
+   TOP ONE ANALYSIS VM — SINGLE FILE APPLICATION
+   Les valeurs codées en dur sont des données de démonstration.
+   Aucun prix ou consensus fictif n'est présenté comme une donnée live.
+   ============================================================ */
+
+const $ = selector => document.querySelector(selector);
+const $$ = selector => [...document.querySelectorAll(selector)];
+
+const COUNTRY_DATA = [
+["USA","États-Unis","Americas"],["CAN","Canada","Americas"],
+["MEX","Mexique","Americas"],["BRA","Brésil","Americas"],
+["ARG","Argentine","Americas"],["CHL","Chili","Americas"],
+["COL","Colombie","Americas"],["PER","Pérou","Americas"],
+["URY","Uruguay","Americas"],["ECU","Équateur","Americas"],
+["BOL","Bolivie","Americas"],["PRY","Paraguay","Americas"],
+["CRI","Costa Rica","Americas"],["PAN","Panama","Americas"],
+["GTM","Guatemala","Americas"],["HND","Honduras","Americas"],
+["SLV","Salvador","Americas"],["NIC","Nicaragua","Americas"],
+["DOM","République dominicaine","Americas"],["JAM","Jamaïque","Americas"],
+["GBR","Royaume-Uni","Europe"],["FRA","France","Europe"],
+["DEU","Allemagne","Europe"],["ITA","Italie","Europe"],
+["ESP","Espagne","Europe"],["NLD","Pays-Bas","Europe"],
+["BEL","Belgique","Europe"],["CHE","Suisse","Europe"],
+["AUT","Autriche","Europe"],["PRT","Portugal","Europe"],
+["IRL","Irlande","Europe"],["GRC","Grèce","Europe"],
+["POL","Pologne","Europe"],["CZE","Tchéquie","Europe"],
+["SVK","Slovaquie","Europe"],["HUN","Hongrie","Europe"],
+["ROU","Roumanie","Europe"],["BGR","Bulgarie","Europe"],
+["SWE","Suède","Europe"],["NOR","Norvège","Europe"],
+["DNK","Danemark","Europe"],["FIN","Finlande","Europe"],
+["ISL","Islande","Europe"],["HRV","Croatie","Europe"],
+["SVN","Slovénie","Europe"],["EST","Estonie","Europe"],
+["LVA","Lettonie","Europe"],["LTU","Lituanie","Europe"],
+["RUS","Russie","Europe"],["TUR","Turquie","Asia"],
+["CHN","Chine","Asia"],["JPN","Japon","Asia"],
+["IND","Inde","Asia"],["KOR","Corée du Sud","Asia"],
+["IDN","Indonésie","Asia"],["THA","Thaïlande","Asia"],
+["MYS","Malaisie","Asia"],["SGP","Singapour","Asia"],
+["PHL","Philippines","Asia"],["VNM","Vietnam","Asia"],
+["PAK","Pakistan","Asia"],["BGD","Bangladesh","Asia"],
+["LKA","Sri Lanka","Asia"],["NPL","Népal","Asia"],
+["KAZ","Kazakhstan","Asia"],["SAU","Arabie saoudite","Asia"],
+["ARE","Émirats arabes unis","Asia"],["ISR","Israël","Asia"],
+["IRN","Iran","Asia"],["QAT","Qatar","Asia"],
+["EGY","Égypte","Africa"],["ZAF","Afrique du Sud","Africa"],
+["NGA","Nigeria","Africa"],["KEN","Kenya","Africa"],
+["MAR","Maroc","Africa"],["GHA","Ghana","Africa"],
+["ETH","Éthiopie","Africa"],["CIV","Côte d'Ivoire","Africa"],
+["SEN","Sénégal","Africa"],["TZA","Tanzanie","Africa"],
+["AUS","Australie","Oceania"],["NZL","Nouvelle-Zélande","Oceania"]
 ];
-document.getElementById('macroTable').innerHTML=macro.map(m=>`<tr><td>${m[0]}</td><td><b>${m[1]}</b></td><td style="color:#94a3b8">${m[2]}</td><td>${m[3]}</td></tr>`).join('');
 
-// GENERATE SMOOTH 4D DATA
-function smooth(base,vol=1.1){let v=base,d=[];for(let i=0;i<120;i++){v+=(Math.random()-0.485)*vol;d.push([i, +v.toFixed(2)])}return d}
-const c1=echarts.init(document.getElementById('chart1'));
-c1.setOption({backgroundColor:'transparent',tooltip:{trigger:'axis'},legend:{textStyle:{color:'#fff'},top:0,data:['GOLD',[STRIPPED]
-{name:'GOLD',type:'line',smooth:true,smoothMonotone:'x',symbol:'none',lineStyle:{width:3.5,color:'#facc15',shadowBlur:14,shadowColor:'#facc15'},areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(250,204,21,0.35)'},{offset:1,color:'transparent'}])},data:smooth(100,1.2)},
-{name:'EUR',type:'line',smooth:true,symbol:'none',lineStyle:{width:2.5,color:'#22c55e',shadowBlur:8,shadowColor:'#22c55e'},data:smooth(96,0.9)},
-{name:'GBP',type:'line',smooth:true,symbol:'none',lineStyle:{width:2.5,color:'#3b82f6',shadowBlur:8,shadowColor:'#3b82f6'},data:smooth(98,0.9)},
-{name:'DXY',type:'line',smooth:true,symbol:'none',lineStyle:{width:2.5,color:'#ef4444',shadowBlur:8,shadowColor:'#ef4444'},data:smooth(102,0.9)},
-{name:'BTC',type:'line',smooth:true,symbol:'none',lineStyle:{width:2,color:'#a855f7',shadowBlur:8,shadowColor:'#a855f7'},data:smooth(104,1.5)},
-]});
+const INDICATORS = [
+["Croissance","PIB réel QoQ","%","PIB trimestriel"],
+["Croissance","PIB réel YoY","%","PIB annuel"],
+["Croissance","PMI manufacturier","indice","PMI"],
+["Croissance","PMI services","indice","PMI"],
+["Croissance","PMI composite","indice","PMI"],
+["Croissance","Ventes au détail","%","Retail sales"],
+["Croissance","Production industrielle","%","Industrial production"],
 
-const c2=echarts.init(document.getElementById('chart2'));
-c2.setOption({backgroundColor:'transparent',tooltip:{trigger:'axis'},legend:{textStyle:{color:'#fff'},data:['USD','EUR','JPY','GBP']},
-xAxis:{type:'value',show:false},yAxis:{type:'value',show:false},
-series:[
-{name:'USD',type:'line',smooth:true,symbol:'none',lineStyle:{width:3,color:'#facc15',shadowBlur:12,shadowColor:'#facc15'},data:smooth(100)},
-{name:'EUR',type:'line',smooth:true,symbol:'none',lineStyle:{width:2.5,color:'#22c55e',shadowBlur:8,shadowColor:'#22c55e'},data:smooth(97)},
-{name:'JPY',type:'line',smooth:true,symbol:'none',lineStyle:{width:2.5,color:'#ef4444',shadowBlur:8,shadowColor:'#ef4444'},data:smooth(103)},
-{name:'GBP',type:'line',smooth:true,symbol:'none',lineStyle:{width:2.5,color:'#3b82f6',shadowBlur:8,shadowColor:'#3b82f6'},data:smooth(99)},
-]});
+["Inflation","CPI global","%","CPI"],
+["Inflation","CPI Core","%","Core CPI"],
+["Inflation","PCE Core","%","PCE"],
+["Inflation","PPI","%","PPI"],
+["Inflation","Inflation alimentaire","%","Food inflation"],
+["Inflation","Inflation énergie","%","Energy inflation"],
 
-// GLOBE
-const g=echarts.init(document.getElementById('globe'));
-g.setOption({globe:{baseTexture:'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/example/data-gl/asset/world.topo.bathy.200401.jpg',shading:'realistic',light:{main:{intensity:1.3}}},series:[{type:'scatter3D',coordinateSystem:'globe',symbolSize:14,itemStyle:{color:'#facc15'},data:[[-74,[STRIPPED]
-g.on('click',()=>alert('Pays sélectionné — Macro chargée. Connecte FRED_KEY pour vrai data.'));
+["Emploi","NFP","milliers","PAYEMS"],
+["Emploi","Taux de chômage","%","UNRATE"],
+["Emploi","ADP emploi","milliers","ADP"],
+["Emploi","JOLTS postes vacants","milliers","JTSJOL"],
+["Emploi","Initial Jobless Claims","milliers","ICSA"],
+["Emploi","Salaire horaire moyen","%","CES0500000003"],
 
-function calc(){const b=+document.getElementById('bal').value||5000;const sl=+document.getElementById('sl').value||50;const risk=b*0.01;const lot=risk/(sl*1);document.getElementById('res').innerHTML=`Risque $${risk.toFixed(2)} | Lot <b>${lot.toFixed(2)}</b>`;}
-window.addEventListener('resize',()=>{c1.resize();c2.resize();g.resize()});
+["Consommation","Consumer Confidence CB","indice","CONCCONF"],
+["Consommation","Michigan Sentiment","indice","UMCSENT"],
+["Consommation","Retail Sales US","%","RSAFS"],
+
+["Immobilier","Permis de construire","milliers","PERMIT"],
+["Immobilier","Ventes maisons existantes","milliers","EXHOSLUSM495S"],
+["Immobilier","Dette publique / PIB","%","GC.DOD.TOTL.GD.ZS"],
+["Immobilier","Déficit budgétaire","% PIB","Fiscal deficit"],
+
+["Taux","Taux directeur","%","Policy rate"],
+["Taux","Rendement 2 ans","%","DGS2"],
+["Taux","Rendement 5 ans","%","DGS5"],
+["Taux","Rendement 10 ans","%","DGS10"],
+["Taux","Rendement 30 ans","%","DGS30"],
+["Taux","Spread 10Y-2Y","points","T10Y2Y"],
+["Taux","Bilan banque centrale","monnaie locale","Central bank assets"],
+["Taux","M2 Money Supply","monnaie locale","M2SL"],
+
+["Marché","VIX","indice","VIXCLS"],
+["Marché","MOVE Index","indice","Fournisseur spécialisé"],
+["Marché","Credit Spread HY","points","BAMLH0A0HYM2"],
+["Marché","Credit Spread IG","points","BAMLC0A0CM"],
+["Marché","Dollar Index DXY","indice","Fournisseur prix"],
+["Marché","WTI Crude Oil","USD/baril","Fournisseur prix"],
+["Marché","Taux de défaut","%","Default rate"],
+
+["Surprises","Citi Economic Surprise US","indice","Citi / fournisseur licencié"],
+["Surprises","Citi Economic Surprise EU","indice","Citi / fournisseur licencié"]
+];
+
+const DEMO_EVENTS = [
+{date:"2026-10-28T14:30:00Z",country:"USA",name:"PIB américain",impact:"High"},
+{date:"2026-10-30T12:30:00Z",country:"USA",name:"Core PCE",impact:"High"},
+{date:"2026-11-03T03:00:00Z",country:"JPN",name:"Décision de politique monétaire",impact:"High"},
+{date:"2026-11-05T12:00:00Z",country:"GBR",name:"Décision de la Banque d'Angleterre",impact:"High"},
+{date:"2026-11-06T13:30:00Z",country:"USA",name:"Nonfarm Payrolls",impact:"High"},
+{date:"2026-11-11T10:00:00Z",country:"EUR",name:"Production industrielle",impact:"Medium"},
+{date:"2026-11-13T13:30:00Z",country:"USA",name:"CPI américain",impact:"High"},
+{date:"2026-11-18T01:30:00Z",country:"AUS",name:"Données emploi",impact:"Medium"}
+];
+
+const BANKS = [
+["Federal Reserve","4.00%","28 Oct 2026"],
+["European Central Bank","2.15%","30 Oct 2026"],
+["Bank of England","4.00%","5 Nov 2026"],
+["Bank of Japan","0.50%","3 Nov 2026"],
+["Bank of Canada","2.50%","28 Oct 2026"],
+["Reserve Bank of Australia","3.60%","3 Nov 2026"]
+];
+
+const MARKET = [
+["EURUSD",-0.24,"FOREX"],["GBPUSD",0.12,"FOREX"],
+["USDJPY",0.31,"FOREX"],["AUDUSD",0.48,"FOREX"],
+["USDCAD",-0.18,"FOREX"],["USDCHF",0.22,"FOREX"],
+["XAUUSD",0.63,"COMMODITIES"],["WTI",-0.44,"COMMODITIES"],
+["NATGAS",0.28,"COMMODITIES"],["SILVER",0.42,"COMMODITIES"],
+["NAS100",0.82,"INDICES"],["SPX",-0.27,"INDICES"],
+["DAX",0.19,"INDICES"],["FTSE",-0.11,"INDICES"],
+["BTC",1.42,"CRYPTO"],["ETH",0.91,"CRYPTO"]
+];
+
+const DEMO_YIELDS = {
+USA:[4.30,4.20,4.05,3.85,3.95,4.05,4.18,4.52,4.72],
+DEU:[2.10,2.05,2.00,2.08,2.20,2.35,2.50,2.78,2.92],
+GBR:[4.30,4.20,4.15,4.10,4.25,4.40,4.55,4.80,4.95]
+};
+
+let selectedCountry = "USA";
+let activePeriod = "1M";
+let charts = {};
+let animationTimer = null;
+let yieldRotation = false;
+let yieldAngle = 0;
+let yieldTimer = null;
+
+function deterministicValue(seed) {
+    let x = 0;
+    for (let i=0;i<seed.length;i++) x += seed.charCodeAt(i)*(i+3);
+    return x;
+}
+
+function demoNumber(country, indicator, index) {
+    const seed = deterministicValue(country + indicator);
+    return ((seed % 2000) / 100) + index * 0.07;
+}
+
+function countryName(code) {
+    if(code==="EUR") return "Zone euro";
+    return COUNTRY_DATA.find(c=>c[0]===code)?.[1] || code;
+}
+
+function initializeCountrySelect() {
+    const select=$("#countrySelect");
+    COUNTRY_DATA.forEach(c=>{
+        const opt=document.createElement("option");
+        opt.value=c[0];
+        opt.textContent=c[1];
+        select.appendChild(opt);
+    });
+    select.value="USA";
+}
+
+function renderMacro() {
+    const family=$("#familySelect").value;
+    const search=$("#macroSearch").value.toLowerCase();
+    const country=$("#countrySelect").value;
+    selectedCountry=country;
+
+    $("#macroCountryInfo").textContent =
+        `${countryName(country)} · ${INDICATORS.length} indicateurs · `+
+        `Mode DEMO — observations fictives, aucun consensus réel.`;
+
+    const rows=INDICATORS.filter(row=>
+        (family==="ALL" || row[0]===family) &&
+        row[1].toLowerCase().includes(search)
+    );
+
+    $("#macroTable").innerHTML=rows.map((row,i)=>{
+        const current=demoNumber(country,row[1],i);
+        const previous=current+(i%2===0?-0.25:0.18);
+        const consensus=current+(i%3===0?0.10:-0.08);
+        const bullish=i%2===0;
+        const fmt=n=>n.toFixed(2)+(row[2]==="%"?"%":"");
+
+        return `<tr>
+            <td>${row[0]}</td>
+            <td><strong>${row[1]}</strong></td>
+            <td>${fmt(current)}</td>
+            <td>${fmt(previous)}</td>
+            <td>${fmt(consensus)}</td>
+            <td class="${bullish?"positive":"negative"}">${bullish?"HAUSSIER":"BAISSIER"} · DEMO</td>
+            <td>${row[3]} · <span class="warning">DEMO</span></td>
+        </tr>`;
+    }).join("");
+}
+
+function initializeTicker() {
+    $("#ticker").innerHTML=[
+        ["XAUUSD","4,120.50","+0.42%"],
+        ["NAS100","24,180.2","+0.32%"],
+        ["EURUSD","1.1215","-0.02%"],
+        ["GBPUSD","1.3385","-0.03%"],
+        ["USDJPY","157.20","+0.14%"],
+        ["US10Y","4.12%","+0.02"],
+        ["DXY","98.24","-0.18%"],
+        ["BTCUSD","108,240","+1.42%"]
+    ].map(item=>`<span>${item[0]} <strong>${item[1]}</strong>
+        <b class="${item[2].startsWith("+")?"positive":"negative"}">${item[2]}</b>
+        <small> DEMO</small></span>`).join("");
+}
+
+function renderHeatmap() {
+    const cat=$("#heatCategory").value;
+    const items=MARKET.filter(m=>cat==="ALL"||m[2]===cat);
+    $("#heatmap").innerHTML=items.map(item=>{
+        const [symbol,change,category]=item;
+        const intensity=Math.min(Math.abs(change)/2,0.7);
+        const bg=change>=0
+            ?`rgba(0,190,110,${intensity})`
+            :`rgba(220,50,70,${intensity})`;
+
+        return `<div class="heat-cell" style="background:${bg}">
+            <strong>${symbol}</strong>
+            <span class="change ${change>=0?"positive":"negative"}">${change>0?"+":""}${change.toFixed(2)}%</span>
+            <small>${category} · DEMO</small>
+        </div>`;
+    }).join("");
+}
+
+function renderCalendar() {
+    const impact=$("#calendarImpact").value;
+    const country=$("#calendarCountry").value;
+
+    const rows=DEMO_EVENTS.filter(e=>
+        (impact==="ALL"||e.impact===impact) &&
+        (country==="ALL"||e.country===country)
+    ).sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+    $("#calendarTable").innerHTML=rows.map(e=>{
+        const date=new Date(e.date);
+        const minutes=Math.floor((date-Date.now())/60000);
+        let countdown;
+
+        if(minutes<0) countdown="Événement passé";
+        else if(minutes<60) countdown=`${minutes} min`;
+        else if(minutes<1440) countdown=`${Math.floor(minutes/60)} h ${minutes%60} min`;
+        else countdown=`${Math.floor(minutes/1440)} j ${Math.floor((minutes%1440)/60)} h`;
+
+        return `<tr>
+            <td>${date.toLocaleString("fr-FR",{timeZone:"UTC"})} UTC</td>
+            <td>${countryName(e.country)}</td>
+            <td><strong>${e.name}</strong></td>
+            <td class="${e.impact==="High"?"negative":e.impact==="Medium"?"warning":"positive"}">${e.impact}</td>
+            <td>${countdown}</td>
+            <td>DEMO</td>
+        </tr>`;
+    }).join("") || `<tr><td colspan="6">Aucun événement correspondant.</td></tr>`;
+}
+
+function renderBanks() {
+    $("#bankTable").innerHTML=BANKS.map(b=>`
+        <tr><td><strong>${b[0]}</strong></td><td>${b[1]}</td>
+        <td>${b[2]}</td></tr>`).join("");
+}
+
+function updateRisk() {
+    const capital=Math.max(0,Number($("#capital").value)||0);
+    const percent=Math.max(0,Number($("#riskPercent").value)||0);
+    const stop=Math.max(0,Number($("#stopDistance").value)||0);
+    const point=Math.max(0,Number($("#pointValue").value)||0);
+    const risk=capital*percent/100;
+    const lots=stop>0&&point>0?risk/(stop*point):0;
+
+    $("#riskMoney").textContent=risk.toLocaleString("fr-FR",{maximumFractionDigits:2});
+    $("#lotSize").textContent=lots.toFixed(3);
+}
+
+function makeDates(count) {
+    const result=[];
+    const today=new Date();
+    for(let i=count-1;i>=0;i--){
+        const d=new Date(today);
+        d.setUTCDate(d.getUTCDate()-i);
+        result.push(d.toISOString().slice(0,10));
+    }
+    return result;
+}
+
+function randomSeries(name,count,base=100,scale=1) {
+    let state=deterministicValue(name)||1;
+    let value=base;
+    const data=[];
+    for(let i=0;i<count;i++){
+        state=(state*9301+49297)%233280;
+        const noise=(state/233280-0.5)*scale;
+        value+=noise;
+        data.push(Number(value.toFixed(3)));
+    }
+    return data;
+}
+
+function chartTheme() {
+    return {
+        backgroundColor:"transparent",
+        textStyle:{color:"#aaa78b"},
+        animationDuration:450
+    };
+}
+
+function initializeRelativeChart() {
+    const chart=echarts.init($("#relativeChart"));
+    charts.relative=chart;
+
+    const dates=makeDates(365);
+    const names=["USD","EUR","GBP","JPY","AUD","CAD","CHF","NZD"];
+    const colors=["#ffd400","#23d9ed","#ff5364","#ffffff","#f0a020","#a54fff","#4a85ff","#00df91"];
+
+    const allData=names.map((name,i)=>({
+        name,
+        type:"line",
+        smooth:0.38,
+        showSymbol:false,
+        lineStyle:{width:2},
+        areaStyle:{opacity:0.035},
+        data:randomSeries(name,365,0.1*i,0.8),
+        emphasis:{focus:"series"}
+    }));
+
+    const option={
+        ...chartTheme(),
+        tooltip:{
+            trigger:"axis",
+            axisPointer:{type:"cross"},
+            valueFormatter:value=>Number(value).toFixed(3)+"%"
+        },
+        legend:{top:0,textStyle:{color:"#aaa78b"}},
+        grid:{left:48,right:20,top:45,bottom:30},
+        xAxis:{type:"category",data:dates,boundaryGap:false,axisLine:{lineStyle:{color:"#514b20"}}},
+        yAxis:{type:"value",scale:true,axisLine:{show:false},splitLine:{lineStyle:{color:"#242416"}}},
+        dataZoom:[{type:"inside"},{type:"slider",height:14,bottom:2}],
+        series:allData.map((s,i)=>({...s,lineStyle:{color:colors[i],width:2},itemStyle:{color:colors[i]}}))
+    };
+    chart.setOption(option);
+    setPeriod(activePeriod);
+    chart.on("updateAxisPointer",event=>{
+        const info=event.axesInfo?.[0];
+        if(info) $("#chartValue").textContent="Date : "+info.value+" · Valeurs de démonstration";
+    });
+}
+
+function setPeriod(period) {
+    activePeriod=period;
+    const days={"1D":1,"1W":7,"1M":30,"3M":90,"1Y":365,"5Y":1825}[period]||30;
+    const start=Math.max(0,365-days);
+
+    if(charts.relative){
+        charts.relative.dispatchAction({
+            type:"dataZoom",
+            startValue:makeDates(365)[start],
+            endValue:makeDates(365)[364]
+        });
+    }
+
+    $$("#chartPeriods button[data-period]").forEach(b=>
+        b.classList.toggle("active",b.dataset.period===period)
+    );
+}
+
+function initializeRiskChart() {
+    const chart=echarts.init($("#riskChart"));
+    charts.risk=chart;
+    chart.setOption({
+        ...chartTheme(),
+        series:[{
+            type:"gauge",
+            min:0,max:100,
+            startAngle:210,endAngle:-30,
+            radius:"90%",
+            progress:{show:true,width:12,itemStyle:{color:"#ffd400"}},
+            axisLine:{lineStyle:{width:12,color:[[0.4,"#ff5364"],[0.6,"#ffd400"],[1,"#00df91"]]}},
+            axisTick:{show:false},
+            splitLine:{distance:-18,length:7,lineStyle:{color:"#aaa78b"}},
+            axisLabel:{distance:20,color:"#aaa78b"},
+            pointer:{itemStyle:{color:"#ff5364"}},
+            detail:{valueAnimation:true,formatter:"{value}",color:"#ffd400",fontSize:30,offsetCenter:[0,"45%"]},
+            data:[{value:42,name:"SCORE"}],
+            title:{color:"#aaa78b",fontSize:11,offsetCenter:[0,"70%"]}
+        }]
+    });
+}
+
+function initializeCorrelation() {
+    const chart=echarts.init($("#corrChart"));
+    charts.correlation=chart;
+
+    const assets=["XAUUSD","DXY","US10Y","SPX","BTC"];
+    const values=[
+        [1,-.72,-.61,.18,.22],
+        [-.72,1,.65,-.14,-.08],
+        [-.61,.65,1,-.31,-.20],
+        [.18,-.14,-.31,1,.54],
+        [.22,-.08,-.20,.54,1]
+    ];
+
+    const data=[];
+    values.forEach((row,y)=>row.forEach((v,x)=>data.push([x,y,v])));
+
+    chart.setOption({
+        ...chartTheme(),
+        tooltip:{position:"top",formatter:p=>`${assets[p.data[1]]} / ${assets[p.data[0]]}<br>Corrélation DEMO : ${p.data[2].toFixed(2)}`},
+        grid:{left:55,right:10,top:15,bottom:45},
+        xAxis:{type:"category",data:assets,splitArea:{show:true},axisLabel:{color:"#aaa78b"}},
+        yAxis:{type:"category",data:assets,splitArea:{show:true},axisLabel:{color:"#aaa78b"}},
+        visualMap:{
+            min:-1,max:1,calculable:false,orient:"horizontal",
+            left:"center",bottom:0,
+            inRange:{color:["#ff5364","#171811","#00df91"]}
+        },
+        series:[{
+            type:"heatmap",data,
+            label:{show:true,formatter:p=>p.data[2].toFixed(2),color:"#fff"},
+            emphasis:{itemStyle:{borderColor:"#ffd400",borderWidth:1}}
+        }]
+    });
+}
+
+function initializeYieldChart() {
+    const chart=echarts.init($("#yieldChart"));
+    charts.yield=chart;
+    renderYield();
+}
+
+function renderYield() {
+    const code=$("#yieldCountry").value;
+    const yields=DEMO_YIELDS[code]||DEMO_YIELDS.USA;
+    const maturities=[0.25,0.5,1,2,5,7,10,20,30];
+    const dates=["T-5","T-4","T-3","T-2","T-1","Aujourd'hui"];
+
+    const series=[];
+    dates.forEach((date,t)=>{
+        const offset=(t-5)*0.035;
+        maturities.forEach((m,i)=>{
+            series.push([m,Number((yields[i]+offset).toFixed(3)),t]);
+        });
+    });
+
+    charts.yield.setOption({
+        ...chartTheme(),
+        tooltip:{formatter:p=>`Maturité : ${p.data[0]} ans<br>Rendement : ${p.data[1]}%<br>Historique : ${dates[p.data[2]]}<br>DEMO`},
+        visualMap:{
+            show:true,min:0,max:5,dimension:1,
+            inRange:{color:["#23d9ed","#ffd400","#ff5364"]}
+        },
+        xAxis3D:{type:"value",name:"Maturité (ans)",axisLabel:{color:"#aaa78b"}},
+        yAxis3D:{type:"value",name:"Rendement (%)",axisLabel:{color:"#aaa78b"}},
+        zAxis3D:{type:"category",name:"Historique",data:dates,axisLabel:{color:"#aaa78b"}},
+        grid3D:{
+            boxWidth:140,boxDepth:80,viewControl:{autoRotate:yieldRotation,autoRotateSpeed:2},
+            light:{main:{intensity:1.2},ambient:{intensity:.5}},
+            axisLine:{lineStyle:{color:"#514b20"}},
+            splitLine:{lineStyle:{color:"#292719"}}
+        },
+        series:[{
+            type:"line3D",
+            data:series,
+            lineStyle:{width:4},
+            symbol:"circle",
+            symbolSize:4
+        }]
+    },true);
+}
+
+function initializeGlobe() {
+    const chart=echarts.init($("#globeChart"));
+    charts.globe=chart;
+
+    const coords=COUNTRY_DATA.map(c=>{
+        const latLon=countryCoordinates[c[0]];
+        return latLon?[latLon[1],latLon[0],1]:null;
+    }).filter(Boolean);
+
+    chart.setOption({
+        ...chartTheme(),
+        globe:{
+            baseTexture:null,
+            globeRadius:95,
+            shading:"color",
+            environment:"#080907",
+            backgroundColor:"#080907",
+            viewControl:{
+                autoRotate:true,
+                autoRotateSpeed:3,
+                distance:190,
+                rotateSensitivity:1,
+                zoomSensitivity:1
+            },
+            light:{main:{intensity:1.5},ambient:{intensity:.5}},
+            itemStyle:{color:"#123e72",borderColor:"#354a5e",borderWidth:.5}
+        },
+        series:[{
+            type:"scatter3D",
+            coordinateSystem:"globe",
+            data:COUNTRY_DATA.map(c=>{
+                const p=countryCoordinates[c[0]]||[0,0];
+                return {name:c[1],code:c[0],value:[p[1],p[0],2]};
+            }),
+            symbolSize:5,
+            itemStyle:{color:"#ffd400"},
+            emphasis:{itemStyle:{color:"#ffffff"},label:{show:true,formatter:p=>p.data.name}}
+        }]
+    });
+
+    chart.on("click",params=>{
+        const code=params.data?.code;
+        if(!code)return;
+        selectCountry(code);
+    });
+}
+
+function selectCountry(code) {
+    selectedCountry=code;
+    const select=$("#countrySelect");
+    if([...select.options].some(o=>o.value===code))select.value=code;
+
+    $("#globeInfo").textContent=
+        `${countryName(code)} sélectionné · Indicateurs macro consultables dans le dashboard.`;
+
+    renderMacro();
+
+    $$("#countryList button").forEach(b=>
+        b.classList.toggle("active",b.dataset.code===code)
+    );
+}
+
+function initializeCountryList() {
+    $("#countryList").innerHTML=COUNTRY_DATA.map(c=>`
+        <button class="country-btn ${c[0]==="USA"?"active":""}" data-code="${c[0]}">
+            ${c[1]} <span class="muted">${c[0]}</span>
+        </button>
+    `).join("");
+
+    $$("#countryList button").forEach(button=>{
+        button.addEventListener("click",()=>selectCountry(button.dataset.code));
+    });
+}
+
+function initializeNavigation() {
+    $$(".nav-item").forEach(button=>{
+        button.addEventListener("click",()=>{
+            $$(".nav-item").forEach(b=>b.classList.remove("active"));
+            button.classList.add("active");
+
+            const target=document.getElementById(button.dataset.target);
+            if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
+        });
+    });
+}
+
+function initializeEvents() {
+    $("#countrySelect").addEventListener("change",renderMacro);
+    $("#familySelect").addEventListener("change",renderMacro);
+    $("#macroSearch").addEventListener("input",renderMacro);
+    $("#heatCategory").addEventListener("change",renderHeatmap);
+    $("#calendarImpact").addEventListener("change",renderCalendar);
+    $("#calendarCountry").addEventListener("change",renderCalendar);
+    $("#yieldCountry").addEventListener("change",renderYield);
+
+    $("#corrPeriod").addEventListener("change",()=>{
+        $("#corrChart").setAttribute("title",
+            "Valeurs DEMO inchangées pour la période sélectionnée.");
+    });
+
+    $$("#chartPeriods button[data-period]").forEach(button=>{
+        button.addEventListener("click",()=>setPeriod(button.dataset.period));
+    });
+
+    $("#playChart").addEventListener("click",()=>{
+        if(animationTimer){
+            clearInterval(animationTimer);
+            animationTimer=null;
+            $("#playChart").textContent="▶ PLAY";
+            return;
+        }
+
+        let periodIndex=0;
+        const periods=["1D","1W","1M","3M","1Y","5Y"];
+        $("#playChart").textContent="Ⅱ PAUSE";
+
+        animationTimer=setInterval(()=>{
+            setPeriod(periods[periodIndex%periods.length]);
+            periodIndex++;
+        },1200);
+    });
+
+    $("#rotateYield").addEventListener("click",()=>{
+        yieldRotation=!yieldRotation;
+        $("#rotateYield").textContent=yieldRotation?"Ⅱ PAUSE":"▶ ANIMATION";
+        renderYield();
+    });
+
+    ["capital","riskPercent","stopDistance","pointValue"].forEach(id=>{
+        $("#"+id).addEventListener("input",updateRisk);
+    });
+
+    $("#refreshButton").addEventListener("click",()=>{
+        renderMacro();
+        renderHeatmap();
+        renderCalendar();
+        renderBanks();
+        updateClock();
+    });
+
+    $("#saveConfig").addEventListener("click",()=>{
+        try{
+            localStorage.setItem("toa_fred_key",$("#fredKey").value);
+            localStorage.setItem("toa_price_key",$("#priceKey").value);
+            $("#configStatus").textContent="Configuration enregistrée dans ce navigateur.";
+        }catch(e){
+            $("#configStatus").textContent="Impossible d'enregistrer la configuration.";
+        }
+    });
+
+    $("#clearConfig").addEventListener("click",()=>{
+        localStorage.removeItem("toa_fred_key");
+        localStorage.removeItem("toa_price_key");
+        $("#fredKey").value="";
+        $("#priceKey").value="";
+        $("#configStatus").textContent="Clés locales effacées.";
+    });
+
+    $("#loadMacro").addEventListener("click",loadWorldBankData);
+}
+
+function updateClock() {
+    $("#clock").textContent=new Date().toLocaleTimeString("fr-FR",{timeZone:"UTC"})+" UTC";
+    renderCalendar();
+}
+
+/* Coordonnées géographiques simplifiées : latitude, longitude.
+   Les pays sans coordonnées spécifiques ne sont pas placés sur le globe. */
+const countryCoordinates = {
+USA:[38,-97],CAN:[56,-106],MEX:[23,-102],BRA:[-10,-52],
+ARG:[-34,-64],CHL:[-30,-71],COL:[4,-72],PER:[-9,-75],
+GBR:[55,-3],FRA:[46,2],DEU:[51,10],ITA:[42,12],
+ESP:[40,-4],NLD:[52,5],BEL:[50,4],CHE:[47,8],
+AUT:[47,14],PRT:[39,-8],IRL:[53,-8],GRC:[39,22],
+POL:[52,20],CZE:[49,15],SVK:[48,19],HUN:[47,20],
+ROU:[46,25],BGR:[43,25],SWE:[60,18],NOR:[62,10],
+DNK:[56,10],FIN:[64,26],ISL:[65,-19],HRV:[45,16],
+SVN:[46,15],EST:[59,25],LVA:[57,24],LTU:[56,24],
+RUS:[60,100],TUR:[39,35],CHN:[35,103],JPN:[36,138],
+IND:[21,78],KOR:[36,128],IDN:[-2,118],THA:[15,101],
+MYS:[4,102],SGP:[1.3,103.8],PHL:[13,122],VNM:[16,108],
+PAK:[30,70],BGD:[24,90],LKA:[7,81],NPL:[28,84],
+KAZ:[48,68],SAU:[24,45],ARE:[24,54],ISR:[31,35],
+IRN:[32,53],QAT:[25,51],EGY:[27,30],ZAF:[-29,24],
+NGA:[9,8],KEN:[0,38],MAR:[32,-6],GHA:[7,-2],
+ETH:[9,40],CIV:[7,-5],SEN:[14,-14],TZA:[-6,35],
+AUS:[-25,133],NZL:[-41,174],URY:[-33,-56],ECU:[-2,-77],
+BOL:[-17,-65],PRY:[-23,-58],CRI:[10,-84],PAN:[9,-80],
+GTM:[15,-90],HND:[15,-86],SLV:[14,-89],NIC:[13,-85],
+DOM:[19,-70],JAM:[18,-77]
+};
+
+/* World Bank API : source officielle, sans clé pour les indicateurs
+   publiquement accessibles. Les réponses peuvent manquer de données.
+   Le module ne transforme pas ces données en consensus de marché. */
+async function loadWorldBankData() {
+    const code=$("#countrySelect").value;
+    const info=$("#macroCountryInfo");
+
+    info.textContent="Chargement des données World Bank…";
+
+    const map={
+        "PIB réel YoY":"NY.GDP.MKTP.KD.ZG",
+        "CPI global":"FP.CPI.TOTL.ZG",
+        "Dette publique / PIB":"GC.DOD.TOTL.GD.ZS",
+        "Taux de chômage":"SL.UEM.TOTL.ZS",
+        "Ventes au détail":"NE.CON.PRVT.KD.ZG",
+        "Production industrielle":"NV.IND.MANF.KD.ZG"
+    };
+
+    try{
+        const codes=Object.values(map);
+        const responses=await Promise.all(codes.map(async indicator=>{
+            const url=`https://api.worldbank.org/v2/country/${code}/indicator/${indicator}?format=json&per_page=8`;
+            const response=await fetch(url);
+            if(!response.ok)throw new Error("World Bank HTTP "+response.status);
+            const json=await response.json();
+            return {indicator,rows:Array.isArray(json[1])?json[1]:[]};
+        }));
+
+        const actual={};
+
+        responses.forEach(result=>{
+            const valid=result.rows.filter(r=>r.value!==null);
+            actual[result.indicator]=valid;
+        });
+
+        const labels={
+            "NY.GDP.MKTP.KD.ZG":"PIB réel YoY",
+            "FP.CPI.TOTL.ZG":"CPI global",
+            "GC.DOD.TOTL.GD.ZS":"Dette publique / PIB",
+            "SL.UEM.TOTL.ZS":"Taux de chômage",
+            "NE.CON.PRVT.KD.ZG":"Consommation des ménages",
+            "NV.IND.MANF.KD.ZG":"Croissance manufacturière"
+        };
+
+        $("#macroTable").innerHTML=responses.map(result=>{
+            const rows=result.rows.filter(r=>r.value!==null);
+            const current=rows[0];
+            const previous=rows[1];
+            const name=labels[result.indicator];
+
+            return `<tr>
+                <td>World Bank</td>
+                <td><strong>${name}</strong></td>
+                <td>${current?Number(current.value).toFixed(2):"N/D"}</td>
+                <td>${previous?Number(previous.value).toFixed(2):"N/D"}</td>
+                <td>N/D</td>
+                <td>Non déterminé automatiquement</td>
+                <td>World Bank · ${current?.date||"N/D"}</td>
+            </tr>`;
+        }).join("");
+
+        info.textContent=`Données World Bank chargées pour ${countryName(code)}. `+
+            "Les observations utilisent la dernière période disponible, qui peut être annuelle ou retardée. Consensus non fourni.";
+    }catch(error){
+        console.error(error);
+        info.textContent="Échec de chargement World Bank. Vérifie la connexion réseau, la disponibilité de l'API et le code pays.";
+    }
+}
+
+function handleResize() {
+    Object.values(charts).forEach(chart=>{
+        if(chart&&typeof chart.resize==="function")chart.resize();
+    });
+}
+
+function initialize() {
+    initializeCountrySelect();
+    initializeNavigation();
+    initializeTicker();
+    renderMacro();
+    renderHeatmap();
+    renderCalendar();
+    renderBanks();
+    updateRisk();
+    initializeRelativeChart();
+    initializeRiskChart();
+    initializeCorrelation();
+    initializeYieldChart();
+    initializeGlobe();
+    initializeCountryList();
+    initializeEvents();
+    updateClock();
+
+    try{
+        $("#fredKey").value=localStorage.getItem("toa_fred_key")||"";
+        $("#priceKey").value=localStorage.getItem("toa_price_key")||"";
+    }catch(e){
+        $("#configStatus").textContent="Stockage local indisponible dans ce navigateur.";
+    }
+
+    setInterval(updateClock,1000);
+    window.addEventListener("resize",handleResize);
+}
+
+if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",initialize);
+}else{
+    initialize();
+}
 </script>
+
 </body>
 </html>
