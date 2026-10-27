@@ -115,6 +115,31 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .tag { display: inline-block; font: 11px var(--font-mono); padding: 0 7px; border: 1px solid var(--line); color: var(--muted); }
 .tag.hike { border-color: var(--amber); color: var(--amber); }
 
+/* Données automatiques */
+.badge { display: inline-block; font: 600 10px var(--font-mono); letter-spacing: .06em; padding: 1px 7px; border: 1px solid var(--line); color: var(--muted); text-transform: uppercase; }
+.badge.ok { color: var(--up); border-color: #1f5a41; }
+.badge.old { color: var(--amber); border-color: #6b5214; }
+.badge.ko { color: var(--down); border-color: #6b2a24; }
+.ck { font: 11px var(--font-mono); margin-left: 6px; }
+.ck.ok { color: var(--up); } .ck.bad { color: var(--amber); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
+.tile { background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tile small { color: var(--muted); font: 10px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.tile b { font: 500 18px var(--font-mono); }
+.tile .dl { font: 11px var(--font-mono); }
+.tile .asof { min-height: 0; }
+.news { list-style: none; margin: 0; padding: 0; }
+.news li { display: grid; grid-template-columns: 62px 44px minmax(0, 1fr); gap: 8px; padding: 7px 12px; border-top: 1px solid var(--line2); align-items: baseline; font-size: 12px; }
+.news li:first-child { border-top: 0; }
+.news .d { color: var(--muted); font: 11px var(--font-mono); }
+.news a { color: inherit; text-decoration: none; } .news a:hover { color: var(--amber); text-decoration: underline; }
+.src-list { list-style: none; margin: 0; padding: 0 12px 8px; font: 11px var(--font-mono); }
+.src-list li { display: flex; gap: 8px; justify-content: space-between; padding: 4px 0; border-top: 1px solid var(--line2); }
+.src-list li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+details.srcs summary { cursor: pointer; padding: 8px 12px; font: 11px var(--font-mono); color: var(--amber); }
+.moreBtn { display: block; width: 100%; border: 0; border-top: 1px solid var(--line2); background: transparent; color: var(--amber); font: 11px var(--font-mono); padding: 8px; cursor: pointer; }
+.pad { padding: 10px 12px; }
+
 /* Agenda */
 .agenda { list-style: none; margin: 0; padding: 0; }
 .agenda li { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 7px 12px; border-top: 1px solid var(--line2); }
@@ -251,6 +276,10 @@ table.perf th, table.perf td { padding: 7px 10px; }
     <a href="#calc">Calculateur</a>
     <a href="#check">Checklist</a>
     <a href="#conseils">Gestion du risque</a>
+    <a href="#taux">Taux, VIX, dollar</a>
+    <a href="#cot">Positions COT</a>
+    <a href="#actus">Actus banques centrales</a>
+    <a href="#robot">Fraîcheur des données</a>
     <a href="#liens">Sources gratuites</a>
   </div></nav>
 
@@ -374,6 +403,8 @@ table.perf th, table.perf td { padding: 7px 10px; }
           <div class="ph"><h2>Prochaines réunions</h2><span class="meta">date locale de la banque</span></div>
           <p class="warn" id="weekWarn" hidden></p>
           <ul class="agenda" id="agendaList"></ul>
+          <button type="button" class="moreBtn" id="agendaMore" hidden></button>
+          <p class="note">Calendriers officiels publiés ; Fed 2027 provisoire (la Fed peut l'ajuster). Banque du Japon : dates après le 30 oct. non vérifiées ici. Banque d'Angleterre et BNS : dates de fin 2026 absentes de mes sources.</p>
         </section>
 
         <section class="panel o-week" id="semaine">
@@ -389,6 +420,26 @@ table.perf th, table.perf td { padding: 7px 10px; }
       <div class="tbl"><table class="ind" id="indTable"></table></div>
       <p class="note" id="indBilan"></p>
       <p class="note">Lecture : vert = évolution plutôt favorable à la devise (croissance, emploi, salaires, inflation et taux plus hauts, chômage plus bas), rouge = l'inverse. Le prix réagit surtout à l'écart avec les prévisions des économistes, pas au chiffre seul. Données saisies à la main d'après Trading Economics et les instituts nationaux, à vérifier avant de trader. États-Unis : PIB t/t annualisé. Indices de confiance non comparables d'un pays à l'autre.</p>
+    </section>
+
+    <section class="panel" id="taux">
+      <div class="ph"><h2>Taux, VIX et dollar</h2><span class="meta" id="tauxMeta">robot</span></div>
+      <div id="tauxBody"></div>
+    </section>
+
+    <section class="panel" id="cot">
+      <div class="ph"><h2>Positions des fonds (COT)</h2><span class="meta" id="cotMeta">robot</span></div>
+      <div id="cotBody"></div>
+    </section>
+
+    <section class="panel" id="actus">
+      <div class="ph"><h2>Communiqués des banques centrales</h2><span class="meta" id="newsMeta">sources officielles</span></div>
+      <div id="newsBody"></div>
+    </section>
+
+    <section class="panel" id="robot">
+      <div class="ph"><h2>Fraîcheur des données</h2><span class="meta" id="robotMeta"></span></div>
+      <div id="robotBody"></div>
     </section>
 
     <section class="panel" id="lecture">
@@ -490,21 +541,77 @@ table.perf th, table.perf td { padding: 7px 10px; }
 
   /* À mettre à jour à la main après chaque réunion ou publication. */
   var MACRO = [
-    { b: "Fed", c: "USD", rate: "3,75–4,00 %", last: "+0,25 pt", when: "16 sept.", hike: true, cpi: "3,7 %", core: "2,6 %" },
-    { b: "BCE", c: "EUR", rate: "2,50 %", last: "+0,25 pt", when: "10 sept.", hike: true, cpi: "3,8 %", core: "2,5 %" },
-    { b: "Banque d'Angleterre", c: "GBP", rate: "3,75 %", last: "Maintien", when: "17 sept.", hike: false, cpi: "3,5 %", core: "2,8 %" },
-    { b: "Banque du Japon", c: "JPY", rate: "1,25 %", last: "+0,25 pt", when: "18 sept.", hike: true, cpi: "2,1 %", core: "–" },
-    { b: "BNS", c: "CHF", rate: "0,00 %", last: "Maintien", when: "24 sept.", hike: false, cpi: "–", core: "–" },
-    { b: "RBA", c: "AUD", rate: "4,60 %", last: "+0,25 pt", when: "29 sept.", hike: true, cpi: "–", core: "–" },
-    { b: "Banque du Canada", c: "CAD", rate: "2,25 %", last: "Maintien", when: "2 sept.", hike: false, cpi: "–", core: "–" },
-    { b: "RBNZ", c: "NZD", rate: "2,75 %", last: "+0,25 pt", when: "2 sept.", hike: true, cpi: "–", core: "–" }
+    { b: "Fed", r: 4.0, i: 3.7, c: "USD", rate: "3,75–4,00 %", last: "+0,25 pt", when: "16 sept.", hike: true, cpi: "3,7 %", core: "2,6 %" },
+    { b: "BCE", r: 2.5, i: 3.8, c: "EUR", rate: "2,50 %", last: "+0,25 pt", when: "10 sept.", hike: true, cpi: "3,8 %", core: "2,5 %" },
+    { b: "Banque d'Angleterre", r: 3.75, i: 3.5, c: "GBP", rate: "3,75 %", last: "Maintien", when: "17 sept.", hike: false, cpi: "3,5 %", core: "2,8 %" },
+    { b: "Banque du Japon", r: 1.25, i: 2.1, c: "JPY", rate: "1,25 %", last: "+0,25 pt", when: "18 sept.", hike: true, cpi: "2,1 %", core: "–" },
+    { b: "BNS", r: 0.0, i: null, c: "CHF", rate: "0,00 %", last: "Maintien", when: "24 sept.", hike: false, cpi: "–", core: "–" },
+    { b: "RBA", r: 4.6, i: null, c: "AUD", rate: "4,60 %", last: "+0,25 pt", when: "29 sept.", hike: true, cpi: "–", core: "–" },
+    { b: "Banque du Canada", r: 2.25, i: null, c: "CAD", rate: "2,25 %", last: "Maintien", when: "2 sept.", hike: false, cpi: "–", core: "–" },
+    { b: "RBNZ", r: 2.75, i: null, c: "NZD", rate: "2,75 %", last: "+0,25 pt", when: "2 sept.", hike: true, cpi: "–", core: "–" }
   ];
+  /* Calendriers officiels vérifiés le 27 oct. 2026. t:1 = provisoire. */
   var MEETINGS = [
-    { d: "2026-10-28", b: "RBNZ", c: "NZD" }, { d: "2026-10-28", b: "Banque du Canada", c: "CAD" },
-    { d: "2026-10-28", b: "Fed", c: "USD" }, { d: "2026-10-29", b: "BCE", c: "EUR" },
-    { d: "2026-10-30", b: "Banque du Japon", c: "JPY" }, { d: "2026-11-03", b: "RBA", c: "AUD" },
-    { d: "2026-11-05", b: "Banque d'Angleterre", c: "GBP" }, { d: "2026-12-10", b: "BNS", c: "CHF" }
-  ];
+    { d: "2026-10-28", b: "Fed", c: "USD" },
+    { d: "2026-12-09", b: "Fed", c: "USD" },
+    { d: "2027-01-27", b: "Fed", c: "USD", t: 1 },
+    { d: "2027-03-17", b: "Fed", c: "USD", t: 1 },
+    { d: "2027-04-28", b: "Fed", c: "USD", t: 1 },
+    { d: "2027-06-09", b: "Fed", c: "USD", t: 1 },
+    { d: "2027-07-28", b: "Fed", c: "USD", t: 1 },
+    { d: "2027-09-15", b: "Fed", c: "USD", t: 1 },
+    { d: "2027-10-27", b: "Fed", c: "USD", t: 1 },
+    { d: "2027-12-08", b: "Fed", c: "USD", t: 1 },
+    { d: "2026-10-29", b: "BCE", c: "EUR" },
+    { d: "2026-12-17", b: "BCE", c: "EUR" },
+    { d: "2027-02-04", b: "BCE", c: "EUR" },
+    { d: "2027-03-18", b: "BCE", c: "EUR" },
+    { d: "2027-04-29", b: "BCE", c: "EUR" },
+    { d: "2027-06-10", b: "BCE", c: "EUR" },
+    { d: "2027-07-22", b: "BCE", c: "EUR" },
+    { d: "2027-09-09", b: "BCE", c: "EUR" },
+    { d: "2027-10-28", b: "BCE", c: "EUR" },
+    { d: "2027-12-16", b: "BCE", c: "EUR" },
+    { d: "2026-11-05", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2027-02-04", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2027-03-18", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2027-04-29", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2027-06-17", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2027-07-29", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2027-09-16", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2027-11-04", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2027-12-16", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2026-10-30", b: "Banque du Japon", c: "JPY" },
+    { d: "2026-12-10", b: "BNS", c: "CHF" },
+    { d: "2027-03-18", b: "BNS", c: "CHF" },
+    { d: "2027-06-24", b: "BNS", c: "CHF" },
+    { d: "2027-09-23", b: "BNS", c: "CHF" },
+    { d: "2026-11-03", b: "RBA", c: "AUD" },
+    { d: "2027-02-09", b: "RBA", c: "AUD" },
+    { d: "2027-03-23", b: "RBA", c: "AUD" },
+    { d: "2027-05-04", b: "RBA", c: "AUD" },
+    { d: "2027-06-22", b: "RBA", c: "AUD" },
+    { d: "2027-08-10", b: "RBA", c: "AUD" },
+    { d: "2027-09-21", b: "RBA", c: "AUD" },
+    { d: "2027-11-02", b: "RBA", c: "AUD" },
+    { d: "2027-12-14", b: "RBA", c: "AUD" },
+    { d: "2026-10-28", b: "Banque du Canada", c: "CAD" },
+    { d: "2026-12-09", b: "Banque du Canada", c: "CAD" },
+    { d: "2027-01-27", b: "Banque du Canada", c: "CAD" },
+    { d: "2027-03-03", b: "Banque du Canada", c: "CAD" },
+    { d: "2027-04-28", b: "Banque du Canada", c: "CAD" },
+    { d: "2027-06-02", b: "Banque du Canada", c: "CAD" },
+    { d: "2027-07-21", b: "Banque du Canada", c: "CAD" },
+    { d: "2027-09-08", b: "Banque du Canada", c: "CAD" },
+    { d: "2027-10-27", b: "Banque du Canada", c: "CAD" },
+    { d: "2027-12-08", b: "Banque du Canada", c: "CAD" },
+    { d: "2026-10-28", b: "RBNZ", c: "NZD" },
+    { d: "2026-12-09", b: "RBNZ", c: "NZD" },
+    { d: "2027-02-10", b: "RBNZ", c: "NZD" },
+    { d: "2027-03-17", b: "RBNZ", c: "NZD" },
+    { d: "2027-05-05", b: "RBNZ", c: "NZD" },
+    { d: "2027-06-16", b: "RBNZ", c: "NZD" }
+  ]; MEETINGS.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
   var CHECKS = [
     "Je connais la direction de fond (graphique journalier).",
     "Aucune décision de banque centrale ni inflation dans les prochaines heures.",
@@ -725,20 +832,25 @@ table.perf th, table.perf td { padding: 7px 10px; }
 
   function renderMacro() {
     $("macro").innerHTML = MACRO.map(function (m) {
-      return "<tr><td><b>" + m.b + "</b> <small>" + m.c + '</small></td><td class="r num">' + m.rate + '</td><td><span class="tag' + (m.hike ? " hike" : "") + '">' + m.last + "</span> <small>" + m.when + '</small></td><td class="r num">' + m.cpi + '</td><td class="r num col-core">' + m.core + "</td></tr>";
+      var ck = autoChecks(m);
+      return "<tr><td><b>" + m.b + "</b> <small>" + m.c + '</small></td><td class="r num">' + m.rate + ck.rate + '</td><td><span class="tag' + (m.hike ? " hike" : "") + '">' + m.last + "</span> <small>" + m.when + '</small></td><td class="r num">' + m.cpi + ck.cpi + '</td><td class="r num col-core">' + m.core + "</td></tr>";
     }).join("");
   }
+  var agendaAll = false;
   function renderAgenda() {
     var t = new Date(); t.setHours(0, 0, 0, 0);
     var soon = MEETINGS.filter(function (m) { var d = Math.round((parseD(m.d) - t) / 864e5); return d >= 0 && d <= 7; });
     var w = $("weekWarn");
     if (soon.length >= 2) { w.hidden = false; w.innerHTML = "<b>Semaine chargée :</b> " + soon.length + " décisions d'ici 7 jours (" + soon.map(function (m) { return m.c; }).join(", ") + "). Réduisez la taille des positions ouvertes avant ces annonces."; }
     else w.hidden = true;
-    $("agendaList").innerHTML = MEETINGS.map(function (m) {
+    var fut = MEETINGS.filter(function (m) { return Math.round((parseD(m.d) - t) / 864e5) >= 0; });
+    var shown = agendaAll ? fut : fut.slice(0, 10);
+    $("agendaList").innerHTML = shown.map(function (m) {
       var days = Math.round((parseD(m.d) - t) / 864e5);
-      var when = days < 0 ? "passée" : days === 0 ? "aujourd'hui" : days === 1 ? "demain" : "dans " + days + " j";
-      return '<li class="' + (days >= 0 && days <= 7 ? "soon" : "") + '"><span class="d">' + parseD(m.d).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + "</span><span><b>" + m.b + '</b> <small class="d">' + m.c + '</small></span><span class="in">' + when + "</span></li>";
+      var when = days === 0 ? "aujourd'hui" : days === 1 ? "demain" : "dans " + days + " j";
+      return '<li class="' + (days <= 7 ? "soon" : "") + '"><span class="d">' + parseD(m.d).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", year: days > 150 ? "2-digit" : undefined }) + "</span><span><b>" + m.b + '</b> <small class="d">' + m.c + (m.t ? " · provisoire" : "") + '</small></span><span class="in">' + when + "</span></li>";
     }).join("");
+    var mb = $("agendaMore"); mb.hidden = fut.length <= 10; mb.textContent = agendaAll ? "Réduire" : "Voir tout (" + fut.length + " réunions jusqu'à fin 2027)";
   }
 
 
@@ -1127,9 +1239,137 @@ table.perf th, table.perf td { padding: 7px 10px; }
   });
   $("resetCheck").addEventListener("click", function () { checked = {}; saveChecks(); renderChecks(); });
 
+
+  /* ---------- Données automatiques (robot GitHub) ---------- */
+  var AUTO_URLS = ["https://raw.githubusercontent.com/philippembulu1-dot/macro-forex/main/data/macro.json", "data/macro.json"];
+  var AUTO = null, autoErr = "";
+  var MAXAGE = { daily: 6, weekly: 12, monthly: 80, quarterly: 140, news: 21 };
+  var MANUAL = [
+    { n: "Banques centrales (taux, inflation)", d: "2026-10-24" }, { n: "Tableau des indicateurs macro", d: "2026-10-25" },
+    { n: "Publications de la semaine", d: "2026-10-25" }, { n: "Calendrier des réunions", d: "2026-10-27" }
+  ];
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function ageDays(d) { var t = Date.parse(String(d).slice(0, 10) + "T00:00:00Z"); return isNaN(t) ? Infinity : Math.floor((Date.now() - t) / 864e5); }
+  function fnum(v, d) { return typeof v === "number" ? fmt(v, d) : "–"; }
+  function fred(id) { return AUTO && AUTO.fred && AUTO.fred[id]; }
+  function oecd(k) { return AUTO && AUTO.oecd && AUTO.oecd[k]; }
+  function srcState(s) {
+    if (!s.ok) return "ko";
+    return ageDays(s.asof) <= (MAXAGE[s.kind] || 30) ? "ok" : "old";
+  }
+  var BL = { ok: "à jour", old: "ancien", ko: "échec" };
+  function badge(st, txt) { return '<span class="badge ' + st + '">' + (txt || BL[st]) + "</span>"; }
+
+  /* Compare la saisie manuelle au chiffre automatique : ✓ concordant, ⚠ écart (le chiffre auto est affiché). */
+  function autoChecks(m) {
+    var out = { rate: "", cpi: "" };
+    if (!AUTO) return out;
+    var rd = null, rv = null, rtol = 0.13, rmax = 100, cv = null, ctol = 0.25, cmax = 100, cc = { USD: "US", EUR: "EZ", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" }[m.c];
+    if (m.c === "USD") { var f = fred("DFEDTARU"); if (f) { rv = f.v; rtol = 0.01; rmax = 10; rd = f.asof; } }
+    else if (m.c === "EUR") { var e = fred("ECBDFR"); if (e) { rv = e.v; rtol = 0.01; rmax = 10; rd = e.asof; } }
+    else { var o = oecd("rate_" + cc); if (o) { rv = o.v; rd = o.asof; } }
+    var rd0 = rd;
+    if (rv !== null && ageDays(rd0) <= rmax) out.rate = Math.abs(rv - m.r) <= rtol ? ' <span class="ck ok" title="Concordant avec la source automatique du ' + esc(rd0) + '">✓</span>' : ' <span class="ck bad" title="Source automatique du ' + esc(rd0) + '">⚠ auto ' + fnum(rv, 2) + "</span>";
+    var cd = null;
+    if (m.c === "USD" && AUTO.derived && AUTO.derived.us_cpi) { cv = AUTO.derived.us_cpi.v; cd = AUTO.derived.us_cpi.asof; ctol = 0.15; }
+    else { var q = oecd("cpi_" + cc); if (q) { cv = q.v; cd = q.asof; } }
+    if (cv !== null && m.i !== null && ageDays(cd) <= cmax) out.cpi = Math.abs(cv - m.i) <= ctol ? ' <span class="ck ok" title="Concordant avec la source automatique du ' + esc(cd) + '">✓</span>' : ' <span class="ck bad" title="Source automatique du ' + esc(cd) + '">⚠ auto ' + fnum(cv, 1) + "</span>";
+    return out;
+  }
+
+  function tile(lbl, id, d, unit, fmtDelta) {
+    var f = fred(id); if (!f) return '<div class="tile"><small>' + lbl + '</small><b>–</b><span class="asof">indisponible</span></div>';
+    var dl = f.prev != null ? f.v - f.prev : null, h = f.hist ? f.hist.slice(-40).map(function (p) { return { v: p[1] }; }) : null;
+    return '<div class="tile"><small>' + lbl + "</small><b>" + fnum(f.v, d) + (unit || "") + "</b>" +
+      (dl !== null ? '<span class="dl ' + cls(dl) + '">' + (fmtDelta ? fmtDelta(dl) : (dl >= 0 ? "+" : "−") + Math.abs(dl).toFixed(d).replace(".", ",")) + "</span>" : "") +
+      (h && h.length > 3 ? spark(h) : "") + '<span class="asof">au ' + shortD(f.asof) + "</span></div>";
+  }
+  function chg5(id) { var f = fred(id); if (!f || !f.hist || f.hist.length < 6) return null; var h = f.hist; return h[h.length - 1][1] - h[h.length - 6][1]; }
+  function renderTaux() {
+    var b = $("tauxBody");
+    if (!AUTO || !AUTO.fred || !Object.keys(AUTO.fred).length) { b.innerHTML = '<p class="note pad">Pas encore de données du robot. Voir « Fraîcheur des données » plus bas.</p>'; $("tauxMeta").textContent = "robot : en attente"; return; }
+    var sp = fred("T10Y2Y"), h = '<div class="tiles">' +
+      tile("US 10 ans", "DGS10", 2, " %") + tile("US 2 ans", "DGS2", 2, " %") +
+      tile("Écart 10a − 2a", "T10Y2Y", 2, " pt") + tile("Réel 10 ans (TIPS)", "DFII10", 2, " %") +
+      tile("VIX", "VIXCLS", 1, "") + tile("Dollar large", "DTWEXBGS", 1, "") + "</div>";
+    var l = [], dr = chg5("DFII10"), v = fred("VIXCLS");
+    if (dr !== null) l.push(dr > 0.1 ? "Rendement réel en hausse de " + fmt(dr, 2) + " pt sur 5 séances : plutôt <b>défavorable à l'or</b>." : dr < -0.1 ? "Rendement réel en baisse de " + fmt(-dr, 2) + " pt sur 5 séances : plutôt <b>favorable à l'or</b>." : "Rendement réel stable sur 5 séances : pas de signal pour l'or.");
+    if (sp) l.push(sp.v < 0 ? "Courbe <b>inversée</b> (10a sous 2a) : le marché anticipe un ralentissement ou des baisses de taux." : "Courbe <b>positive</b> (10a au-dessus de 2a).");
+    if (v) l.push("VIX à " + fmt(v.v, 1) + " : " + (v.v < 15 ? "marché calme." : v.v < 20 ? "volatilité normale." : v.v < 30 ? "<b>tension</b>, prudence sur les tailles de position." : "<b>stress élevé</b>, réduire le risque."));
+    h += '<div class="pad idea" style="margin:10px 12px">' + l.join(" ") + ' C\'est une piste de lecture, pas un signal.</div>';
+    h += '<p class="note">Sources : FRED (Réserve fédérale de Saint-Louis), données de clôture quotidiennes, mises à jour par le robot. Le rendement réel est le principal moteur de l\'or à moyen terme.</p>';
+    b.innerHTML = h; $("tauxMeta").textContent = "clôtures · FRED";
+  }
+
+  var COTN = { XAU: "Or", EUR: "Euro", GBP: "Livre", JPY: "Yen", CHF: "Franc suisse", AUD: "Dollar australien", CAD: "Dollar canadien", NZD: "Dollar néo-zélandais" };
+  function renderCot() {
+    var b = $("cotBody"), c = AUTO && AUTO.cot;
+    if (!c || !Object.keys(c).length) { b.innerHTML = '<p class="note pad">Pas encore de données COT. Voir « Fraîcheur des données ».</p>'; $("cotMeta").textContent = "robot : en attente"; return; }
+    var newest = "", rows = Object.keys(COTN).filter(function (k) { return c[k]; }).map(function (k) {
+      var x = c[k]; if (x.date > newest) newest = x.date;
+      var dl = x.prev_net != null ? x.net - x.prev_net : null, tot = x.long + x.short, pl = tot ? x.long / tot * 100 : 0;
+      var sp = x.hist && x.hist.length > 3 ? spark(x.hist.map(function (v) { return { v: v }; })) : "";
+      var ni = function (n) { return (n >= 0 ? "+" : "−") + Math.abs(n).toLocaleString("fr-FR"); };
+      return "<tr><td><b>" + k + "</b> <small>" + COTN[k] + '</small></td><td class="r num ' + cls(x.net) + '">' + ni(x.net) + '</td><td class="r num ' + (dl === null ? "" : cls(dl)) + '">' + (dl === null ? "–" : ni(dl)) + '</td><td class="r num">' + pl.toFixed(0) + " %</td><td>" + sp + "</td></tr>";
+    }).join("");
+    b.innerHTML = '<div class="tbl"><table><thead><tr><th>Marché</th><th class="r">Net</th><th class="r">Var. semaine</th><th class="r">% acheteur</th><th>12 sem.</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      '<p class="note">Fonds spéculatifs (non commerciaux), contrats à terme. Net = positions acheteuses − vendeuses : positif = pari haussier sur la devise (ou l\'or) face au dollar. Rapport publié le vendredi pour le mardi précédent. Un positionnement extrême peut précéder un retournement, mais ce n\'est pas un signal d\'entrée.</p>';
+    $("cotMeta").textContent = "positions du " + shortD(newest);
+  }
+
+  function renderNews() {
+    var b = $("newsBody"), n = AUTO && AUTO.news;
+    if (!n || !n.length) { b.innerHTML = '<p class="note pad">Pas encore de communiqués. Voir « Fraîcheur des données ».</p>'; return; }
+    b.innerHTML = '<ul class="news">' + n.slice(0, 14).map(function (x) {
+      var ok = /^https?:\/\//i.test(x.l || "");
+      return '<li><span class="d">' + (x.d ? shortD(x.d) : "–") + '</span><span class="d">' + esc(x.c) + "</span><span>" + (ok ? '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" : esc(x.t)) + " <small class=\"d\">" + esc(x.src) + "</small></span></li>";
+    }).join("") + '</ul><p class="note">Communiqués officiels des banques centrales (flux RSS), pas un fil d\'actualité temps réel de type Reuters ou Bloomberg, qui est payant.</p>';
+  }
+
+  function renderRobot() {
+    var h = "", meta = "";
+    var gen = AUTO && AUTO.generated, age = gen ? (Date.now() - Date.parse(gen)) / 36e5 : null;
+    if (!AUTO) {
+      h += '<div class="pad"><p class="warn">Le fichier du robot est introuvable' + (autoErr ? " (" + esc(autoErr) + ")" : "") + ". Le robot n'a probablement pas encore tourné : suivez le guide d'installation (Actions → Mise à jour des données → Run workflow).</p></div>";
+      meta = "robot : aucun fichier";
+    } else {
+      var st = age <= 6 ? "ok" : age <= 36 ? "old" : "ko";
+      meta = "robot : " + (age < 1 ? "il y a moins d'1 h" : age < 48 ? "il y a " + Math.round(age) + " h" : "il y a " + Math.round(age / 24) + " j");
+      var cnt = { ok: 0, old: 0, ko: 0 }; AUTO.sources.forEach(function (s) { cnt[srcState(s)]++; });
+      h += '<div class="pad">' + badge(st, st === "ok" ? "robot actif" : st === "old" ? "robot en retard" : "robot arrêté?") + " &nbsp;" + cnt.ok + " sources à jour · " + cnt.old + " anciennes · " + cnt.ko + " en échec</div>";
+      if (st === "ko") h += '<p class="warn" style="margin:0 12px 8px">Le robot n\'a pas écrit de données depuis plus de 36 h : les chiffres automatiques ci-dessus peuvent être périmés. Vérifiez l\'onglet Actions du dépôt.</p>';
+      h += '<details class="srcs"><summary>Détail des ' + AUTO.sources.length + ' sources</summary><ul class="src-list">' + AUTO.sources.map(function (s) {
+        var q = srcState(s); return "<li><span>" + esc(s.label) + (s.ok ? "" : ' <small title="' + esc(s.err) + '">· ' + esc((s.err || "").slice(0, 40)) + "</small>") + "</span><span>" + (s.asof ? shortD(s.asof) + " " : "") + badge(q) + "</span></li>";
+      }).join("") + "</ul></details>";
+    }
+    h += '<div class="tbl"><table><thead><tr><th>À mettre à jour à la main</th><th class="r">Dernière saisie</th><th>État</th></tr></thead><tbody>' + MANUAL.map(function (m) {
+      var a = ageDays(m.d), q = a <= 7 ? "ok" : a <= 14 ? "old" : "ko";
+      return "<tr><td>" + m.n + '</td><td class="r num">' + shortD(m.d) + " <small>(" + a + " j)</small></td><td>" + badge(q, q === "ok" ? "récent" : q === "old" ? "à revoir" : "périmé") + "</td></tr>";
+    }).join("") + '</tbody></table></div><p class="note">Ces blocs ne viennent pas du robot (probabilités CME FedWatch, prévisions des économistes, agenda détaillé : pas de source gratuite automatisable). Au-delà de 14 jours ils sont marqués périmés : ne tradez pas dessus sans vérifier. Les petits ✓ / ⚠ du tableau des banques centrales comparent la saisie manuelle au chiffre automatique.</p>';
+    $("robotBody").innerHTML = h; $("robotMeta").textContent = meta;
+  }
+
+  function renderAuto() { renderMacro(); renderTaux(); renderCot(); renderNews(); renderRobot(); }
+  function getJson(url) {
+    var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
+    return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
+      .then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.json(); });
+  }
+  function validAuto(j) { return j && typeof j === "object" && j.generated && Array.isArray(j.sources); }
+  function loadAuto() {
+    var p = Promise.reject(new Error("start")), pick = function (u) { return function () { return getJson(u).then(function (j) { if (!validAuto(j)) throw new Error("format"); return j; }); }; };
+    AUTO_URLS.forEach(function (u) { p = p.catch(pick(u)); });
+    return p.then(function (j) { AUTO = j; autoErr = ""; try { localStorage.setItem("mf-macro", JSON.stringify(j)); } catch (e) { } })
+      .catch(function (e) {
+        autoErr = String(e && e.message || e);
+        if (!AUTO) { try { var c = JSON.parse(localStorage.getItem("mf-macro")); if (validAuto(c)) AUTO = c; } catch (x) { } }
+      }).then(renderAuto);
+  }
+
+  $("agendaMore").addEventListener("click", function () { agendaAll = !agendaAll; renderAgenda(); });
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
-  initTV(); refreshGold();
+  initTV(); refreshGold(); renderAuto(); loadAuto(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });
   $("gChart").addEventListener("pointermove", function (e) { if (gCur) gShow(idx(e, $("gChart"), gCur.W, gCur.L, gCur.Rm, gCur.s.length), false); });
