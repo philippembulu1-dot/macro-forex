@@ -1022,11 +1022,29 @@ def do_shipping(data):
     url0 = "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query"
     try:
         since = (NOW - timedelta(days=75)).strftime("%Y-%m-%d")
-        q = urllib.parse.urlencode({"where": "date >= DATE '%s'" % since, "outFields": "date,portid,portname,n_total,n_tanker,n_container,capacity",
-                                    "orderByFields": "date ASC", "resultRecordCount": "4000", "f": "json"})
-        j = json.loads(http("portwatch.json", url0 + "?" + q, timeout=40))
-        if j.get("error"):
-            raise ValueError("ArcGIS : " + str(j["error"].get("message"))[:80])
+        base = {"outFields": "date,portid,portname,n_total,n_tanker,n_container,capacity", "f": "json"}
+        variants = [
+            dict(base, where="1=1", orderByFields="date DESC", resultRecordCount="2000"),
+            dict(base, where="year >= %d" % (NOW - timedelta(days=75)).year, orderByFields="date DESC", resultRecordCount="2000"),
+            dict(base, where="date >= timestamp '%s 00:00:00'" % since),
+            dict(base, where="1=1", outFields="*", resultRecordCount="1000"),
+        ]
+        j, errs = None, []
+        for k, v in enumerate(variants):
+            try:
+                jj = json.loads(http("portwatch.json" if k == 0 else "portwatch_%d.json" % k, url0 + "?" + urllib.parse.urlencode(v), timeout=40, tries=1))
+                if jj.get("error"):
+                    raise ValueError(str(jj["error"].get("message"))[:60])
+                if not jj.get("features"):
+                    raise ValueError("aucune ligne")
+                j = jj
+                DIAG["portwatch"] = {"variante": k, "lignes": len(jj["features"]), "erreurs_avant": errs}
+                break
+            except Exception as e:
+                errs.append("variante %d : %s" % (k, fr_err(e)))
+        if j is None:
+            DIAG["portwatch"] = errs
+            raise ValueError("ArcGIS : aucune variante de requête acceptée")
         by = {}
         for f in j.get("features") or []:
             a = f.get("attributes") or {}
@@ -1110,7 +1128,8 @@ def do_history(force=False):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("sentiment", do_sentiment_widget)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping)]
+    # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
         try:
