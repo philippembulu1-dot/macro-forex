@@ -361,6 +361,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     <a href="#sessions">Sessions</a>
     <div class="grp">ANALYSES</div>
     <a href="#desk">Indicateurs des desks</a>
+    <a href="#maritime">Trafic maritime</a>
     <a href="#consensus">Consensus des banques</a>
     <a href="#comite">Comités</a>
     <a href="#probas">Probabilités de taux</a>
@@ -607,6 +608,15 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       <p class="note">Source : Banque mondiale (dernière valeur annuelle disponible, l'année est indiquée à côté de chaque chiffre). Les prévisions du FMI ne sont pas affichées : son site refuse les robots. Contours : Natural Earth (domaine public). Taux directeurs des 8 grandes banques : voir « Banques centrales ».</p>
     </section>
 
+    <section class="panel" id="maritime">
+      <div class="ph"><h2>Trafic maritime mondial</h2><span class="meta" id="shipMeta">robot</span></div>
+      <div class="tbl"><table id="shipTbl"></table></div>
+      <p class="note">Navires ayant franchi chaque détroit ou canal (moyenne des 7 derniers jours connus, comparée aux 7 jours précédents). Pourquoi c'est utile : une chute à Ormuz ou en mer Rouge signale un risque sur le pétrole et souvent une demande de valeurs refuges (or). Source : UN Global Platform ; FMI PortWatch (portwatch.imf.org), données AIS publiées avec quelques jours de retard.</p>
+      <div class="toolbar"><span class="pill">Carte des navires en direct</span><span id="shipBtns"></span></div>
+      <div id="shipMap"></div>
+      <p class="note">Carte en temps réel fournie gratuitement par VesselFinder (positions AIS). Elle ne se charge que lorsque vous choisissez une zone.</p>
+    </section>
+
     <section class="panel" id="consensus">
       <div class="ph"><h2>Consensus des banques</h2><span class="meta">saisie sourcée · à vérifier</span></div>
       <div class="tbl"><table id="consTbl"></table></div>
@@ -629,6 +639,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 
     <section class="panel" id="sentiment">
       <div class="ph"><h2>Sentiment des particuliers</h2><span class="meta">saisie datée</span></div>
+      <div id="sentWidget"></div>
       <div class="links" id="sentLinks"></div>
       <div id="sentMan"></div>
       <p class="note">Aucun courtier ne fournit d'accès gratuit automatisable à ces chiffres : relevez-les sur leurs pages publiques. Lecture habituelle à contre-courant : quand plus de 70 % des particuliers sont acheteurs, le prix a souvent tendance à baisser, et inversement.</p>
@@ -1718,7 +1729,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     ["CB", "Banques centrales", "banques"], ["ECO", "Indicateurs macro", "indicateurs"], ["CAL", "Calendrier économique", "calendrier"],
     ["AG", "Prochaines réunions", "agenda"], ["DESK", "Indicateurs des desks", "desk"], ["TX", "Taux, VIX, dollar", "taux"], ["DIFF", "Écarts de taux", "ecarts"],
     ["COT", "Positions COT", "cot"], ["SEAS", "Saisonnalité 20 ans", "saison"], ["HEAT", "Carte thermique", "heat"], ["CORR", "Corrélations", "correl"],
-    ["VOL", "Volatilité", "vola"], ["MAP", "Carte du monde", "monde"], ["CONS", "Consensus des banques", "consensus"], ["COM", "Comités", "comite"],
+    ["VOL", "Volatilité", "vola"], ["MAP", "Carte du monde", "monde"], ["SHIP", "Trafic maritime", "maritime"], ["CONS", "Consensus des banques", "consensus"], ["COM", "Comités", "comite"],
     ["FED", "Probabilités de taux", "probas"], ["SENT", "Sentiment des particuliers", "sentiment"], ["PIV", "Pivots et convertisseur", "outils"],
     ["LIVE", "Marchés en direct", "marches"], ["NEWS", "Communiqués", "actus"], ["VID", "Vidéos d'analyse", "videos"], ["CALC", "Calculateur de position", "calc"], ["RISK", "Gestion du risque", "conseils"],
     ["CHK", "Checklist", "check"], ["DATA", "Fraîcheur des données", "robot"], ["NOTE", "Notes rapides", "notes"]
@@ -2236,6 +2247,45 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   }
   function trLink(u) { return /^https?:\/\//i.test(u || "") ? ' <a href="https://translate.google.com/translate?sl=auto&tl=fr&u=' + encodeURIComponent(u) + '" target="_blank" rel="noopener" title="Ouvrir la page traduite en français"><small>traduire</small></a>' : ""; }
 
+  /* ---------- Trafic maritime ---------- */
+  var SHIPFR = [["Hormuz", "Détroit d'Ormuz"], ["Bab el-Mandeb", "Bab el-Mandeb (mer Rouge)"], ["Suez", "Canal de Suez"], ["Malacca", "Détroit de Malacca"],
+    ["Panama", "Canal de Panama"], ["Good Hope", "Cap de Bonne-Espérance"], ["Bosporus", "Bosphore"], ["Gibraltar", "Détroit de Gibraltar"], ["Dover", "Pas de Calais"],
+    ["Taiwan", "Détroit de Taïwan"], ["Korea", "Détroit de Corée"], ["Sunda", "Détroit de la Sonde"], ["Lombok", "Détroit de Lombok"], ["Makassar", "Détroit de Makassar"],
+    ["Oresund", "Øresund"], ["Kerch", "Détroit de Kertch"], ["Bering", "Détroit de Béring"], ["Magellan", "Détroit de Magellan"], ["Yucatan", "Canal du Yucatán"],
+    ["Florida", "Détroit de Floride"], ["Windward", "Passage du Vent"], ["Mona", "Passage de la Mona"], ["Torres", "Détroit de Torrès"], ["Ombai", "Détroit d'Ombai"],
+    ["Balabac", "Détroit de Balabac"], ["Mindoro", "Détroit de Mindoro"], ["Tsugaru", "Détroit de Tsugaru"], ["Bass", "Détroit de Bass"]];
+  function shipName(n) { for (var i = 0; i < SHIPFR.length; i++) if (String(n).indexOf(SHIPFR[i][0]) >= 0) return { fr: SHIPFR[i][1], o: i }; return { fr: n, o: 99 }; }
+  function renderShip() {
+    var s = AUTO && AUTO.shipping, tb = $("shipTbl");
+    if (!s || !s.c) { tb.innerHTML = '<tbody><tr><td>Pas encore de données du robot. Voir « Fraîcheur des données ».</td></tr></tbody>'; $("shipMeta").textContent = "robot : en attente"; return; }
+    var avg = function (a) { a = a.filter(function (x) { return typeof x === "number"; }); return a.length ? a.reduce(function (p, q) { return p + q; }, 0) / a.length : null; };
+    var rows = Object.keys(s.c).map(function (k) {
+      var r = s.c[k], last7 = r.slice(-7), prev7 = r.slice(-14, -7), a = avg(last7.map(function (x) { return x[1]; })), b = avg(prev7.map(function (x) { return x[1]; }));
+      return { n: shipName(k), raw: k, a: a, ch: a !== null && b ? (a / b - 1) * 100 : null, tk: avg(last7.map(function (x) { return x[2]; })), last: r[r.length - 1][0], sp: r.slice(-30).map(function (x) { return { v: x[1] || 0 }; }) };
+    }).filter(function (x) { return x.a !== null; }).sort(function (x, y) { return x.n.o - y.n.o || y.a - x.a; });
+    tb.innerHTML = '<thead><tr><th>Passage</th><th class="r">Navires / jour</th><th class="r">Var. 7 j</th><th class="r col-core">Pétroliers / jour</th><th>30 jours</th></tr></thead><tbody>' + rows.slice(0, 14).map(function (x) {
+      return '<tr><td title="' + esc(x.raw) + '"><b>' + esc(x.n.fr) + '</b></td><td class="r num">' + fmt(x.a, 0) + '</td><td class="r num ' + (x.ch === null ? "" : cls(x.ch)) + '">' + (x.ch === null ? "–" : pct(x.ch)) + '</td><td class="r num col-core">' + (x.tk === null ? "–" : fmt(x.tk, 0)) + "</td><td>" + (x.sp.length > 3 ? spark(x.sp) : "") + "</td></tr>";
+    }).join("") + "</tbody>";
+    var a = ageDays(s.asof);
+    $("shipMeta").innerHTML = "jusqu'au " + shortD(s.asof) + " " + badge(a <= 10 ? "ok" : a <= 21 ? "old" : "ko");
+  }
+  var SHIPZ = [["Ormuz", 26.4, 56.4, 7], ["Mer Rouge", 13.2, 43.0, 7], ["Suez", 30.3, 32.5, 8], ["Malacca", 2.8, 101.0, 6], ["Panama", 9.1, -79.7, 9], ["Manche", 50.6, 1.2, 7], ["Monde", 20, 10, 3]];
+  $("shipBtns").innerHTML = SHIPZ.map(function (z, i) { return '<button type="button" class="btn" data-z="' + i + '">' + z[0] + "</button>"; }).join(" ");
+  $("shipBtns").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-z]"); if (!b) return;
+    var z = SHIPZ[+b.getAttribute("data-z")];
+    var doc = '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#0d0d0f}</style></head><body><script>var width="100%";var height="420";var latitude="' + z[1] + '";var longitude="' + z[2] + '";var zoom="' + z[3] + '";var names=false;<\/script><script src="https://www.vesselfinder.com/aismap.js"><\/script></body></html>';
+    var f = document.createElement("iframe"); f.setAttribute("title", "Carte des navires : " + z[0]); f.style.cssText = "width:100%;height:430px;border:0;display:block;background:#0d0d0f";
+    f.srcdoc = doc; $("shipMap").innerHTML = ""; $("shipMap").appendChild(f);
+  });
+  function renderSentWidget() {
+    var w = AUTO && AUTO.sentiment_widget, box = $("sentWidget");
+    if (!w || !/^https:\/\/freeserv\.dukascopy\.com\//.test(w.url)) { box.innerHTML = ""; return; }
+    if (box.getAttribute("data-u") === w.url) return;
+    box.setAttribute("data-u", w.url);
+    box.innerHTML = '<iframe title="Indice de sentiment SWFX (Dukascopy)" loading="lazy" src="' + esc(w.url) + '" style="width:100%;height:520px;border:0;display:block;background:#fff"></iframe><p class="note">Indice de sentiment SWFX de la banque Dukascopy : part des positions acheteuses et vendeuses de ses clients, mise à jour toutes les 30 minutes. Widget gratuit, adresse vérifiée par le robot le ' + esc(w.checked) + ".</p>";
+  }
+
   /* ---------- Vidéos ---------- */
   var vidLang = "all";
   function renderVid() {
@@ -2271,7 +2321,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); renderInd(); renderWeek(); renderVid(); }
+  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })

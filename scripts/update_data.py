@@ -978,8 +978,9 @@ def do_seasonal(force=False):
 
 
 # ---------------------------------------------------------------- Vidéos (flux publics YouTube, sans clé)
-VIDEO_CHANNELS = [("BFM Business", "fr", "BFMBusiness"), ("Zonebourse", "fr", "Zonebourse"), ("Bloomberg Television", "en", "markets"),
-                  ("CNBC Television", "en", "CNBCtelevision"), ("Reuters", "en", "Reuters"), ("Kitco News", "en", "kitco")]
+# 30 oct. : Zonebourse retiré (chaîne trouvée inactive depuis 2010), Reuters retiré (surtout politique).
+VIDEO_CHANNELS = [("BFM Business", "fr", "BFMBusiness"), ("Bloomberg Television", "en", "markets"),
+                  ("CNBC Television", "en", "CNBCtelevision"), ("Kitco News", "en", "kitco")]
 YT = "{http://www.youtube.com/xml/schemas/2015}"
 
 
@@ -1014,6 +1015,62 @@ def do_videos(data):
         list(ex.map(one, VIDEO_CHANNELS))
     vids.sort(key=lambda v: v["d"] or "", reverse=True)
     data["videos"] = vids[:36]
+
+
+# ---------------------------------------------------------------- Trafic maritime : détroits stratégiques (FMI PortWatch)
+def do_shipping(data):
+    url0 = "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query"
+    try:
+        since = (NOW - timedelta(days=75)).strftime("%Y-%m-%d")
+        q = urllib.parse.urlencode({"where": "date >= DATE '%s'" % since, "outFields": "date,portid,portname,n_total,n_tanker,n_container,capacity",
+                                    "orderByFields": "date ASC", "resultRecordCount": "4000", "f": "json"})
+        j = json.loads(http("portwatch.json", url0 + "?" + q, timeout=40))
+        if j.get("error"):
+            raise ValueError("ArcGIS : " + str(j["error"].get("message"))[:80])
+        by = {}
+        for f in j.get("features") or []:
+            a = f.get("attributes") or {}
+            d = a.get("date")
+            d = datetime.fromtimestamp(d / 1000, timezone.utc).strftime("%Y-%m-%d") if isinstance(d, (int, float)) else str(d)[:10]
+            by.setdefault(a.get("portname") or a.get("portid"), []).append([d, a.get("n_total"), a.get("n_tanker"), a.get("n_container"), a.get("capacity")])
+        out, newest = {}, ""
+        for name, rows in by.items():
+            rows.sort()
+            out[name] = rows[-60:]
+            newest = max(newest, rows[-1][0])
+        if not out:
+            raise ValueError("aucune donnée")
+        data["shipping"] = {"src": "UN Global Platform ; FMI PortWatch (portwatch.imf.org)", "asof": newest, "c": out}
+        note("imf.portwatch", "Trafic des détroits stratégiques (FMI PortWatch)", "weekly", True, newest, url="https://portwatch.imf.org/")
+    except Exception as e:
+        note("imf.portwatch", "Trafic des détroits stratégiques (FMI PortWatch)", "weekly", False, err=e, url="https://portwatch.imf.org/")
+
+
+# ---------------------------------------------------------------- Sentiment des particuliers : widget gratuit Dukascopy (vérifié par le robot)
+DUKA_CANDIDATES = [
+    "https://freeserv.dukascopy.com/2.0/?path=swfx_sentiment_index/index&lang=fr&showHeader=false",
+    "https://freeserv.dukascopy.com/2.0/?path=sentiment_index/index&lang=fr&showHeader=false",
+]
+
+
+def do_sentiment_widget(data):
+    """On n'affiche le widget que si une adresse répond ET contient bien un widget de sentiment."""
+    tried = []
+    for i, u in enumerate(DUKA_CANDIDATES):
+        try:
+            t = http("duka_%d.html" % i, u, tries=1, timeout=20)
+            ok = bool(re.search(r"sentiment", t, re.I)) and not re.search(r"not found|404|error", t[:400], re.I)
+            tried.append([u, "ok" if ok else "contenu inattendu"])
+            if ok:
+                data["sentiment_widget"] = {"url": u, "checked": TODAY}
+                note("duka.widget", "Widget de sentiment Dukascopy (vérifié)", "daily", True, TODAY, url="https://www.dukascopy.com/swiss/english/marketwatch/sentiment/")
+                DIAG["dukascopy"] = tried
+                return
+        except Exception as e:
+            tried.append([u, fr_err(e)])
+    DIAG["dukascopy"] = tried
+    note("duka.widget", "Widget de sentiment Dukascopy (vérifié)", "daily", False, err="aucune adresse de widget confirmée",
+         url="https://www.dukascopy.com/swiss/english/marketwatch/sentiment/")
 
 
 # ---------------------------------------------------------------- Historique macro depuis 2001 (fichier séparé)
@@ -1053,7 +1110,7 @@ def do_history(force=False):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("sentiment", do_sentiment_widget)]
     def run(step):
         name, fn = step
         try:
