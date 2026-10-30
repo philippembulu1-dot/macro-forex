@@ -10,7 +10,7 @@ Règles :
 Test hors ligne : MF_MOCK_DIR=<dossier> lit des fichiers au lieu d'Internet.
 Diagnostic : MF_ONLY=fred,cot,... ne lance que certaines sources."""
 import csv, io, json, os, re, sys, time, statistics, threading, urllib.request, urllib.parse
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta, date
 
@@ -44,8 +44,18 @@ def http(key, url, tries=2, headers=None, timeout=20):
             hd = {"User-Agent": UA, "Accept": "*/*", "Accept-Language": "en-US,en;q=0.8"}
             hd.update(headers or {})
             req = urllib.request.Request(url, headers=hd)
+            # Durée maximale par téléchargement : un serveur qui répond au compte-gouttes est coupé.
+            end = time.time() + timeout * 3
+            buf = bytearray()
             with urllib.request.urlopen(req, timeout=timeout) as r:
-                return r.read().decode("utf-8-sig", "replace")
+                while True:
+                    chunk = r.read(65536)
+                    if not chunk:
+                        break
+                    buf.extend(chunk)
+                    if time.time() > end:
+                        raise TimeoutError("réponse trop lente (> %d s)" % (timeout * 3))
+            return bytes(buf).decode("utf-8-sig", "replace")
         except urllib.error.HTTPError as e:  # 4xx : inutile d'insister (sauf 429)
             last = e
             if e.code in (400, 401, 403, 404, 410, 418):
@@ -673,13 +683,16 @@ def main():
             fn(data)
         except Exception as e:  # filet de sécurité : une erreur de code n'arrête pas le reste
             note("robot." + name, "Bloc " + name, "daily", False, err=e)
-    with ThreadPoolExecutor(5) as ex:
-        list(ex.map(run, [st for st in steps if want(st[0])]))
+    todo = [st for st in steps if want(st[0])]
     if want("seasonal"):
-        try:
-            do_seasonal(force=os.environ.get("MF_SEAS_FORCE") == "1")
-        except Exception as e:
-            note("robot.seasonal", "Bloc saisonnalité", "weekly", False, err=e)
+        todo.append(("seasonal", lambda d: do_seasonal(force=os.environ.get("MF_SEAS_FORCE") == "1")))
+    # Chronomètre global : au-delà de BUDGET secondes, on enregistre ce qu'on a et on s'arrête.
+    budget = int(os.environ.get("MF_BUDGET", "300"))
+    ex = ThreadPoolExecutor(len(todo) or 1)
+    futs = {ex.submit(run, st): st[0] for st in todo}
+    done, pending = wait(futs, timeout=budget)
+    for f in pending:
+        note("robot." + futs[f], "Bloc " + futs[f] + " (arrêté : délai global de %d s dépassé)" % budget, "daily", False, err="délai dépassé")
 
     out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES}
     out.update(data)
@@ -691,9 +704,13 @@ def main():
     if ONLY:
         return  # mode diagnostic : on n'écrase pas le fichier complet
     os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
+    with LOCK:
+        txt = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+        f.write(txt)
 
 
 if __name__ == "__main__":
     main()
+    sys.stdout.flush()
+    os._exit(0)  # coupe net les éventuels téléchargements encore bloqués
