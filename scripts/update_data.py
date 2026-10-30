@@ -427,6 +427,63 @@ def fallbacks(data):
             note("ecb.dfr", "Taux de dépôt BCE (BCE, secours)", "daily", True, F["ECBDFR"]["asof"], url="https://data.ecb.europa.eu/")
         except Exception as e:
             note("ecb.dfr", "Taux de dépôt BCE (BCE, secours)", "daily", False, err=e, url="https://data.ecb.europa.eu/")
+    # Bilan de la Fed : publication H.4.1 directement chez la Réserve fédérale (programme de téléchargement)
+    if need("WALCL"):
+        try:
+            url = ("https://www.federalreserve.gov/datadownload/Output.aspx?rel=H41&filetype=csv&label=include"
+                   "&layout=seriescolumn&lastobs=60")
+            rows = list(csv.reader(io.StringIO(http("fed_h41.csv", url, timeout=60, tries=2))))
+            col = None
+            for r in rows[:8]:
+                for i, c in enumerate(r):
+                    if "RESPPANWW" in c.upper():
+                        col = i
+                        break
+                if col is not None:
+                    break
+            if col is None:
+                DIAG["h41_entetes"] = [r[:4] for r in rows[:6]]
+                raise ValueError("colonne du total de l'actif (RESPPANWW) introuvable")
+            obs = []
+            for r in rows:
+                if len(r) > col and re.match(r"\d{4}-\d{2}-\d{2}$", r[0].strip()) and num(r[col]) is not None:
+                    obs.append((r[0].strip(), num(r[col])))
+            put(data, "WALCL", obs, "Réserve fédérale (H.4.1)")
+            note("fed.h41", "Bilan de la Fed (Réserve fédérale, H.4.1)", "weekly", True, F["WALCL"]["asof"], url="https://www.federalreserve.gov/releases/h41/")
+        except Exception as e:
+            note("fed.h41", "Bilan de la Fed (Réserve fédérale, H.4.1)", "weekly", False, err=e, url="https://www.federalreserve.gov/releases/h41/")
+    # Dernière chance pour les séries qui n'existent que chez la Fed de St. Louis : délai long, FRED puis ALFRED
+    rest = need("STLFSI4", "BAMLH0A0HYM2", "BAMLC0A0CM", "PCEPILFE", "WALCL")
+    tries_log = {}
+
+    def slow(sid):
+        start = (NOW - timedelta(days=400)).strftime("%Y-%m-%d")
+        for host, path in (("fred", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=%s&cosd=%s"),
+                           ("alfred", "https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=%s&cosd=%s")):
+            try:
+                txt = http("slow_%s_%s.csv" % (host, sid), path % (sid, start), tries=1, timeout=90)
+                rows = list(csv.reader(io.StringIO(txt)))
+                obs = [(r[0][:10], num(r[1])) for r in rows[1:] if len(r) > 1 and num(r[1]) is not None]
+                if not obs:
+                    raise ValueError("série vide")
+                if sid == "PCEPILFE":
+                    y = yoy(obs)
+                    if y:
+                        data["derived"]["us_pce_core"] = y
+                else:
+                    put(data, sid, obs, "FRED (délai long)" if host == "fred" else "ALFRED (Fed de St. Louis)")
+                tries_log[sid] = host + " : ok"
+                return
+            except Exception as e:
+                tries_log[sid] = tries_log.get(sid, "") + host + " : " + fr_err(e)[:50] + " ; "
+    if rest:
+        with ThreadPoolExecutor(len(rest)) as ex:
+            list(ex.map(slow, rest))
+        DIAG["fred_delai_long"] = tries_log
+        for sid in rest:
+            if sid in F or (sid == "PCEPILFE" and data["derived"].get("us_pce_core")):
+                note("fred.slow." + sid, "Fed de St. Louis, " + sid + " (délai long)", "weekly" if sid in ("STLFSI4", "WALCL") else "daily", True,
+                     F[sid]["asof"] if sid in F else data["derived"]["us_pce_core"]["asof"], url="https://fred.stlouisfed.org/series/" + sid)
     # Une série FRED remplacée par une source de secours n'est plus affichée comme une panne
     with LOCK:
         SOURCES[:] = [x for x in SOURCES if not (x["id"].startswith("fred.") and not x["ok"] and x["id"][5:] in F)]
@@ -434,6 +491,8 @@ def fallbacks(data):
             SOURCES[:] = [x for x in SOURCES if not (x["id"] == "fred.DTWEXBGS" and not x["ok"])]
         if data["derived"].get("us_cpi"):
             SOURCES[:] = [x for x in SOURCES if not (x["id"] in ("fred.CPIAUCSL", "fred.CPILFESL", "fred.UNRATE", "fred.PAYEMS") and not x["ok"])]
+        if data["derived"].get("us_pce_core"):
+            SOURCES[:] = [x for x in SOURCES if not (x["id"] == "fred.PCEPILFE" and not x["ok"])]
 
 
 def do_oecd(data):
@@ -1330,7 +1389,7 @@ def main():
                 note("wb.hist", "Historique 2001+ inflation et croissance (Banque mondiale, hebdo)", "weekly", False, err=e, url="https://data.worldbank.org/")
         todo.append(("history", hist))
     # Chronomètre global : au-delà de BUDGET secondes, on enregistre ce qu'on a et on s'arrête.
-    budget = int(os.environ.get("MF_BUDGET", "420"))
+    budget = int(os.environ.get("MF_BUDGET", "540"))
     ex = ThreadPoolExecutor(len(todo) or 1)
     futs = {ex.submit(run, st): st[0] for st in todo}
     done, pending = wait(futs, timeout=budget)
