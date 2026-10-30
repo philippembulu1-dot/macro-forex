@@ -329,6 +329,13 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .tv-box { min-height: 420px; }
 @media (min-width: 1100px) { .duo2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; } }
 .duo2 { display: flex; flex-direction: column; gap: 12px; }
+.vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px; background: var(--line2); }
+.vgrid button { display: flex; flex-direction: column; gap: 4px; text-align: left; background: var(--panel); color: inherit; border: 0; padding: 8px; cursor: pointer; font: 12px var(--font-body); min-width: 0; }
+.vgrid button:hover { background: var(--panel2); }
+.vgrid img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #111; }
+.vgrid small { color: var(--muted); font: 10px var(--font-mono); }
+.vplay { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+.vplay iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 </style>
 
 </head><body><div class="shell">
@@ -368,6 +375,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     <a href="#taux">Taux, VIX, dollar</a>
     <a href="#cot">Positions COT</a>
     <a href="#actus">Actus banques centrales</a>
+    <a href="#videos">Vidéos</a>
     <a href="#robot">Fraîcheur des données</a>
     <a href="#notes">Notes rapides</a>
     <a href="#liens">Sources gratuites</a>
@@ -501,13 +509,13 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
           <p class="warn" id="weekWarn" hidden></p>
           <ul class="agenda" id="agendaList"></ul>
           <button type="button" class="moreBtn" id="agendaMore" hidden></button>
-          <p class="note">Calendriers officiels publiés ; Fed 2027 provisoire (la Fed peut l'ajuster). Banque du Japon : dates après le 30 oct. non vérifiées ici. Banque d'Angleterre et BNS : dates de fin 2026 absentes de mes sources.</p>
+          <p class="note">Calendriers officiels publiés, vérifiés le 30 oct. 2026 (BoE 2026–2027, BoJ 2027). Fed 2027 provisoire (la Fed peut l'ajuster). Banque du Japon, 18 déc. 2026 : source secondaire, marqué provisoire.</p>
         </section>
 
         <section class="panel o-week" id="semaine">
-          <div class="ph"><h2>Publications de la semaine</h2><span class="meta">heure UTC si connue</span></div>
+          <div class="ph"><h2>Publications de la semaine</h2><span class="meta" id="weekMeta">saisie du 25 oct.</span></div>
           <ul class="agenda" id="weekList"></ul>
-          <p class="note">Principales publications à fort impact, relevées le 25 oct. 2026. Les prévisions des économistes sont sur Forex Factory.</p>
+          <p class="note" id="weekNote">Principales publications à fort impact, relevées le 25 oct. 2026. Les prévisions des économistes sont sur Forex Factory.</p>
         </section>
       </div>
     </div>
@@ -516,7 +524,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       <div class="ph"><h2>Indicateurs macro</h2><span class="meta">relevé du 25 oct. 2026 · dernier chiffre et précédent</span></div>
       <div class="tbl"><table class="ind" id="indTable"></table></div>
       <p class="note" id="indBilan"></p>
-      <p class="note">Lecture : vert = évolution plutôt favorable à la devise (croissance, emploi, salaires, inflation et taux plus hauts, chômage plus bas), rouge = l'inverse. Le prix réagit surtout à l'écart avec les prévisions des économistes, pas au chiffre seul. Données saisies à la main d'après Trading Economics et les instituts nationaux, à vérifier avant de trader. États-Unis : PIB t/t annualisé. Indices de confiance non comparables d'un pays à l'autre.</p>
+      <p class="note">Lecture : vert = évolution plutôt favorable à la devise (croissance, emploi, salaires, inflation et taux plus hauts, chômage plus bas), rouge = l'inverse. Le prix réagit surtout à l'écart avec les prévisions des économistes, pas au chiffre seul. Cases marquées « auto » : chiffre officiel récupéré par le robot (Trésor, BLS, BCE, BoE, BoC, BNS, ONS…), source au survol. Les autres cases sont saisies à la main d'après Trading Economics et les instituts nationaux, à vérifier avant de trader. États-Unis : PIB t/t annualisé. Indices de confiance non comparables d'un pays à l'autre.</p>
     </section>
 
 
@@ -669,6 +677,13 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       <div id="newsBody"></div>
     </section>
 
+    <section class="panel" id="videos">
+      <div class="ph"><h2>Vidéos d'analyse</h2><div class="seg" role="group" aria-label="Langue des vidéos"><button type="button" data-vl="fr" aria-pressed="false">FR</button><button type="button" data-vl="all" aria-pressed="true">Toutes</button></div></div>
+      <div id="vidPlayer"></div>
+      <div class="vgrid" id="vidList"></div>
+      <p class="note" id="vidNote">Dernières vidéos publiées par des chaînes de marché (flux publics YouTube, relevés par le robot). Rien n'est chargé depuis YouTube tant que vous ne cliquez pas sur une vidéo. Chaînes en anglais : sous-titres français automatiques via le bouton ⚙ du lecteur.</p>
+    </section>
+
     <section class="panel" id="robot">
       <div class="ph"><h2>Fraîcheur des données</h2><span class="meta" id="robotMeta"></span></div>
       <div id="robotBody"></div>
@@ -814,6 +829,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     { d: "2027-10-28", b: "BCE", c: "EUR" },
     { d: "2027-12-16", b: "BCE", c: "EUR" },
     { d: "2026-11-05", b: "Banque d'Angleterre", c: "GBP" },
+    { d: "2026-12-17", b: "Banque d'Angleterre", c: "GBP" }, /* BoE, calendrier 2026 publié en déc. 2024 */
     { d: "2027-02-04", b: "Banque d'Angleterre", c: "GBP" },
     { d: "2027-03-18", b: "Banque d'Angleterre", c: "GBP" },
     { d: "2027-04-29", b: "Banque d'Angleterre", c: "GBP" },
@@ -823,6 +839,11 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     { d: "2027-11-04", b: "Banque d'Angleterre", c: "GBP" },
     { d: "2027-12-16", b: "Banque d'Angleterre", c: "GBP" },
     { d: "2026-10-30", b: "Banque du Japon", c: "JPY" },
+    { d: "2026-12-18", b: "Banque du Japon", c: "JPY", t: 1 }, /* source secondaire (financecalendar), PDF officiel BoJ 2026 non lu */
+    { d: "2027-01-22", b: "Banque du Japon", c: "JPY" }, { d: "2027-03-18", b: "Banque du Japon", c: "JPY" },
+    { d: "2027-04-28", b: "Banque du Japon", c: "JPY" }, { d: "2027-06-11", b: "Banque du Japon", c: "JPY" },
+    { d: "2027-07-22", b: "Banque du Japon", c: "JPY" }, { d: "2027-09-22", b: "Banque du Japon", c: "JPY" },
+    { d: "2027-10-29", b: "Banque du Japon", c: "JPY" }, { d: "2027-12-17", b: "Banque du Japon", c: "JPY" }, /* BoJ, calendrier 2027 publié le 31 juil. 2026 */
     { d: "2026-12-10", b: "BNS", c: "CHF" },
     { d: "2027-03-18", b: "BNS", c: "CHF" },
     { d: "2027-06-24", b: "BNS", c: "CHF" },
@@ -1100,17 +1121,17 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   /* v: [dernier, précédent, période]. dir: +1 si une hausse est plutôt favorable à la devise, -1 si c'est une baisse. */
   var IND = [
     { g: "Politique monétaire" },
-    { l: "Taux directeur (Fed : borne haute)", u: " %", d: 2, dir: 1, v: { USD: [4.00, 3.75, "sept."], EUR: [2.50, 2.25, "sept."], GBP: [3.75, 3.75, "sept."], JPY: [1.25, 1.00, "sept."], CHF: [0.00, 0.00, "sept."], AUD: [4.60, 4.35, "sept."], CAD: [2.50, 2.25, "oct."], NZD: [2.75, 2.50, "sept."] } },
+    { k: "rate", l: "Taux directeur (Fed : borne haute)", u: " %", d: 2, dir: 1, v: { USD: [4.00, 3.75, "sept."], EUR: [2.50, 2.25, "sept."], GBP: [3.75, 3.75, "sept."], JPY: [1.25, 1.00, "sept."], CHF: [0.00, 0.00, "sept."], AUD: [4.60, 4.35, "sept."], CAD: [2.50, 2.25, "oct."], NZD: [2.75, 2.50, "sept."] } },
     { g: "Croissance" },
     { l: "PIB trimestriel t/t", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.5, "T2"], EUR: [0.6, 0.0, "T2"], GBP: [0.5, 0.6, "T2"], JPY: [0.4, 0.5, "T2"], CHF: [1.5, 0.5, "T2"], AUD: [0.4, 0.3, "T2"], CAD: [0.8, 0.1, "T2"], NZD: [0.2, 0.9, "T2"] } },
     { l: "PIB a/a", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.6, "T2"], EUR: [1.2, 0.6, "T2"], GBP: [1.4, 0.8, "T2"], JPY: [0.7, 0.5, "T2"], CHF: [2.3, 0.4, "T2"], AUD: [2.1, 2.5, "T2"], CAD: [1.1, 0.1, "T2"], NZD: [2.6, 1.7, "T2"] } },
     { g: "Inflation" },
-    { l: "Inflation (IPC) a/a", u: " %", d: 1, dir: 1, v: { USD: [3.7, 3.4, "sept."], EUR: [3.8, 3.2, "sept."], GBP: [3.5, 3.1, "sept."], JPY: [2.1, 1.9, "sept."], CHF: [1.0, 0.8, "sept."], AUD: [4.0, 3.5, "août"], CAD: [3.1, 3.0, "sept."], NZD: [3.7, 4.1, "sept."] } },
-    { l: "Inflation sous-jacente a/a", u: " %", d: 1, dir: 1, v: { USD: [2.6, 2.4, "sept."], EUR: [2.5, 2.4, "sept."], GBP: [2.8, 2.6, "sept."], JPY: [2.1, 1.7, "sept."], CHF: [0.5, 0.4, "sept."], AUD: [3.6, 3.6, "août"], CAD: [2.2, 2.4, "sept."], NZD: [3.2, 3.2, "sept."] } },
+    { k: "cpi", l: "Inflation (IPC) a/a", u: " %", d: 1, dir: 1, v: { USD: [3.7, 3.4, "sept."], EUR: [3.8, 3.2, "sept."], GBP: [3.5, 3.1, "sept."], JPY: [2.1, 1.9, "sept."], CHF: [1.0, 0.8, "sept."], AUD: [4.0, 3.5, "août"], CAD: [3.1, 3.0, "sept."], NZD: [3.7, 4.1, "sept."] } },
+    { k: "core", l: "Inflation sous-jacente a/a", u: " %", d: 1, dir: 1, v: { USD: [2.6, 2.4, "sept."], EUR: [2.5, 2.4, "sept."], GBP: [2.8, 2.6, "sept."], JPY: [2.1, 1.7, "sept."], CHF: [0.5, 0.4, "sept."], AUD: [3.6, 3.6, "août"], CAD: [2.2, 2.4, "sept."], NZD: [3.2, 3.2, "sept."] } },
     { g: "Emploi" },
-    { l: "Taux de chômage", u: " %", d: 1, dir: -1, v: { USD: [4.2, 4.1, "sept."], EUR: [6.4, 6.4, "août"], GBP: [4.7, 4.9, "août"], JPY: [2.5, 2.4, "août"], CHF: [3.0, 3.0, "sept."], AUD: [4.7, 4.7, "sept."], CAD: [6.5, 6.4, "sept."], NZD: [5.6, 5.4, "T2"] } },
+    { k: "unemp", l: "Taux de chômage", u: " %", d: 1, dir: -1, v: { USD: [4.2, 4.1, "sept."], EUR: [6.4, 6.4, "août"], GBP: [4.7, 4.9, "août"], JPY: [2.5, 2.4, "août"], CHF: [3.0, 3.0, "sept."], AUD: [4.7, 4.7, "sept."], CAD: [6.5, 6.4, "sept."], NZD: [5.6, 5.4, "T2"] } },
     { l: "Salaires a/a", u: " %", d: 1, dir: 1, v: { USD: [4.17, 4.18, "août"], EUR: [3.0, 3.4, "T2"], GBP: [3.7, 3.9, "août"], JPY: [3.8, 4.3, "août"], CHF: null, AUD: [3.2, 3.2, "T2"], CAD: [3.2, 3.39, "juil."], NZD: [2.1, 2.0, "T2"] } },
-    { l: "Emplois créés (NFP, milliers)", u: " k", d: 0, dir: 1, v: { USD: [29, 133, "sept."], EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "nfp", l: "Emplois créés (NFP, milliers)", u: " k", d: 0, dir: 1, v: { USD: [29, 133, "sept."], EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { g: "Activité" },
     { l: "PMI manufacturier", u: "", d: 1, dir: 1, v: { USD: [56.0, 55.9, "oct."], EUR: [52.4, 52.9, "oct."], GBP: [52.8, 51.9, "oct."], JPY: [53.3, 54.1, "oct."], CHF: [55.3, 57.1, "sept."], AUD: [49.7, 49.6, "oct."], CAD: [51.5, 53.0, "sept."], NZD: [56.5, 53.3, "sept."] } },
     { l: "PMI services", u: "", d: 1, dir: 1, v: { USD: [57.9, 58.8, "oct."], EUR: [51.7, 53.0, "oct."], GBP: [53.1, 52.1, "oct."], JPY: [52.0, 51.3, "oct."], CHF: [59.8, 58.3, "sept."], AUD: [47.8, 51.9, "oct."], CAD: [48.3, 46.8, "sept."], NZD: [50.9, 51.0, "sept."] } },
@@ -1149,6 +1170,26 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     if (d === "auto") { var a = Math.abs(v); d = a >= 100 ? 0 : a >= 10 ? 1 : 2; }
     return v.toFixed(d).replace(".", ",").replace("-", "−");
   }
+  /* Chiffre officiel récupéré par le robot pour une case du tableau (sinon null : la saisie manuelle reste). */
+  function indAuto(k, c) {
+    if (!AUTO) return null;
+    var D = AUTO.derived || {}, N = AUTO.national || {}, cc = CCODE[c], x = null, src = "";
+    var per = function (asof) { return MOIS[parseInt(String(asof).slice(5, 7), 10) - 1]; };
+    if (k === "rate") {
+      var m = MACRO.filter(function (q) { return q.c === c; })[0], p = m && policyRate(m);
+      if (!p || !p.auto) return null;
+      var prev = null;
+      if (c === "USD" || c === "EUR") { var f = fred(c === "USD" ? "DFEDTARU" : "ECBDFR"); if (f && f.hist) { for (var i = f.hist.length - 1; i >= 0; i--) if (f.hist[i][1] !== f.v) { prev = f.hist[i][1]; break; } if (prev === null) prev = f.v; } }
+      else prev = N["rate_" + cc] && N["rate_" + cc].prev;
+      return { v: p.v, p: prev === null || prev === undefined ? p.v : prev, per: shortD(String(p.d).slice(0, 10)), src: p.src + " du " + p.d };
+    }
+    if (k === "cpi") x = c === "USD" ? D.us_cpi : N["cpi_" + cc];
+    if (k === "core" && c === "USD") x = D.us_core;
+    if (k === "unemp" && c === "USD") x = D.us_unemp;
+    if (k === "nfp" && c === "USD") x = D.us_nfp;
+    if (!x || x.v === null || x.v === undefined || ageDays(x.asof) > 80) return null;
+    return { v: x.v, p: x.prev === null || x.prev === undefined ? x.v : x.prev, per: per(x.asof), src: "source officielle, mois de " + per(x.asof) + " " + String(x.asof).slice(0, 4) };
+  }
   function renderInd() {
     var tally = {}, count = {};
     IND_C.forEach(function (c) { tally[c] = 0; count[c] = 0; });
@@ -1159,13 +1200,17 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       if (row.g) { h += '<tr class="grp"><td colspan="9">' + row.g + "</td></tr>"; return; }
       h += '<tr><td class="lab">' + row.l + "</td>";
       IND_C.forEach(function (c) {
-        var x = row.v[c];
+        var x = row.v[c], au = row.k ? indAuto(row.k, c) : null;
+        if (au && row.k === "rate" && x) {
+          /* Taux : si le chiffre officiel confirme la saisie, on garde la variation de la dernière décision ; sinon, l'ancien niveau saisi devient le précédent. */
+          x = Math.abs(au.v - x[0]) < 0.005 ? [x[0], x[1], x[2]] : [au.v, x[0], au.per];
+        } else if (au) x = [au.v, au.p, au.per];
         if (!x) { h += '<td class="c"><div class="cell"><b style="color:var(--muted)">–</b></div></td>'; return; }
         var dl = x[0] - x[1], flat = Math.abs(dl) < 1e-9, s = flat ? 0 : (dl > 0 ? 1 : -1) * row.dir;
         var cl = s > 0 ? "f" : s < 0 ? "u" : "z";
         tally[c] += s; count[c] += 1;
         var ar = flat ? "=" : dl > 0 ? "▲" : "▼";
-        h += '<td class="c"><div class="cell ' + cl + '"><b>' + fmtNum(x[0], row) + row.u + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + "</small></div></td>";
+        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : "") + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + "</small></div></td>";
       });
       h += "</tr>";
     });
@@ -1182,6 +1227,17 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     $("how").innerHTML = HOW.map(function (x) { return "<details><summary>" + x[0] + "</summary><p>" + x[1] + "</p></details>"; }).join("");
   }
   function renderWeek() {
+    var c = AUTO && AUTO.calendar, now = Date.now(), MAJ8 = ["USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
+    if (c && c.events && c.events.length) {
+      var ev = c.events.filter(function (e) { var t = Date.parse(e.d); return e.i === "High" && MAJ8.indexOf(e.c) >= 0 && t >= now - 3 * 36e5 && t <= now + 8 * 864e5; });
+      $("weekMeta").innerHTML = "automatique · Forex Factory, relevé " + shortD(c.fetched.slice(0, 10)) + " " + badge(ageDays(c.fetched.slice(0, 10)) <= 1 ? "ok" : "old");
+      $("weekNote").textContent = "Publications à fort impact des 8 devises, tirées du calendrier du robot (export Forex Factory). Heures dans le fuseau de votre appareil. Le calendrier complet et filtrable est dans « Calendrier économique ».";
+      $("weekList").innerHTML = ev.length ? ev.map(function (e) {
+        var t = new Date(e.d);
+        return '<li class="' + (t - now < 864e5 && t > now ? "soon" : "") + '"><span class="d">' + t.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + "</span><span><b>" + esc(e.c) + '</b> <small class="d" title="' + esc(e.t) + '">' + esc(frEvent(e.t).t) + (e.f ? " · prévu " + esc(String(e.f).replace(/(\d)\.(\d)/g, "$1,$2")) : "") + '</small></span><span class="in">' + t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + "</span></li>";
+      }).join("") : '<li><span class="d">–</span><span>Plus de publication à fort impact cette semaine. La semaine suivante apparaît dès que Forex Factory la publie (en général le week-end).</span><span class="in"></span></li>';
+      return;
+    }
     var t = new Date(); t.setHours(0, 0, 0, 0);
     var items = WEEK.filter(function (w) { return parseD(w.d) >= t; });
     if (!items.length) { $("weekList").innerHTML = '<li><span class="d">–</span><span>Agenda à mettre à jour</span><span class="in"></span></li>'; return; }
@@ -1492,7 +1548,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   var MAXAGE = { daily: 6, weekly: 12, monthly: 80, quarterly: 140, news: 21, calendar: 8, annual: 800 };
   var MANUAL = [
     { n: "Banques centrales (taux, inflation)", d: "2026-10-24" }, { n: "Tableau des indicateurs macro", d: "2026-10-25" },
-    { n: "Publications de la semaine", d: "2026-10-25" }, { n: "Calendrier des réunions", d: "2026-10-27" },
+{ n: "Calendrier des réunions", d: "2026-10-30" },
     { n: "Consensus des banques (relevé presse)", d: "2026-10-30" }
   ];
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -1664,7 +1720,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     ["COT", "Positions COT", "cot"], ["SEAS", "Saisonnalité 20 ans", "saison"], ["HEAT", "Carte thermique", "heat"], ["CORR", "Corrélations", "correl"],
     ["VOL", "Volatilité", "vola"], ["MAP", "Carte du monde", "monde"], ["CONS", "Consensus des banques", "consensus"], ["COM", "Comités", "comite"],
     ["FED", "Probabilités de taux", "probas"], ["SENT", "Sentiment des particuliers", "sentiment"], ["PIV", "Pivots et convertisseur", "outils"],
-    ["LIVE", "Marchés en direct", "marches"], ["NEWS", "Communiqués", "actus"], ["CALC", "Calculateur de position", "calc"], ["RISK", "Gestion du risque", "conseils"],
+    ["LIVE", "Marchés en direct", "marches"], ["NEWS", "Communiqués", "actus"], ["VID", "Vidéos d'analyse", "videos"], ["CALC", "Calculateur de position", "calc"], ["RISK", "Gestion du risque", "conseils"],
     ["CHK", "Checklist", "check"], ["DATA", "Fraîcheur des données", "robot"], ["NOTE", "Notes rapides", "notes"]
   ];
   function initCmd() {
@@ -1984,12 +2040,37 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     $("mapMeta").textContent = srcs.length ? okn + "/" + srcs.length + " séries chargées" : "robot : en attente";
     if (mapSel) showCountry(mapSel);
   }
+  var HIST = null, histTried = false;
+  function loadHist() {
+    if (histTried) return; histTried = true;
+    var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "macro-history.json"); }), p = Promise.reject(new Error("start"));
+    urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.c) throw new Error("format"); return j; }); }); });
+    p.then(function (j) { HIST = j; if (mapSel) showCountry(mapSel); }).catch(function () { HIST = { c: {}, missing: true }; if (mapSel) showCountry(mapSel); });
+  }
+  function histChart(x) {
+    var inf = (x && x.inf) || [], gdp = (x && x.gdp) || [];
+    if (inf.length < 3 && gdp.length < 3) return '<p class="hint">Pas d\'historique annuel disponible pour ce pays.</p>';
+    var all = inf.concat(gdp), y0 = 2001, y1 = Math.max.apply(null, all.map(function (p) { return p[0]; }));
+    var vs = all.map(function (p) { return p[1]; }), lo = Math.min(0, Math.min.apply(null, vs)), hi = Math.max.apply(null, vs);
+    lo = Math.max(lo, -15); hi = Math.min(hi, 40);
+    var W = 300, H = 120, L = 30, R = 6, T = 8, B = 16;
+    var sx = function (y) { return L + (W - L - R) * (y - y0) / Math.max(1, y1 - y0); }, sy = function (v) { v = Math.max(lo, Math.min(hi, v)); return T + (H - T - B) * (1 - (v - lo) / ((hi - lo) || 1)); };
+    var line = function (a, col) { return a.length ? '<polyline fill="none" stroke="' + col + '" stroke-width="1.6" points="' + a.map(function (p) { return sx(p[0]).toFixed(1) + "," + sy(p[1]).toFixed(1); }).join(" ") + '"/>' : ""; };
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="chart" role="img" aria-label="Inflation et croissance depuis 2001">' +
+      '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + sy(0).toFixed(1) + '" y2="' + sy(0).toFixed(1) + '" stroke="#4a4430" stroke-dasharray="3 3"/>' +
+      '<text x="' + (L - 4) + '" y="' + (sy(hi) + 4).toFixed(1) + '" text-anchor="end">' + fmt(hi, 0) + '</text><text x="' + (L - 4) + '" y="' + (sy(lo) + 3).toFixed(1) + '" text-anchor="end">' + fmt(lo, 0) + "</text>" +
+      '<text x="' + L + '" y="' + (H - 3) + '">' + y0 + '</text><text x="' + (W - R) + '" y="' + (H - 3) + '" text-anchor="end">' + y1 + "</text>" +
+      line(inf, "#ff5c4f") + line(gdp, "#3ddc97") + "</svg>" +
+      '<p class="hint"><span style="color:#ff5c4f">━</span> inflation · <span style="color:#3ddc97">━</span> croissance du PIB, en % par an (Banque mondiale' + (hi >= 40 || lo <= -15 ? ", valeurs extrêmes coupées" : "") + ").</p>";
+  }
   function showCountry(a3) {
     var W = (AUTO && AUTO.world) || {}, x = W[a3] || {}, c = WMAP.c.filter(function (k) { return k[0] === a3; })[0], name = c ? c[1] : a3;
     var h = "<h3>" + esc(name) + "</h3><div class=\"kv\">" + MAPIND.map(function (m) { var v = x[m[0]]; return "<span>" + m[1] + "</span><b>" + (v ? fmt(v[0], 1) + m[2] + " <small>(" + v[1] + ")</small>" : "–") + "</b>"; }).join("");
     var cur = MAJ[a3] || (EZ.indexOf(a3) >= 0 ? "EUR" : null);
     if (cur) { var m = MACRO.filter(function (k) { return k.c === cur; })[0], p = policyRate(m); h += "<span>Taux directeur (" + m.b + ")</span><b>" + fmt(p.v, 2) + " % <small>" + p.src + ", " + shortD(String(p.d).slice(0, 10)) + "</small></b>"; }
-    $("mapInfo").innerHTML = h + "</div>" + (Object.keys(x).length ? "" : '<p class="hint">Aucune donnée du robot pour ce pays (ou robot pas encore passé).</p>');
+    loadHist();
+    var hx = HIST ? (HIST.missing ? '<p class="hint">Historique pas encore publié par le robot.</p>' : '<div class="pair-name" style="margin:10px 0 4px">Depuis 2001</div>' + histChart(HIST.c[a3])) : '<p class="hint">Chargement de l\'historique…</p>';
+    $("mapInfo").innerHTML = h + "</div>" + (Object.keys(x).length ? "" : '<p class="hint">Aucune donnée du robot pour ce pays (ou robot pas encore passé).</p>') + hx;
   }
 
   /* ---------- Consensus des banques (recherche du 30 oct. 2026, à vérifier) ---------- */
@@ -2155,6 +2236,28 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   }
   function trLink(u) { return /^https?:\/\//i.test(u || "") ? ' <a href="https://translate.google.com/translate?sl=auto&tl=fr&u=' + encodeURIComponent(u) + '" target="_blank" rel="noopener" title="Ouvrir la page traduite en français"><small>traduire</small></a>' : ""; }
 
+  /* ---------- Vidéos ---------- */
+  var vidLang = "all";
+  function renderVid() {
+    var v = (AUTO && AUTO.videos) || [], L = v.filter(function (x) { return vidLang === "all" || x.lang === vidLang; });
+    $("vidList").innerHTML = L.length ? L.slice(0, 12).map(function (x) {
+      if (!/^[\w-]{11}$/.test(x.id || "")) return "";
+      return '<button type="button" data-vid="' + x.id + '"><img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + x.id + '/mqdefault.jpg"><span>' + esc(x.t) + "</span><small>" + esc(x.ch) + (x.d ? " · " + shortD(x.d) : "") + (x.lang === "en" ? " · anglais" : "") + "</small></button>";
+    }).join("") : '<p class="note pad">' + (v.length ? "Aucune vidéo dans cette langue pour l'instant." : "Pas encore de vidéos du robot. Voir « Fraîcheur des données ».") + "</p>";
+  }
+  $("vidList").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-vid]"); if (!b) return;
+    $("vidPlayer").innerHTML = '<div class="vplay"><iframe src="https://www.youtube-nocookie.com/embed/' + b.getAttribute("data-vid") + '?autoplay=1&hl=fr&cc_lang_pref=fr" title="Vidéo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>';
+    $("vidPlayer").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-vl]"), function (b) {
+    b.addEventListener("click", function () {
+      vidLang = b.getAttribute("data-vl");
+      Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-vl]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      renderVid();
+    });
+  });
+
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
   function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
@@ -2168,7 +2271,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); }
+  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); renderInd(); renderWeek(); renderVid(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })

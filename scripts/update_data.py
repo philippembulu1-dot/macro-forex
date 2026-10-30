@@ -17,6 +17,8 @@ from datetime import datetime, timezone, timedelta, date
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 OUT = os.environ.get("MF_OUT", os.path.join(ROOT, "data", "macro.json"))
 OUT_SEAS = os.environ.get("MF_OUT_SEAS", os.path.join(ROOT, "data", "seasonal.json"))
+OUT_HIST = os.environ.get("MF_OUT_HIST", os.path.join(ROOT, "data", "macro-history.json"))
+DIAG = {}
 MOCK = os.environ.get("MF_MOCK_DIR")
 ONLY = set(x for x in os.environ.get("MF_ONLY", "").split(",") if x)
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
@@ -361,6 +363,7 @@ def fallbacks(data):
         try:
             rows = list(csv.reader(io.StringIO(http("nfci.csv", "https://www.chicagofed.org/-/media/publications/nfci/nfci-data-series-csv.csv", timeout=40))))
             head = [c.strip().upper() for c in rows[0]]
+            DIAG["nfci"] = {"entete": rows[0][:5], "lignes": len(rows), "premiere": rows[1][:3] if len(rows) > 1 else None, "derniere": rows[-1][:3]}
             ci = head.index("NFCI")
             obs = []
             for r in rows[1:]:
@@ -533,6 +536,15 @@ def rba_rate():
 def eurostat_hicp():
     """La zone euro a changé de code avec l'entrée de la Bulgarie (2026) : on essaie plusieurs codes, on garde le plus récent."""
     best = None
+    try:  # diagnostic : quelles zones euro existent et jusqu'à quel mois
+        url = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_manr"
+               "?format=JSON&lang=EN&coicop=CP00&unit=RCH_A&lastTimePeriod=1")
+        j = json.loads(http("eurostat_all.json", url, timeout=40, tries=1))
+        geos = j["dimension"]["geo"]["category"]["index"]
+        tim = list(j["dimension"]["time"]["category"]["index"].keys())
+        DIAG["eurostat_zones"] = {"mois_le_plus_recent": tim, "zones_EA": [g for g in geos if g.startswith("EA")]}
+    except Exception as e:
+        DIAG["eurostat_zones"] = "échec : " + fr_err(e)
     for geo in ("EA21", "EA", "EA20"):
         try:
             url = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_manr"
@@ -540,6 +552,7 @@ def eurostat_hicp():
             j = json.loads(http("eurostat_hicp_%s.json" % geo, url, timeout=30, tries=1))
             idx = j["dimension"]["time"]["category"]["index"]
             r = last2([(per[:7] + "-01", num(j["value"].get(str(pos)))) for per, pos in idx.items()])
+            DIAG.setdefault("eurostat_geo", {})[geo] = r["asof"] if r else "vide"
             if r and (not best or r["asof"] > best["asof"]):
                 best = r
         except Exception:
@@ -564,9 +577,20 @@ def ez_cpi():
 
 
 def ecb_hicp():
-    url = "https://data-api.ecb.europa.eu/service/data/ICP/M.U2.N.000000.4.ANR?format=csvdata&lastNObservations=3"
-    rows = list(csv.DictReader(io.StringIO(http("ecb_hicp.csv", url))))
-    return last2([(r["TIME_PERIOD"] + "-01", num(r["OBS_VALUE"])) for r in rows])
+    best = None
+    for key in ("M.U2.N.000000.4.ANR", "M.U2.N.000000.4F.ANR", "M.I9.N.000000.4.ANR"):
+        try:
+            url = "https://data-api.ecb.europa.eu/service/data/ICP/%s?format=csvdata&lastNObservations=3" % key
+            rows = list(csv.DictReader(io.StringIO(http("ecb_hicp_%s.csv" % key, url, tries=1))))
+            r = last2([(rw["TIME_PERIOD"] + "-01", num(rw["OBS_VALUE"])) for rw in rows])
+            DIAG.setdefault("bce_hicp", {})[key] = r["asof"] if r else "vide"
+            if r and (not best or r["asof"] > best["asof"]):
+                best = r
+        except Exception as e:
+            DIAG.setdefault("bce_hicp", {})[key] = "échec : " + fr_err(e)
+    if not best:
+        raise ValueError("BCE : aucune série IPCH")
+    return best
 
 
 def ons_cpi():
@@ -953,11 +977,83 @@ def do_seasonal(force=False):
             json.dump(res, f, ensure_ascii=False, separators=(",", ":"))
 
 
+# ---------------------------------------------------------------- Vidéos (flux publics YouTube, sans clé)
+VIDEO_CHANNELS = [("BFM Business", "fr", "BFMBusiness"), ("Zonebourse", "fr", "Zonebourse"), ("Bloomberg Television", "en", "markets"),
+                  ("CNBC Television", "en", "CNBCtelevision"), ("Reuters", "en", "Reuters"), ("Kitco News", "en", "kitco")]
+YT = "{http://www.youtube.com/xml/schemas/2015}"
+
+
+def do_videos(data):
+    vids = []
+
+    def one(ch):
+        name, lang, handle = ch
+        try:
+            page = http("yt_%s.html" % handle, "https://www.youtube.com/@%s" % handle, tries=1, timeout=25,
+                        headers={"Cookie": "CONSENT=YES+1", "Accept-Language": "fr-FR,fr;q=0.9"})
+            m = re.search(r'"(?:channelId|externalId)":"(UC[\w-]{22})"', page) or re.search(r'channel_id=(UC[\w-]{22})', page)
+            if not m:
+                raise ValueError("identifiant de chaîne introuvable")
+            feed = http("yt_%s.xml" % handle, "https://www.youtube.com/feeds/videos.xml?channel_id=" + m.group(1), tries=2, timeout=25)
+            root = ET.fromstring(feed.encode("utf-8"))
+            got = []
+            for e in list(root.iter(ATOM + "entry"))[:6]:
+                vid = e.find(YT + "videoId")
+                t = e.find(ATOM + "title")
+                d = e.find(ATOM + "published")
+                if vid is not None and t is not None:
+                    got.append({"ch": name, "lang": lang, "id": vid.text, "t": (t.text or "")[:150], "d": (d.text or "")[:10] if d is not None else None})
+            if not got:
+                raise ValueError("flux vide")
+            with LOCK:
+                vids.extend(got)
+            note("yt." + handle, "Vidéos " + name, "news", True, max(g["d"] or "" for g in got) or None, url="https://www.youtube.com/@" + handle)
+        except Exception as e:
+            note("yt." + handle, "Vidéos " + name, "news", False, err=e, url="https://www.youtube.com/@" + handle)
+    with ThreadPoolExecutor(6) as ex:
+        list(ex.map(one, VIDEO_CHANNELS))
+    vids.sort(key=lambda v: v["d"] or "", reverse=True)
+    data["videos"] = vids[:36]
+
+
+# ---------------------------------------------------------------- Historique macro depuis 2001 (fichier séparé)
+def do_history(force=False):
+    """Inflation et croissance annuelles de tous les pays depuis 2001 (Banque mondiale). Recalcul une fois par semaine."""
+    if not force and os.path.exists(OUT_HIST):
+        try:
+            with open(OUT_HIST, encoding="utf-8") as f:
+                old = json.load(f)
+            if (NOW - datetime.strptime(old["generated"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)).days < 7 and old.get("c"):
+                note("wb.hist", "Historique 2001+ inflation et croissance (Banque mondiale, hebdo)", "weekly", True, old["generated"][:10],
+                     url="https://data.worldbank.org/")
+                return
+        except Exception:
+            pass
+    res, newest = {}, ""
+    for code, key in (("FP.CPI.TOTL.ZG", "inf"), ("NY.GDP.MKTP.KD.ZG", "gdp")):
+        url = "https://api.worldbank.org/v2/country/all/indicator/%s?format=json&date=2001:%d&per_page=20000" % (code, NOW.year)
+        j = json.loads(http("wbh_%s.json" % key, url, tries=2, timeout=60))
+        for r in (j[1] if isinstance(j, list) and len(j) > 1 else []) or []:
+            iso, v = r.get("countryiso3code"), num(r.get("value"))
+            if iso and v is not None:
+                res.setdefault(iso, {}).setdefault(key, []).append([int(r["date"]), round(v, 2)])
+                newest = max(newest, r["date"])
+    for iso in res:
+        for k in res[iso]:
+            res[iso][k].sort()
+    if not res:
+        raise ValueError("aucune donnée")
+    with open(OUT_HIST, "w", encoding="utf-8") as f:
+        json.dump({"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "src": "Banque mondiale (FP.CPI.TOTL.ZG, NY.GDP.MKTP.KD.ZG)", "c": res},
+                  f, ensure_ascii=False, separators=(",", ":"))
+    note("wb.hist", "Historique 2001+ inflation et croissance (Banque mondiale, hebdo)", "weekly", True, newest + "-12-31", url="https://data.worldbank.org/")
+
+
 # ---------------------------------------------------------------- Programme principal
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos)]
     def run(step):
         name, fn = step
         try:
@@ -967,6 +1063,13 @@ def main():
     todo = [st for st in steps if want(st[0])]
     if want("seasonal"):
         todo.append(("seasonal", lambda d: do_seasonal(force=os.environ.get("MF_SEAS_FORCE") == "1")))
+    if want("history"):
+        def hist(d):
+            try:
+                do_history(force=os.environ.get("MF_HIST_FORCE") == "1")
+            except Exception as e:
+                note("wb.hist", "Historique 2001+ inflation et croissance (Banque mondiale, hebdo)", "weekly", False, err=e, url="https://data.worldbank.org/")
+        todo.append(("history", hist))
     # Chronomètre global : au-delà de BUDGET secondes, on enregistre ce qu'on a et on s'arrête.
     budget = int(os.environ.get("MF_BUDGET", "420"))
     ex = ThreadPoolExecutor(len(todo) or 1)
@@ -975,7 +1078,7 @@ def main():
     for f in pending:
         note("robot." + futs[f], "Bloc " + futs[f] + " (arrêté : délai global de %d s dépassé)" % budget, "daily", False, err="délai dépassé")
 
-    out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES}
+    out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES, "diag": DIAG}
     out.update(data)
     ok = sum(1 for s in SOURCES if s["ok"])
     SOURCES.sort(key=lambda s: s["id"])
