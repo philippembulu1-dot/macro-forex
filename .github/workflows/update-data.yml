@@ -11,13 +11,15 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Récupérer les données
+        env:
+          PYTHONUNBUFFERED: "1"
         run: python scripts/update_data.py
       - name: Publier si changé
         run: |

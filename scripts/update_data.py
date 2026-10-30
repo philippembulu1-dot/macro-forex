@@ -9,7 +9,8 @@ Règles :
 
 Test hors ligne : MF_MOCK_DIR=<dossier> lit des fichiers au lieu d'Internet.
 Diagnostic : MF_ONLY=fred,cot,... ne lance que certaines sources."""
-import csv, io, json, os, re, sys, time, statistics, urllib.request, urllib.parse
+import csv, io, json, os, re, sys, time, statistics, threading, urllib.request, urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta, date
 
@@ -22,13 +23,15 @@ UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like 
 NOW = datetime.now(timezone.utc)
 TODAY = NOW.strftime("%Y-%m-%d")
 SOURCES = []
+LOCK = threading.Lock()
+T0 = time.time()
 
 
 def want(group):
     return not ONLY or group in ONLY
 
 
-def http(key, url, tries=3, headers=None, timeout=40):
+def http(key, url, tries=2, headers=None, timeout=20):
     if MOCK:
         p = os.path.join(MOCK, key)
         if not os.path.exists(p):
@@ -47,16 +50,19 @@ def http(key, url, tries=3, headers=None, timeout=40):
             last = e
             if e.code in (400, 401, 403, 404, 410, 418):
                 break
-            time.sleep(2 + 3 * i)
+            time.sleep(2)
         except Exception as e:  # noqa
             last = e
-            time.sleep(2 + 3 * i)
+            time.sleep(2)
     raise last
 
 
 def note(sid, label, kind, ok, asof=None, err=None, url=None):
-    SOURCES.append({"id": sid, "label": label, "kind": kind, "ok": bool(ok), "asof": asof,
-                    "err": (str(err)[:160] if err else None), "url": url})
+    with LOCK:
+        SOURCES.append({"id": sid, "label": label, "kind": kind, "ok": bool(ok), "asof": asof,
+                        "err": (str(err)[:160] if err else None), "url": url})
+        # affichage immédiat : on suit la progression dans l'onglet Actions
+        print("[%4.0fs] %-5s %-26s %s" % (time.time() - T0, "ok" if ok else "ÉCHEC", sid, asof if ok else str(err)[:110]), flush=True)
 
 
 def num(s):
@@ -137,7 +143,8 @@ def yoy(o):
 def do_fred(data):
     start_d = (NOW - timedelta(days=400)).strftime("%Y-%m-%d")
     start_m = (NOW - timedelta(days=900)).strftime("%Y-%m-%d")
-    for sid, label, kind in FRED_DAILY:
+    def one_d(item):
+        sid, label, kind = item
         try:
             o = fred(sid, start_d)
             data["fred"][sid] = {"v": o[-1][1], "prev": o[-2][1] if len(o) > 1 else None, "asof": o[-1][0],
@@ -147,12 +154,18 @@ def do_fred(data):
             note("fred." + sid, label, kind, False, err=e, url="https://fred.stlouisfed.org/series/" + sid)
 
     raw = {}
-    for sid, label in FRED_MONTHLY:
+
+    def one_m(item):
+        sid, label = item
         try:
             raw[sid] = fred(sid, start_m)
             note("fred." + sid, label, "monthly", True, raw[sid][-1][0], url="https://fred.stlouisfed.org/series/" + sid)
         except Exception as e:
             note("fred." + sid, label, "monthly", False, err=e, url="https://fred.stlouisfed.org/series/" + sid)
+
+    with ThreadPoolExecutor(6) as ex:
+        list(ex.map(one_d, FRED_DAILY))
+        list(ex.map(one_m, FRED_MONTHLY))
     d = data["derived"]
     for sid, key in (("CPIAUCSL", "us_cpi"), ("CPILFESL", "us_core"), ("PCEPILFE", "us_pce_core")):
         y = yoy(raw.get(sid))
@@ -388,7 +401,9 @@ def parse_feed(txt):
 
 def do_rss(data):
     items = []
-    for name, cur_, urls in FEEDS:
+
+    def one(feed):
+        name, cur_, urls = feed
         err, ok = None, False
         for k, url in enumerate(urls):
             try:
@@ -397,7 +412,8 @@ def do_rss(data):
                     raise ValueError("flux vide")
                 for g in got:
                     g.update({"src": name, "c": cur_})
-                items += got
+                with LOCK:
+                    items.extend(got)
                 note("rss." + name, "Communiqués " + name, "news", True, max((g["d"] for g in got if g["d"]), default=None), url=url)
                 ok = True
                 break
@@ -405,6 +421,8 @@ def do_rss(data):
                 err = "%s (%s)" % (e, url)
         if not ok:
             note("rss." + name, "Communiqués " + name, "news", False, err=err, url=urls[0])
+    with ThreadPoolExecutor(8) as ex:
+        list(ex.map(one, FEEDS))
     items.sort(key=lambda i: i["d"] or "", reverse=True)
     data["news"] = items[:48]
 
@@ -495,16 +513,19 @@ IMF_IND = [("PCPIPCH", "inf_f", "Inflation, prévision FMI (WEO)"), ("NGDP_RPCH"
 
 def do_world(data):
     w = {}
-    for code, key, label in WB_IND:
+
+    def wb(ind):
+        code, key, label = ind
         url = "https://api.worldbank.org/v2/country/all/indicator/%s?format=json&mrnev=1&per_page=600" % code
         try:
-            j = json.loads(http("wb_%s.json" % key, url, tries=2, timeout=60))
+            j = json.loads(http("wb_%s.json" % key, url, tries=2, timeout=40))
             rows = j[1] if isinstance(j, list) and len(j) > 1 else []
             n, newest = 0, ""
             for r in rows or []:
                 iso, v = r.get("countryiso3code"), num(r.get("value"))
                 if iso and v is not None:
-                    w.setdefault(iso, {"n": (r.get("country") or {}).get("value")})[key] = [round(v, 2), r.get("date")]
+                    with LOCK:
+                        w.setdefault(iso, {"n": (r.get("country") or {}).get("value")})[key] = [round(v, 2), r.get("date")]
                     n += 1
                     newest = max(newest, r.get("date") or "")
             if not n:
@@ -513,22 +534,28 @@ def do_world(data):
         except Exception as e:
             note("wb." + key, label, "annual", False, err=e, url="https://data.worldbank.org/indicator/" + code)
     yr = str(NOW.year)
-    for code, key, label in IMF_IND:
+
+    def imf(ind):
+        code, key, label = ind
         url = "https://www.imf.org/external/datamapper/api/v1/%s?periods=%s" % (code, yr)
         try:
-            j = json.loads(http("imf_%s.json" % key, url, tries=2, timeout=60))
+            j = json.loads(http("imf_%s.json" % key, url, tries=2, timeout=40))
             vals = (j.get("values") or {}).get(code) or {}
             n = 0
             for iso, per in vals.items():
                 v = num((per or {}).get(yr))
                 if v is not None and len(iso) == 3:
-                    w.setdefault(iso, {})[key] = [round(v, 2), yr]
+                    with LOCK:
+                        w.setdefault(iso, {})[key] = [round(v, 2), yr]
                     n += 1
             if not n:
                 raise ValueError("aucune valeur")
             note("imf." + key, label + " " + yr, "annual", True, TODAY, url="https://www.imf.org/external/datamapper/" + code)
         except Exception as e:
             note("imf." + key, label + " " + yr, "annual", False, err=e, url="https://www.imf.org/external/datamapper/" + code)
+    with ThreadPoolExecutor(7) as ex:
+        list(ex.map(wb, WB_IND))
+        list(ex.map(imf, IMF_IND))
     data["world"] = w
 
 
@@ -640,12 +667,14 @@ def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world)]
-    for name, fn in steps:
-        if want(name):
-            try:
-                fn(data)
-            except Exception as e:  # filet de sécurité : une erreur de code n'arrête pas le reste
-                note("robot." + name, "Bloc " + name, "daily", False, err=e)
+    def run(step):
+        name, fn = step
+        try:
+            fn(data)
+        except Exception as e:  # filet de sécurité : une erreur de code n'arrête pas le reste
+            note("robot." + name, "Bloc " + name, "daily", False, err=e)
+    with ThreadPoolExecutor(5) as ex:
+        list(ex.map(run, [st for st in steps if want(st[0])]))
     if want("seasonal"):
         try:
             do_seasonal(force=os.environ.get("MF_SEAS_FORCE") == "1")
@@ -655,9 +684,8 @@ def main():
     out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES}
     out.update(data)
     ok = sum(1 for s in SOURCES if s["ok"])
-    print("OK %d/%d sources" % (ok, len(SOURCES)))
-    for s in SOURCES:
-        print("  %-4s %-28s %-12s %s" % ("ok" if s["ok"] else "ÉCHEC", s["id"], s["asof"] or "", "" if s["ok"] else s["err"]))
+    SOURCES.sort(key=lambda s: s["id"])
+    print("BILAN : %d/%d sources OK en %.0f s" % (ok, len(SOURCES), time.time() - T0), flush=True)
     if ok == 0:
         sys.exit(1)  # rien récupéré : on ne remplace pas l'ancien fichier
     if ONLY:
