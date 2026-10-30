@@ -67,12 +67,34 @@ def http(key, url, tries=2, headers=None, timeout=20):
     raise last
 
 
+def fr_err(e):
+    """Messages d'erreur en français simple."""
+    t = str(e)
+    m = re.search(r"HTTP Error (\d+)", t)
+    if m:
+        c = int(m.group(1))
+        return {403: "accès refusé par le site (403)", 404: "adresse introuvable (404)", 418: "le site refuse les robots (418)",
+                429: "trop de demandes, le site limite (429)", 500: "erreur du site (500)", 502: "site indisponible (502)",
+                503: "site indisponible (503)"}.get(c, "erreur du site (%d)" % c)
+    if "timed out" in t or "TimeoutError" in t or "trop lente" in t:
+        return "le site n'a pas répondu à temps" + (" (" + t + ")" if "trop lente" in t else "")
+    if "is not in list" in t:
+        return "format du fichier changé (" + t[:60] + ")"
+    if "Name or service not known" in t or "getaddrinfo" in t:
+        return "adresse du site introuvable"
+    if "Connection reset" in t or "Connection refused" in t:
+        return "connexion refusée par le site"
+    if "Expecting value" in t or "JSONDecodeError" in t:
+        return "réponse illisible (pas du JSON)"
+    return t
+
+
 def note(sid, label, kind, ok, asof=None, err=None, url=None):
     with LOCK:
         SOURCES.append({"id": sid, "label": label, "kind": kind, "ok": bool(ok), "asof": asof,
-                        "err": (str(err)[:160] if err else None), "url": url})
+                        "err": (fr_err(err)[:160] if err else None), "url": url})
         # affichage immédiat : on suit la progression dans l'onglet Actions
-        print("[%4.0fs] %-5s %-26s %s" % (time.time() - T0, "ok" if ok else "ÉCHEC", sid, asof if ok else str(err)[:110]), flush=True)
+        print("[%4.0fs] %-5s %-26s %s" % (time.time() - T0, "ok" if ok else "ÉCHEC", sid, asof if ok else fr_err(err)[:110]), flush=True)
 
 
 def num(s):

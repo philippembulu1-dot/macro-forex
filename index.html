@@ -562,7 +562,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       <div id="calSurp"></div>
       <div class="toolbar"><button type="button" class="btn" id="calTV">Afficher aussi le calendrier TradingView</button></div>
       <div id="calTVBox"></div>
-      <p class="note">Source : export hebdomadaire gratuit de Forex Factory (semaine en cours et suivante), relevé par le robot. Heures affichées dans le fuseau de votre appareil. Prévision = consensus des économistes publié par Forex Factory.</p>
+      <p class="note">Source : export hebdomadaire gratuit de Forex Factory (semaine en cours et suivante), relevé par le robot. Heures affichées dans le fuseau de votre appareil. Prévision = consensus des économistes publié par Forex Factory. Cet export gratuit ne contient pas les chiffres réellement publiés : consultez-les sur Forex Factory juste après l'annonce. Titres traduits automatiquement (titre original au survol).</p>
     </section>
 
     <section class="panel" id="heat">
@@ -788,7 +788,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     { b: "Banque du Japon", r: 1.25, i: 2.1, c: "JPY", rate: "1,25 %", last: "+0,25 pt", when: "18 sept.", hike: true, cpi: "2,1 %", core: "–" },
     { b: "BNS", r: 0.0, i: null, c: "CHF", rate: "0,00 %", last: "Maintien", when: "24 sept.", hike: false, cpi: "–", core: "–" },
     { b: "RBA", r: 4.6, i: null, c: "AUD", rate: "4,60 %", last: "+0,25 pt", when: "29 sept.", hike: true, cpi: "–", core: "–" },
-    { b: "Banque du Canada", r: 2.25, i: null, c: "CAD", rate: "2,25 %", last: "Maintien", when: "2 sept.", hike: false, cpi: "–", core: "–" },
+    { b: "Banque du Canada", r: 2.5, i: null, c: "CAD", rate: "2,50 %", last: "+0,25 pt", when: "28 oct.", hike: true, cpi: "–", core: "–" }, /* 30 oct. : taux confirmé par la Banque du Canada (Valet, série V39079) */
     { b: "RBNZ", r: 2.75, i: null, c: "NZD", rate: "2,75 %", last: "+0,25 pt", when: "2 sept.", hike: true, cpi: "–", core: "–" }
   ];
   /* Calendriers officiels vérifiés le 27 oct. 2026. t:1 = provisoire. */
@@ -1100,7 +1100,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   /* v: [dernier, précédent, période]. dir: +1 si une hausse est plutôt favorable à la devise, -1 si c'est une baisse. */
   var IND = [
     { g: "Politique monétaire" },
-    { l: "Taux directeur (Fed : borne haute)", u: " %", d: 2, dir: 1, v: { USD: [4.00, 3.75, "sept."], EUR: [2.50, 2.25, "sept."], GBP: [3.75, 3.75, "sept."], JPY: [1.25, 1.00, "sept."], CHF: [0.00, 0.00, "sept."], AUD: [4.60, 4.35, "sept."], CAD: [2.25, 2.25, "sept."], NZD: [2.75, 2.50, "sept."] } },
+    { l: "Taux directeur (Fed : borne haute)", u: " %", d: 2, dir: 1, v: { USD: [4.00, 3.75, "sept."], EUR: [2.50, 2.25, "sept."], GBP: [3.75, 3.75, "sept."], JPY: [1.25, 1.00, "sept."], CHF: [0.00, 0.00, "sept."], AUD: [4.60, 4.35, "sept."], CAD: [2.50, 2.25, "oct."], NZD: [2.75, 2.50, "sept."] } },
     { g: "Croissance" },
     { l: "PIB trimestriel t/t", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.5, "T2"], EUR: [0.6, 0.0, "T2"], GBP: [0.5, 0.6, "T2"], JPY: [0.4, 0.5, "T2"], CHF: [1.5, 0.5, "T2"], AUD: [0.4, 0.3, "T2"], CAD: [0.8, 0.1, "T2"], NZD: [0.2, 0.9, "T2"] } },
     { l: "PIB a/a", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.6, "T2"], EUR: [1.2, 0.6, "T2"], GBP: [1.4, 0.8, "T2"], JPY: [0.7, 0.5, "T2"], CHF: [2.3, 0.4, "T2"], AUD: [2.1, 2.5, "T2"], CAD: [1.1, 0.1, "T2"], NZD: [2.6, 1.7, "T2"] } },
@@ -1570,8 +1570,8 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     if (!n || !n.length) { b.innerHTML = '<p class="note pad">Pas encore de communiqués. Voir « Fraîcheur des données ».</p>'; return; }
     b.innerHTML = '<ul class="news">' + n.slice(0, 14).map(function (x) {
       var ok = /^https?:\/\//i.test(x.l || "");
-      return '<li><span class="d">' + (x.d ? shortD(x.d) : "–") + '</span><span class="d">' + esc(x.c) + "</span><span>" + (ok ? '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" : esc(x.t)) + " <small class=\"d\">" + esc(x.src) + "</small></span></li>";
-    }).join("") + '</ul><p class="note">Communiqués officiels des banques centrales (flux RSS), pas un fil d\'actualité temps réel de type Reuters ou Bloomberg, qui est payant.</p>';
+      return '<li><span class="d">' + (x.d ? shortD(x.d) : "–") + '</span><span class="d">' + esc(x.c) + "</span><span>" + (ok ? '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" : esc(x.t)) + " <small class=\"d\">" + esc(x.src) + "</small>" + (ok && x.c !== "CHF" ? trLink(x.l) : "") + "</span></li>";
+    }).join("") + '</ul><p class="note">Communiqués officiels des banques centrales (flux RSS). Les titres sont publiés en anglais par les banques : le lien « traduire » ouvre la page en français (traduction automatique Google). Pas un fil d\'actualité temps réel de type Reuters ou Bloomberg, qui est payant.</p>';
   }
 
   function renderRobot() {
@@ -1869,13 +1869,14 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       if (q && e.t.toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
-    var day = "";
-    tb.innerHTML = '<thead><tr><th>Heure</th><th>Dev.</th><th>Événement</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r col-core">Précédent</th></tr></thead><tbody>' + (rows.length ? rows.map(function (e) {
+    var day = "", hasA = c.events.some(function (e) { return e.a; }), ncol = hasA ? 6 : 5;
+    tb.innerHTML = '<thead><tr><th>Heure</th><th>Dev.</th><th>Événement</th>' + (hasA ? '<th class="r">Réel</th>' : "") + '<th class="r">Prévu</th><th class="r col-core">Précédent</th></tr></thead><tbody>'  + (rows.length ? rows.map(function (e) {
       var t = new Date(e.d), dk = t.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }), h = "";
-      if (dk !== day) { day = dk; h += '<tr class="grp"><td colspan="6" style="background:var(--panel2);color:var(--amber);font:600 11px var(--font-mono)">' + dk + "</td></tr>"; }
+      if (dk !== day) { day = dk; h += '<tr class="grp"><td colspan="' + ncol + '" style="background:var(--panel2);color:var(--amber);font:600 11px var(--font-mono)">' + dk + "</td></tr>"; }
       var a = numOf(e.a), f = numOf(e.f), sc = a !== null && f !== null && a !== f ? (a > f ? "up" : "down") : "";
-      return h + '<tr class="calrow' + (Date.parse(e.d) < now ? " past" : "") + '"><td class="num">' + (isNaN(t) ? "–" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })) + '</td><td><span class="imp ' + esc(e.i) + '" title="Impact ' + esc(e.i) + '"></span>' + esc(e.c) + "</td><td style=\"white-space:normal\">" + esc(e.t) + '</td><td class="r num ' + sc + '">' + esc(e.a || "") + '</td><td class="r num">' + esc(e.f || "") + '</td><td class="r num col-core">' + esc(e.p || "") + "</td></tr>";
-    }).join("") : '<tr><td colspan="6">Aucun événement avec ces filtres.</td></tr>') + "</tbody>";
+      var dec = function (s) { return esc(String(s || "").replace(/(\d)\.(\d)/g, "$1,$2")); };
+      return h + '<tr class="calrow' + (Date.parse(e.d) < now ? " past" : "") + '"><td class="num">' + (isNaN(t) ? "–" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })) + '</td><td><span class="imp ' + esc(e.i) + '" title="Impact ' + esc(e.i) + '"></span>' + esc(e.c) + "</td><td style=\"white-space:normal\" title=\"" + esc(e.t) + "\">" + esc(frEvent(e.t).t) + (hasA ? '</td><td class="r num ' + sc + '">' + dec(e.a) : "") + '</td><td class="r num">' + dec(e.f) + '</td><td class="r num col-core">' + dec(e.p) + "</td></tr>";
+    }).join("") : '<tr><td colspan="' + ncol + '">Aucun événement avec ces filtres.</td></tr>') + "</tbody>";
     var fa = ageDays(c.fetched.slice(0, 10)), st = fa <= 1 ? "ok" : fa <= 8 ? "old" : "ko";
     $("calMeta").innerHTML = "relevé " + shortD(c.fetched.slice(0, 10)) + " " + badge(st);
     renderSurprise(c.events);
@@ -2034,8 +2035,8 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       Object.keys(ev).filter(function (k) { return (ev[k][0].close || "9") >= today; }).sort(function (a, c) { return (ev[a][0].close || "9") < (ev[c][0].close || "9") ? -1 : 1; }).slice(0, 4).forEach(function (k) {
         var L = ev[k].filter(function (x) { return x.p !== null; }).sort(function (a, c) { return c.p - a.p; }).slice(0, 6);
         if (!L.length) return;
-        h += '<div class="pad"><b class="mono">' + esc(L[0].t || k) + "</b> <small class=\"d\">Kalshi · clôture " + esc(L[0].close) + '</small></div><div class="tbl"><table><tbody>' + L.map(function (x) {
-          return "<tr><td style=\"white-space:normal\">" + esc(x.o || x.tk) + '</td><td style="width:45%"><div class="pbar"><i style="width:' + (x.p * 100).toFixed(0) + '%"></i><span>' + (x.p * 100).toFixed(0) + " %</span></div></td></tr>";
+        h += '<div class="pad"><b class="mono" title="' + esc(L[0].t || k) + '">' + esc(kalshiTitle(L[0])) + "</b> <small class=\"d\">Kalshi · clôture " + esc(L[0].close) + '</small></div><div class="tbl"><table><tbody>' + L.map(function (x) {
+          return "<tr><td style=\"white-space:normal\">" + esc(kalshiOut(x.o || x.tk)) + '</td><td style="width:45%"><div class="pbar"><i style="width:' + (x.p * 100).toFixed(0) + '%"></i><span>' + (x.p * 100).toFixed(0) + " %</span></div></td></tr>";
         }).join("") + "</tbody></table></div>";
       });
     }
@@ -2044,8 +2045,8 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       Object.keys(pe).filter(function (k) { return (pe[k][0].close || "9") >= iso(new Date()); }).sort(function (a, c) { return (pe[a][0].close || "9") < (pe[c][0].close || "9") ? -1 : 1; }).slice(0, 3).forEach(function (k) {
         var L = pe[k].filter(function (x) { return x.p !== null; }).sort(function (a, c) { return c.p - a.p; }).slice(0, 6);
         if (!L.length) return;
-        h += '<div class="pad"><b class="mono">' + esc(k) + "</b> <small class=\"d\">Polymarket · fin " + esc(L[0].close) + '</small></div><div class="tbl"><table><tbody>' + L.map(function (x) {
-          return "<tr><td style=\"white-space:normal\">" + esc(x.q) + '</td><td style="width:45%"><div class="pbar"><i style="width:' + (x.p * 100).toFixed(0) + '%"></i><span>' + (x.p * 100).toFixed(0) + " %</span></div></td></tr>";
+        h += '<div class="pad"><b class="mono" title="' + esc(k) + '">' + esc(polyFr(k)) + "</b> <small class=\"d\">Polymarket · fin " + esc(L[0].close) + '</small></div><div class="tbl"><table><tbody>' + L.map(function (x) {
+          return "<tr><td style=\"white-space:normal\">" + esc(polyFr(x.q)) + '</td><td style="width:45%"><div class="pbar"><i style="width:' + (x.p * 100).toFixed(0) + '%"></i><span>' + (x.p * 100).toFixed(0) + " %</span></div></td></tr>";
         }).join("") + "</tbody></table></div>";
       });
     }
@@ -2086,6 +2087,73 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     $("cvOut").value = fmtN(v, t === "JPY" ? 0 : 2) + " " + t;
     $("cvNote").textContent = "Taux de référence BCE du " + shortD(ds[ds.length - 1]) + (state.live ? "" : " (instantané hors ligne)") + ". Votre banque ou courtier applique une marge.";
   }
+
+
+  /* ---------- Traduction française des titres venus de sources anglaises ---------- */
+  var GLOSS = [
+    ["ADP Non-Farm Employment Change", "Emplois privés ADP"], ["Non-Farm Employment Change", "Créations d'emplois (NFP)"], ["Non-Farm Payrolls", "Créations d'emplois (NFP)"],
+    ["Average Hourly Earnings", "Salaire horaire moyen"], ["Unemployment Claims", "Inscriptions au chômage"], ["Unemployment Rate", "Taux de chômage"],
+    ["Claimant Count Change", "Demandeurs d'allocations chômage"], ["Employment Change", "Variation de l'emploi"], ["Employment Cost Index", "Indice du coût de l'emploi"],
+    ["JOLTS Job Openings", "Offres d'emploi JOLTS"], ["Core PCE Price Index", "Indice PCE sous-jacent"], ["PCE Price Index", "Indice PCE"],
+    ["Trimmed Mean CPI", "IPC moyenne tronquée"], ["Median CPI", "IPC médian"], ["Tokyo Core CPI", "IPC sous-jacent de Tokyo"], ["National Core CPI", "IPC sous-jacent national"],
+    ["Core CPI", "IPC sous-jacent"], ["Flash CPI", "IPC flash"], ["CPI", "IPC (inflation)"], ["Core PPI", "Prix à la production sous-jacents"], ["PPI", "Prix à la production"],
+    ["Prelim UoM Consumer Sentiment", "Moral des ménages Michigan (préliminaire)"], ["UoM Consumer Sentiment", "Moral des ménages Michigan"],
+    ["Prelim UoM Inflation Expectations", "Anticipations d'inflation Michigan (préliminaire)"], ["UoM Inflation Expectations", "Anticipations d'inflation Michigan"],
+    ["CB Consumer Confidence", "Confiance des consommateurs (Conference Board)"], ["Consumer Confidence", "Confiance des consommateurs"], ["Business Confidence", "Confiance des entreprises"],
+    ["Ifo Business Climate", "Climat des affaires Ifo"], ["ZEW Economic Sentiment", "Sentiment économique ZEW"],
+    ["ISM Manufacturing PMI", "ISM manufacturier"], ["ISM Services PMI", "ISM services"], ["Non-Manufacturing PMI", "PMI non manufacturier"],
+    ["Manufacturing PMI", "PMI manufacturier"], ["Services PMI", "PMI services"], ["Chicago PMI", "PMI de Chicago"],
+    ["Empire State Manufacturing Index", "Indice manufacturier Empire State"], ["Philly Fed Manufacturing Index", "Indice manufacturier de la Fed de Philadelphie"],
+    ["Core Retail Sales", "Ventes au détail hors auto"], ["Retail Sales", "Ventes au détail"], ["Core Durable Goods Orders", "Commandes de biens durables hors transport"],
+    ["Durable Goods Orders", "Commandes de biens durables"], ["Industrial Production", "Production industrielle"], ["Trade Balance", "Balance commerciale"],
+    ["Current Account", "Compte courant"], ["Building Permits", "Permis de construire"], ["Housing Starts", "Mises en chantier"], ["Existing Home Sales", "Ventes de logements anciens"],
+    ["New Home Sales", "Ventes de logements neufs"], ["Pending Home Sales", "Promesses de vente de logements"], ["Personal Spending", "Dépenses des ménages"], ["Personal Income", "Revenus des ménages"],
+    ["Crude Oil Inventories", "Stocks de pétrole brut"], ["Natural Gas Storage", "Stocks de gaz naturel"], ["Advance GDP", "PIB (première estimation)"], ["Prelim GDP", "PIB (préliminaire)"],
+    ["Final GDP", "PIB (définitif)"], ["GDP", "PIB"], ["Federal Funds Rate", "Taux directeur de la Fed"], ["FOMC Statement", "Communiqué du FOMC"],
+    ["FOMC Meeting Minutes", "Compte rendu du FOMC"], ["FOMC Press Conference", "Conférence de presse du FOMC"], ["Main Refinancing Rate", "Taux de refinancement de la BCE"],
+    ["Official Bank Rate", "Taux directeur de la BoE"], ["Official Cash Rate", "Taux directeur de la RBNZ"], ["Cash Rate", "Taux directeur de la RBA"], ["Overnight Rate", "Taux directeur de la BoC"],
+    ["BOJ Policy Rate", "Taux directeur de la BoJ"], ["SNB Policy Rate", "Taux directeur de la BNS"], ["Monetary Policy Statement", "Communiqué de politique monétaire"],
+    ["Monetary Policy Report", "Rapport de politique monétaire"], ["Press Conference", "conférence de presse"], ["Bank Holiday", "Jour férié"], ["Speaks", "discours"],
+    ["German ", "Allemagne : "], ["French ", "France : "], ["Italian ", "Italie : "], ["Spanish ", "Espagne : "], ["Flash ", "flash "], ["Prelim ", "préliminaire "],
+    ["Rate Statement", "communiqué sur les taux"], ["Annual Budget Release", "Présentation du budget annuel"], ["Budget Release", "Présentation du budget"],
+    ["Bank Lending", "Crédit bancaire"], ["Money Supply", "Masse monétaire"], ["Mortgage Approvals", "Prêts immobiliers accordés"], ["Housing Price Index", "Prix des logements"],
+    ["House Price Index", "Prix des logements"], ["Import Prices", "Prix à l'importation"], ["Export Prices", "Prix à l'exportation"], ["Treasury Currency Report", "Rapport du Trésor sur les changes"],
+    ["Inflation Expectations", "Anticipations d'inflation"], ["Labor Cost Index", "Indice du coût du travail"], ["Wage Price Index", "Indice des salaires"],
+    ["Retail Sales", "Ventes au détail"], ["Gov Council Member", "Membre du Conseil des gouverneurs"], ["Governor", "gouverneur"], ["President", "président"],
+    ["BOC ", "BoC "], ["BOE ", "BoE "], ["BOJ ", "BoJ "], ["ECB ", "BCE "], ["SNB ", "BNS "], ["MPC Member", "Membre du MPC"],
+    [" q/q", " t/t"], [" y/y", " a/a"]
+  ];
+  function frEvent(t) {
+    var out = String(t || ""), hit = false;
+    GLOSS.forEach(function (g) { if (out.indexOf(g[0]) >= 0) { out = out.split(g[0]).join(g[1]); hit = true; } });
+    return { t: out, ok: hit };
+  }
+  var MOIS_EN = { JAN: "janv.", FEB: "févr.", MAR: "mars", APR: "avr.", MAY: "mai", JUN: "juin", JUL: "juil.", AUG: "août", SEP: "sept.", OCT: "oct.", NOV: "nov.", DEC: "déc." };
+  var MONTHS_EN = { January: "janvier", February: "février", March: "mars", April: "avril", May: "mai", June: "juin", July: "juillet", August: "août", September: "septembre", October: "octobre", November: "novembre", December: "décembre" };
+  function bpsFr(n) { return (n / 100).toFixed(2).replace(".", ",") + " pt"; }
+  function kalshiTitle(x) {
+    var m = /-(\d{2})([A-Z]{3})/.exec(x.ev || ""), when = m ? (MOIS_EN[m[2]] || m[2]) + " 20" + m[1] : "";
+    if (x.s === "KXFEDDECISION") return "Décision de la Fed, réunion de " + when;
+    if (x.s === "KXFED") return "Taux de la Fed (borne haute) après la réunion de " + when;
+    return x.t || x.ev;
+  }
+  function kalshiOut(o) {
+    var s = String(o || ""), m = /^(Hike|Cut)\s*(>?)\s*(\d+)\s*bps/i.exec(s);
+    if (m) return (/hike/i.test(m[1]) ? "Hausse " : "Baisse ") + (m[2] ? "de plus de " : "de ") + bpsFr(+m[3]);
+    if (/maintain|hold|no change/i.test(s)) return "Maintien du taux";
+    return s.replace(/Above/i, "Au-dessus de").replace(/Below/i, "En dessous de").replace(/or above/i, "ou plus").replace(/or below/i, "ou moins").replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  function polyFr(s) {
+    var t = String(s || "");
+    t = t.replace(/^How many Fed rate cuts in (\d{4})\?/i, "Combien de baisses de taux de la Fed en $1 ?")
+      .replace(/^Fed decision in ([A-Za-z]+)\??/i, function (a, mo) { return "Décision de la Fed en " + (MONTHS_EN[mo] || mo) + " ?"; })
+      .replace(/^No change$/i, "Pas de changement").replace(/(\d+)\+?\s*bps\s*decrease/i, function (a, n) { return "Baisse de " + bpsFr(+n) + (a.indexOf("+") >= 0 ? " ou plus" : ""); })
+      .replace(/(\d+)\+?\s*bps\s*increase/i, function (a, n) { return "Hausse de " + bpsFr(+n) + (a.indexOf("+") >= 0 ? " ou plus" : ""); })
+      .replace(/\((\d+) bps\)/g, function (a, n) { return "(" + bpsFr(+n) + ")"; });
+    Object.keys(MONTHS_EN).forEach(function (k) { t = t.replace(new RegExp("\\b" + k + "\\b", "g"), MONTHS_EN[k]); });
+    return t;
+  }
+  function trLink(u) { return /^https?:\/\//i.test(u || "") ? ' <a href="https://translate.google.com/translate?sl=auto&tl=fr&u=' + encodeURIComponent(u) + '" target="_blank" rel="noopener" title="Ouvrir la page traduite en français"><small>traduire</small></a>' : ""; }
 
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
