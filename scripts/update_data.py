@@ -1136,6 +1136,120 @@ def do_sentiment_widget(data):
          url="https://www.dukascopy.com/swiss/english/marketwatch/sentiment/")
 
 
+# ---------------------------------------------------------------- Courbes de taux : États-Unis (Trésor) et zone euro (BCE)
+US_TENORS = [("1 Mo", "1M"), ("3 Mo", "3M"), ("6 Mo", "6M"), ("1 Yr", "1A"), ("2 Yr", "2A"), ("3 Yr", "3A"), ("5 Yr", "5A"), ("7 Yr", "7A"), ("10 Yr", "10A"), ("20 Yr", "20A"), ("30 Yr", "30A")]
+EU_TENORS = [("SR_1M", "1M"), ("SR_3M", "3M"), ("SR_6M", "6M"), ("SR_1Y", "1A"), ("SR_2Y", "2A"), ("SR_3Y", "3A"), ("SR_5Y", "5A"), ("SR_7Y", "7A"), ("SR_10Y", "10A"), ("SR_20Y", "20A"), ("SR_30Y", "30A")]
+
+
+def snap(series_by_tenor, labels):
+    """Courbe du dernier jour, d'il y a ~1 semaine et ~1 mois (jours de marché)."""
+    dates = sorted(set(d for s_ in series_by_tenor.values() for d, _ in s_))
+    if not dates:
+        return None
+    out = {"tenors": labels}
+    for key, back in (("now", 0), ("w1", 5), ("m1", 21)):
+        if len(dates) <= back:
+            continue
+        d = dates[-1 - back]
+        out[key] = {"d": d, "v": [dict(series_by_tenor.get(t, [])).get(d) for t in labels]}
+    return out
+
+
+def do_curves(data):
+    C = {}
+    try:
+        t = treasury("daily_treasury_yield_curve", [x[0] for x in US_TENORS])
+        sb = {lab: t.get(col, []) for col, lab in US_TENORS}
+        c = snap(sb, [x[1] for x in US_TENORS])
+        if not c:
+            raise ValueError("courbe vide")
+        c["hist2"] = sb["2A"][-130:]
+        c["hist10"] = sb["10A"][-130:]
+        C["us"] = c
+        note("curve.us", "Courbe des taux US (Trésor américain)", "daily", True, c["now"]["d"], url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
+    except Exception as e:
+        note("curve.us", "Courbe des taux US (Trésor américain)", "daily", False, err=e, url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
+    try:
+        key = "B.U2.EUR.4F.G_N_A.SV_C_YM." + "+".join(x[0] for x in EU_TENORS)
+        url = "https://data-api.ecb.europa.eu/service/data/YC/%s?format=csvdata&lastNObservations=135" % key
+        sb = {}
+        for r in csv.DictReader(io.StringIO(http("ecb_yc.csv", url, timeout=40))):
+            tenor = (r.get("DATA_TYPE_FM") or r.get("KEY", "").split(".")[-1]).strip()
+            lab = dict(EU_TENORS).get(tenor)
+            v = num(r.get("OBS_VALUE"))
+            if lab and v is not None:
+                sb.setdefault(lab, []).append((r["TIME_PERIOD"], round(v, 3)))
+        for k in sb:
+            sb[k].sort()
+        c = snap(sb, [x[1] for x in EU_TENORS])
+        if not c:
+            raise ValueError("courbe vide")
+        c["hist2"] = sb.get("2A", [])[-130:]
+        c["hist10"] = sb.get("10A", [])[-130:]
+        C["eu"] = c
+        note("curve.eu", "Courbe des taux zone euro (BCE, États notés AAA)", "daily", True, c["now"]["d"], url="https://data.ecb.europa.eu/")
+    except Exception as e:
+        note("curve.eu", "Courbe des taux zone euro (BCE, États notés AAA)", "daily", False, err=e, url="https://data.ecb.europa.eu/")
+    data["curves"] = C
+
+
+# ---------------------------------------------------------------- Analyses de marché et de banques (flux publics)
+ANALYSIS_FEEDS = [
+    ("ING THINK", ["https://think.ing.com/rss/", "https://think.ing.com/feed/", "https://think.ing.com/rss"]),
+    ("FXStreet", ["https://www.fxstreet.com/rss/news", "https://www.fxstreet.com/rss"]),
+    ("FXStreet analyses", ["https://www.fxstreet.com/rss/analysis"]),
+    ("investingLive", ["https://investinglive.com/feed/news", "https://investinglive.com/feed/", "https://investinglive.com/rss"]),
+]
+BANKS = ["ING", "Goldman", "JPMorgan", "JP Morgan", "Morgan Stanley", "Citi", "UBS", "BofA", "Bank of America", "HSBC", "Barclays", "Commerzbank",
+         "Danske", "MUFG", "Rabobank", "Nomura", "Deutsche Bank", "BNP", "Societe Generale", "Société Générale", "SocGen", "Wells Fargo", "Scotiabank",
+         "RBC", "TD Securities", "Credit Agricole", "Crédit Agricole", "Natixis", "Nordea", "SEB", "Standard Chartered", "Westpac", "ANZ", "NAB",
+         "Mizuho", "Julius Baer", "Pictet", "BBH", "Saxo", "Capital Economics", "Pantheon", "Macquarie", "Jefferies", "Bank of Montreal", "BMO"]
+RX_USD = re.compile(r"\b(USD|US dollar|dollar|DXY|Fed|FOMC|Powell|Treasur|US yields?|EUR/USD|USD/JPY|GBP/USD)\b", re.I)
+RX_EUR = re.compile(r"\b(EUR|euro|ECB|Lagarde|eurozone|euro area|Bund|EUR/USD|EUR/GBP)\b", re.I)
+RX_RATE = re.compile(r"\b(rate|rates|hike|cut|yield|yields|inflation|CPI|PCE|policy|hawk|dove|hawkish|dovish|pricing|basis points|bps)\b", re.I)
+
+
+def do_analyses(data):
+    items = []
+
+    def one(feed):
+        name, urls = feed
+        err = None
+        for k, url in enumerate(urls):
+            try:
+                got = parse_feed(http("an_%s_%d.xml" % (re.sub(r"\W", "", name), k), url, tries=1, timeout=25))
+                if not got:
+                    raise ValueError("flux vide")
+                keep = 0
+                for g in got:
+                    t = g["t"]
+                    usd, eur, rate = bool(RX_USD.search(t)), bool(RX_EUR.search(t)), bool(RX_RATE.search(t))
+                    bank = next((b for b in BANKS if re.search(r"\b" + re.escape(b) + r"\b", t)), None)
+                    if name == "ING THINK":
+                        bank = bank or "ING"
+                    if (usd or eur) and (rate or bank):
+                        g.update({"src": name, "usd": usd, "eur": eur, "bank": bank, "rate": rate})
+                        with LOCK:
+                            items.append(g)
+                        keep += 1
+                note("an." + re.sub(r"\W", "", name).lower(), "Analyses : " + name, "news", True,
+                     max((g["d"] for g in got if g["d"]), default=TODAY), url=url)
+                DIAG.setdefault("analyses", {})[name] = {"url": url, "articles": len(got), "retenus": keep}
+                return
+            except Exception as e:
+                err = "%s (%s)" % (fr_err(e), url)
+        note("an." + re.sub(r"\W", "", name).lower(), "Analyses : " + name, "news", False, err=err, url=urls[0])
+    with ThreadPoolExecutor(4) as ex:
+        list(ex.map(one, ANALYSIS_FEEDS))
+    seen, out = set(), []
+    for it in sorted(items, key=lambda i: i["d"] or "", reverse=True):
+        k = it["t"].lower()[:80]
+        if k not in seen:
+            seen.add(k)
+            out.append(it)
+    data["analyses"] = out[:80]
+
+
 # ---------------------------------------------------------------- Historique macro depuis 2001 (fichier séparé)
 def do_history(force=False):
     """Inflation et croissance annuelles de tous les pays depuis 2001 (Banque mondiale). Recalcul une fois par semaine."""
@@ -1173,7 +1287,7 @@ def do_history(force=False):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
