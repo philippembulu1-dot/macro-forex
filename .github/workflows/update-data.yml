@@ -1,0 +1,30 @@
+name: Mise à jour des données
+on:
+  schedule:
+    - cron: "7 */2 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Récupérer les données
+        run: python scripts/update_data.py
+      - name: Publier si changé
+        run: |
+          git config user.name "macro-forex-robot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/macro.json data/seasonal.json
+          if git diff --staged --quiet; then echo "Rien de nouveau"; exit 0; fi
+          git commit -m "Données mises à jour"
+          git pull --rebase origin main
+          git push

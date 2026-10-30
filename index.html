@@ -140,6 +140,21 @@ details.srcs summary { cursor: pointer; padding: 8px 12px; font: 11px var(--font
 .moreBtn { display: block; width: 100%; border: 0; border-top: 1px solid var(--line2); background: transparent; color: var(--amber); font: 11px var(--font-mono); padding: 8px; cursor: pointer; }
 .pad { padding: 10px 12px; }
 
+/* Marchés en direct */
+.fgwrap { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 12px; padding: 12px; align-items: center; }
+.fgwrap svg text { fill: var(--muted); font: 10px var(--font-mono); }
+.fgprev { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font: 11px var(--font-mono); color: var(--muted); }
+.fgprev b { color: var(--text, #ece8dc); font-weight: 500; }
+.minigrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
+.mini { background: var(--panel); min-height: 190px; position: relative; }
+.mini .tv-fb { padding: 12px; font: 11px var(--font-mono); color: var(--muted); }
+@media (max-width: 560px) { .fgwrap { grid-template-columns: 1fr; } }
+
+/* Notes et pied de page */
+.notes textarea { width: 100%; min-height: 150px; resize: vertical; background: var(--panel2, #121214); color: inherit; border: 1px solid var(--line); padding: 10px; font: 13px/1.5 var(--font-mono); }
+.notes .row2 { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 6px 12px 10px; font: 11px var(--font-mono); color: var(--muted); }
+.legal { border: 1px solid var(--line2); padding: 10px 12px; font-size: 11px; color: var(--muted); margin-top: 8px; }
+
 /* Agenda */
 .agenda { list-style: none; margin: 0; padding: 0; }
 .agenda li { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 7px 12px; border-top: 1px solid var(--line2); }
@@ -255,6 +270,65 @@ table.perf th, table.perf td { padding: 7px 10px; }
   th, td { padding: 7px 8px; white-space: normal; }
   th:first-child, td:first-child { padding-left: 12px; }
 }
+/* ---------- Terminal : barre de commandes et nouveaux panneaux ---------- */
+.cmdbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 1px solid var(--line); background: var(--panel); padding: 6px 8px; }
+.cmdbar label { font: 600 11px var(--font-mono); color: var(--amber); letter-spacing: .12em; }
+.cmdbar input { flex: 1 1 160px; max-width: 260px; text-transform: uppercase; }
+.fkeys { display: flex; flex-wrap: wrap; gap: 4px; }
+.fkeys a { font: 600 10px var(--font-mono); letter-spacing: .08em; text-decoration: none; padding: 3px 7px; background: var(--amber); color: #111; }
+.fkeys a:hover, .fkeys a:focus-visible { background: var(--fg); }
+.cmdmsg { font: 11px var(--font-mono); color: var(--muted); width: 100%; min-height: 0; }
+.pill { display: inline-block; font: 600 10px var(--font-mono); letter-spacing: .06em; padding: 1px 6px; border: 1px solid var(--line); color: var(--muted); text-transform: uppercase; white-space: nowrap; }
+#seasBasis { white-space: normal; text-transform: none; letter-spacing: 0; font-weight: 400; }
+.pill.warn { color: var(--amber); border-color: #6b5214; }
+.pill.demo { color: #c77dff; border-color: #5b3a7a; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line2); }
+.toolbar select, .toolbar input { width: auto; min-width: 0; padding: 4px 6px; font-size: 12px; }
+.toolbar .chk { display: inline-flex; align-items: center; gap: 4px; font: 11px var(--font-mono); color: var(--muted); }
+.toolbar .chk input { width: 14px; height: 14px; accent-color: var(--amber); }
+.sc { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 1px; background: var(--line2); }
+.sc .pil { background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+.sc .pil small { color: var(--muted); font: 10px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.sc .pil b { font: 600 14px var(--font-mono); }
+.sc .pil span { font-size: 11px; color: var(--muted); }
+.sc .pil.p b { color: var(--up); } .sc .pil.n b { color: var(--down); } .sc .pil.z b { color: var(--amber); }
+.total { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-top: 1px solid var(--line2); font: 12px var(--font-mono); }
+.total b { font-size: 20px; }
+.bars { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; align-items: end; height: 140px; padding: 0 12px; }
+.bars .bcol { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+.bars .bcol i { position: absolute; left: 12%; right: 12%; }
+.bars .bcol.cur { outline: 1px dashed var(--amber); outline-offset: 1px; }
+.bars .zero { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+.blab { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; padding: 2px 12px 0; font: 10px var(--font-mono); color: var(--muted); text-align: center; }
+.wk { display: grid; grid-template-columns: repeat(26, minmax(0, 1fr)); gap: 2px; padding: 8px 12px; }
+.wk i { display: block; height: 16px; }
+table.hm td, table.hm th { text-align: center; padding: 5px 4px; font: 11px var(--font-mono); white-space: nowrap; }
+table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weight: 600; }
+.calrow.past { opacity: .6; }
+.imp { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.imp.High { background: var(--down); } .imp.Medium { background: var(--amber); } .imp.Low { background: #6f6a5c; } .imp.Holiday { background: #4da3ff; }
+.mapwrap { position: relative; }
+.mapwrap svg { width: 100%; height: auto; display: block; background: #08080a; }
+.mapwrap path { stroke: #060607; stroke-width: .5; cursor: pointer; }
+.mapwrap path:hover, .mapwrap path.on { stroke: var(--amber); stroke-width: 1.4; }
+.legend { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 12px; font: 10px var(--font-mono); color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 10px; }
+.cinfo { padding: 10px 12px; border-top: 1px solid var(--line2); }
+.cinfo h3 { margin: 0 0 6px; font: 600 13px var(--font-mono); color: var(--amber); }
+.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 12px; }
+.kv b { font-family: var(--font-mono); text-align: right; }
+.man { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 12px; border-top: 1px solid var(--line2); font-size: 12px; }
+.man input { width: auto; flex: 1 1 90px; min-width: 70px; padding: 4px 6px; font-size: 12px; }
+.man input.u { flex: 2 1 160px; }
+.man button, .btn { font: 11px var(--font-mono); background: transparent; color: var(--amber); border: 1px solid var(--line); padding: 4px 10px; cursor: pointer; }
+.man .lbl { min-width: 110px; font: 600 11px var(--font-mono); }
+.man .saved { width: 100%; font: 11px var(--font-mono); color: var(--muted); }
+.pbar { position: relative; height: 14px; background: var(--panel2); min-width: 80px; }
+.pbar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--amber); }
+.pbar span { position: relative; font: 10px/14px var(--font-mono); padding-left: 4px; color: var(--fg); }
+.tv-box { min-height: 420px; }
+@media (min-width: 1100px) { .duo2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; } }
+.duo2 { display: flex; flex-direction: column; gap: 12px; }
 </style>
 
 </head><body><div class="shell">
@@ -265,21 +339,37 @@ table.perf th, table.perf td { padding: 7px 10px; }
     <a href="#or">Or XAU/USD</a>
     <a href="#paires">Paires</a>
     <a href="#force">Force des devises</a>
+    <a href="#scorecard">Or : 6 piliers</a>
+    <a href="#heat">Carte thermique</a>
+    <a href="#correl">Corrélations</a>
+    <a href="#saison">Saisonnalité 20 ans</a>
     <div class="grp">MACRO</div>
     <a href="#banques">Banques centrales</a>
     <a href="#indicateurs">Indicateurs macro</a>
     <a href="#semaine">Publications</a>
+    <a href="#calendrier">Calendrier économique</a>
+    <a href="#ecarts">Écarts de taux</a>
+    <a href="#monde">Carte du monde</a>
     <a href="#agenda">Agenda</a>
     <a href="#sessions">Sessions</a>
+    <div class="grp">ANALYSES</div>
+    <a href="#desk">Indicateurs des desks</a>
+    <a href="#consensus">Consensus des banques</a>
+    <a href="#comite">Comités</a>
+    <a href="#probas">Probabilités de taux</a>
+    <a href="#sentiment">Sentiment</a>
     <div class="grp">OUTILS</div>
+    <a href="#outils">Pivots, convertisseur</a>
     <a href="#lecture">Lire les indicateurs</a>
     <a href="#calc">Calculateur</a>
     <a href="#check">Checklist</a>
     <a href="#conseils">Gestion du risque</a>
+    <a href="#marches">Marchés en direct</a>
     <a href="#taux">Taux, VIX, dollar</a>
     <a href="#cot">Positions COT</a>
     <a href="#actus">Actus banques centrales</a>
     <a href="#robot">Fraîcheur des données</a>
+    <a href="#notes">Notes rapides</a>
     <a href="#liens">Sources gratuites</a>
   </div></nav>
 
@@ -290,6 +380,13 @@ table.perf th, table.perf td { padding: 7px 10px; }
       <div class="status" id="status"><i></i><span id="statusText">Chargement…</span></div>
     </header>
 
+    <div class="cmdbar" role="search">
+      <label for="cmdIn">CMD&gt;</label>
+      <input id="cmdIn" list="cmdList" placeholder="OR, CAL, COT, SEAS…  (touche /)" autocomplete="off" aria-describedby="cmdMsg">
+      <datalist id="cmdList"></datalist>
+      <nav class="fkeys" id="fkeys" aria-label="Fonctions"></nav>
+      <div class="cmdmsg" id="cmdMsg" aria-live="polite"></div>
+    </div>
     <div class="tv" id="tv" aria-label="Cotations en direct"></div>
     <div class="tape" id="tape" aria-label="Cours des paires"></div>
     <p class="tapenote">* XAUUSD : cours du jeton PAXG, adossé à l'or (Binance), très proche du spot. DXY recalculé à partir des taux BCE du jour. NAS100 et US10Y : barre TradingView ci-dessus. Les paires : taux BCE, variation sur 7 jours.</p>
@@ -422,6 +519,141 @@ table.perf th, table.perf td { padding: 7px 10px; }
       <p class="note">Lecture : vert = évolution plutôt favorable à la devise (croissance, emploi, salaires, inflation et taux plus hauts, chômage plus bas), rouge = l'inverse. Le prix réagit surtout à l'écart avec les prévisions des économistes, pas au chiffre seul. Données saisies à la main d'après Trading Economics et les instituts nationaux, à vérifier avant de trader. États-Unis : PIB t/t annualisé. Indices de confiance non comparables d'un pays à l'autre.</p>
     </section>
 
+
+    <section class="panel" id="scorecard">
+      <div class="ph"><h2>Or · tableau de bord à 6 piliers</h2><span class="meta" id="scMeta">robot</span></div>
+      <div id="scBody"></div>
+      <p class="note">Lecture maison inspirée des facteurs suivis par le World Gold Council (coût d'opportunité : taux réels et dollar ; risque ; flux ; positionnement) et par les banques. Règles fixes et visibles, calculées sur les données du robot : ce n'est ni un modèle officiel ni un signal d'entrée. Les flux des ETF d'or ne sont pas disponibles gratuitement en automatique : le pilier « flux » utilise le COT comme approximation.</p>
+    </section>
+
+    <section class="panel" id="desk">
+      <div class="ph"><h2>Indicateurs des desks macro</h2><span class="meta" id="deskMeta">robot · FRED</span></div>
+      <div id="deskBody"></div>
+    </section>
+
+    <section class="panel" id="ecarts">
+      <div class="ph"><h2>Écarts de taux face au dollar</h2><span class="meta">taux directeurs</span></div>
+      <div id="diffBody"></div>
+      <p class="note">Écart = taux directeur de la devise − taux de la Fed (borne haute). Un écart qui se creuse en faveur d'une devise la soutient souvent (carry). Chiffre automatique quand une source officielle a répondu, sinon saisie manuelle datée.</p>
+    </section>
+
+    <section class="panel" id="saison">
+      <div class="ph"><h2>Saisonnalité 20 ans</h2><span class="meta" id="seasMeta">chargement…</span></div>
+      <div class="toolbar">
+        <label class="chk" for="seasSel">Actif <select id="seasSel"></select></label>
+        <span class="pill" id="seasBasis"></span>
+      </div>
+      <div class="pb" style="padding-bottom:4px"><div class="bars" id="seasBars" role="img" aria-label="Rendement moyen par mois"></div><div class="blab" id="seasLab"></div></div>
+      <div class="tbl"><table id="seasTbl"></table></div>
+      <div id="seasWeek"></div>
+      <p class="note">Rendement moyen de chaque mois sur les 20 dernières années complètes, et part des années où le mois a été positif. Sources : clôtures quotidiennes de la Fed (série H.10) pour les paires, moyennes mensuelles de la Banque mondiale pour l'or. Une saisonnalité est une tendance passée, pas une prévision.</p>
+    </section>
+
+    <section class="panel" id="calendrier">
+      <div class="ph"><h2>Calendrier économique</h2><span class="meta" id="calMeta">robot</span></div>
+      <div class="toolbar" id="calTools">
+        <label class="chk" for="calImp">Impact <select id="calImp"><option value="High">Fort</option><option value="Medium" selected>Moyen et +</option><option value="all">Tous</option></select></label>
+        <label class="chk" for="calType">Type <select id="calType"></select></label>
+        <label class="chk" for="calQ">Recherche <input id="calQ" placeholder="ex. CPI" size="8"></label>
+        <label class="chk"><input type="checkbox" id="calPast"> passés</label>
+        <span id="calCur"></span>
+      </div>
+      <div class="tbl"><table id="calTbl"></table></div>
+      <div id="calSurp"></div>
+      <div class="toolbar"><button type="button" class="btn" id="calTV">Afficher aussi le calendrier TradingView</button></div>
+      <div id="calTVBox"></div>
+      <p class="note">Source : export hebdomadaire gratuit de Forex Factory (semaine en cours et suivante), relevé par le robot. Heures affichées dans le fuseau de votre appareil. Prévision = consensus des économistes publié par Forex Factory.</p>
+    </section>
+
+    <section class="panel" id="heat">
+      <div class="ph"><h2>Carte thermique des devises</h2>
+        <div class="seg" role="group" aria-label="Période de la carte thermique"><button type="button" data-hw="1" aria-pressed="true">1J</button><button type="button" data-hw="5" aria-pressed="false">1S</button><button type="button" data-hw="21" aria-pressed="false">1M</button></div></div>
+      <div class="tbl"><table class="hm" id="hmTbl"></table></div>
+      <p class="note" id="hmNote"></p>
+      <div class="toolbar"><button type="button" class="btn" id="hmTVfx">Carte TradingView (forex, temps réel)</button><button type="button" class="btn" id="hmTVspx">Carte TradingView (S&amp;P 500 par secteur)</button></div>
+      <div id="hmTVBox"></div>
+    </section>
+
+    <div class="duo2">
+      <section class="panel" id="correl">
+        <div class="ph"><h2>Corrélations</h2><span class="meta" id="corMeta"></span></div>
+        <div class="tbl"><table class="hm" id="corTbl"></table></div>
+        <p class="note">Corrélation des variations quotidiennes (fixings BCE) sur la période chargée. Proche de +1 : les deux bougent ensemble (deux positions = un double risque). Proche de −1 : elles bougent en sens inverse.</p>
+      </section>
+      <section class="panel" id="vola">
+        <div class="ph"><h2>Volatilité réalisée</h2><span class="meta">20 fixings</span></div>
+        <div class="tbl"><table id="volTbl"></table></div>
+        <p class="note">Volatilité annualisée des variations quotidiennes et mouvement moyen par jour en pips. Utile pour placer un stop qui respire. Calcul maison sur les taux BCE (un point par jour, pas les extrêmes intrajournaliers).</p>
+      </section>
+    </div>
+
+    <section class="panel" id="monde">
+      <div class="ph"><h2>Carte du monde macro</h2><span class="meta" id="mapMeta">chargement…</span></div>
+      <div class="toolbar">
+        <label class="chk" for="mapInd">Couleur <select id="mapInd"></select></label>
+        <label class="chk" for="mapCty">Pays <select id="mapCty"><option value="">— choisir —</option></select></label>
+      </div>
+      <div class="mapwrap" id="mapBox"></div>
+      <div class="legend" id="mapLeg"></div>
+      <div class="cinfo" id="mapInfo"><p class="hint">Touchez un pays (ou choisissez-le dans la liste) pour voir ses chiffres.</p></div>
+      <p class="note">Sources : Banque mondiale (dernière valeur annuelle disponible, l'année est indiquée) et FMI (prévisions des Perspectives de l'économie mondiale). Contours : Natural Earth (domaine public). Taux directeurs des 8 grandes banques : voir « Banques centrales ».</p>
+    </section>
+
+    <section class="panel" id="consensus">
+      <div class="ph"><h2>Consensus des banques</h2><span class="meta">saisie sourcée · à vérifier</span></div>
+      <div class="tbl"><table id="consTbl"></table></div>
+      <div id="consMan"></div>
+      <p class="note">Prévisions publiées dans la presse financière, avec la date et le lien de l'article. Les notes de recherche complètes sont réservées aux clients des banques : rien n'est simulé ici. Une prévision de banque se trompe souvent : c'est un repère d'opinion, pas un niveau à trader.</p>
+    </section>
+
+    <section class="panel" id="comite">
+      <div class="ph"><h2>Comités des banques centrales</h2><span class="meta">jugement qualitatif · à vérifier</span></div>
+      <div class="tbl"><table id="comTbl"></table></div>
+      <p class="note">Orientation déduite uniquement de la dernière décision saisie (hausse = restrictive, maintien = neutre, baisse = accommodante). Ce n'est pas l'analyse du discours des membres : lisez le dernier communiqué (lien) et notez votre propre lecture, elle est enregistrée sur cet appareil avec sa date.</p>
+    </section>
+
+    <section class="panel" id="probas">
+      <div class="ph"><h2>Probabilités de taux</h2><span class="meta" id="pmMeta">robot</span></div>
+      <div id="pmBody"></div>
+      <div id="pmMan"></div>
+      <p class="note">Marchés de prédiction publics (Kalshi, Polymarket) : prix d'un contrat qui paie 1 $ si l'événement arrive, lu comme une probabilité. Ce n'est pas l'outil CME FedWatch (calculé sur les contrats à terme et sans accès gratuit automatisable) : comparez avec lui avant de trader.</p>
+    </section>
+
+    <section class="panel" id="sentiment">
+      <div class="ph"><h2>Sentiment des particuliers</h2><span class="meta">saisie datée</span></div>
+      <div class="links" id="sentLinks"></div>
+      <div id="sentMan"></div>
+      <p class="note">Aucun courtier ne fournit d'accès gratuit automatisable à ces chiffres : relevez-les sur leurs pages publiques. Lecture habituelle à contre-courant : quand plus de 70 % des particuliers sont acheteurs, le prix a souvent tendance à baisser, et inversement.</p>
+    </section>
+
+    <section class="panel" id="outils">
+      <div class="ph"><h2>Outils rapides</h2><span class="meta">calculs maison</span></div>
+      <div class="duo" style="padding:12px">
+        <div>
+          <div class="pair-name" style="margin-bottom:6px">Points pivots de l'or</div>
+          <div class="tbl"><table id="pivTbl"></table></div>
+          <p class="hint" id="pivNote"></p>
+        </div>
+        <div>
+          <div class="pair-name" style="margin-bottom:6px">Convertisseur</div>
+          <div class="form">
+            <label for="cvAmt">Montant<input id="cvAmt" inputmode="decimal" value="1000"></label>
+            <label for="cvFrom">De<select id="cvFrom"></select></label>
+            <label for="cvTo">Vers<select id="cvTo"></select></label>
+            <label>Résultat<input id="cvOut" readonly></label>
+          </div>
+          <p class="hint" id="cvNote"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="marches">
+      <div class="ph"><h2>Marchés en direct</h2><span class="meta">TradingView · peur et avidité</span></div>
+      <div class="fgwrap"><svg id="fgSvg" viewBox="0 0 200 128" role="img" aria-label="Indice Fear and Greed"></svg><div id="fgInfo"></div></div>
+      <div class="minigrid" id="miniGrid"></div>
+      <p class="note">Les graphiques viennent de TradingView et se mettent à jour seuls. Si un cadre reste vide, le symbole est peut-être refusé (changez-le dans la liste MINIS du code) ou un bloqueur de publicités l'empêche de charger.</p>
+    </section>
+
     <section class="panel" id="taux">
       <div class="ph"><h2>Taux, VIX et dollar</h2><span class="meta" id="tauxMeta">robot</span></div>
       <div id="tauxBody"></div>
@@ -486,10 +718,18 @@ table.perf th, table.perf td { padding: 7px 10px; }
       </div>
     </div>
 
+    <section class="panel notes" id="notes">
+      <div class="ph"><h2>Notes rapides</h2><span class="meta" id="notesMeta">enregistrées sur cet appareil</span></div>
+      <div class="pad"><textarea id="notesTxt" placeholder="Plan de la semaine, niveaux à surveiller, scénarios…" aria-label="Notes rapides"></textarea></div>
+      <div class="row2"><span>Sauvegarde automatique dans ce navigateur uniquement (pas sur un autre appareil).</span><button type="button" class="seg" id="notesClr" style="font:11px var(--font-mono);color:var(--muted);background:transparent;padding:3px 10px;cursor:pointer">Effacer</button></div>
+    </section>
+
     <section class="panel" id="liens">
       <div class="ph"><h2>Sources gratuites</h2><span class="meta">ouvrent un nouvel onglet</span></div>
       <div class="links">
-        <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener"><b>FRED</b><span>Taux, inflation, emploi des États-Unis. API gratuite avec clé.</span></a>
+        <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener"><b>FRED</b><span>Taux, inflation, emploi des États-Unis. Téléchargement CSV sans clé (utilisé par le robot).</span></a>
+        <a href="https://www.gold.org/goldhub" target="_blank" rel="noopener"><b>World Gold Council</b><span>Flux des ETF d'or, achats des banques centrales (inscription gratuite).</span></a>
+        <a href="https://data.worldbank.org" target="_blank" rel="noopener"><b>Banque mondiale</b><span>Inflation, croissance, chômage de tous les pays (carte du monde).</span></a>
         <a href="https://data.ecb.europa.eu" target="_blank" rel="noopener"><b>BCE Data Portal</b><span>Zone euro : taux, monnaie, inflation.</span></a>
         <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener"><b>CME FedWatch</b><span>Probabilités de hausse ou baisse des taux de la Fed.</span></a>
         <a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener"><b>Forex Factory</b><span>Calendrier économique avec impact attendu.</span></a>
@@ -499,6 +739,7 @@ table.perf th, table.perf td { padding: 7px 10px; }
         <a href="https://frankfurter.dev" target="_blank" rel="noopener"><b>Frankfurter</b><span>API de taux de change sans clé, utilisée ici.</span></a>
       </div>
     </section>
+    <p class="legal">Avertissement : ce site est un outil d'information personnel, pas un conseil en investissement. Le trading du forex et de l'or comporte un risque élevé de perte en capital. Les données viennent de sources gratuites tierces, peuvent être retardées, incomplètes ou erronées : vérifiez toujours avant de trader.</p>
   </div>
 </div>
 
@@ -1108,7 +1349,7 @@ table.perf th, table.perf td { padding: 7px 10px; }
     drawGoldChart(k); gShow(gCur.s.length - 1, true);
     renderPerf(g); renderTape();
   }
-  function refreshGold() { return loadGold().then(renderGold); }
+  function refreshGold() { return loadGold().then(function () { renderGold(); renderPiv(); }); }
   function initTV() {
     var box = $("tv"), fb = function () {
       if (box.querySelector("iframe") || box.querySelector(".tv-fb")) return;
@@ -1208,7 +1449,7 @@ table.perf th, table.perf td { padding: 7px 10px; }
       });
   }
   function renderAll() {
-    setStatus(); renderPairs(); drawPair(); drawStrength(); drawGauge(); renderGold();
+    setStatus(); renderPairs(); drawPair(); drawStrength(); drawGauge(); renderGold(); renderFx2();
     if (!touched && $("cPair").options.length) { resetEntry(); calc(); } else if ($("cPair").options.length) calc();
   }
 
@@ -1241,12 +1482,18 @@ table.perf th, table.perf td { padding: 7px 10px; }
 
 
   /* ---------- Données automatiques (robot GitHub) ---------- */
-  var AUTO_URLS = ["https://raw.githubusercontent.com/philippembulu1-dot/macro-forex/main/data/macro.json", "data/macro.json"];
+  /* Adresse déduite automatiquement du site (compte.github.io/dépôt/) : fonctionne avec n'importe quel compte ou nom de dépôt. */
+  var AUTO_URLS = (function () {
+    var u = ["data/macro.json"], m = /^([a-z0-9-]+)\.github\.io$/i.exec(location.hostname), r = location.pathname.split("/")[1];
+    if (m && r) u.unshift("https://raw.githubusercontent.com/" + m[1] + "/" + r + "/main/data/macro.json");
+    return u;
+  })();
   var AUTO = null, autoErr = "";
-  var MAXAGE = { daily: 6, weekly: 12, monthly: 80, quarterly: 140, news: 21 };
+  var MAXAGE = { daily: 6, weekly: 12, monthly: 80, quarterly: 140, news: 21, calendar: 8, annual: 800 };
   var MANUAL = [
     { n: "Banques centrales (taux, inflation)", d: "2026-10-24" }, { n: "Tableau des indicateurs macro", d: "2026-10-25" },
-    { n: "Publications de la semaine", d: "2026-10-25" }, { n: "Calendrier des réunions", d: "2026-10-27" }
+    { n: "Publications de la semaine", d: "2026-10-25" }, { n: "Calendrier des réunions", d: "2026-10-27" },
+    { n: "Consensus des banques (relevé presse)", d: "2026-10-30" }
   ];
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function ageDays(d) { var t = Date.parse(String(d).slice(0, 10) + "T00:00:00Z"); return isNaN(t) ? Infinity : Math.floor((Date.now() - t) / 864e5); }
@@ -1267,12 +1514,12 @@ table.perf th, table.perf td { padding: 7px 10px; }
     var rd = null, rv = null, rtol = 0.13, rmax = 100, cv = null, ctol = 0.25, cmax = 100, cc = { USD: "US", EUR: "EZ", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" }[m.c];
     if (m.c === "USD") { var f = fred("DFEDTARU"); if (f) { rv = f.v; rtol = 0.01; rmax = 10; rd = f.asof; } }
     else if (m.c === "EUR") { var e = fred("ECBDFR"); if (e) { rv = e.v; rtol = 0.01; rmax = 10; rd = e.asof; } }
-    else { var o = oecd("rate_" + cc); if (o) { rv = o.v; rd = o.asof; } }
+    else { var nr = AUTO.national && AUTO.national["rate_" + cc], o = oecd("rate_" + cc); if (nr) { rv = nr.v; rd = nr.asof; rtol = 0.01; rmax = 60; } else if (o) { rv = o.v; rd = o.asof; } }
     var rd0 = rd;
     if (rv !== null && ageDays(rd0) <= rmax) out.rate = Math.abs(rv - m.r) <= rtol ? ' <span class="ck ok" title="Concordant avec la source automatique du ' + esc(rd0) + '">✓</span>' : ' <span class="ck bad" title="Source automatique du ' + esc(rd0) + '">⚠ auto ' + fnum(rv, 2) + "</span>";
     var cd = null;
     if (m.c === "USD" && AUTO.derived && AUTO.derived.us_cpi) { cv = AUTO.derived.us_cpi.v; cd = AUTO.derived.us_cpi.asof; ctol = 0.15; }
-    else { var q = oecd("cpi_" + cc); if (q) { cv = q.v; cd = q.asof; } }
+    else { var nc = AUTO.national && AUTO.national["cpi_" + cc], q = oecd("cpi_" + cc); if (nc) { cv = nc.v; cd = nc.asof; ctol = 0.15; } else if (q) { cv = q.v; cd = q.asof; } }
     if (cv !== null && m.i !== null && ageDays(cd) <= cmax) out.cpi = Math.abs(cv - m.i) <= ctol ? ' <span class="ck ok" title="Concordant avec la source automatique du ' + esc(cd) + '">✓</span>' : ' <span class="ck bad" title="Source automatique du ' + esc(cd) + '">⚠ auto ' + fnum(cv, 1) + "</span>";
     return out;
   }
@@ -1291,10 +1538,11 @@ table.perf th, table.perf td { padding: 7px 10px; }
     var sp = fred("T10Y2Y"), h = '<div class="tiles">' +
       tile("US 10 ans", "DGS10", 2, " %") + tile("US 2 ans", "DGS2", 2, " %") +
       tile("Écart 10a − 2a", "T10Y2Y", 2, " pt") + tile("Réel 10 ans (TIPS)", "DFII10", 2, " %") +
-      tile("VIX", "VIXCLS", 1, "") + tile("Dollar large", "DTWEXBGS", 1, "") + "</div>";
+      tile("VIX", "VIXCLS", 1, "") + tile("Dollar large", "DTWEXBGS", 1, "") + tile("Spread crédit HY", "BAMLH0A0HYM2", 2, " %") + "</div>";
     var l = [], dr = chg5("DFII10"), v = fred("VIXCLS");
     if (dr !== null) l.push(dr > 0.1 ? "Rendement réel en hausse de " + fmt(dr, 2) + " pt sur 5 séances : plutôt <b>défavorable à l'or</b>." : dr < -0.1 ? "Rendement réel en baisse de " + fmt(-dr, 2) + " pt sur 5 séances : plutôt <b>favorable à l'or</b>." : "Rendement réel stable sur 5 séances : pas de signal pour l'or.");
     if (sp) l.push(sp.v < 0 ? "Courbe <b>inversée</b> (10a sous 2a) : le marché anticipe un ralentissement ou des baisses de taux." : "Courbe <b>positive</b> (10a au-dessus de 2a).");
+    var hy = fred("BAMLH0A0HYM2"); if (hy) l.push("Spread de crédit à " + fmt(hy.v, 2) + " % : " + (hy.v < 3.5 ? "crédit détendu." : hy.v < 5 ? "prudence modérée." : "<b>stress de crédit</b>, plutôt risk-off."));
     if (v) l.push("VIX à " + fmt(v.v, 1) + " : " + (v.v < 15 ? "marché calme." : v.v < 20 ? "volatilité normale." : v.v < 30 ? "<b>tension</b>, prudence sur les tailles de position." : "<b>stress élevé</b>, réduire le risque."));
     h += '<div class="pad idea" style="margin:10px 12px">' + l.join(" ") + ' C\'est une piste de lecture, pas un signal.</div>';
     h += '<p class="note">Sources : FRED (Réserve fédérale de Saint-Louis), données de clôture quotidiennes, mises à jour par le robot. Le rendement réel est le principal moteur de l\'or à moyen terme.</p>';
@@ -1310,10 +1558,10 @@ table.perf th, table.perf td { padding: 7px 10px; }
       var dl = x.prev_net != null ? x.net - x.prev_net : null, tot = x.long + x.short, pl = tot ? x.long / tot * 100 : 0;
       var sp = x.hist && x.hist.length > 3 ? spark(x.hist.map(function (v) { return { v: v }; })) : "";
       var ni = function (n) { return (n >= 0 ? "+" : "−") + Math.abs(n).toLocaleString("fr-FR"); };
-      return "<tr><td><b>" + k + "</b> <small>" + COTN[k] + '</small></td><td class="r num ' + cls(x.net) + '">' + ni(x.net) + '</td><td class="r num ' + (dl === null ? "" : cls(dl)) + '">' + (dl === null ? "–" : ni(dl)) + '</td><td class="r num">' + pl.toFixed(0) + " %</td><td>" + sp + "</td></tr>";
+      return "<tr><td><b>" + k + "</b> <small>" + COTN[k] + '</small></td><td class="r num ' + cls(x.net) + '">' + ni(x.net) + '</td><td class="r num ' + (dl === null ? "" : cls(dl)) + '">' + (dl === null ? "–" : ni(dl)) + '</td><td class="r num">' + pl.toFixed(0) + ' %</td><td class="r num ' + (typeof x.comm_net === "number" ? cls(x.comm_net) : "") + '">' + (typeof x.comm_net === "number" ? ni(x.comm_net) : "–") + "</td><td>" + sp + "</td></tr>";
     }).join("");
-    b.innerHTML = '<div class="tbl"><table><thead><tr><th>Marché</th><th class="r">Net</th><th class="r">Var. semaine</th><th class="r">% acheteur</th><th>12 sem.</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
-      '<p class="note">Fonds spéculatifs (non commerciaux), contrats à terme. Net = positions acheteuses − vendeuses : positif = pari haussier sur la devise (ou l\'or) face au dollar. Rapport publié le vendredi pour le mardi précédent. Un positionnement extrême peut précéder un retournement, mais ce n\'est pas un signal d\'entrée.</p>';
+    b.innerHTML = '<div class="tbl"><table><thead><tr><th>Marché</th><th class="r">Net</th><th class="r">Var. semaine</th><th class="r">% acheteur</th><th class="r">Net commerciaux</th><th>12 sem.</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      '<p class="note">Fonds spéculatifs (non commerciaux), contrats à terme. Les commerciaux (producteurs, banques : « smart money » de couverture) prennent souvent le côté opposé aux fonds. Net = positions acheteuses − vendeuses : positif = pari haussier sur la devise (ou l\'or) face au dollar. Rapport publié le vendredi pour le mardi précédent. Un positionnement extrême peut précéder un retournement, mais ce n\'est pas un signal d\'entrée.</p>';
     $("cotMeta").textContent = "positions du " + shortD(newest);
   }
 
@@ -1339,7 +1587,7 @@ table.perf th, table.perf td { padding: 7px 10px; }
       h += '<div class="pad">' + badge(st, st === "ok" ? "robot actif" : st === "old" ? "robot en retard" : "robot arrêté?") + " &nbsp;" + cnt.ok + " sources à jour · " + cnt.old + " anciennes · " + cnt.ko + " en échec</div>";
       if (st === "ko") h += '<p class="warn" style="margin:0 12px 8px">Le robot n\'a pas écrit de données depuis plus de 36 h : les chiffres automatiques ci-dessus peuvent être périmés. Vérifiez l\'onglet Actions du dépôt.</p>';
       h += '<details class="srcs"><summary>Détail des ' + AUTO.sources.length + ' sources</summary><ul class="src-list">' + AUTO.sources.map(function (s) {
-        var q = srcState(s); return "<li><span>" + esc(s.label) + (s.ok ? "" : ' <small title="' + esc(s.err) + '">· ' + esc((s.err || "").slice(0, 40)) + "</small>") + "</span><span>" + (s.asof ? shortD(s.asof) + " " : "") + badge(q) + "</span></li>";
+        var q = srcState(s); return "<li><span>" + (/^https?:/.test(s.url || "") ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.label) + "</a>" : esc(s.label)) + (s.ok ? "" : ' <small title="' + esc(s.err) + '">· ' + esc((s.err || "").slice(0, 40)) + "</small>") + "</span><span>" + (s.asof ? shortD(s.asof) + " " : "") + badge(q) + "</span></li>";
       }).join("") + "</ul></details>";
     }
     h += '<div class="tbl"><table><thead><tr><th>À mettre à jour à la main</th><th class="r">Dernière saisie</th><th>État</th></tr></thead><tbody>' + MANUAL.map(function (m) {
@@ -1349,7 +1597,509 @@ table.perf th, table.perf td { padding: 7px 10px; }
     $("robotBody").innerHTML = h; $("robotMeta").textContent = meta;
   }
 
-  function renderAuto() { renderMacro(); renderTaux(); renderCot(); renderNews(); renderRobot(); }
+
+  /* ---------- Marchés en direct : Fear & Greed + mini-graphiques TradingView ---------- */
+  var MINIS = [
+    { t: "VIX", s: "CBOE:VIX" }, { t: "S&P 500", s: "SP:SPX" }, { t: "MOVE (volatilité obligataire)", s: "TVC:MOVE" },
+    { t: "Or / Dollar", s: "OANDA:XAUUSD" }, { t: "AUD/JPY (appétit pour le risque)", s: "FX:AUDJPY" }, { t: "US 10 ans", s: "TVC:US10Y" }
+  ];
+  function initMinis() {
+    var g = $("miniGrid");
+    MINIS.forEach(function (m) {
+      var box = document.createElement("div"); box.className = "mini"; box.setAttribute("aria-label", m.t); g.appendChild(box);
+      var wrap = document.createElement("div"); wrap.className = "tradingview-widget-container";
+      var w = document.createElement("div"); w.className = "tradingview-widget-container__widget"; wrap.appendChild(w);
+      var s = document.createElement("script"); s.async = true; s.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
+      s.innerHTML = JSON.stringify({ symbol: m.s, width: "100%", height: 190, locale: "fr", dateRange: "1M", colorTheme: "dark", isTransparent: true, autosize: false, largeChartUrl: "" });
+      var fb = function () { if (box.querySelector("iframe") || box.querySelector(".tv-fb")) return; var d = document.createElement("div"); d.className = "tv-fb"; d.textContent = m.t + " : graphique non chargé (réseau, bloqueur ou symbole " + m.s + " refusé)."; box.appendChild(d); };
+      s.onerror = fb; wrap.appendChild(s); box.appendChild(wrap); setTimeout(fb, 9000);
+    });
+  }
+  var FGR = { "extreme fear": "Peur extrême", fear: "Peur", neutral: "Neutre", greed: "Avidité", "extreme greed": "Avidité extrême" };
+  function fgLabel(v) { return v < 25 ? "Peur extrême" : v < 45 ? "Peur" : v <= 55 ? "Neutre" : v < 75 ? "Avidité" : "Avidité extrême"; }
+  function renderFG() {
+    var f = AUTO && AUTO.fng, svg = $("fgSvg"), approx = false, score = null, info = "";
+    if (f && typeof f.score === "number") score = Math.round(f.score);
+    else { var v = fred("VIXCLS"); if (v) { score = Math.round(Math.max(0, Math.min(100, (35 - v.v) / 25 * 100))); approx = true; } }
+    svg.textContent = "";
+    if (score === null) { $("fgInfo").innerHTML = '<p class="note" style="padding:0">Indice non disponible : le robot n\'a pas encore récupéré les données. Voir « Fraîcheur des données ».</p>'; return; }
+    var pt = function (a, r) { var t = a * Math.PI / 180; return [100 - r * Math.cos(t), 100 - r * Math.sin(t)]; };
+    [[0, 25, "#c4382e"], [25, 45, "#e07a3a"], [45, 55, "#f2b01e"], [55, 75, "#8fc46a"], [75, 100, "#2fb27a"]].forEach(function (z) {
+      var p0 = pt(z[0] * 1.8 + 0.8, 80), p1 = pt(z[1] * 1.8 - 0.8, 80);
+      el("path", { d: "M" + p0[0].toFixed(1) + " " + p0[1].toFixed(1) + " A80 80 0 0 1 " + p1[0].toFixed(1) + " " + p1[1].toFixed(1), fill: "none", stroke: z[2], "stroke-width": 12 }, svg);
+    });
+    var tip = pt(score * 1.8, 64);
+    el("line", { x1: 100, y1: 100, x2: tip[0].toFixed(1), y2: tip[1].toFixed(1), stroke: "#ece8dc", "stroke-width": 2.5, "stroke-linecap": "round" }, svg);
+    el("circle", { cx: 100, cy: 100, r: 5, fill: "#ece8dc" }, svg);
+    var t = txt(svg, 100, 124, String(score), "middle"); t.setAttribute("style", "fill:#ece8dc;font:600 22px var(--font-mono)");
+    txt(svg, 14, 118, "0", "start"); txt(svg, 186, 118, "100", "end");
+    var rating = f && f.rating ? (FGR[String(f.rating).toLowerCase()] || fgLabel(score)) : fgLabel(score);
+    info = '<div style="font:600 16px var(--font-mono);color:var(--amber);margin-bottom:6px">' + rating.toUpperCase() + "</div>";
+    if (approx) info += '<p class="note" style="padding:0;margin:0">Approximation maison tirée du VIX (l\'indice CNN n\'a pas pu être récupéré). Ce n\'est pas l\'indice officiel.</p>';
+    else {
+      var P = function (l, v) { return typeof v === "number" ? "<span>" + l + " <b>" + Math.round(v) + "</b></span>" : ""; };
+      info += '<div class="fgprev">' + P("Veille", f.prev_close) + P("1 semaine", f.week) + P("1 mois", f.month) + P("1 an", f.year) + "</div>" +
+        '<p class="note" style="padding:0;margin:8px 0 0">Indice CNN Fear &amp; Greed' + (f.asof ? " · " + shortD(f.asof) : "") + " — sous 25 : peur extrême, au-dessus de 75 : avidité extrême. Un extrême est un contexte, pas un signal d'entrée.</p>";
+    }
+    $("fgInfo").innerHTML = info;
+  }
+
+  /* ---------- Notes rapides (stockage local) ---------- */
+  (function () {
+    var ta = $("notesTxt"), key = "mf-notes", tm = null;
+    try { ta.value = localStorage.getItem(key) || ""; } catch (e) { $("notesMeta").textContent = "stockage indisponible"; }
+    ta.addEventListener("input", function () { clearTimeout(tm); tm = setTimeout(function () { try { localStorage.setItem(key, ta.value); $("notesMeta").textContent = "enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); } catch (e) { $("notesMeta").textContent = "non enregistré"; } }, 400); });
+    $("notesClr").addEventListener("click", function () { if (ta.value && !confirm("Effacer toutes les notes ?")) return; ta.value = ""; try { localStorage.removeItem(key); } catch (e) { } $("notesMeta").textContent = "notes effacées"; });
+  })();
+
+  /* =====================================================================
+     TERMINAL : barre de commandes, nouveaux panneaux (ajout du 30 oct. 2026)
+     Règle : aucun chiffre inventé. Tout ce qui n'est pas automatique est une
+     saisie datée et sourcée, marquée « à vérifier ».
+     ===================================================================== */
+  var CMDS = [
+    ["OR", "Or XAU/USD", "or"], ["GOLD", "Tableau de bord or (6 piliers)", "scorecard"], ["FX", "Paires", "paires"], ["FORCE", "Force des devises", "force"],
+    ["CB", "Banques centrales", "banques"], ["ECO", "Indicateurs macro", "indicateurs"], ["CAL", "Calendrier économique", "calendrier"],
+    ["AG", "Prochaines réunions", "agenda"], ["DESK", "Indicateurs des desks", "desk"], ["TX", "Taux, VIX, dollar", "taux"], ["DIFF", "Écarts de taux", "ecarts"],
+    ["COT", "Positions COT", "cot"], ["SEAS", "Saisonnalité 20 ans", "saison"], ["HEAT", "Carte thermique", "heat"], ["CORR", "Corrélations", "correl"],
+    ["VOL", "Volatilité", "vola"], ["MAP", "Carte du monde", "monde"], ["CONS", "Consensus des banques", "consensus"], ["COM", "Comités", "comite"],
+    ["FED", "Probabilités de taux", "probas"], ["SENT", "Sentiment des particuliers", "sentiment"], ["PIV", "Pivots et convertisseur", "outils"],
+    ["LIVE", "Marchés en direct", "marches"], ["NEWS", "Communiqués", "actus"], ["CALC", "Calculateur de position", "calc"], ["RISK", "Gestion du risque", "conseils"],
+    ["CHK", "Checklist", "check"], ["DATA", "Fraîcheur des données", "robot"], ["NOTE", "Notes rapides", "notes"]
+  ];
+  function initCmd() {
+    var inp = $("cmdIn"), msg = $("cmdMsg");
+    $("cmdList").innerHTML = CMDS.map(function (c) { return '<option value="' + c[0] + '">' + c[1] + "</option>"; }).join("");
+    $("fkeys").innerHTML = CMDS.slice(0, 14).map(function (c) { return '<a href="#' + c[2] + '" title="' + c[1] + '">' + c[0] + "</a>"; }).join("");
+    function go(code) {
+      code = String(code || "").trim().toUpperCase();
+      var c = CMDS.filter(function (x) { return x[0] === code; })[0] || CMDS.filter(function (x) { return x[1].toUpperCase().indexOf(code) >= 0; })[0];
+      if (!code) return;
+      if (!c) { msg.textContent = "Commande inconnue : " + code + ". Essayez OR, CAL, COT, SEAS, MAP, FED…"; return; }
+      msg.textContent = c[0] + " → " + c[1];
+      var t = $(c[2]); if (t) { t.scrollIntoView({ behavior: "smooth", block: "start" }); t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); }
+      inp.value = "";
+    }
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(inp.value); } if (e.key === "Escape") inp.blur(); });
+    document.addEventListener("keydown", function (e) {
+      var tg = e.target && e.target.tagName;
+      if (e.key === "/" && tg !== "INPUT" && tg !== "TEXTAREA" && tg !== "SELECT") { e.preventDefault(); inp.focus(); }
+    });
+  }
+
+  /* ---------- Saisies manuelles datées (stockées sur cet appareil) ---------- */
+  var MAN = {};
+  try { MAN = JSON.parse(localStorage.getItem("mf-man") || "{}") || {}; } catch (e) { MAN = {}; }
+  function saveMan() { try { localStorage.setItem("mf-man", JSON.stringify(MAN)); } catch (e) { } }
+  function todayIso() { return iso(new Date()); }
+  function manRow(key, label, ph) {
+    var m = MAN[key];
+    return '<div class="man" data-k="' + esc(key) + '"><span class="lbl">' + esc(label) + '</span>' +
+      '<input aria-label="Valeur ' + esc(label) + '" placeholder="' + esc(ph || "valeur") + '" value="' + esc(m ? m.v : "") + '">' +
+      '<input type="date" aria-label="Date du relevé" value="' + esc(m ? m.d : todayIso()) + '">' +
+      '<input class="u" aria-label="Lien de la source" placeholder="lien de la source (https://…)" value="' + esc(m ? m.s : "") + '">' +
+      '<button type="button" data-act="save">Enregistrer</button>' + (m ? '<button type="button" data-act="del">Effacer</button>' : "") +
+      '<span class="saved">' + (m ? manBadge(m) : "Rien de saisi pour l'instant.") + "</span></div>";
+  }
+  function manBadge(m) {
+    var a = ageDays(m.d), q = a <= 2 ? "ok" : a <= 7 ? "old" : "ko";
+    return "Saisi : <b>" + esc(m.v) + "</b> · relevé du " + esc(m.d) + " " + badge(q, q === "ok" ? "récent" : q === "old" ? "à revoir" : "périmé") +
+      ' <span class="pill warn">à vérifier</span>' + (/^https?:\/\//.test(m.s || "") ? ' · <a href="' + esc(m.s) + '" target="_blank" rel="noopener">source</a>' : " · sans lien de source");
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".man button"); if (!b) return;
+    var row = b.closest(".man"), k = row.getAttribute("data-k"), ins = row.querySelectorAll("input");
+    if (b.getAttribute("data-act") === "del") delete MAN[k];
+    else {
+      if (!ins[0].value.trim()) { row.querySelector(".saved").textContent = "Entrez une valeur avant d'enregistrer."; return; }
+      MAN[k] = { v: ins[0].value.trim().slice(0, 60), d: ins[1].value || todayIso(), s: ins[2].value.trim().slice(0, 300) };
+    }
+    saveMan(); row.outerHTML = manRow(k, row.querySelector(".lbl").textContent, ins[0].getAttribute("placeholder"));
+  });
+
+  /* ---------- Fraîcheur d'un chiffre automatique ---------- */
+  function fresh(asof, kind) { var a = ageDays(asof); return a <= (MAXAGE[kind] || 30) ? "ok" : "old"; }
+  function srcOf(id) { return AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return s.id === id; })[0] : null; }
+  function chgN(id, n) { var f = fred(id); if (!f || !f.hist || f.hist.length <= n) return null; var h = f.hist; return { d: h[h.length - 1][1] - h[h.length - 1 - n][1], p: (h[h.length - 1][1] / h[h.length - 1 - n][1] - 1) * 100, asof: f.asof }; }
+
+  /* ---------- Or : 6 piliers ---------- */
+  function renderScore() {
+    var b = $("scBody");
+    if (!AUTO || !AUTO.fred) { b.innerHTML = '<p class="note pad">En attente des données du robot.</p>'; return; }
+    var P = [], g = AUTO.cot && AUTO.cot.XAU;
+    function add(name, s, val, why, asof, kind) { P.push({ n: name, s: s, v: val, w: why, a: asof, k: kind }); }
+    var r = chgN("DFII10", 20);
+    if (r) add("Taux réels", r.d < -0.1 ? 1 : r.d > 0.1 ? -1 : 0, (r.d >= 0 ? "+" : "−") + fmt(Math.abs(r.d), 2) + " pt / 20 séances", "TIPS 10 ans : en baisse = favorable à l'or", r.asof, "daily");
+    else add("Taux réels", null, "indisponible", "FRED DFII10", null);
+    var f = chgN("DGS2", 20);
+    if (f) add("Anticipations Fed", f.d < -0.1 ? 1 : f.d > 0.1 ? -1 : 0, (f.d >= 0 ? "+" : "−") + fmt(Math.abs(f.d), 2) + " pt / 20 séances", "US 2 ans : en baisse = marché attend des baisses de taux", f.asof, "daily");
+    else add("Anticipations Fed", null, "indisponible", "FRED DGS2", null);
+    var d = chgN("DTWEXBGS", 20);
+    if (d) add("Dollar", d.p < -1 ? 1 : d.p > 1 ? -1 : 0, pct(d.p) + " / 20 séances", "Dollar large : en baisse = favorable à l'or", d.asof, "daily");
+    else add("Dollar", null, "indisponible", "FRED DTWEXBGS", null);
+    if (g && g.hist && g.hist.length >= 5) {
+      var h = g.hist, c4 = h[h.length - 1] - h[h.length - 5], th = Math.abs(h[h.length - 1]) * 0.05;
+      add("Flux (proxy COT)", c4 > th ? 1 : c4 < -th ? -1 : 0, (c4 >= 0 ? "+" : "−") + Math.abs(c4).toLocaleString("fr-FR") + " contrats / 4 sem.", "Achats nets des fonds sur 4 semaines", g.date, "weekly");
+    } else add("Flux (proxy COT)", null, "indisponible", "CFTC", null);
+    var v = fred("VIXCLS"), hy = chgN("BAMLH0A0HYM2", 20);
+    if (v) { var rs = v.v > 22 || (hy && hy.d > 0.3) ? 1 : (v.v < 15 && hy && hy.d < 0) ? -1 : 0; add("Risque / refuge", rs, "VIX " + fmt(v.v, 1) + (hy ? " · HY " + (hy.d >= 0 ? "+" : "−") + fmt(Math.abs(hy.d), 2) + " pt" : ""), "Stress élevé = demande de valeur refuge", v.asof, "daily"); }
+    else add("Risque / refuge", null, "indisponible", "FRED VIX", null);
+    if (g && typeof g.idx3y === "number") add("Positionnement", g.idx3y > 85 ? -1 : g.idx3y < 15 ? 1 : 0, "indice COT 3 ans : " + g.idx3y + " / 100", "Au-dessus de 85 : marché déjà très acheteur (risque de reflux)", g.date, "weekly");
+    else add("Positionnement", null, "indisponible", "CFTC", null);
+    var tot = 0, n = 0;
+    b.innerHTML = '<div class="sc">' + P.map(function (p) {
+      if (p.s !== null) { tot += p.s; n++; }
+      var c = p.s === null ? "" : p.s > 0 ? "p" : p.s < 0 ? "n" : "z", lab = p.s === null ? "–" : p.s > 0 ? "FAVORABLE" : p.s < 0 ? "DÉFAVORABLE" : "NEUTRE";
+      return '<div class="pil ' + c + '"><small>' + p.n + "</small><b>" + lab + "</b><span>" + p.v + "</span><span>" + p.w + "</span>" + (p.a ? '<span class="asof">au ' + shortD(String(p.a).slice(0, 10)) + " " + badge(fresh(p.a, p.k)) + "</span>" : badge("ko")) + "</div>";
+    }).join("") + "</div>" +
+      '<div class="total">Bilan <b class="' + (tot > 0 ? "up" : tot < 0 ? "down" : "") + '">' + (tot > 0 ? "+" : tot < 0 ? "−" : "") + Math.abs(tot) + "</b> sur " + n + " piliers disponibles · " +
+      (tot >= 3 ? "contexte plutôt porteur pour l'or" : tot <= -3 ? "contexte plutôt défavorable à l'or" : "contexte mitigé") + "</div>";
+    $("scMeta").textContent = n + "/6 piliers calculés";
+  }
+
+  /* ---------- Indicateurs des desks (recherche du 30 oct. 2026) ---------- */
+  var DESK = [
+    ["T10YIE", "Inflation anticipée 10 ans", 2, " %", "Breakeven : l'inflation que le marché obligataire anticipe. En hausse = soutien pour l'or."],
+    ["T5YIFR", "Inflation 5 ans dans 5 ans", 2, " %", "Mesure favorite de la Fed pour la crédibilité de sa cible de 2 %."],
+    ["GVZCLS", "Volatilité implicite or (GVZ)", 1, "", "Le « VIX de l'or » : au-dessus de 25, mouvements violents à prévoir."],
+    ["NFCI", "Conditions financières", 2, "", "Fed de Chicago : négatif = conditions plus souples que la moyenne, positif = plus tendues."],
+    ["STLFSI4", "Stress financier", 2, "", "Fed de St. Louis : 0 = normal, au-dessus de 0 = stress."],
+    ["BAMLC0A0CM", "Spread de crédit qualité", 2, " %", "Prime des entreprises bien notées. En hausse = aversion au risque."],
+    ["BAMLH0A0HYM2", "Spread de crédit HY", 2, " %", "Prime des entreprises risquées : le thermomètre du risque."],
+    ["WALCL", "Bilan de la Fed (Md $)", 0, "", "Liquidité injectée par la Fed. En baisse = resserrement quantitatif."]
+  ];
+  function renderDesk() {
+    var b = $("deskBody");
+    if (!AUTO || !AUTO.fred) { b.innerHTML = '<p class="note pad">En attente des données du robot.</p>'; return; }
+    b.innerHTML = '<div class="tbl"><table><thead><tr><th>Indicateur</th><th class="r">Dernier</th><th class="r">Var. 20 pts</th><th>Date</th><th class="col-core">À quoi ça sert</th></tr></thead><tbody>' + DESK.map(function (x) {
+      var f = fred(x[0]), s = srcOf("fred." + x[0]), kind = s ? s.kind : "daily";
+      if (!f) return "<tr><td><b>" + x[1] + '</b></td><td class="r">–</td><td class="r">–</td><td>' + badge("ko") + '</td><td class="col-core"><small>' + x[4] + "</small></td></tr>";
+      var val = x[0] === "WALCL" ? f.v / 1000 : f.v, c = chgN(x[0], 20), dv = c ? (x[0] === "WALCL" ? c.d / 1000 : c.d) : null;
+      return "<tr><td><b>" + x[1] + '</b></td><td class="r num">' + fmtN(val, x[2]) + x[3] + '</td><td class="r num">' + (dv === null ? "–" : (dv >= 0 ? "+" : "−") + fmtN(Math.abs(dv), x[2] || 0)) + "</td><td>" + shortD(f.asof) + " " + badge(fresh(f.asof, kind)) + '</td><td class="col-core" style="white-space:normal"><small>' + x[4] + "</small></td></tr>";
+    }).join("") + '</tbody></table></div><p class="note">Sélection issue de la recherche : facteurs du modèle du World Gold Council (taux réels, dollar, inflation anticipée, volatilité implicite), conditions financières et crédit suivis par les desks. Source : FRED, sans clé. Non disponibles gratuitement : indice de surprise économique Citi, risk reversals d\'options, flux d\'ETF quotidiens.</p>';
+  }
+
+  /* ---------- Écarts de taux ---------- */
+  var CCODE = { USD: "US", EUR: "EZ", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" };
+  function policyRate(m) {
+    var a = null, cc = CCODE[m.c];
+    if (m.c === "USD") { var f = fred("DFEDTARU"); if (f) a = { v: f.v, d: f.asof, s: "FRED" }; }
+    else if (m.c === "EUR") { var e = fred("ECBDFR"); if (e) a = { v: e.v, d: e.asof, s: "FRED (BCE)" }; }
+    else { var n = AUTO && AUTO.national && AUTO.national["rate_" + cc]; if (n) a = { v: n.v, d: n.asof, s: "source officielle" }; }
+    if (a && ageDays(a.d) <= 60) return { v: a.v, d: a.d, src: a.s, auto: true };
+    return { v: m.r, d: MANUAL[0].d, src: "saisie manuelle", auto: false };
+  }
+  function renderDiff() {
+    var us = policyRate(MACRO[0]);
+    $("diffBody").innerHTML = '<div class="tbl"><table><thead><tr><th>Devise</th><th class="r">Taux</th><th class="r">Écart vs USD</th><th>Origine</th></tr></thead><tbody>' + MACRO.map(function (m) {
+      var p = policyRate(m), dlt = p.v - us.v;
+      return "<tr><td><b>" + m.c + "</b> <small>" + m.b + '</small></td><td class="r num">' + fmt(p.v, 2) + ' %</td><td class="r num ' + (m.c === "USD" ? "" : cls(dlt)) + '">' + (m.c === "USD" ? "réf." : (dlt >= 0 ? "+" : "−") + fmt(Math.abs(dlt), 2) + " pt") + "</td><td><small>" + p.src + " · " + shortD(String(p.d).slice(0, 10)) + "</small> " + (p.auto ? badge("ok", "auto") : '<span class="pill warn">à vérifier</span>') + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+  }
+
+  /* ---------- Saisonnalité ---------- */
+  var SEAS = null, seasErr = "";
+  var MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  function loadSeas() {
+    var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "seasonal.json"); }), p = Promise.reject(new Error("start"));
+    urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.series) throw new Error("format"); return j; }); }); });
+    return p.then(function (j) { SEAS = j; }).catch(function (e) { seasErr = String(e && e.message || e); }).then(renderSeas);
+  }
+  function renderSeas() {
+    var sel = $("seasSel");
+    if (!SEAS) { $("seasMeta").textContent = "indisponible"; $("seasBars").innerHTML = '<p class="note">Fichier de saisonnalité introuvable (' + esc(seasErr) + ").</p>"; return; }
+    if (!sel.options.length) {
+      var order = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD"];
+      sel.innerHTML = order.filter(function (k) { return SEAS.series[k]; }).map(function (k) { return '<option value="' + k + '">' + k.slice(0, 3) + "/" + k.slice(3) + "</option>"; }).join("");
+      sel.addEventListener("change", renderSeas);
+    }
+    var k = sel.value, s = SEAS.series[k], mo = new Date().getMonth();
+    if (!s) return;
+    var age = ageDays(SEAS.generated.slice(0, 10));
+    $("seasMeta").innerHTML = SEAS.years[0] + "–" + SEAS.years[1] + " · calculé le " + shortD(SEAS.generated.slice(0, 10)) + " " + badge(age <= 10 ? "ok" : age <= 30 ? "old" : "ko");
+    $("seasBasis").textContent = s.basis + " · dernier point " + s.asof;
+    var mx = Math.max.apply(null, s.monthly.map(function (x) { return x ? Math.abs(x.avg) : 0; })) || 1;
+    $("seasBars").innerHTML = s.monthly.map(function (x, i) {
+      if (!x) return '<div class="bcol"></div>';
+      var h = Math.abs(x.avg) / mx * 48;
+      return '<div class="bcol' + (i === mo ? " cur" : "") + '" title="' + MOIS[i] + " : " + pct(x.avg) + ", positif " + x.win + ' % des années"><span class="zero"></span><i style="background:' + (x.avg >= 0 ? "var(--up)" : "var(--down)") + ";height:" + h.toFixed(1) + "%;" + (x.avg >= 0 ? "bottom:50%" : "top:50%") + '"></i></div>';
+    }).join("");
+    $("seasLab").innerHTML = MOIS.map(function (m, i) { return "<span" + (i === mo ? ' style="color:var(--amber)"' : "") + ">" + m.slice(0, 3) + "</span>"; }).join("");
+    $("seasTbl").innerHTML = '<thead><tr><th>Mois</th><th class="r">Moyenne</th><th class="r">Médiane</th><th class="r">Années +</th><th class="r">' + new Date().getFullYear() + "</th></tr></thead><tbody>" + s.monthly.map(function (x, i) {
+      if (!x) return "";
+      var c = s.cur && s.cur[i];
+      return "<tr" + (i === mo ? ' style="background:var(--amber-soft)"' : "") + "><td>" + MOIS[i] + '</td><td class="r num ' + cls(x.avg) + '">' + pct(x.avg) + '</td><td class="r num ' + cls(x.med) + '">' + pct(x.med) + '</td><td class="r num">' + x.win + " % <small>(" + x.n + ')</small></td><td class="r num ' + (c == null ? "" : cls(c)) + '">' + (c == null ? "–" : pct(c)) + "</td></tr>";
+    }).join("") + "</tbody>";
+    if (s.weekly) {
+      var wm = Math.max.apply(null, s.weekly.map(function (x) { return x ? Math.abs(x.avg) : 0; })) || 1, cw = isoWeek(new Date());
+      var cell = function (x, i) { return x ? '<i title="Semaine ' + (i + 1) + " : " + pct(x.avg) + ", positive " + x.win + ' % des années" style="background:' + (x.avg >= 0 ? "rgba(61,220,151," : "rgba(255,92,79,") + (0.15 + 0.85 * Math.abs(x.avg) / wm).toFixed(2) + ")" + (i + 1 === cw ? ";outline:1px solid var(--amber)" : "") + '"></i>' : "<i></i>"; };
+      $("seasWeek").innerHTML = '<p class="note" style="border-top:0">Par semaine de l\'année (1 à 52), semaine actuelle encadrée : vert = semaine en moyenne positive.</p><div class="wk">' + s.weekly.slice(0, 26).map(cell).join("") + '</div><div class="wk">' + s.weekly.slice(26).map(function (x, i) { return cell(x, i + 26); }).join("") + "</div>";
+    } else $("seasWeek").innerHTML = '<p class="note">Pas de saisonnalité hebdomadaire pour l\'or : aucune source gratuite de clôtures quotidiennes sur 20 ans n\'a été validée.</p>';
+  }
+  function isoWeek(d) { var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), dn = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - dn); var y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); }
+
+  /* ---------- Calendrier économique ---------- */
+  var CAL_TYPES = [["", "Tous"], ["CPI|PCE|PPI|Inflation|HICP", "Inflation"], ["Non-Farm|Employment|Unemployment|Claims|Payroll|Jobless|Earnings", "Emploi"], ["GDP", "PIB"],
+    ["Rate|FOMC|Monetary|Cash Rate|Press Conference|Minutes|Statement|Speaks", "Banques centrales"], ["PMI|ISM", "PMI"], ["Retail Sales", "Ventes au détail"], ["Confidence|Sentiment", "Confiance"]];
+  var CAL_CUR = ["USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD", "CNY"], calCur = {};
+  CAL_CUR.forEach(function (c) { calCur[c] = c !== "CNY"; });
+  function numOf(s) { var m = /-?\d+(\.\d+)?/.exec(String(s || "").replace(",", ".")); return m ? parseFloat(m[0]) : null; }
+  function initCal() {
+    $("calType").innerHTML = CAL_TYPES.map(function (t, i) { return '<option value="' + i + '">' + t[1] + "</option>"; }).join("");
+    $("calCur").innerHTML = CAL_CUR.map(function (c) { return '<label class="chk"><input type="checkbox" data-c="' + c + '"' + (calCur[c] ? " checked" : "") + ">" + c + "</label>"; }).join(" ");
+    ["calImp", "calType", "calPast"].forEach(function (id) { $(id).addEventListener("change", renderCal); });
+    $("calQ").addEventListener("input", renderCal);
+    $("calCur").addEventListener("change", function (e) { var c = e.target.getAttribute("data-c"); if (c) { calCur[c] = e.target.checked; renderCal(); } });
+    $("calTV").addEventListener("click", function () {
+      tvEmbed($("calTVBox"), "embed-widget-events.js", { colorTheme: "dark", isTransparent: true, width: "100%", height: 520, locale: "fr", importanceFilter: "0,1", countryFilter: "us,eu,gb,jp,ch,au,ca,nz,cn" }, "Calendrier TradingView");
+      this.disabled = true;
+    });
+  }
+  function renderCal() {
+    var c = AUTO && AUTO.calendar, tb = $("calTbl");
+    if (!c || !c.events || !c.events.length) { tb.innerHTML = '<tbody><tr><td>Pas de calendrier du robot pour l\'instant. Utilisez le bouton TradingView ci-dessous ou <a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">Forex Factory</a>.</td></tr></tbody>'; $("calMeta").textContent = "robot : en attente"; $("calSurp").innerHTML = ""; return; }
+    var imp = $("calImp").value, ty = CAL_TYPES[+$("calType").value][0], rx = ty ? new RegExp(ty, "i") : null, q = $("calQ").value.trim().toLowerCase(), past = $("calPast").checked, now = Date.now();
+    var rows = c.events.filter(function (e) {
+      var t = Date.parse(e.d);
+      if (!past && t < now - 2 * 36e5) return false;
+      if (imp === "High" && e.i !== "High") return false;
+      if (imp === "Medium" && e.i !== "High" && e.i !== "Medium") return false;
+      if (calCur[e.c] === false || (calCur[e.c] === undefined && e.c !== "All")) return false;
+      if (rx && !rx.test(e.t)) return false;
+      if (q && e.t.toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    var day = "";
+    tb.innerHTML = '<thead><tr><th>Heure</th><th>Dev.</th><th>Événement</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r col-core">Précédent</th></tr></thead><tbody>' + (rows.length ? rows.map(function (e) {
+      var t = new Date(e.d), dk = t.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }), h = "";
+      if (dk !== day) { day = dk; h += '<tr class="grp"><td colspan="6" style="background:var(--panel2);color:var(--amber);font:600 11px var(--font-mono)">' + dk + "</td></tr>"; }
+      var a = numOf(e.a), f = numOf(e.f), sc = a !== null && f !== null && a !== f ? (a > f ? "up" : "down") : "";
+      return h + '<tr class="calrow' + (Date.parse(e.d) < now ? " past" : "") + '"><td class="num">' + (isNaN(t) ? "–" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })) + '</td><td><span class="imp ' + esc(e.i) + '" title="Impact ' + esc(e.i) + '"></span>' + esc(e.c) + "</td><td style=\"white-space:normal\">" + esc(e.t) + '</td><td class="r num ' + sc + '">' + esc(e.a || "") + '</td><td class="r num">' + esc(e.f || "") + '</td><td class="r num col-core">' + esc(e.p || "") + "</td></tr>";
+    }).join("") : '<tr><td colspan="6">Aucun événement avec ces filtres.</td></tr>') + "</tbody>";
+    var fa = ageDays(c.fetched.slice(0, 10)), st = fa <= 1 ? "ok" : fa <= 8 ? "old" : "ko";
+    $("calMeta").innerHTML = "relevé " + shortD(c.fetched.slice(0, 10)) + " " + badge(st);
+    renderSurprise(c.events);
+  }
+  /* Indice de surprise maison : réel vs prévu sur les publications de la semaine (pas l'indice Citi, payant). */
+  function renderSurprise(evs) {
+    var inv = /Unemployment|Claims|Jobless/i, sc = {};
+    evs.forEach(function (e) {
+      if (e.i !== "High" && e.i !== "Medium") return;
+      var a = numOf(e.a), f = numOf(e.f); if (a === null || f === null || a === f) return;
+      var s = (a > f ? 1 : -1) * (inv.test(e.t) ? -1 : 1);
+      sc[e.c] = sc[e.c] || { s: 0, n: 0 }; sc[e.c].s += s; sc[e.c].n++;
+    });
+    var ks = Object.keys(sc);
+    $("calSurp").innerHTML = ks.length ? '<p class="note">Surprises de la période (maison, impact moyen et fort) : ' + ks.map(function (k) { var x = sc[k]; return "<b>" + k + "</b> <span class=\"" + cls(x.s) + "\">" + (x.s > 0 ? "+" : x.s < 0 ? "−" : "") + Math.abs(x.s) + "</span>/" + x.n; }).join(" · ") + ". Positif = chiffres meilleurs que prévu pour la devise (chômage inversé). Ce n'est pas l'indice de surprise Citi.</p>" : "";
+  }
+
+  /* ---------- Widgets TradingView à la demande ---------- */
+  function tvEmbed(box, file, cfg, label) {
+    box.innerHTML = ""; box.className = "tv-box";
+    var wrap = document.createElement("div"); wrap.className = "tradingview-widget-container";
+    var w = document.createElement("div"); w.className = "tradingview-widget-container__widget"; wrap.appendChild(w);
+    var s = document.createElement("script"); s.async = true; s.src = "https://s3.tradingview.com/external-embedding/" + file; s.innerHTML = JSON.stringify(cfg);
+    var fb = function () { if (box.querySelector("iframe") || box.querySelector(".tv-fb")) return; var d = document.createElement("div"); d.className = "tv-fb"; d.textContent = label + " non chargé (réseau, bloqueur de publicités ou aperçu protégé)."; box.appendChild(d); };
+    s.onerror = fb; wrap.appendChild(s); box.appendChild(wrap); setTimeout(fb, 10000);
+  }
+
+  /* ---------- Carte thermique, corrélations, volatilité (taux BCE) ---------- */
+  var hmWin = 1;
+  function renderHeat() {
+    var ds = dates(), n = ds.length; if (n < 3) return;
+    var i0 = Math.max(0, n - 1 - hmWin), a = state.data[ds[i0]], b = state.data[ds[n - 1]], C = ORDER;
+    var h = '<thead><tr><th class="h">Base \\ Cote</th>' + C.map(function (c) { return "<th>" + c + "</th>"; }).join("") + "</tr></thead><tbody>";
+    C.forEach(function (r) {
+      h += '<tr><th class="h">' + r + "</th>";
+      C.forEach(function (c) {
+        if (r === c) { h += '<td style="color:var(--muted)">·</td>'; return; }
+        var v = ((R(b, c) / R(b, r)) / (R(a, c) / R(a, r)) - 1) * 100, k = Math.min(1, Math.abs(v) / (hmWin === 1 ? 0.8 : hmWin === 5 ? 1.8 : 3.5));
+        h += '<td title="' + r + "/" + c + " : " + pct(v) + '" style="background:' + (v >= 0 ? "rgba(61,220,151," : "rgba(255,92,79,") + (0.08 + 0.6 * k).toFixed(2) + ')">' + (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2).replace(".", ",") + "</td>";
+      });
+      h += "</tr>";
+    });
+    $("hmTbl").innerHTML = h + "</tbody>";
+    $("hmNote").innerHTML = "Variation de la devise en ligne face à la devise en colonne, du " + shortD(ds[i0]) + " au " + shortD(ds[n - 1]) + " (fixings BCE" + (state.live ? ", à jour" : ", instantané hors ligne") + "). Ligne très verte = devise forte partout.";
+  }
+  function rets(p) { var s = series(p), out = []; for (var i = 1; i < s.length; i++) out.push(Math.log(s[i].v / s[i - 1].v)); return out; }
+  function corr(x, y) { var n = Math.min(x.length, y.length); x = x.slice(-n); y = y.slice(-n); var mx = mean(x), my = mean(y), sxy = 0, sx = 0, sy = 0; for (var i = 0; i < n; i++) { sxy += (x[i] - mx) * (y[i] - my); sx += Math.pow(x[i] - mx, 2); sy += Math.pow(y[i] - my, 2); } return sx && sy ? sxy / Math.sqrt(sx * sy) : 0; }
+  function renderCorr() {
+    var ds = dates(); if (ds.length < 10) return;
+    var R_ = {}; PAIRS.forEach(function (p) { R_[p.id] = rets(p); });
+    var h = '<thead><tr><th class="h"></th>' + PAIRS.map(function (p) { return "<th>" + p.id.slice(0, 3) + "<br>" + p.id.slice(3) + "</th>"; }).join("") + "</tr></thead><tbody>";
+    PAIRS.forEach(function (p) {
+      h += '<tr><th class="h">' + p.n + "</th>";
+      PAIRS.forEach(function (q) {
+        var c = p === q ? 1 : corr(R_[p.id], R_[q.id]);
+        h += '<td style="background:' + (c >= 0 ? "rgba(242,176,30," : "rgba(77,163,255,") + (Math.abs(c) * 0.55).toFixed(2) + ')">' + (p === q ? "1" : c.toFixed(2).replace(".", ",").replace("-", "−")) + "</td>";
+      });
+      h += "</tr>";
+    });
+    $("corTbl").innerHTML = h + "</tbody>";
+    $("corMeta").textContent = (ds.length - 1) + " variations · " + shortD(ds[0]) + " → " + shortD(ds[ds.length - 1]);
+  }
+  function renderVol() {
+    var ds = dates();
+    if (ds.length < 22) { $("volTbl").innerHTML = '<tbody><tr><td>Pas assez de fixings chargés (' + ds.length + ' points, il en faut 22). Le calcul apparaît dès que les taux BCE du jour sont chargés.</td></tr></tbody>'; return; }
+    $("volTbl").innerHTML = '<thead><tr><th>Paire</th><th class="r">Vol. annualisée</th><th class="r">Moy. / jour</th><th class="r">Stop indicatif (×1,5)</th></tr></thead><tbody>' + PAIRS.map(function (p) {
+      var s = series(p).slice(-21), r = [], ad = [];
+      for (var i = 1; i < s.length; i++) { r.push(Math.log(s[i].v / s[i - 1].v)); ad.push(Math.abs(s[i].v - s[i - 1].v) / pipSize(p)); }
+      var m = mean(r), sd = Math.sqrt(r.reduce(function (a, x) { return a + Math.pow(x - m, 2); }, 0) / (r.length - 1)), mov = mean(ad);
+      return "<tr><td><b>" + p.n + '</b></td><td class="r num">' + fmt(sd * Math.sqrt(252) * 100, 1) + ' %</td><td class="r num">' + fmt(mov, 0) + ' pips</td><td class="r num">' + fmt(mov * 1.5, 0) + " pips</td></tr>";
+    }).join("") + "</tbody>";
+  }
+
+  /* ---------- Carte du monde ---------- */
+  var WMAP = null, mapSel = "", EZ = ["AUT", "BEL", "BGR", "HRV", "CYP", "EST", "FIN", "FRA", "DEU", "GRC", "IRL", "ITA", "LVA", "LTU", "LUX", "MLT", "NLD", "PRT", "SVK", "SVN", "ESP"];
+  var MAJ = { USA: "USD", GBR: "GBP", JPN: "JPY", CHE: "CHF", AUS: "AUD", CAN: "CAD", NZL: "NZD" };
+  var MAPIND = [["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"],
+    ["inf_f", "Inflation, prévision FMI", " %"], ["gdp_f", "Croissance, prévision FMI", " %"]];
+  function loadMap() {
+    var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "world-map.json"); }), p = Promise.reject(new Error("start"));
+    urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.c) throw new Error("format"); return j; }); }); });
+    return p.then(function (j) { WMAP = j; drawMap(); }).catch(function (e) { $("mapBox").innerHTML = '<p class="note">Carte non chargée (' + esc(e && e.message) + ").</p>"; $("mapMeta").textContent = "indisponible"; });
+  }
+  function initMap() {
+    $("mapInd").innerHTML = MAPIND.map(function (m, i) { return '<option value="' + i + '">' + m[1] + "</option>"; }).join("");
+    $("mapInd").addEventListener("change", drawMap);
+    $("mapCty").addEventListener("change", function () { mapSel = this.value; drawMap(); });
+    $("mapBox").addEventListener("click", function (e) { var a = e.target.getAttribute && e.target.getAttribute("data-c"); if (a) { mapSel = a; $("mapCty").value = a; drawMap(); } });
+  }
+  function drawMap() {
+    if (!WMAP) return;
+    var W = (AUTO && AUTO.world) || {}, mi = MAPIND[+$("mapInd").value], key = mi[0];
+    var vals = WMAP.c.map(function (c) { var x = W[c[0]] && W[c[0]][key]; return x ? x[0] : null; }).filter(function (v) { return v !== null; }).sort(function (a, b) { return a - b; });
+    var q = function (p) { return vals.length ? vals[Math.floor(p * (vals.length - 1))] : 0; }, cuts = [q(0.2), q(0.4), q(0.6), q(0.8)];
+    var pal = key === "unemp" || key === "inf" || key === "inf_f" || key === "lend" ? ["#2a3b2f", "#3f5a33", "#7a6a1e", "#a8521f", "#c4382e"] : ["#c4382e", "#a8521f", "#7a6a1e", "#3f5a33", "#2fb27a"];
+    var col = function (v) { if (v === null) return "#1a1a1d"; var i = 0; while (i < 4 && v > cuts[i]) i++; return pal[i]; };
+    var cty = $("mapCty");
+    if (cty.options.length <= 1) cty.innerHTML += WMAP.c.filter(function (c) { return c[0]; }).sort(function (a, b) { return a[1].localeCompare(b[1], "fr"); }).map(function (c) { return '<option value="' + c[0] + '">' + esc(c[1]) + "</option>"; }).join("");
+    $("mapBox").innerHTML = '<svg viewBox="0 0 ' + WMAP.w + " " + WMAP.h + '" role="img" aria-label="Carte du monde : ' + esc(mi[1]) + '">' + WMAP.c.map(function (c) {
+      var x = W[c[0]] && W[c[0]][key];
+      return '<path d="' + c[2] + '" fill="' + col(x ? x[0] : null) + '" data-c="' + c[0] + '"' + (c[0] && c[0] === mapSel ? ' class="on"' : "") + "><title>" + esc(c[1]) + (x ? " : " + fmt(x[0], 1) + mi[2] + " (" + x[1] + ")" : " : pas de donnée") + "</title></path>";
+    }).join("") + "</svg>";
+    $("mapLeg").innerHTML = vals.length ? pal.map(function (p, i) { return "<span><i style=\"background:" + p + '"></i> ' + (i === 0 ? "≤ " + fmt(cuts[0], 1) : i === 4 ? "> " + fmt(cuts[3], 1) : fmt(cuts[i - 1], 1) + " à " + fmt(cuts[i], 1)) + "</span>"; }).join("") + '<span><i style="background:#1a1a1d"></i> pas de donnée</span>' : "Aucune donnée mondiale du robot pour l'instant.";
+    var srcs = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return /^(wb|imf)\./.test(s.id); }) : [], okn = srcs.filter(function (s) { return s.ok; }).length;
+    $("mapMeta").textContent = srcs.length ? okn + "/" + srcs.length + " séries chargées" : "robot : en attente";
+    if (mapSel) showCountry(mapSel);
+  }
+  function showCountry(a3) {
+    var W = (AUTO && AUTO.world) || {}, x = W[a3] || {}, c = WMAP.c.filter(function (k) { return k[0] === a3; })[0], name = c ? c[1] : a3;
+    var h = "<h3>" + esc(name) + "</h3><div class=\"kv\">" + MAPIND.map(function (m) { var v = x[m[0]]; return "<span>" + m[1] + "</span><b>" + (v ? fmt(v[0], 1) + m[2] + " <small>(" + v[1] + ")</small>" : "–") + "</b>"; }).join("");
+    var cur = MAJ[a3] || (EZ.indexOf(a3) >= 0 ? "EUR" : null);
+    if (cur) { var m = MACRO.filter(function (k) { return k.c === cur; })[0], p = policyRate(m); h += "<span>Taux directeur (" + m.b + ")</span><b>" + fmt(p.v, 2) + " % <small>" + p.src + ", " + shortD(String(p.d).slice(0, 10)) + "</small></b>"; }
+    $("mapInfo").innerHTML = h + "</div>" + (Object.keys(x).length ? "" : '<p class="hint">Aucune donnée du robot pour ce pays (ou robot pas encore passé).</p>');
+  }
+
+  /* ---------- Consensus des banques (recherche du 30 oct. 2026, à vérifier) ---------- */
+  var CONS = [
+    { b: "Goldman Sachs", a: "Or", v: "4 650 $ fin 2026 · 5 400 $ fin 2027", d: "2026-09-23", u: "https://investinglive.com/commodities/icymi-goldman-trims-end-2026-gold-forecast-to-4-650-but-holds-5-400-target-for-2027/", s: "investingLive" },
+    { b: "JPMorgan", a: "Or", v: "4 500 $ en moyenne au T4 2026", d: "2026-07-06", u: "https://www.kitco.com/news/off-the-wire/2026-07-06/jpmorgan-sees-4500-gold-price-fourth-quarter-says-risks-downside", s: "Kitco / Reuters" },
+    { b: "Morgan Stanley", a: "Or", v: "au-dessus de 5 000 $ au S2 2027 · plancher vu vers 4 000 $", d: "2026-09-30", u: "https://www.kitco.com/news/article/2026-09-30/gold-price-will-break-5000oz-h2-2027-and-silvers-run-120-was-driven-more", s: "Kitco" },
+    { b: "Citi", a: "Or", v: "4 800 $ à 0–3 mois · 5 000 $ à 6–12 mois", d: "2026-08-25", u: "https://investinglive.com/commodities/citi-lifts-near-term-gold-target-to-4-800-jpmorgan-flags-5k/", s: "investingLive" }
+  ];
+  function renderCons() {
+    $("consTbl").innerHTML = '<thead><tr><th>Banque</th><th>Actif</th><th>Prévision publiée</th><th>Date</th><th>Source</th></tr></thead><tbody>' + CONS.map(function (c) {
+      var a = ageDays(c.d), q = a <= 45 ? "ok" : a <= 120 ? "old" : "ko";
+      return "<tr><td><b>" + c.b + "</b></td><td>" + c.a + '</td><td style="white-space:normal">' + c.v + "</td><td>" + shortD(c.d) + " " + badge(q, q === "ok" ? "récent" : q === "old" ? "ancien" : "périmé") + ' <span class="pill warn">à vérifier</span></td><td><a href="' + c.u + '" target="_blank" rel="noopener">' + c.s + "</a></td></tr>";
+    }).join("") + "</tbody>";
+    $("consMan").innerHTML = '<p class="note">Devises et taux : pas de prévision datée et vérifiable trouvée gratuitement le 30 oct. 2026. Ajoutez-les vous-même dès que vous lisez un article (valeur, date, lien) :</p>' +
+      [["cons-eur", "EUR/USD (banque)", "ex. GS 1,15 fin 2026"], ["cons-jpy", "USD/JPY (banque)", "ex. MS 150 T1 2027"], ["cons-gbp", "GBP/USD (banque)", ""], ["cons-fed", "Taux Fed fin 2026", "ex. JPM 3,50 %"], ["cons-xau2", "Or (autre banque)", "ex. UBS 5 000 $"]].map(function (x) { return manRow(x[0], x[1], x[2]); }).join("");
+  }
+
+  /* ---------- Comités ---------- */
+  var COMLINK = { Fed: "https://www.federalreserve.gov/monetarypolicy/fomc.htm", BCE: "https://www.ecb.europa.eu/press/pr/html/index.en.html", "Banque d'Angleterre": "https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/monetary-policy-summary-and-minutes",
+    "Banque du Japon": "https://www.boj.or.jp/en/mopo/mpmdeci/index.htm", BNS: "https://www.snb.ch/en/", RBA: "https://www.rba.gov.au/monetary-policy/", "Banque du Canada": "https://www.bankofcanada.ca/core-functions/monetary-policy/", RBNZ: "https://www.rbnz.govt.nz/monetary-policy" };
+  function renderCom() {
+    $("comTbl").innerHTML = '<thead><tr><th>Banque</th><th>Dernière décision</th><th>Orientation déduite</th><th>Ma lecture (datée)</th></tr></thead><tbody>' + MACRO.map(function (m) {
+      var o = /^\+/.test(m.last) ? ["restrictive", "down"] : /^[−-]/.test(m.last) ? ["accommodante", "up"] : ["neutre", ""], k = "com-" + m.c, me = MAN[k];
+      return "<tr><td><b>" + m.b + "</b> <small>" + m.c + '</small><br><a href="' + COMLINK[m.b] + '" target="_blank" rel="noopener"><small>communiqués officiels</small></a></td><td>' + m.last + " <small>" + m.when + "</small></td><td><span class=\"tag" + (o[0] === "restrictive" ? " hike" : "") + "\">" + o[0] + '</span> <span class="pill warn">à vérifier</span></td><td>' +
+        '<select data-com="' + m.c + '" aria-label="Ma lecture pour ' + m.b + '"><option value="">—</option>' + ["hawkish (restrictif)", "neutre", "dovish (accommodant)"].map(function (v) { return "<option" + (me && me.v === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select>" +
+        (me ? " <small>" + esc(me.d) + "</small>" : "") + "</td></tr>";
+    }).join("") + "</tbody>";
+  }
+  document.addEventListener("change", function (e) {
+    var c = e.target.getAttribute && e.target.getAttribute("data-com"); if (!c) return;
+    if (e.target.value) MAN["com-" + c] = { v: e.target.value, d: todayIso(), s: "" }; else delete MAN["com-" + c];
+    saveMan(); renderCom();
+  });
+
+  /* ---------- Probabilités de taux ---------- */
+  function renderPM() {
+    var m = AUTO && AUTO.markets, b = $("pmBody"), h = "";
+    var srcs = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return /^pm\./.test(s.id); }) : [];
+    if (m && m.kalshi && m.kalshi.length) {
+      var ev = {}; m.kalshi.forEach(function (x) { (ev[x.ev] = ev[x.ev] || []).push(x); });
+      Object.keys(ev).sort().slice(0, 4).forEach(function (k) {
+        var L = ev[k].filter(function (x) { return x.p !== null; }).sort(function (a, c) { return c.p - a.p; }).slice(0, 6);
+        if (!L.length) return;
+        h += '<div class="pad"><b class="mono">' + esc(L[0].t || k) + "</b> <small class=\"d\">Kalshi · clôture " + esc(L[0].close) + '</small></div><div class="tbl"><table><tbody>' + L.map(function (x) {
+          return "<tr><td style=\"white-space:normal\">" + esc(x.o || x.tk) + '</td><td style="width:45%"><div class="pbar"><i style="width:' + (x.p * 100).toFixed(0) + '%"></i><span>' + (x.p * 100).toFixed(0) + " %</span></div></td></tr>";
+        }).join("") + "</tbody></table></div>";
+      });
+    }
+    if (m && m.polymarket && m.polymarket.length) {
+      var pe = {}; m.polymarket.forEach(function (x) { (pe[x.ev] = pe[x.ev] || []).push(x); });
+      Object.keys(pe).slice(0, 3).forEach(function (k) {
+        var L = pe[k].filter(function (x) { return x.p !== null; }).sort(function (a, c) { return c.p - a.p; }).slice(0, 6);
+        if (!L.length) return;
+        h += '<div class="pad"><b class="mono">' + esc(k) + "</b> <small class=\"d\">Polymarket · fin " + esc(L[0].close) + '</small></div><div class="tbl"><table><tbody>' + L.map(function (x) {
+          return "<tr><td style=\"white-space:normal\">" + esc(x.q) + '</td><td style="width:45%"><div class="pbar"><i style="width:' + (x.p * 100).toFixed(0) + '%"></i><span>' + (x.p * 100).toFixed(0) + " %</span></div></td></tr>";
+        }).join("") + "</tbody></table></div>";
+      });
+    }
+    var okS = srcs.filter(function (s) { return s.ok; });
+    $("pmMeta").innerHTML = okS.length ? "relevé " + shortD(okS[0].asof) + " " + badge(fresh(okS[0].asof, "daily")) : (srcs.length ? badge("ko") : "robot : en attente");
+    b.innerHTML = h || '<p class="note pad">Aucun marché de prédiction récupéré par le robot. Consultez <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a> et notez le chiffre ci-dessous.</p>';
+    $("pmMan").innerHTML = '<p class="note">Relevé manuel CME FedWatch (probabilité de l\'issue la plus probable à la prochaine réunion) :</p>' + manRow("pm-fedwatch", "FedWatch", "ex. maintien 72 %") + manRow("pm-ecb", "BCE (€STR / presse)", "ex. baisse 30 %");
+  }
+
+  /* ---------- Sentiment ---------- */
+  function renderSent() {
+    $("sentLinks").innerHTML = [["Myfxbook", "https://www.myfxbook.com/community/outlook", "Positions des comptes reliés, par paire."], ["IG", "https://www.ig.com/en/trading-strategies/client-sentiment", "Sentiment des clients IG."],
+      ["Dukascopy SWFX", "https://www.dukascopy.com/swiss/english/marketwatch/sentiment/", "Indice de sentiment de la banque suisse."], ["Forex Factory", "https://www.forexfactory.com/market/", "Positions des traders du site."]]
+      .map(function (x) { return '<a href="' + x[1] + '" target="_blank" rel="noopener"><b>' + x[0] + "</b><span>" + x[2] + "</span></a>"; }).join("");
+    $("sentMan").innerHTML = [["sent-xau", "XAU/USD % acheteurs"], ["sent-eur", "EUR/USD % acheteurs"], ["sent-gbp", "GBP/USD % acheteurs"], ["sent-jpy", "USD/JPY % acheteurs"]].map(function (x) { return manRow(x[0], x[1], "ex. 64 %"); }).join("");
+  }
+
+  /* ---------- Outils : pivots et convertisseur ---------- */
+  function renderPiv() {
+    var k = state.gold;
+    if (!k || k.length < 2) { $("pivTbl").innerHTML = ""; $("pivNote").textContent = "Cours de l'or indisponible."; return; }
+    var y = k[k.length - 2], P = (y.h + y.l + y.c) / 3, rg = y.h - y.l;
+    var L = [["R3", y.h + 2 * (P - y.l)], ["R2", P + rg], ["R1", 2 * P - y.l], ["Pivot", P], ["S1", 2 * P - y.h], ["S2", P - rg], ["S3", y.l - 2 * (y.h - P)]], px = k[k.length - 1].c;
+    $("pivTbl").innerHTML = "<tbody>" + L.map(function (x) { return "<tr" + (x[0] === "Pivot" ? ' style="background:var(--amber-soft)"' : "") + "><td><b>" + x[0] + '</b></td><td class="r num">' + fmtN(x[1], 2) + '</td><td class="r num ' + cls(x[1] - px) + '">' + (x[1] >= px ? "+" : "−") + fmtN(Math.abs(x[1] - px), 2) + "</td></tr>"; }).join("") + "</tbody>";
+    $("pivNote").textContent = "Pivots classiques calculés sur la bougie du " + tzDate(y.t) + " (PAXG, proxy de l'or). Écart affiché par rapport au dernier cours " + fmtN(px, 2) + ".";
+  }
+  function initConv() {
+    var o = CUR.map(function (c) { return '<option value="' + c + '">' + c + "</option>"; }).join("");
+    $("cvFrom").innerHTML = o; $("cvTo").innerHTML = o; $("cvFrom").value = "USD"; $("cvTo").value = "EUR";
+    ["cvAmt", "cvFrom", "cvTo"].forEach(function (id) { $(id).addEventListener("input", conv); $(id).addEventListener("change", conv); });
+    conv();
+  }
+  function conv() {
+    if (!$("cvFrom").options.length) return;
+    var ds = dates(), r = state.data[ds[ds.length - 1]], a = num("cvAmt"), f = $("cvFrom").value, t = $("cvTo").value;
+    if (!(a >= 0)) { $("cvOut").value = ""; return; }
+    var v = a * R(r, t) / R(r, f);
+    $("cvOut").value = fmtN(v, t === "JPY" ? 0 : 2) + " " + t;
+    $("cvNote").textContent = "Taux de référence BCE du " + shortD(ds[ds.length - 1]) + (state.live ? "" : " (instantané hors ligne)") + ". Votre banque ou courtier applique une marge.";
+  }
+
+  /* ---------- Rendu groupé ---------- */
+  function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
+  function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
+  Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-hw]"), function (b, i, all) {
+    b.addEventListener("click", function () {
+      hmWin = parseInt(b.getAttribute("data-hw"), 10);
+      Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-hw]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      renderHeat();
+    });
+  });
+  $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
+  $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
+
+  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
@@ -1369,7 +2119,8 @@ table.perf th, table.perf td { padding: 7px 10px; }
   $("agendaMore").addEventListener("click", function () { agendaAll = !agendaAll; renderAgenda(); });
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
-  initTV(); refreshGold(); renderAuto(); loadAuto(); setInterval(loadAuto, 10 * 60 * 1000);
+  initCmd(); initCal(); initMap(); initConv();
+  initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });
   $("gChart").addEventListener("pointermove", function (e) { if (gCur) gShow(idx(e, $("gChart"), gCur.W, gCur.L, gCur.Rm, gCur.s.length), false); });
