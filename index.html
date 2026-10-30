@@ -596,7 +596,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       <div class="mapwrap" id="mapBox"></div>
       <div class="legend" id="mapLeg"></div>
       <div class="cinfo" id="mapInfo"><p class="hint">Touchez un pays (ou choisissez-le dans la liste) pour voir ses chiffres.</p></div>
-      <p class="note">Sources : Banque mondiale (dernière valeur annuelle disponible, l'année est indiquée) et FMI (prévisions des Perspectives de l'économie mondiale). Contours : Natural Earth (domaine public). Taux directeurs des 8 grandes banques : voir « Banques centrales ».</p>
+      <p class="note">Source : Banque mondiale (dernière valeur annuelle disponible, l'année est indiquée à côté de chaque chiffre). Les prévisions du FMI ne sont pas affichées : son site refuse les robots. Contours : Natural Earth (domaine public). Taux directeurs des 8 grandes banques : voir « Banques centrales ».</p>
     </section>
 
     <section class="panel" id="consensus">
@@ -1538,7 +1538,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     var sp = fred("T10Y2Y"), h = '<div class="tiles">' +
       tile("US 10 ans", "DGS10", 2, " %") + tile("US 2 ans", "DGS2", 2, " %") +
       tile("Écart 10a − 2a", "T10Y2Y", 2, " pt") + tile("Réel 10 ans (TIPS)", "DFII10", 2, " %") +
-      tile("VIX", "VIXCLS", 1, "") + tile("Dollar large", "DTWEXBGS", 1, "") + tile("Spread crédit HY", "BAMLH0A0HYM2", 2, " %") + "</div>";
+      tile("VIX", "VIXCLS", 1, "") + (fred("DTWEXBGS") || !fred("DXY") ? tile("Dollar large", "DTWEXBGS", 1, "") : tile("Dollar DXY", "DXY", 2, "")) + tile("Spread crédit HY", "BAMLH0A0HYM2", 2, " %") + "</div>";
     var l = [], dr = chg5("DFII10"), v = fred("VIXCLS");
     if (dr !== null) l.push(dr > 0.1 ? "Rendement réel en hausse de " + fmt(dr, 2) + " pt sur 5 séances : plutôt <b>défavorable à l'or</b>." : dr < -0.1 ? "Rendement réel en baisse de " + fmt(-dr, 2) + " pt sur 5 séances : plutôt <b>favorable à l'or</b>." : "Rendement réel stable sur 5 séances : pas de signal pour l'or.");
     if (sp) l.push(sp.v < 0 ? "Courbe <b>inversée</b> (10a sous 2a) : le marché anticipe un ralentissement ou des baisses de taux." : "Courbe <b>positive</b> (10a au-dessus de 2a).");
@@ -1734,8 +1734,9 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     var f = chgN("DGS2", 20);
     if (f) add("Anticipations Fed", f.d < -0.1 ? 1 : f.d > 0.1 ? -1 : 0, (f.d >= 0 ? "+" : "−") + fmt(Math.abs(f.d), 2) + " pt / 20 séances", "US 2 ans : en baisse = marché attend des baisses de taux", f.asof, "daily");
     else add("Anticipations Fed", null, "indisponible", "FRED DGS2", null);
-    var d = chgN("DTWEXBGS", 20);
-    if (d) add("Dollar", d.p < -1 ? 1 : d.p > 1 ? -1 : 0, pct(d.p) + " / 20 séances", "Dollar large : en baisse = favorable à l'or", d.asof, "daily");
+    var d = chgN("DTWEXBGS", 20), dn = "Dollar large";
+    if (!d) { d = chgN("DXY", 20); dn = "DXY (recalculé, taux BCE)"; }
+    if (d) add("Dollar", d.p < -1 ? 1 : d.p > 1 ? -1 : 0, pct(d.p) + " / 20 séances", dn + " : en baisse = favorable à l'or", d.asof, "daily");
     else add("Dollar", null, "indisponible", "FRED DTWEXBGS", null);
     if (g && g.hist && g.hist.length >= 5) {
       var h = g.hist, c4 = h[h.length - 1] - h[h.length - 5], th = Math.abs(h[h.length - 1]) * 0.05;
@@ -1776,7 +1777,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       if (!f) return "<tr><td><b>" + x[1] + '</b></td><td class="r">–</td><td class="r">–</td><td>' + badge("ko") + '</td><td class="col-core"><small>' + x[4] + "</small></td></tr>";
       var val = x[0] === "WALCL" ? f.v / 1000 : f.v, c = chgN(x[0], 20), dv = c ? (x[0] === "WALCL" ? c.d / 1000 : c.d) : null;
       return "<tr><td><b>" + x[1] + '</b></td><td class="r num">' + fmtN(val, x[2]) + x[3] + '</td><td class="r num">' + (dv === null ? "–" : (dv >= 0 ? "+" : "−") + fmtN(Math.abs(dv), x[2] || 0)) + "</td><td>" + shortD(f.asof) + (f.via ? " <small>" + esc(f.via) + "</small>" : "") + " " + badge(fresh(f.asof, kind)) + '</td><td class="col-core" style="white-space:normal"><small>' + x[4] + "</small></td></tr>";
-    }).join("") + '</tbody></table></div><p class="note">Sélection issue de la recherche : facteurs du modèle du World Gold Council (taux réels, dollar, inflation anticipée, volatilité implicite), conditions financières et crédit suivis par les desks. Source : FRED, sans clé. Non disponibles gratuitement : indice de surprise économique Citi, risk reversals d\'options, flux d\'ETF quotidiens.</p>';
+    }).join("") + '</tbody></table></div><p class="note">Sélection issue de la recherche : facteurs du modèle du World Gold Council (taux réels, dollar, inflation anticipée, volatilité implicite), conditions financières et crédit suivis par les desks. Source : FRED, sans clé. FRED refuse les serveurs de GitHub : les taux viennent alors du Trésor américain, la volatilité du CBOE, les conditions financières de la Fed de Chicago, et l\'inflation anticipée est calculée (taux nominal − taux réel), la source est indiquée sous chaque date. Sans remplaçant gratuit (affichés en échec) : spreads de crédit ICE, stress financier, bilan de la Fed. Non disponibles gratuitement : indice de surprise Citi, risk reversals d\'options, flux d\'ETF quotidiens.</p>';
   }
 
   /* ---------- Écarts de taux ---------- */
@@ -1953,8 +1954,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   /* ---------- Carte du monde ---------- */
   var WMAP = null, mapSel = "", EZ = ["AUT", "BEL", "BGR", "HRV", "CYP", "EST", "FIN", "FRA", "DEU", "GRC", "IRL", "ITA", "LVA", "LTU", "LUX", "MLT", "NLD", "PRT", "SVK", "SVN", "ESP"];
   var MAJ = { USA: "USD", GBR: "GBP", JPN: "JPY", CHE: "CHF", AUS: "AUD", CAN: "CAD", NZL: "NZD" };
-  var MAPIND = [["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"],
-    ["inf_f", "Inflation, prévision FMI", " %"], ["gdp_f", "Croissance, prévision FMI", " %"]];
+  var MAPIND = [["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"]];
   function loadMap() {
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "world-map.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.c) throw new Error("format"); return j; }); }); });

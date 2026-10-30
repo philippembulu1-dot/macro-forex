@@ -270,12 +270,16 @@ def put(data, sid, obs, via):
                          "hist": [[d, v] for d, v in obs], "via": via}
 
 
+NOMINAL, REAL = {}, {}
+
+
 def fallbacks(data):
     F = data["fred"]
     need = lambda *ids: [i for i in ids if i not in F]
     if need("DGS10", "DGS2", "T10Y2Y"):
         try:
-            t = treasury("daily_treasury_yield_curve", ["2 Yr", "10 Yr"])
+            t = treasury("daily_treasury_yield_curve", ["2 Yr", "5 Yr", "10 Yr"])
+            NOMINAL.update(t)
             ten, two = t.get("10 Yr", []), t.get("2 Yr", [])
             if "DGS10" not in F:
                 put(data, "DGS10", ten, "Trésor US")
@@ -291,7 +295,9 @@ def fallbacks(data):
                  url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
     if need("DFII10"):
         try:
-            put(data, "DFII10", treasury("daily_treasury_real_yield_curve", ["10 YR"]).get("10 YR", []), "Trésor US")
+            rt = treasury("daily_treasury_real_yield_curve", ["5 YR", "10 YR"])
+            REAL.update(rt)
+            put(data, "DFII10", rt.get("10 YR", []), "Trésor US")
             note("ust.real", "Taux réel US 10 ans (Trésor américain, secours)", "daily", True, F["DFII10"]["asof"],
                  url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
         except Exception as e:
@@ -315,6 +321,95 @@ def fallbacks(data):
         except Exception as e:
             note("nyfed.target", "Fourchette cible de la Fed (Fed de New York, secours)", "daily", False, err=e,
                  url="https://www.newyorkfed.org/markets/reference-rates/effr")
+    # Inflation anticipée = taux nominal − taux réel (c'est la définition utilisée par FRED pour T10YIE)
+    if need("T10YIE", "T5YIFR") and NOMINAL.get("10 Yr") and REAL.get("10 YR"):
+        try:
+            n10, r10 = dict(NOMINAL["10 Yr"]), dict(REAL["10 YR"])
+            n5, r5 = dict(NOMINAL.get("5 Yr", [])), dict(REAL.get("5 YR", []))
+            be10 = [(d, round(n10[d] - r10[d], 2)) for d in sorted(r10) if d in n10]
+            if "T10YIE" not in F:
+                put(data, "T10YIE", be10, "calcul maison : 10 ans nominal − réel (Trésor US)")
+            if "T5YIFR" not in F and n5 and r5:
+                b10 = dict(be10)
+                put(data, "T5YIFR", [(d, round(2 * b10[d] - (n5[d] - r5[d]), 2)) for d in sorted(r5) if d in n5 and d in b10],
+                    "calcul maison : 2 × inflation 10 ans − inflation 5 ans (Trésor US)")
+            note("calc.breakeven", "Inflation anticipée 10 ans et 5 ans dans 5 ans (calcul maison, Trésor US)", "daily", True, F["T10YIE"]["asof"],
+                 url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
+        except Exception as e:
+            note("calc.breakeven", "Inflation anticipée (calcul maison, Trésor US)", "daily", False, err=e)
+    # Indice du dollar (formule officielle du DXY) recalculé avec les taux de référence BCE
+    if need("DTWEXBGS") and "DXY" not in F:
+        try:
+            url = "https://data-api.ecb.europa.eu/service/data/EXR/D.USD+JPY+GBP+CAD+SEK+CHF.EUR.SP00.A?format=csvdata&lastNObservations=270"
+            by = {}
+            for r in csv.DictReader(io.StringIO(http("ecb_exr.csv", url, timeout=40))):
+                v = num(r.get("OBS_VALUE"))
+                if v:
+                    by.setdefault(r["TIME_PERIOD"], {})[r["CURRENCY"]] = v
+            obs = []
+            for d, x in sorted(by.items()):
+                if len(x) == 6:
+                    u = x["USD"]
+                    obs.append((d, round(50.14348112 * u ** -0.576 * (x["JPY"] / u) ** 0.136 * (u / x["GBP"]) ** -0.119 * (x["CAD"] / u) ** 0.091
+                                         * (x["SEK"] / u) ** 0.042 * (x["CHF"] / u) ** 0.036, 3)))
+            put(data, "DXY", obs, "calcul maison : formule DXY avec les taux BCE")
+            note("calc.dxy", "Indice du dollar DXY (recalculé avec les taux BCE)", "daily", True, F["DXY"]["asof"], url="https://data.ecb.europa.eu/")
+        except Exception as e:
+            note("calc.dxy", "Indice du dollar DXY (recalculé avec les taux BCE)", "daily", False, err=e, url="https://data.ecb.europa.eu/")
+    # Conditions financières : fichier de la Fed de Chicago
+    if need("NFCI"):
+        try:
+            rows = list(csv.reader(io.StringIO(http("nfci.csv", "https://www.chicagofed.org/-/media/publications/nfci/nfci-data-series-csv.csv", timeout=40))))
+            head = [c.strip().upper() for c in rows[0]]
+            ci = head.index("NFCI")
+            obs = []
+            for r in rows[1:]:
+                if len(r) > ci and num(r[ci]) is not None:
+                    d = r[0].strip()
+                    for f_ in ("%m/%d/%Y", "%Y-%m-%d", "%m/%d/%y"):
+                        try:
+                            obs.append((datetime.strptime(d, f_).strftime("%Y-%m-%d"), num(r[ci])))
+                            break
+                        except ValueError:
+                            pass
+            put(data, "NFCI", obs, "Fed de Chicago")
+            note("chifed.nfci", "Conditions financières NFCI (Fed de Chicago)", "weekly", True, F["NFCI"]["asof"], url="https://www.chicagofed.org/nfci")
+        except Exception as e:
+            note("chifed.nfci", "Conditions financières NFCI (Fed de Chicago)", "weekly", False, err=e, url="https://www.chicagofed.org/nfci")
+    # Inflation, chômage, emplois US : Bureau des statistiques du travail (API v1, sans clé)
+    if not data["derived"].get("us_cpi"):
+        try:
+            body = json.dumps({"seriesid": ["CUSR0000SA0", "CUSR0000SA0L1E", "LNS14000000", "CES0000000001"]}).encode()
+            if MOCK:
+                txt = http("bls.json", "")
+            else:
+                req = urllib.request.Request("https://api.bls.gov/publicAPI/v1/timeseries/data/", data=body,
+                                             headers={"Content-Type": "application/json", "User-Agent": UA})
+                with urllib.request.urlopen(req, timeout=40) as r:
+                    txt = r.read().decode("utf-8")
+            j = json.loads(txt)
+            if j.get("status") != "REQUEST_SUCCEEDED":
+                raise ValueError("BLS : " + " ".join(j.get("message") or [])[:100])
+            ser = {}
+            for x in j["Results"]["series"]:
+                ser[x["seriesID"]] = sorted(("%s-%s-01" % (o["year"], o["period"][1:]), num(o["value"])) for o in x["data"]
+                                            if o["period"].startswith("M") and o["period"] != "M13" and num(o["value"]) is not None)
+            D = data["derived"]
+            for sid, key in (("CUSR0000SA0", "us_cpi"), ("CUSR0000SA0L1E", "us_core")):
+                y = yoy(ser.get(sid))
+                if y:
+                    D[key] = y
+            u = ser.get("LNS14000000")
+            if u and len(u) > 1:
+                D["us_unemp"] = {"v": u[-1][1], "prev": u[-2][1], "asof": u[-1][0]}
+            n = ser.get("CES0000000001")
+            if n and len(n) > 2:
+                D["us_nfp"] = {"v": round(n[-1][1] - n[-2][1]), "prev": round(n[-2][1] - n[-3][1]), "asof": n[-1][0]}
+            if not D.get("us_cpi"):
+                raise ValueError("série IPC vide")
+            note("bls.us", "Inflation, chômage et emplois US (BLS)", "monthly", True, D["us_cpi"]["asof"], url="https://www.bls.gov/")
+        except Exception as e:
+            note("bls.us", "Inflation, chômage et emplois US (BLS)", "monthly", False, err=e, url="https://www.bls.gov/")
     if need("ECBDFR"):
         try:
             url = "https://data-api.ecb.europa.eu/service/data/FM/D.U2.EUR.4F.KR.DFR.LEV?format=csvdata&lastNObservations=30"
@@ -323,6 +418,13 @@ def fallbacks(data):
             note("ecb.dfr", "Taux de dépôt BCE (BCE, secours)", "daily", True, F["ECBDFR"]["asof"], url="https://data.ecb.europa.eu/")
         except Exception as e:
             note("ecb.dfr", "Taux de dépôt BCE (BCE, secours)", "daily", False, err=e, url="https://data.ecb.europa.eu/")
+    # Une série FRED remplacée par une source de secours n'est plus affichée comme une panne
+    with LOCK:
+        SOURCES[:] = [x for x in SOURCES if not (x["id"].startswith("fred.") and not x["ok"] and x["id"][5:] in F)]
+        if "DXY" in F:
+            SOURCES[:] = [x for x in SOURCES if not (x["id"] == "fred.DTWEXBGS" and not x["ok"])]
+        if data["derived"].get("us_cpi"):
+            SOURCES[:] = [x for x in SOURCES if not (x["id"] in ("fred.CPIAUCSL", "fred.CPILFESL", "fred.UNRATE", "fred.PAYEMS") and not x["ok"])]
 
 
 def do_oecd(data):
@@ -429,12 +531,22 @@ def rba_rate():
 
 
 def eurostat_hicp():
-    url = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_manr"
-           "?format=JSON&lang=EN&geo=EA&coicop=CP00&unit=RCH_A&lastTimePeriod=3")
-    j = json.loads(http("eurostat_hicp.json", url, timeout=30))
-    idx = j["dimension"]["time"]["category"]["index"]
-    obs = [(per[:7] + "-01", num(j["value"].get(str(pos)))) for per, pos in idx.items()]
-    return last2(obs)
+    """La zone euro a changé de code avec l'entrée de la Bulgarie (2026) : on essaie plusieurs codes, on garde le plus récent."""
+    best = None
+    for geo in ("EA21", "EA", "EA20"):
+        try:
+            url = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_manr"
+                   "?format=JSON&lang=EN&geo=%s&coicop=CP00&unit=RCH_A&lastTimePeriod=3" % geo)
+            j = json.loads(http("eurostat_hicp_%s.json" % geo, url, timeout=30, tries=1))
+            idx = j["dimension"]["time"]["category"]["index"]
+            r = last2([(per[:7] + "-01", num(j["value"].get(str(pos)))) for per, pos in idx.items()])
+            if r and (not best or r["asof"] > best["asof"]):
+                best = r
+        except Exception:
+            pass
+    if not best:
+        raise ValueError("Eurostat : aucun code de zone euro n'a répondu")
+    return best
 
 
 def ez_cpi():
@@ -734,8 +846,7 @@ def do_world(data):
         except Exception as e:
             note("imf." + key, label + " " + yr, "annual", False, err=e, url="https://www.imf.org/external/datamapper/" + code)
     with ThreadPoolExecutor(7) as ex:
-        list(ex.map(wb, WB_IND))
-        list(ex.map(imf, IMF_IND))
+        list(ex.map(wb, WB_IND))  # FMI retiré le 30 oct. 2026 : il refuse les serveurs de GitHub (403)
     data["world"] = w
 
 
