@@ -1029,20 +1029,34 @@ def do_shipping(data):
     lab = "Trafic des détroits stratégiques (FMI PortWatch)"
     try:
         d0 = NOW - timedelta(days=70)
-        # Filtre sur des champs numériques (année, mois), sans tri côté serveur : plus léger et plus fiable.
-        where = "(year > %d) OR (year = %d AND month >= %d)" % (d0.year, d0.year, d0.month)
-        feats, off, errs = [], 0, []
-        for page in range(6):
-            q = urllib.parse.urlencode({"where": where, "outFields": "date,portname,n_total,n_tanker,n_container,capacity",
-                                        "resultOffset": str(off), "resultRecordCount": "1000", "f": "json"})
-            jj = json.loads(http("portwatch.json" if page == 0 else "portwatch_p%d.json" % page, url0 + "?" + q, timeout=40, tries=2))
-            if jj.get("error"):
-                raise ValueError("ArcGIS : " + str(jj["error"].get("message"))[:70])
-            got = jj.get("features") or []
-            feats += got
-            off += len(got)
-            if not got or not jj.get("exceededTransferLimit"):
+        flds = "date,portname,n_total,n_tanker,n_container,capacity"
+        variants = [  # chaque variante est contrôlée : il faut des données de moins de 30 jours
+            {"where": "1=1", "orderByFields": "ObjectId DESC", "resultRecordCount": "2000"},
+            {"where": "1=1", "orderByFields": "OBJECTID DESC", "resultRecordCount": "2000"},
+            {"where": "1=1", "orderByFields": "FID DESC", "resultRecordCount": "2000"},
+            {"where": "year >= %d" % d0.year, "orderByFields": "date DESC", "resultRecordCount": "2000"},
+            {"where": "(year > %d) OR (year = %d AND month >= %d)" % (d0.year, d0.year, d0.month), "resultRecordCount": "2000"},
+        ]
+        feats, errs = None, []
+        for k, v in enumerate(variants):
+            try:
+                v = dict(v, outFields=flds, returnGeometry="false", f="json")
+                jj = json.loads(http("portwatch.json" if k == 0 else "portwatch_%d.json" % k, url0 + "?" + urllib.parse.urlencode(v), timeout=40, tries=1))
+                if jj.get("error"):
+                    raise ValueError(str(jj["error"].get("message"))[:60])
+                got = jj.get("features") or []
+                dd = [x["attributes"].get("date") for x in got if isinstance((x.get("attributes") or {}).get("date"), (int, float))]
+                newest_ = datetime.fromtimestamp(max(dd) / 1000, timezone.utc).strftime("%Y-%m-%d") if dd else ""
+                if not got or ageDaysPy(newest_) > 30:
+                    raise ValueError("lignes trop anciennes ou vides (%s)" % (newest_ or "aucune date"))
+                feats = got
+                DIAG["portwatch_variante"] = k
                 break
+            except Exception as e:
+                errs.append("variante %d : %s" % (k, fr_err(e)))
+        DIAG["portwatch_erreurs"] = errs
+        if feats is None:
+            raise ValueError("aucune variante de requête n'a donné de données récentes")
         by = {}
         for f in feats:
             a_ = f.get("attributes") or {}
