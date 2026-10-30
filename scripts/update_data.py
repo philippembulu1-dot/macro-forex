@@ -18,6 +18,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 OUT = os.environ.get("MF_OUT", os.path.join(ROOT, "data", "macro.json"))
 OUT_SEAS = os.environ.get("MF_OUT_SEAS", os.path.join(ROOT, "data", "seasonal.json"))
 OUT_HIST = os.environ.get("MF_OUT_HIST", os.path.join(ROOT, "data", "macro-history.json"))
+OUT_SURP = os.environ.get("MF_OUT_SURP", os.path.join(ROOT, "data", "surprises.json"))
 DIAG = {}
 PREVIOUS = {}
 try:  # fichier précédent : sert à conserver les dernières données valides d'une source instable
@@ -1368,6 +1369,93 @@ def do_retail(data):
                 pass
 
 
+# ---------------------------------------------------------------- Réserves des banques centrales et or (Banque mondiale, annuel)
+def do_reserves(data):
+    res, newest = {}, ""
+    for code, key in (("FI.RES.TOTL.CD", "tot"), ("FI.RES.XGLD.CD", "xg")):
+        url = "https://api.worldbank.org/v2/country/all/indicator/%s?format=json&date=2018:%d&per_page=20000" % (code, NOW.year)
+        try:
+            j = json.loads(http("wbr_%s.json" % key, url, tries=2, timeout=60))
+            n = 0
+            for r in (j[1] if isinstance(j, list) and len(j) > 1 else []) or []:
+                iso, v = r.get("countryiso3code"), num(r.get("value"))
+                if iso and v is not None:
+                    with LOCK:
+                        res.setdefault(iso, {"n": (r.get("country") or {}).get("value")}).setdefault(key, []).append([int(r["date"]), round(v / 1e9, 2)])
+                    n += 1
+                    newest = max(newest, r["date"])
+            if not n:
+                raise ValueError("aucune valeur")
+            note("wb.res." + key, ("Réserves totales, or compris" if key == "tot" else "Réserves hors or") + " (Banque mondiale, annuel)", "annual", True,
+                 newest + "-12-31", url="https://data.worldbank.org/indicator/" + code)
+        except Exception as e:
+            note("wb.res." + key, ("Réserves totales, or compris" if key == "tot" else "Réserves hors or") + " (Banque mondiale, annuel)", "annual", False,
+                 err=e, url="https://data.worldbank.org/indicator/" + code)
+    for iso in res:
+        for k in ("tot", "xg"):
+            if k in res[iso]:
+                res[iso][k].sort()
+    data["reserves"] = res
+
+
+# ---------------------------------------------------------------- Surprises économiques : prévision (Forex Factory) contre chiffre officiel
+# Le robot mémorise chaque prévision de la semaine, puis la compare au chiffre officiel quand il paraît.
+SURP_MAP = [("USD", r"^CPI y/y$", "cpi", "IPC a/a", " %"), ("USD", r"^Unemployment Rate$", "unemp", "Chômage", " %"),
+            ("USD", r"^Non-Farm Employment Change$", "nfp", "Créations d'emplois (NFP)", " k"),
+            ("GBP", r"^CPI y/y$", "cpi", "IPC a/a", " %"), ("CAD", r"^CPI y/y$", "cpi", "IPC a/a", " %"),
+            ("EUR", r"^(CPI Flash Estimate y/y|Final CPI y/y)$", "cpi", "IPC a/a", " %")]
+
+
+def actual_for(data, cur, key):
+    D, N = data.get("derived") or {}, data.get("national") or {}
+    if cur == "USD":
+        x = {"cpi": D.get("us_cpi"), "unemp": D.get("us_unemp"), "nfp": D.get("us_nfp")}.get(key)
+    else:
+        x = N.get({"GBP": "cpi_GB", "CAD": "cpi_CA", "EUR": "cpi_EZ"}[cur]) if key == "cpi" else None
+    return x
+
+
+def do_surprises(data):
+    st = {"forecasts": [], "results": []}
+    try:
+        with open(OUT_SURP, encoding="utf-8") as f:
+            st = json.load(f)
+    except Exception:
+        pass
+    have = set((x["k"], x["period"]) for x in st["forecasts"])
+    done = set((x["k"], x["period"]) for x in st["results"])
+    for e in ((data.get("calendar") or {}).get("events") or []):
+        for cur, rx, key, lab, unit in SURP_MAP:
+            if e.get("c") == cur and re.match(rx, e.get("t") or "") and e.get("f"):
+                fv = num(re.sub(r"[^\d.\-]", "", e["f"]))
+                if fv is None:
+                    continue
+                d = (e.get("d") or "")[:10]
+                y, m = int(d[:4]), int(d[5:7])
+                py, pm = (y, m - 1) if m > 1 else (y - 1, 12)
+                period = "%d-%02d" % (py, pm)
+                k = cur + "|" + key
+                if (k, period) not in have:
+                    st["forecasts"].append({"k": k, "c": cur, "key": key, "lab": lab, "u": unit, "d": d, "period": period, "f": fv, "t": e.get("t")})
+                    have.add((k, period))
+    for fc in st["forecasts"]:
+        if (fc["k"], fc["period"]) in done:
+            continue
+        a = actual_for(data, fc["c"], fc["key"])
+        if a and str(a.get("asof", ""))[:7] == fc["period"] and a.get("v") is not None:
+            sp = round(a["v"] - fc["f"], 2)
+            st["results"].append({"k": fc["k"], "c": fc["c"], "lab": fc["lab"], "u": fc["u"], "period": fc["period"], "d": fc["d"], "f": fc["f"], "a": a["v"],
+                                  "s": sp, "good": (sp > 0) if fc["key"] != "unemp" else (sp < 0)})
+            done.add((fc["k"], fc["period"]))
+    st["forecasts"] = st["forecasts"][-200:]
+    st["results"] = sorted(st["results"], key=lambda r: r["d"])[-200:]
+    st["generated"] = NOW.strftime("%Y-%m-%dT%H:%M:%SZ")
+    with open(OUT_SURP, "w", encoding="utf-8") as f:
+        json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
+    note("surp", "Surprises économiques (prévisions mémorisées : %d, résultats : %d)" % (len(st["forecasts"]), len(st["results"])), "weekly", True, TODAY,
+         url="https://www.forexfactory.com/calendar")
+
+
 # ---------------------------------------------------------------- Historique macro depuis 2001 (fichier séparé)
 def do_history(force=False):
     """Inflation et croissance annuelles de tous les pays depuis 2001 (Banque mondiale). Recalcul une fois par semaine."""
@@ -1405,7 +1493,7 @@ def do_history(force=False):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
@@ -1430,6 +1518,11 @@ def main():
     done, pending = wait(futs, timeout=budget)
     for f in pending:
         note("robot." + futs[f], "Bloc " + futs[f] + " (arrêté : délai global de %d s dépassé)" % budget, "daily", False, err="délai dépassé")
+    if want("calendar") or want("surprises"):
+        try:
+            do_surprises(data)
+        except Exception as e:
+            note("surp", "Surprises économiques", "weekly", False, err=e)
 
     out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES, "diag": DIAG}
     out.update(data)
