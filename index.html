@@ -776,6 +776,46 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <p class="note">Titres des notes et articles publiés en accès libre par la banque ING (ING THINK) et par le site de marché investingLive (qui cite souvent les notes d'autres banques), filtrés par le robot sur le dollar, l'euro et les taux. Le nom de la banque est repéré dans le titre quand il y figure. Titres en anglais : le lien « traduire » ouvre l'article en français. Ce sont des opinions, pas des conseils.</p>
     </section>
 
+
+    <section class="panel" id="orvol">
+      <div class="ph"><h2>Or : volatilité et sensibilités</h2><span class="meta" id="ovMeta">GVZ · PAXG · robot</span></div>
+      <div class="pgrid">
+        <div class="pcard"><h3>Fourchette de mouvement attendue</h3><div class="m" id="rgMeta"></div><div class="tbl"><table id="rgTbl"></table></div><p class="hint">Calcul : cours × volatilité implicite (GVZ) × √(jours / 252). Environ 2 fois sur 3, le prix reste dans la fourchette « 1 écart » ; environ 19 fois sur 20 dans « 2 écarts ». Une statistique, pas une prévision de direction.</p></div>
+        <div class="pcard"><h3>Volatilité attendue contre réelle</h3><div class="m" id="vvMeta"></div><svg id="vvSvg" class="chart" viewBox="0 0 400 190" role="img" aria-label="Volatilité implicite et réalisée de l'or"></svg><div class="lg"><span><i style="background:#f2b01e"></i>attendue (GVZ)</span><span><i style="background:#4da3ff"></i>réelle sur 20 jours</span></div><p class="hint" id="vvTxt"></p></div>
+        <div class="pcard"><h3>Sensibilité de l'or au dollar et aux taux réels</h3><div class="m" id="rgrMeta"></div><div class="tbl"><table id="rgrTbl"></table></div><p class="hint" id="rgrTxt"></p></div>
+        <div class="pcard"><h3>Ratio or / argent</h3><div class="m">TradingView, en direct</div><div id="gsBox" class="mini"></div><p class="hint">Combien d'onces d'argent pour une once d'or. Un ratio très haut (au-dessus de 80) signale un argent historiquement bon marché face à l'or ; un ratio qui baisse accompagne souvent les phases où les métaux montent avec l'appétit pour le risque.</p></div>
+      </div>
+    </section>
+
+    <section class="panel" id="taylor">
+      <div class="ph"><h2>Règle de Taylor : où devrait être le taux de la Fed</h2><span class="meta" id="tyMeta">calcul maison</span></div>
+      <div class="calc">
+        <div class="form">
+          <label for="tyInf">Inflation sous-jacente (%)<input id="tyInf" inputmode="decimal"></label>
+          <label for="tyU">Chômage (%)<input id="tyU" inputmode="decimal"></label>
+          <label for="tyR">Taux neutre réel r* (%)<input id="tyR" inputmode="decimal" value="0,75"></label>
+          <label for="tyUs">Chômage d'équilibre u* (%)<input id="tyUs" inputmode="decimal" value="4,2"></label>
+          <label for="tyT">Cible d'inflation (%)<input id="tyT" inputmode="decimal" value="2"></label>
+          <label for="tyW">Poids de l'emploi<select id="tyW"><option value="0.5">Taylor 1993 (0,5)</option><option value="1">Approche équilibrée (1,0)</option></select></label>
+        </div>
+        <div class="out" id="tyOut" aria-live="polite"></div>
+      </div>
+      <p class="note">Formule : taux = r* + inflation + 0,5 × (inflation − cible) + poids × écart de production, avec écart de production ≈ 2 × (u* − chômage) (loi d'Okun). Inflation et chômage : derniers chiffres officiels (BLS) récupérés par le robot, modifiables. r* et u* sont des hypothèses (ordre de grandeur des estimations publiques de la Fed), à ajuster. La Fed ne suit pas mécaniquement cette règle : c'est un repère pour juger si sa politique est plutôt restrictive ou accommodante.</p>
+    </section>
+
+    <section class="panel" id="surprises">
+      <div class="ph"><h2>Surprises économiques</h2><span class="meta" id="spMeta">robot</span></div>
+      <div id="spScore"></div>
+      <div class="tbl"><table id="spTbl"></table></div>
+      <p class="note" id="spNote">Le robot mémorise chaque semaine les prévisions des économistes (Forex Factory) pour l'inflation, l'emploi et le chômage, puis les compare au chiffre officiel dès sa publication (BLS, ONS, Banque du Canada, Eurostat). Vert = meilleur que prévu pour la devise. Le registre s'enrichit au fil des publications. Version maison de l'indice de surprise Citi (payant).</p>
+    </section>
+
+    <section class="panel" id="reserves">
+      <div class="ph"><h2>Réserves des banques centrales et or</h2><span class="meta" id="rsMeta">Banque mondiale</span></div>
+      <div class="tbl"><table id="rsTbl"></table></div>
+      <p class="note">Réserves officielles en milliards de dollars (dernière année publiée par la Banque mondiale). Or = réserves totales − réserves hors or, valorisé au prix du marché : sa part monte quand les banques centrales achètent de l'or ou quand son prix grimpe. Données annuelles. Voir aussi la carte du monde, modes « Réserves ».</p>
+    </section>
+
     <section class="panel" id="marches">
       <div class="ph"><h2>Marchés en direct</h2><span class="meta">TradingView · peur et avidité</span></div>
       <div class="fgwrap"><svg id="fgSvg" viewBox="0 0 200 128" role="img" aria-label="Indice Fear and Greed"></svg><div id="fgInfo"></div></div>
@@ -1402,7 +1442,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     } catch (e) { /* stockage indisponible */ }
   }
   function loadGold() {
-    return Promise.all([binGet("klines?symbol=PAXGUSDT&interval=1d&limit=40"), binGet("ticker/24hr?symbol=BTCUSDT")]).then(function (r) {
+    return Promise.all([binGet("klines?symbol=PAXGUSDT&interval=1d&limit=200"), binGet("ticker/24hr?symbol=BTCUSDT")]).then(function (r) {
       var k = parseK(r[0]);
       if (!validK(k)) throw new Error("données invalides");
       var b = { p: +r[1].lastPrice, c: +r[1].priceChangePercent };
@@ -1526,7 +1566,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     drawGoldChart(k); gShow(gCur.s.length - 1, true);
     renderPerf(g); renderTape();
   }
-  function refreshGold() { return loadGold().then(function () { renderGold(); renderPiv(); }); }
+  function refreshGold() { return loadGold().then(function () { renderGold(); renderPiv(); if (typeof renderOrVol === "function") renderOrVol(); }); }
   function initTV() {
     var box = $("tv"), fb = function () {
       if (box.querySelector("iframe") || box.querySelector(".tv-fb")) return;
@@ -1844,7 +1884,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     ["VOL", "Volatilité", "vola"], ["MAP", "Carte du monde", "monde"], ["SHIP", "Trafic maritime", "maritime"], ["CONS", "Consensus des banques", "consensus"], ["COM", "Comités", "comite"],
     ["FED", "Probabilités de taux", "probas"], ["SENT", "Sentiment des particuliers", "sentiment"], ["PIV", "Pivots et convertisseur", "outils"],
     ["LIVE", "Marchés en direct", "marches"], ["NEWS", "Communiqués", "actus"], ["VID", "Vidéos d'analyse", "videos"], ["CALC", "Calculateur de position", "calc"], ["RISK", "Gestion du risque", "conseils"],
-    ["CHK", "Checklist", "check"], ["DATA", "Fraîcheur des données", "robot"], ["NOTE", "Notes rapides", "notes"]
+    ["CHK", "Checklist", "check"], ["TAYL", "Règle de Taylor", "taylor"], ["VOLC", "Volatilité de l'or", "orvol"], ["ECSU", "Surprises économiques", "surprises"], ["WIRA", "Réserves des banques centrales", "reserves"], ["DATA", "Fraîcheur des données", "robot"], ["NOTE", "Notes rapides", "notes"]
   ];
   function initCmd() {
     var inp = $("cmdIn"), msg = $("cmdMsg");
@@ -2135,11 +2175,11 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* ---------- Carte du monde ---------- */
   var WMAP = null, mapSel = "", EZ = ["AUT", "BEL", "BGR", "HRV", "CYP", "EST", "FIN", "FRA", "DEU", "GRC", "IRL", "ITA", "LVA", "LTU", "LUX", "MLT", "NLD", "PRT", "SVK", "SVN", "ESP"];
   var MAJ = { USA: "USD", GBR: "GBP", JPN: "JPY", CHE: "CHF", AUS: "AUD", CAN: "CAD", NZL: "NZD" };
-  var MAPIND = [["ship", "Trafic maritime (détroits, pétroliers)", ""], ["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"]];
+  var MAPIND = [["ship", "Trafic maritime (détroits, pétroliers)", ""], ["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"], ["res", "Réserves des banques centrales", " Md $"], ["resg", "Part de l'or dans les réserves", " %"]];
   function loadMap() {
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "world-map.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.c) throw new Error("format"); return j; }); }); });
-    return p.then(function (j) { WMAP = j; drawMap(); }).catch(function (e) { $("mapBox").innerHTML = '<p class="note">Carte non chargée (' + esc(e && e.message) + ").</p>"; $("mapMeta").textContent = "indisponible"; });
+    return p.then(function (j) { WMAP = j; drawMap(); renderReserves(); }).catch(function (e) { $("mapBox").innerHTML = '<p class="note">Carte non chargée (' + esc(e && e.message) + ").</p>"; $("mapMeta").textContent = "indisponible"; });
   }
   function initMap() {
     $("mapInd").innerHTML = MAPIND.map(function (m, i) { return '<option value="' + i + '">' + m[1] + "</option>"; }).join("");
@@ -2501,19 +2541,19 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
      BRANCHES : accueil en tuiles, chaque outil dans sa branche (31 oct. 2026)
      ===================================================================== */
   var BR = [
-    { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, saisonnalité 20 ans", p: ["or", "scorecard", "saison"] },
+    { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, saisonnalité 20 ans", p: ["or", "orvol", "scorecard", "saison"] },
     { id: "devises", t: "Devises", ic: "⇄", d: "Paires, graphique, force des devises, appétit pour le risque, corrélations", p: ["selPanel", "paires", "force", "~duo", "heat", "correl", "vola"] },
-    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts de taux", p: ["pricing", "ecarts", "taux", "desk"] },
+    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts de taux", p: ["pricing", "taylor", "ecarts", "taux", "desk"] },
     { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités, réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"] },
-    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier filtrable, publications de la semaine, indicateurs", p: ["calendrier", "semaine", "indicateurs", "lecture"] },
+    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier filtrable, publications de la semaine, indicateurs", p: ["calendrier", "surprises", "semaine", "indicateurs", "lecture"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Notes et articles sur le dollar, l'euro et les taux, consensus, vidéos", p: ["analyses", "consensus", "videos"] },
-    { id: "monde", t: "Monde & maritime", ic: "◍", d: "Carte macro des pays, détroits, navires en temps réel", p: ["monde", "maritime"] },
+    { id: "monde", t: "Monde & maritime", ic: "◍", d: "Carte macro des pays, détroits, navires en temps réel", p: ["monde", "maritime", "reserves"] },
     { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, peur et avidité, sessions", p: ["marches", "sessions"] },
     { id: "position", t: "Positionnement", ic: "⚖", d: "Positions des fonds (COT), sentiment des particuliers", p: ["cot", "sentiment"] },
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, pivots, convertisseur, checklist, notes", p: ["calc", "outils", "check", "conseils", "notes", "liens"] },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source et liens", p: ["robot"] }
   ];
-  var WIDE = { force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   function buildBranches() {
     var main = document.querySelector(".main"), anchor = document.querySelector(".main > .grid"); /* après le bandeau et sa note */
@@ -2555,6 +2595,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       Array.prototype.forEach.call(document.querySelectorAll("#bnav a, .side-in a"), function (a) { a.setAttribute("aria-current", a.getAttribute("href") === "#/" + id ? "page" : "false"); });
       var cur = document.querySelector('#bnav a[aria-current="page"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest", inline: "center" });
       if (id === "taux" && !rateMinisDone) { rateMinisDone = true; initRateMinis(); }
+      if (id === "or") { initGoldSilver(); renderOrVol(); }
       if (id === "taux") renderPricing();
       if (!id) renderHub();
       setTimeout(function () { window.dispatchEvent(new Event("resize")); }, 60); /* redessine les graphiques qui étaient cachés */
@@ -2707,7 +2748,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* ---------- Recherche globale ---------- */
   var CUR_AL = { USD: "dollar américain états-unis usa us fed", EUR: "euro zone euro eurozone bce europe", GBP: "livre sterling royaume-uni angleterre boe", JPY: "yen japon boj", CHF: "franc suisse suisse bns",
     AUD: "dollar australien australie rba", CAD: "dollar canadien canada boc", NZD: "dollar néo-zélandais nouvelle-zélande rbnz" };
-  var KW = { or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
+  var KW = { orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
     ecarts: "écart différentiel taux carry", taux: "rendement 10 ans vix dollar treasury", desk: "breakeven inflation anticipée gvz conditions financières", banques: "taux directeur décision",
     probas: "probabilité fedwatch kalshi polymarket", agenda: "réunion prochaine décision", comite: "comité hawkish dovish", actus: "communiqué actualité news", calendrier: "calendrier cpi nfp pib pmi publication",
     indicateurs: "inflation chômage pib salaires pmi indicateurs", analyses: "analyse banque note article ing goldman", consensus: "consensus prévision banques", videos: "vidéo youtube",
@@ -2870,6 +2911,126 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     new MutationObserver(function () { Array.prototype.forEach.call(document.querySelectorAll("[data-det]:not([tabindex])"), function (x) { x.setAttribute("tabindex", "0"); x.setAttribute("role", "button"); }); }).observe(document.body, { childList: true, subtree: true });
   })();
 
+
+  /* =====================================================================
+     OUTILS INSPIRÉS DE BLOOMBERG (31 oct. 2026) : FXFM-or, VOLC, HRA, TAYL, ECSU, WIRA
+     ===================================================================== */
+  function goldCloses() { return (state.gold || []).map(function (k) { return [new Date(k.t).toISOString().slice(0, 10), k.c]; }); }
+  function renderOrVol() {
+    if (!$("rgTbl")) return;
+    var gv = fred("GVZCLS"), gc = goldCloses(), px = gc.length ? gc[gc.length - 1][1] : null;
+    /* 1. Fourchette attendue */
+    if (gv && px) {
+      var sig = gv.v / 100;
+      $("rgTbl").innerHTML = '<thead><tr><th>Horizon</th><th class="r">1 écart (≈ 68 %)</th><th class="r">2 écarts (≈ 95 %)</th></tr></thead><tbody>' + [["1 jour", 1], ["1 semaine", 5], ["1 mois", 21]].map(function (hz) {
+        var m = px * sig * Math.sqrt(hz[1] / 252);
+        return "<tr><td><b>" + hz[0] + '</b><br><small>± ' + fmtN(m, 0) + ' $</small></td><td class="r num">' + fmtN(px - m, 0) + " – " + fmtN(px + m, 0) + '</td><td class="r num">' + fmtN(px - 2 * m, 0) + " – " + fmtN(px + 2 * m, 0) + "</td></tr>";
+      }).join("") + "</tbody>";
+      $("rgMeta").innerHTML = "cours " + fmtN(px, 2) + " $ (PAXG) · GVZ " + fmt(gv.v, 1) + " au " + shortD(gv.asof) + " " + badge(fresh(gv.asof, "daily"));
+    } else { $("rgTbl").innerHTML = '<tbody><tr><td>' + (!gv ? "GVZ pas encore récupéré par le robot." : "Cours de l'or en chargement (Binance)…") + "</td></tr></tbody>"; $("rgMeta").textContent = ""; }
+    /* 2. Volatilité attendue contre réelle */
+    if (gc.length > 25) {
+      var rv = [];
+      for (var i = 21; i < gc.length; i++) {
+        var r = [];
+        for (var j = i - 19; j <= i; j++) r.push(Math.log(gc[j][1] / gc[j - 1][1]));
+        var m_ = mean(r), sd = Math.sqrt(r.reduce(function (a, x) { return a + Math.pow(x - m_, 2); }, 0) / (r.length - 1));
+        rv.push([gc[i][0], sd * Math.sqrt(252) * 100]);
+      }
+      var gmap = {}; (gv && gv.hist || []).forEach(function (p) { gmap[p[0]] = p[1]; });
+      var dts = rv.map(function (p) { return p[0]; });
+      var lastG = null, ser1 = dts.map(function (d, i) { if (gmap[d] !== undefined) lastG = gmap[d]; return [i, gmap[d] !== undefined ? gmap[d] : null]; });
+      lineChart($("vvSvg"), 400, 190, [{ pts: ser1, c: "#f2b01e" }, { pts: rv.map(function (p, i) { return [i, p[1]]; }), c: "#4da3ff" }], { n: dts.length, xl: dts.map(function (d, i) { return i === 0 || i === dts.length - 1 || i === Math.floor(dts.length / 2) ? shortD(d) : ""; }) });
+      var rNow = rv[rv.length - 1][1];
+      $("vvMeta").innerHTML = "réelle 20 j : <b>" + fmt(rNow, 1) + " %</b>" + (gv ? " · attendue : <b>" + fmt(gv.v, 1) + " %</b>" : "");
+      if (gv) { var ratio = gv.v / rNow; $("vvTxt").innerHTML = ratio > 1.15 ? "Le marché attend <b>plus</b> de mouvement que ce que l'or fait réellement (×" + fmt(ratio, 2) + ") : nervosité, souvent avant un événement (Fed, inflation, géopolitique)." : ratio < 0.85 ? "L'or bouge <b>plus</b> que ce que le marché attendait (×" + fmt(ratio, 2) + ") : la volatilité attendue risque de remonter." : "Attentes et réalité sont proches (×" + fmt(ratio, 2) + ")."; }
+      else $("vvTxt").textContent = "GVZ pas encore disponible pour la comparaison.";
+    } else { $("vvSvg").innerHTML = ""; $("vvMeta").textContent = "Historique de l'or en chargement…"; $("vvTxt").textContent = ""; }
+    /* 3. Régressions : rendement de l'or contre DXY et taux réel */
+    var reg = function (xs, ys) {
+      var n = xs.length; if (n < 20) return null;
+      var mx = mean(xs), my = mean(ys), sxy = 0, sxx = 0, syy = 0;
+      for (var k = 0; k < n; k++) { sxy += (xs[k] - mx) * (ys[k] - my); sxx += Math.pow(xs[k] - mx, 2); syy += Math.pow(ys[k] - my, 2); }
+      return sxx && syy ? { b: sxy / sxx, r: sxy / Math.sqrt(sxx * syy), n: n } : null;
+    };
+    var gr = {}; for (var q = 1; q < gc.length; q++) gr[gc[q][0]] = (gc[q][1] / gc[q - 1][1] - 1) * 100;
+    var chg = function (id, pctMode) { var f = fred(id), out = {}; if (!f || !f.hist) return out; for (var z = 1; z < f.hist.length; z++) out[f.hist[z][0]] = pctMode ? (f.hist[z][1] / f.hist[z - 1][1] - 1) * 100 : (f.hist[z][1] - f.hist[z - 1][1]) * 100; return out; };
+    var pair = function (m) { var xs = [], ys = []; Object.keys(m).forEach(function (d) { if (gr[d] !== undefined) { xs.push(m[d]); ys.push(gr[d]); } }); return reg(xs, ys); };
+    var dId = fred("DTWEXBGS") ? "DTWEXBGS" : "DXY", rD = pair(chg(dId, true)), rR = pair(chg("DFII10", false));
+    var row = function (lab, r, unit, mult) { return r ? "<tr><td><b>" + lab + '</b></td><td class="r num ' + cls(-Math.abs(r.b)) + '">' + (r.b * mult >= 0 ? "+" : "−") + fmt(Math.abs(r.b * mult), 2) + " %</td><td class=\"r num\">" + fmt(r.r, 2) + '</td><td class="r num">' + Math.round(r.r * r.r * 100) + " %</td><td class=\"r num\">" + r.n + "</td></tr>" : "<tr><td><b>" + lab + '</b></td><td colspan="4">pas assez de dates communes</td></tr>'; };
+    $("rgrTbl").innerHTML = '<thead><tr><th>Si…</th><th class="r">l\'or varie de</th><th class="r">Corrélation</th><th class="r">Part expliquée</th><th class="r">Jours</th></tr></thead><tbody>' +
+      row("le dollar (" + (dId === "DXY" ? "DXY" : "indice Fed") + ") monte de 1 %", rD, "%", 1) + row("le taux réel 10 ans monte de 0,10 pt", rR, "pb", 10) + "</tbody>";
+    $("rgrMeta").textContent = "régression sur les variations quotidiennes communes (or : PAXG, jusqu'à 200 jours)";
+    $("rgrTxt").innerHTML = (rD ? "Sensibilité au dollar : <b>" + fmt(rD.b, 2) + "</b> (" + (rD.b < 0 ? "l'or monte quand le dollar baisse, comme d'habitude" : "relation inhabituelle en ce moment : l'or suit d'autres moteurs") + "). " : "") + (rR ? "Sensibilité aux taux réels : " + (rR.b < 0 ? "l'or recule quand les taux réels montent, relation classique." : "l'or ne réagit pas comme d'habitude aux taux réels (achats des banques centrales, refuge…).") : "") + " Part expliquée = combien des mouvements de l'or ce facteur explique à lui seul.";
+  }
+  var gsDone = false;
+  function initGoldSilver() { if (gsDone || !$("gsBox")) return; gsDone = true; tvEmbed($("gsBox"), "embed-widget-mini-symbol-overview.js", { symbol: "TVC:GOLDSILVER", width: "100%", height: 190, locale: "fr", dateRange: "12M", colorTheme: "dark", isTransparent: true, autosize: false, largeChartUrl: "" }, "Ratio or/argent (symbole TVC:GOLDSILVER)"); $("gsBox").className = "mini"; }
+
+  /* Règle de Taylor */
+  function initTaylor() {
+    ["tyInf", "tyU", "tyR", "tyUs", "tyT", "tyW"].forEach(function (id) { $(id).addEventListener("input", calcTaylor); $(id).addEventListener("change", calcTaylor); });
+  }
+  var tyAuto = false;
+  function fillTaylor() {
+    var D = AUTO && AUTO.derived || {};
+    if (!tyAuto && D.us_core && D.us_unemp) { $("tyInf").value = String(D.us_core.v).replace(".", ","); $("tyU").value = String(D.us_unemp.v).replace(".", ","); tyAuto = true; }
+    $("tyMeta").innerHTML = D.us_core ? "inflation sous-jacente IPC " + shortD(D.us_core.asof) + " · chômage " + (D.us_unemp ? shortD(D.us_unemp.asof) : "–") + " (BLS)" : "en attente des chiffres BLS";
+    calcTaylor();
+  }
+  function calcTaylor() {
+    var pi = num("tyInf"), u = num("tyU"), rs = num("tyR"), us = num("tyUs"), t = num("tyT"), w = parseFloat($("tyW").value), out = $("tyOut");
+    if (![pi, u, rs, us, t].every(function (x) { return isFinite(x); })) { out.innerHTML = '<div class="err">Renseignez inflation, chômage, r*, u* et cible.</div>'; return; }
+    var gap = 2 * (us - u), rate = rs + pi + 0.5 * (pi - t) + w * gap, cur = fred("DFEDTARU"), lo = cur ? cur.v - 0.25 : null, mid = cur ? cur.v - 0.125 : null, d = mid !== null ? rate - mid : null;
+    out.innerHTML = '<div class="stat big"><small>Taux « recommandé » par la règle</small><b>' + fmt(rate, 2) + " %</b></div>" +
+      '<div class="stat"><small>Taux actuel de la Fed</small><b>' + (cur ? fmt(lo, 2) + "–" + fmt(cur.v, 2) + " %" : "–") + "</b></div>" +
+      '<div class="stat"><small>Écart règle − Fed</small><b class="' + (d === null ? "" : d > 0 ? "up" : "down") + '">' + (d === null ? "–" : (d >= 0 ? "+" : "−") + fmt(Math.abs(d), 2) + " pt") + "</b></div>" +
+      '<div class="stat"><small>Écart de production estimé</small><b>' + (gap >= 0 ? "+" : "−") + fmt(Math.abs(gap), 1) + " %</b></div>" +
+      '<div class="stat"><small>Inflation au-dessus de la cible</small><b>' + (pi - t >= 0 ? "+" : "−") + fmt(Math.abs(pi - t), 1) + " pt</b></div>" +
+      (d === null ? "" : '<div class="stat" style="grid-column:1/-1"><small>Lecture</small><b style="font-size:13px;font-family:var(--font-body);font-weight:400">' + (d > 0.5 ? "La règle suggère des taux <b>plus hauts</b> : la Fed est plutôt accommodante par rapport à l'inflation et à l'emploi. Cela peut alimenter des anticipations de hausse (bon pour le dollar, moins pour l'or)." : d < -0.5 ? "La règle suggère des taux <b>plus bas</b> : la Fed est plutôt restrictive. Cela peut alimenter des anticipations de baisse (moins bon pour le dollar, favorable à l'or)." : "La Fed est proche de ce que suggère la règle.") + "</b></div>");
+  }
+
+  /* Surprises économiques */
+  var SURP = null;
+  function loadSurp() {
+    var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "surprises.json"); }), p = Promise.reject(new Error("start"));
+    urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.forecasts) throw new Error("format"); return j; }); }); });
+    return p.then(function (j) { SURP = j; }).catch(function () { SURP = null; }).then(renderSurp);
+  }
+  function renderSurp() {
+    if (!$("spTbl")) return;
+    if (!SURP) { $("spTbl").innerHTML = '<tbody><tr><td>Registre pas encore publié par le robot.</td></tr></tbody>'; $("spMeta").textContent = "robot : en attente"; $("spScore").innerHTML = ""; return; }
+    var R = SURP.results.slice().reverse(), done = {}; R.forEach(function (r) { done[r.k + r.period] = 1; });
+    var P = SURP.forecasts.filter(function (f) { return !done[f.k + f.period]; }).slice(-8).reverse();
+    var num_ = function (v, u) { return fmt(v, u === " k" ? 0 : 2) + u; };
+    $("spTbl").innerHTML = '<thead><tr><th>Publication</th><th>Indicateur</th><th class="r">Prévu</th><th class="r">Réel</th><th class="r">Surprise</th></tr></thead><tbody>' +
+      R.slice(0, 15).map(function (r) { return "<tr><td>" + shortD(r.d) + " <small>" + esc(r.c) + "</small></td><td>" + esc(r.lab) + " <small>(" + esc(MOIS[parseInt(r.period.slice(5), 10) - 1]) + ")</small></td><td class=\"r num\">" + num_(r.f, r.u) + '</td><td class="r num">' + num_(r.a, r.u) + '</td><td class="r num ' + (r.good ? "up" : "down") + '">' + (r.s >= 0 ? "+" : "−") + num_(Math.abs(r.s), r.u) + "</td></tr>"; }).join("") +
+      P.map(function (f) { return '<tr style="opacity:.7"><td>' + shortD(f.d) + " <small>" + esc(f.c) + "</small></td><td>" + esc(f.lab) + " <small>(" + esc(MOIS[parseInt(f.period.slice(5), 10) - 1]) + ')</small></td><td class="r num">' + num_(f.f, f.u) + '</td><td class="r" colspan="2"><small>en attente du chiffre officiel</small></td></tr>'; }).join("") +
+      (!R.length && !P.length ? '<tr><td colspan="5">Aucune prévision mémorisée pour l\'instant : le registre se remplit à chaque semaine de publications.</td></tr>' : "") + "</tbody>";
+    var sc = {}; R.slice(0, 30).forEach(function (r) { sc[r.c] = sc[r.c] || { s: 0, n: 0 }; sc[r.c].s += r.good ? 1 : -1; sc[r.c].n++; });
+    $("spScore").innerHTML = Object.keys(sc).length ? '<div class="pad">Score de surprise récent : ' + Object.keys(sc).map(function (c) { var x = sc[c]; return "<b>" + c + '</b> <span class="' + cls(x.s) + '">' + (x.s > 0 ? "+" : x.s < 0 ? "−" : "") + Math.abs(x.s) + "</span>/" + x.n; }).join(" · ") + "</div>" : "";
+    $("spMeta").innerHTML = SURP.forecasts.length + " prévisions · " + SURP.results.length + " résultats · " + shortD(SURP.generated.slice(0, 10)) + " " + badge(ageDays(SURP.generated.slice(0, 10)) <= 2 ? "ok" : "old");
+  }
+
+  /* Réserves des banques centrales */
+  function resOf(x) { var t = x.tot && x.tot[x.tot.length - 1], g = null, gp = null, prev = x.tot && x.tot.length > 1 ? x.tot[x.tot.length - 2] : null;
+    if (t && x.xg) { var xg = x.xg.filter(function (p) { return p[0] === t[0]; })[0]; if (xg) { g = t[1] - xg[1]; gp = g / t[1] * 100; } }
+    return t ? { y: t[0], tot: t[1], gold: g, gp: gp, ch: prev && prev[1] ? (t[1] / prev[1] - 1) * 100 : null } : null; }
+  var AGG = /^(WLD|HIC|LMY|MIC|UMC|LMC|EAS|EAP|ECS|ECA|EUU|EMU|LCN|LAC|MEA|MNA|NAC|SAS|SSF|SSA|OED|IBT|IBD|IDA|IDB|IDX|LTE|EAR|PST|PRE|TEA|TEC|TLA|TMN|TSA|TSS|ARB|CSS|CEB|FCS|HPC|INX|LDC|LIC|OSS|PSS|SST|AFE|AFW)$/;
+  function renderReserves() {
+    if (!$("rsTbl")) return;
+    var R = AUTO && AUTO.reserves; if (!R) { $("rsTbl").innerHTML = '<tbody><tr><td>Pas encore de données du robot.</td></tr></tbody>'; return; }
+    var nm = function (iso) { var c = WMAP && WMAP.c.filter(function (k) { return k[0] === iso; })[0]; return c ? c[1] : (R[iso].n || iso); };
+    var rows = Object.keys(R).filter(function (k) { return !AGG.test(k); }).map(function (k) { var o = resOf(R[k]); return o ? { k: k, o: o } : null; }).filter(Boolean).sort(function (a, b) { return b.o.tot - a.o.tot; });
+    $("rsTbl").innerHTML = '<thead><tr><th>Pays</th><th class="r">Réserves (Md $)</th><th class="r">dont or (Md $)</th><th class="r">Part de l\'or</th><th class="r col-core">Var. 1 an</th></tr></thead><tbody>' + rows.slice(0, 20).map(function (r, i) {
+      return "<tr><td>" + (i + 1) + ". <b>" + esc(nm(r.k)) + "</b> <small>" + r.o.y + '</small></td><td class="r num">' + fmtN(r.o.tot, 0) + '</td><td class="r num">' + (r.o.gold === null ? "–" : fmtN(r.o.gold, 0)) + '</td><td class="r num">' + (r.o.gp === null ? "–" : fmt(r.o.gp, 1) + " %") + '</td><td class="r num col-core ' + (r.o.ch === null ? "" : cls(r.o.ch)) + '">' + (r.o.ch === null ? "–" : pct(r.o.ch)) + "</td></tr>";
+    }).join("") + "</tbody>";
+    var ss = AUTO.sources.filter(function (s) { return /^wb\.res/.test(s.id); });
+    $("rsMeta").innerHTML = "Banque mondiale · " + (ss.length && ss[0].asof ? "jusqu'à " + ss[0].asof.slice(0, 4) + " " + badge(ss.every(function (s) { return s.ok; }) ? "ok" : "ko") : "");
+    /* modes de la carte du monde */
+    var W = AUTO.world = AUTO.world || {};
+    Object.keys(R).forEach(function (k) { var o = resOf(R[k]); if (!o) return; W[k] = W[k] || {}; W[k].res = [o.tot, String(o.y)]; if (o.gp !== null) W[k].resg = [o.gp, String(o.y)]; });
+  }
+
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
   function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
@@ -2883,7 +3044,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
@@ -2904,7 +3065,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
   buildBranches();
-  initCmd(); initCal(); initMap(); initConv(); initSearch();
+  initCmd(); initCal(); initMap(); initConv(); initSearch(); initTaylor(); loadSurp();
   initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });
