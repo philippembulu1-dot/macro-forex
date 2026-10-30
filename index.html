@@ -274,7 +274,7 @@ table.perf th, table.perf td { padding: 7px 10px; }
 .cmdbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 1px solid var(--line); background: var(--panel); padding: 6px 8px; }
 .cmdbar label { font: 600 11px var(--font-mono); color: var(--amber); letter-spacing: .12em; }
 .cmdbar input { flex: 1 1 160px; max-width: 260px; text-transform: uppercase; }
-.fkeys { display: flex; flex-wrap: wrap; gap: 4px; }
+.fkeys { display: none; }
 .fkeys a { font: 600 10px var(--font-mono); letter-spacing: .08em; text-decoration: none; padding: 3px 7px; background: var(--amber); color: #111; }
 .fkeys a:hover, .fkeys a:focus-visible { background: var(--fg); }
 .cmdmsg { font: 11px var(--font-mono); color: var(--muted); width: 100%; min-height: 0; }
@@ -381,7 +381,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .flash { animation: flash 1.6s ease-out; }
 @keyframes flash { 0%, 30% { box-shadow: 0 0 0 2px var(--amber); } 100% { box-shadow: 0 0 0 0 transparent; } }
 /* Pricing et analyses */
-.pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 1px; background: var(--line2); }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 1px; background: var(--line2); }
 .pcard { background: var(--panel); padding: 12px; min-width: 0; }
 .pcard h3 { margin: 0 0 4px; font: 600 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); }
 .pcard .m { font: 11px var(--font-mono); color: var(--muted); margin-bottom: 6px; }
@@ -1698,7 +1698,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     if (v) l.push("VIX à " + fmt(v.v, 1) + " : " + (v.v < 15 ? "marché calme." : v.v < 20 ? "volatilité normale." : v.v < 30 ? "<b>tension</b>, prudence sur les tailles de position." : "<b>stress élevé</b>, réduire le risque."));
     h += '<div class="pad idea" style="margin:10px 12px">' + l.join(" ") + ' C\'est une piste de lecture, pas un signal.</div>';
     h += '<p class="note">Sources : FRED (Réserve fédérale de Saint-Louis) ; si FRED ne répond pas, Trésor américain, CBOE, Fed de New York et BCE (la source est indiquée sous chaque chiffre). Données de clôture quotidiennes, mises à jour par le robot. Le rendement réel est le principal moteur de l\'or à moyen terme.</p>';
-    b.innerHTML = h; $("tauxMeta").textContent = "clôtures · FRED";
+    b.innerHTML = h; $("tauxMeta").textContent = "clôtures · robot";
   }
 
   var COTN = { XAU: "Or", EUR: "Euro", GBP: "Livre", JPY: "Yen", CHF: "Franc suisse", AUD: "Dollar australien", CAD: "Dollar canadien", NZD: "Dollar néo-zélandais" };
@@ -1937,8 +1937,8 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   var CCODE = { USD: "US", EUR: "EZ", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" };
   function policyRate(m) {
     var a = null, cc = CCODE[m.c];
-    if (m.c === "USD") { var f = fred("DFEDTARU"); if (f) a = { v: f.v, d: f.asof, s: "FRED" }; }
-    else if (m.c === "EUR") { var e = fred("ECBDFR"); if (e) a = { v: e.v, d: e.asof, s: "FRED (BCE)" }; }
+    if (m.c === "USD") { var f = fred("DFEDTARU"); if (f) a = { v: f.v, d: f.asof, s: f.via || "FRED" }; }
+    else if (m.c === "EUR") { var e = fred("ECBDFR"); if (e) a = { v: e.v, d: e.asof, s: e.via || "FRED (BCE)" }; }
     else { var n = AUTO && AUTO.national && AUTO.national["rate_" + cc]; if (n) a = { v: n.v, d: n.asof, s: "source officielle" }; }
     if (a && ageDays(a.d) <= 60) return { v: a.v, d: a.d, src: a.s, auto: true };
     return { v: m.r, d: MANUAL[0].d, src: "saisie manuelle", auto: false };
@@ -2599,7 +2599,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     var cur = fred("DFEDTARU"), fp = fedPath(), ks = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return s.id === "pm.kalshi.KXFED"; })[0] : null;
     if (fp.length) {
       lineChart($("fedPath"), 400, 190, [{ pts: fp.map(function (p, i) { return [i, p.exp]; }), c: "#f2b01e", dots: 1 }], { n: fp.length, ref: cur ? cur.v : undefined, xl: fp.map(function (p) { return p.label; }) });
-      $("fedTbl").innerHTML = '<thead><tr><th>Réunion</th><th class="r">Niveau médian (borne haute)</th><th class="r">Proba. au-dessus du taux actuel</th><th class="r">Proba. en dessous</th></tr></thead><tbody>' + fp.map(function (p) {
+      $("fedTbl").innerHTML = '<thead><tr><th>Réunion</th><th class="r" title="Niveau médian de la borne haute">Médian</th><th class="r" title="Probabilité d\'être au-dessus du taux actuel">Hausse</th><th class="r" title="Probabilité d\'être en dessous du taux actuel">Baisse</th></tr></thead><tbody>' + fp.map(function (p) {
         var P = function (v) { return v === null || v === undefined ? "–" : Math.round(v * 100) + " %"; };
         return "<tr><td>" + esc(p.label) + '</td><td class="r num">' + fmt(p.exp, 2) + ' %</td><td class="r num up">' + P(p.up) + '</td><td class="r num down">' + P(p.dn) + "</td></tr>";
       }).join("") + "</tbody>";
