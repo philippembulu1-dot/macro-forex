@@ -115,7 +115,7 @@ OECD_CPI = [("EZ", "zone euro"), ("GB", "Royaume-Uni"), ("JP", "Japon"), ("CH", 
 
 def fred(sid, start):
     url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=%s&cosd=%s" % (sid, start)
-    txt = http("fred_" + sid + ".csv", url)
+    txt = http("fred_" + sid + ".csv", url, tries=1, timeout=35)
     rows = list(csv.reader(io.StringIO(txt)))
     if not rows or len(rows[0]) < 2 or not re.match(r"(observation_date|DATE)$", rows[0][0].strip(), re.I):
         raise ValueError("format inattendu: " + (",".join(rows[0])[:60] if rows else "vide"))
@@ -150,7 +150,29 @@ def yoy(o):
     return {"v": round((o[-1][1] / ya - 1) * 100, 2), "prev": round((o[-2][1] / ya2 - 1) * 100, 2) if ya2 else None, "asof": o[-1][0]}
 
 
+FRED_OK = {"v": None}
+
+
+def fred_reachable():
+    """Un seul essai rapide : si FRED ne répond pas aux serveurs de GitHub, inutile d'attendre 35 séries."""
+    if FRED_OK["v"] is None:
+        try:
+            fred("DGS10", (NOW - timedelta(days=20)).strftime("%Y-%m-%d"))
+            FRED_OK["v"] = True
+        except Exception as e:
+            FRED_OK["v"] = False
+            FRED_OK["err"] = "FRED injoignable depuis GitHub (%s)" % str(e)[:80]
+    return FRED_OK["v"]
+
+
 def do_fred(data):
+    if not fred_reachable():
+        for sid, label, kind in FRED_DAILY:
+            note("fred." + sid, label, kind, False, err=FRED_OK["err"], url="https://fred.stlouisfed.org/series/" + sid)
+        for sid, label in FRED_MONTHLY:
+            note("fred." + sid, label, "monthly", False, err=FRED_OK["err"], url="https://fred.stlouisfed.org/series/" + sid)
+        fallbacks(data)
+        return
     start_d = (NOW - timedelta(days=400)).strftime("%Y-%m-%d")
     start_m = (NOW - timedelta(days=900)).strftime("%Y-%m-%d")
     def one_d(item):
@@ -173,9 +195,10 @@ def do_fred(data):
         except Exception as e:
             note("fred." + sid, label, "monthly", False, err=e, url="https://fred.stlouisfed.org/series/" + sid)
 
-    with ThreadPoolExecutor(6) as ex:
+    with ThreadPoolExecutor(4) as ex:
         list(ex.map(one_d, FRED_DAILY))
         list(ex.map(one_m, FRED_MONTHLY))
+    fallbacks(data)
     d = data["derived"]
     for sid, key in (("CPIAUCSL", "us_cpi"), ("CPILFESL", "us_core"), ("PCEPILFE", "us_pce_core")):
         y = yoy(raw.get(sid))
@@ -189,7 +212,101 @@ def do_fred(data):
         d["us_nfp"] = {"v": round(o[-1][1] - o[-2][1]), "prev": round(o[-2][1] - o[-3][1]), "asof": o[-1][0]}
 
 
+# ---------------------------------------------------------------- Secours officiels quand FRED ne répond pas
+def treasury(kind, cols):
+    """Trésor américain : CSV quotidien sans clé. kind = daily_treasury_yield_curve ou daily_treasury_real_yield_curve."""
+    obs = {}
+    for yr in (NOW.year - 1, NOW.year):
+        url = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/%d/all"
+               "?type=%s&field_tdr_date_value=%d&page&_format=csv" % (yr, kind, yr))
+        rows = list(csv.DictReader(io.StringIO(http("ust_%s_%d.csv" % (kind, yr), url, timeout=30))))
+        for r in rows:
+            d = datetime.strptime(r["Date"].strip(), "%m/%d/%Y").strftime("%Y-%m-%d")
+            for c in cols:
+                key = next((k for k in r if k and k.strip().upper() == c.upper()), None)
+                v = num(r.get(key)) if key else None
+                if v is not None:
+                    obs.setdefault(c, {})[d] = v
+    return {c: sorted(v.items()) for c, v in obs.items()}
+
+
+def cboe(sym):
+    url = "https://cdn.cboe.com/api/global/us_indices/daily_prices/%s_History.csv" % sym
+    out = []
+    for r in csv.DictReader(io.StringIO(http("cboe_%s.csv" % sym, url, timeout=30))):
+        v = num(r.get("CLOSE") or r.get(sym))
+        if v is not None:
+            out.append((datetime.strptime(r["DATE"].strip(), "%m/%d/%Y").strftime("%Y-%m-%d"), v))
+    return out
+
+
+def put(data, sid, obs, via):
+    if not obs:
+        raise ValueError("série vide")
+    obs = sorted(obs)[-260:]
+    data["fred"][sid] = {"v": obs[-1][1], "prev": obs[-2][1] if len(obs) > 1 else None, "asof": obs[-1][0],
+                         "hist": [[d, v] for d, v in obs], "via": via}
+
+
+def fallbacks(data):
+    F = data["fred"]
+    need = lambda *ids: [i for i in ids if i not in F]
+    if need("DGS10", "DGS2", "T10Y2Y"):
+        try:
+            t = treasury("daily_treasury_yield_curve", ["2 Yr", "10 Yr"])
+            ten, two = t.get("10 Yr", []), t.get("2 Yr", [])
+            if "DGS10" not in F:
+                put(data, "DGS10", ten, "Trésor US")
+            if "DGS2" not in F:
+                put(data, "DGS2", two, "Trésor US")
+            if "T10Y2Y" not in F:
+                d2 = dict(two)
+                put(data, "T10Y2Y", [(d, round(v - d2[d], 2)) for d, v in ten if d in d2], "Trésor US (10 ans − 2 ans)")
+            note("ust.nominal", "Taux US 2 et 10 ans (Trésor américain, secours)", "daily", True, F["DGS10"]["asof"],
+                 url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
+        except Exception as e:
+            note("ust.nominal", "Taux US 2 et 10 ans (Trésor américain, secours)", "daily", False, err=e,
+                 url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
+    if need("DFII10"):
+        try:
+            put(data, "DFII10", treasury("daily_treasury_real_yield_curve", ["10 YR"]).get("10 YR", []), "Trésor US")
+            note("ust.real", "Taux réel US 10 ans (Trésor américain, secours)", "daily", True, F["DFII10"]["asof"],
+                 url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
+        except Exception as e:
+            note("ust.real", "Taux réel US 10 ans (Trésor américain, secours)", "daily", False, err=e,
+                 url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates")
+    for sym, sid in (("VIX", "VIXCLS"), ("GVZ", "GVZCLS")):
+        if need(sid):
+            try:
+                put(data, sid, cboe(sym), "CBOE")
+                note("cboe." + sym, sym + " (CBOE, secours)", "daily", True, F[sid]["asof"], url="https://www.cboe.com/tradable_products/vix/")
+            except Exception as e:
+                note("cboe." + sym, sym + " (CBOE, secours)", "daily", False, err=e, url="https://www.cboe.com/tradable_products/vix/")
+    if need("DFEDTARU", "DFEDTARL"):
+        try:
+            j = json.loads(http("nyfed_effr.json", "https://markets.newyorkfed.org/api/rates/unsecured/effr/last/30.json", timeout=30))
+            rows = sorted(j.get("refRates") or [], key=lambda r: r["effectiveDate"])
+            put(data, "DFEDTARU", [(r["effectiveDate"], num(r.get("targetRateTo"))) for r in rows if num(r.get("targetRateTo")) is not None], "Fed de New York")
+            put(data, "DFEDTARL", [(r["effectiveDate"], num(r.get("targetRateFrom"))) for r in rows if num(r.get("targetRateFrom")) is not None], "Fed de New York")
+            note("nyfed.target", "Fourchette cible de la Fed (Fed de New York, secours)", "daily", True, F["DFEDTARU"]["asof"],
+                 url="https://www.newyorkfed.org/markets/reference-rates/effr")
+        except Exception as e:
+            note("nyfed.target", "Fourchette cible de la Fed (Fed de New York, secours)", "daily", False, err=e,
+                 url="https://www.newyorkfed.org/markets/reference-rates/effr")
+    if need("ECBDFR"):
+        try:
+            url = "https://data-api.ecb.europa.eu/service/data/FM/D.U2.EUR.4F.KR.DFR.LEV?format=csvdata&lastNObservations=30"
+            rows = list(csv.DictReader(io.StringIO(http("ecb_dfr.csv", url, timeout=30))))
+            put(data, "ECBDFR", [(r["TIME_PERIOD"], num(r["OBS_VALUE"])) for r in rows if num(r["OBS_VALUE"]) is not None], "BCE")
+            note("ecb.dfr", "Taux de dépôt BCE (BCE, secours)", "daily", True, F["ECBDFR"]["asof"], url="https://data.ecb.europa.eu/")
+        except Exception as e:
+            note("ecb.dfr", "Taux de dépôt BCE (BCE, secours)", "daily", False, err=e, url="https://data.ecb.europa.eu/")
+
+
 def do_oecd(data):
+    if not fred_reachable():
+        note("oecd.fred", "Séries OCDE via FRED (taux et inflation des autres pays)", "monthly", False, err=FRED_OK["err"])
+        return
     start_m = (NOW - timedelta(days=900)).strftime("%Y-%m-%d")
     for cc, name in OECD_RATES:
         sid = "IRSTCB01%sM156N" % cc
@@ -268,17 +385,48 @@ def boc_cpi():
 def rba_rate():
     url = "https://www.rba.gov.au/statistics/tables/csv/f1.1-data.csv"
     rows = list(csv.reader(io.StringIO(http("rba_f11.csv", url))))
-    col = None
-    for r in rows[:15]:
+    col, ids, titles = None, [], []
+    for r in rows[:20]:
         if r and r[0].strip().lower() == "series id":
-            col = [c.strip() for c in r].index("FIRMMCRTD")
+            ids = [c.strip().upper() for c in r]
+        if r and r[0].strip().lower() == "title":
+            titles = [c.strip().lower() for c in r]
+    for i, c in enumerate(ids):
+        if c.startswith("FIRMMCRT"):
+            col = i
+            break
     if col is None:
-        raise ValueError("colonne FIRMMCRTD absente")
+        col = next((i for i, t in enumerate(titles) if "cash rate target" in t), None)
+    if col is None:
+        raise ValueError("colonne du taux cible absente (identifiants : %s)" % ",".join(ids[1:6]))
     obs = []
     for r in rows:
         if r and re.match(r"\d{2}-\w{3}-\d{4}", r[0].strip()) and len(r) > col:
             obs.append((datetime.strptime(r[0].strip(), "%d-%b-%Y").strftime("%Y-%m-%d"), num(r[col])))
     return last2(obs)
+
+
+def eurostat_hicp():
+    url = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_manr"
+           "?format=JSON&lang=EN&geo=EA&coicop=CP00&unit=RCH_A&lastTimePeriod=3")
+    j = json.loads(http("eurostat_hicp.json", url, timeout=30))
+    idx = j["dimension"]["time"]["category"]["index"]
+    obs = [(per[:7] + "-01", num(j["value"].get(str(pos)))) for per, pos in idx.items()]
+    return last2(obs)
+
+
+def ez_cpi():
+    best, err = None, None
+    for fn in (eurostat_hicp, ecb_hicp):
+        try:
+            r = fn()
+            if r and (not best or r["asof"] > best["asof"]):
+                best = r
+        except Exception as e:
+            err = e
+    if not best:
+        raise err or ValueError("aucune valeur")
+    return best
 
 
 def ecb_hicp():
@@ -310,7 +458,7 @@ def do_national(data):
     nat(data, "rate_CA", "Taux directeur BoC (Banque du Canada)", "daily", "https://www.bankofcanada.ca/valet/", lambda: valet("V39079", "boc_rate.json"))
     nat(data, "rate_AU", "Taux directeur RBA (Banque de réserve d'Australie)", "daily", "https://www.rba.gov.au/statistics/tables/", rba_rate)
     nat(data, "rate_CH", "Taux directeur BNS (Banque nationale suisse)", "monthly", "https://data.snb.ch/", snb_rate)
-    nat(data, "cpi_EZ", "Inflation zone euro (BCE, IPCH)", "monthly", "https://data.ecb.europa.eu/", ecb_hicp)
+    nat(data, "cpi_EZ", "Inflation zone euro (Eurostat / BCE, IPCH)", "monthly", "https://ec.europa.eu/eurostat/web/hicp", ez_cpi)
     nat(data, "cpi_GB", "Inflation Royaume-Uni (ONS)", "monthly", "https://www.ons.gov.uk/economy/inflationandpriceindices", ons_cpi)
     nat(data, "cpi_CA", "Inflation Canada (Banque du Canada)", "monthly", "https://www.bankofcanada.ca/rates/price-indexes/cpi/", boc_cpi)
 
@@ -440,8 +588,7 @@ def do_rss(data):
 # ---------------------------------------------------------------- Calendrier économique (export Forex Factory)
 def do_calendar(data):
     evs = []
-    for k, (key, url) in enumerate((("this", "https://nfs.faireconomy.media/ff_calendar_thisweek.json"),
-                                    ("next", "https://nfs.faireconomy.media/ff_calendar_nextweek.json"))):
+    for k, (key, url) in enumerate((("this", "https://nfs.faireconomy.media/ff_calendar_thisweek.json"),)):
         try:
             rows = json.loads(http("ff_%s.json" % key, url, tries=2))
             if not isinstance(rows, list):
@@ -549,7 +696,8 @@ def do_world(data):
         code, key, label = ind
         url = "https://www.imf.org/external/datamapper/api/v1/%s?periods=%s" % (code, yr)
         try:
-            j = json.loads(http("imf_%s.json" % key, url, tries=2, timeout=40))
+            j = json.loads(http("imf_%s.json" % key, url, tries=2, timeout=40, headers={
+                "Accept": "application/json, text/plain, */*", "Referer": "https://www.imf.org/external/datamapper/"}))
             vals = (j.get("values") or {}).get(code) or {}
             n = 0
             for iso, per in vals.items():
@@ -687,7 +835,7 @@ def main():
     if want("seasonal"):
         todo.append(("seasonal", lambda d: do_seasonal(force=os.environ.get("MF_SEAS_FORCE") == "1")))
     # Chronomètre global : au-delà de BUDGET secondes, on enregistre ce qu'on a et on s'arrête.
-    budget = int(os.environ.get("MF_BUDGET", "300"))
+    budget = int(os.environ.get("MF_BUDGET", "420"))
     ex = ThreadPoolExecutor(len(todo) or 1)
     futs = {ex.submit(run, st): st[0] for st in todo}
     done, pending = wait(futs, timeout=budget)

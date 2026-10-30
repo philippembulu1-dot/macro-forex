@@ -1529,7 +1529,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     var dl = f.prev != null ? f.v - f.prev : null, h = f.hist ? f.hist.slice(-40).map(function (p) { return { v: p[1] }; }) : null;
     return '<div class="tile"><small>' + lbl + "</small><b>" + fnum(f.v, d) + (unit || "") + "</b>" +
       (dl !== null ? '<span class="dl ' + cls(dl) + '">' + (fmtDelta ? fmtDelta(dl) : (dl >= 0 ? "+" : "−") + Math.abs(dl).toFixed(d).replace(".", ",")) + "</span>" : "") +
-      (h && h.length > 3 ? spark(h) : "") + '<span class="asof">au ' + shortD(f.asof) + "</span></div>";
+      (h && h.length > 3 ? spark(h) : "") + '<span class="asof">au ' + shortD(f.asof) + (f.via ? " · " + esc(f.via) : "") + "</span></div>";
   }
   function chg5(id) { var f = fred(id); if (!f || !f.hist || f.hist.length < 6) return null; var h = f.hist; return h[h.length - 1][1] - h[h.length - 6][1]; }
   function renderTaux() {
@@ -1545,7 +1545,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     var hy = fred("BAMLH0A0HYM2"); if (hy) l.push("Spread de crédit à " + fmt(hy.v, 2) + " % : " + (hy.v < 3.5 ? "crédit détendu." : hy.v < 5 ? "prudence modérée." : "<b>stress de crédit</b>, plutôt risk-off."));
     if (v) l.push("VIX à " + fmt(v.v, 1) + " : " + (v.v < 15 ? "marché calme." : v.v < 20 ? "volatilité normale." : v.v < 30 ? "<b>tension</b>, prudence sur les tailles de position." : "<b>stress élevé</b>, réduire le risque."));
     h += '<div class="pad idea" style="margin:10px 12px">' + l.join(" ") + ' C\'est une piste de lecture, pas un signal.</div>';
-    h += '<p class="note">Sources : FRED (Réserve fédérale de Saint-Louis), données de clôture quotidiennes, mises à jour par le robot. Le rendement réel est le principal moteur de l\'or à moyen terme.</p>';
+    h += '<p class="note">Sources : FRED (Réserve fédérale de Saint-Louis) ; si FRED ne répond pas, Trésor américain, CBOE, Fed de New York et BCE (la source est indiquée sous chaque chiffre). Données de clôture quotidiennes, mises à jour par le robot. Le rendement réel est le principal moteur de l\'or à moyen terme.</p>';
     b.innerHTML = h; $("tauxMeta").textContent = "clôtures · FRED";
   }
 
@@ -1775,7 +1775,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       var f = fred(x[0]), s = srcOf("fred." + x[0]), kind = s ? s.kind : "daily";
       if (!f) return "<tr><td><b>" + x[1] + '</b></td><td class="r">–</td><td class="r">–</td><td>' + badge("ko") + '</td><td class="col-core"><small>' + x[4] + "</small></td></tr>";
       var val = x[0] === "WALCL" ? f.v / 1000 : f.v, c = chgN(x[0], 20), dv = c ? (x[0] === "WALCL" ? c.d / 1000 : c.d) : null;
-      return "<tr><td><b>" + x[1] + '</b></td><td class="r num">' + fmtN(val, x[2]) + x[3] + '</td><td class="r num">' + (dv === null ? "–" : (dv >= 0 ? "+" : "−") + fmtN(Math.abs(dv), x[2] || 0)) + "</td><td>" + shortD(f.asof) + " " + badge(fresh(f.asof, kind)) + '</td><td class="col-core" style="white-space:normal"><small>' + x[4] + "</small></td></tr>";
+      return "<tr><td><b>" + x[1] + '</b></td><td class="r num">' + fmtN(val, x[2]) + x[3] + '</td><td class="r num">' + (dv === null ? "–" : (dv >= 0 ? "+" : "−") + fmtN(Math.abs(dv), x[2] || 0)) + "</td><td>" + shortD(f.asof) + (f.via ? " <small>" + esc(f.via) + "</small>" : "") + " " + badge(fresh(f.asof, kind)) + '</td><td class="col-core" style="white-space:normal"><small>' + x[4] + "</small></td></tr>";
     }).join("") + '</tbody></table></div><p class="note">Sélection issue de la recherche : facteurs du modèle du World Gold Council (taux réels, dollar, inflation anticipée, volatilité implicite), conditions financières et crédit suivis par les desks. Source : FRED, sans clé. Non disponibles gratuitement : indice de surprise économique Citi, risk reversals d\'options, flux d\'ETF quotidiens.</p>';
   }
 
@@ -2030,7 +2030,8 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     var srcs = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return /^pm\./.test(s.id); }) : [];
     if (m && m.kalshi && m.kalshi.length) {
       var ev = {}; m.kalshi.forEach(function (x) { (ev[x.ev] = ev[x.ev] || []).push(x); });
-      Object.keys(ev).sort().slice(0, 4).forEach(function (k) {
+      var today = iso(new Date());
+      Object.keys(ev).filter(function (k) { return (ev[k][0].close || "9") >= today; }).sort(function (a, c) { return (ev[a][0].close || "9") < (ev[c][0].close || "9") ? -1 : 1; }).slice(0, 4).forEach(function (k) {
         var L = ev[k].filter(function (x) { return x.p !== null; }).sort(function (a, c) { return c.p - a.p; }).slice(0, 6);
         if (!L.length) return;
         h += '<div class="pad"><b class="mono">' + esc(L[0].t || k) + "</b> <small class=\"d\">Kalshi · clôture " + esc(L[0].close) + '</small></div><div class="tbl"><table><tbody>' + L.map(function (x) {
@@ -2040,7 +2041,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     }
     if (m && m.polymarket && m.polymarket.length) {
       var pe = {}; m.polymarket.forEach(function (x) { (pe[x.ev] = pe[x.ev] || []).push(x); });
-      Object.keys(pe).slice(0, 3).forEach(function (k) {
+      Object.keys(pe).filter(function (k) { return (pe[k][0].close || "9") >= iso(new Date()); }).sort(function (a, c) { return (pe[a][0].close || "9") < (pe[c][0].close || "9") ? -1 : 1; }).slice(0, 3).forEach(function (k) {
         var L = pe[k].filter(function (x) { return x.p !== null; }).sort(function (a, c) { return c.p - a.p; }).slice(0, 6);
         if (!L.length) return;
         h += '<div class="pad"><b class="mono">' + esc(k) + "</b> <small class=\"d\">Polymarket · fin " + esc(L[0].close) + '</small></div><div class="tbl"><table><tbody>' + L.map(function (x) {
