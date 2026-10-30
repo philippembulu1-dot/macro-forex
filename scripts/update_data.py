@@ -1304,6 +1304,57 @@ def do_analyses(data):
     data["analyses"] = out[:80]
 
 
+# ---------------------------------------------------------------- Sentiment des particuliers : API officielle Myfxbook (compte gratuit)
+def do_retail(data):
+    """Identifiants lus dans les secrets GitHub (MYFXBOOK_EMAIL, MYFXBOOK_PASSWORD) : jamais écrits dans les fichiers ni le journal."""
+    lab, url_info = "Sentiment des particuliers (Myfxbook)", "https://www.myfxbook.com/community/outlook"
+    em, pw = os.environ.get("MYFXBOOK_EMAIL", "").strip(), os.environ.get("MYFXBOOK_PASSWORD", "")
+    prev = PREVIOUS.get("retail")
+    if not (em and pw) and not MOCK:
+        if prev:
+            data["retail"] = prev
+        note("myfxbook", lab, "config", False, err="à configurer : compte Myfxbook gratuit + secrets GitHub (voir le guide)", url=url_info)
+        return
+    session = None
+    try:
+        if MOCK:
+            session = "mock"
+        else:
+            j = json.loads(http("mfb_login.json", "https://www.myfxbook.com/api/login.json?" + urllib.parse.urlencode({"email": em, "password": pw}), tries=1, timeout=30))
+            if j.get("error"):
+                raise ValueError("connexion refusée par Myfxbook : " + str(j.get("message", ""))[:80])
+            session = j.get("session")
+        j = json.loads(http("mfb_outlook.json", "https://www.myfxbook.com/api/get-community-outlook.json?session=" + urllib.parse.quote(session or ""), tries=2, timeout=30))
+        if j.get("error"):
+            raise ValueError("Myfxbook : " + str(j.get("message", ""))[:80])
+        out = {}
+        for x in j.get("symbols") or []:
+            n = str(x.get("name", "")).upper()
+            lp, sp = num(x.get("longPercentage")), num(x.get("shortPercentage"))
+            if n and lp is not None and sp is not None:
+                out[n] = {"long": round(lp, 1), "short": round(sp, 1), "lpos": x.get("longPositions"), "spos": x.get("shortPositions"),
+                          "lvol": num(x.get("longVolume")), "svol": num(x.get("shortVolume")), "alp": num(x.get("avgLongPrice")), "asp": num(x.get("avgShortPrice"))}
+        if not out:
+            raise ValueError("aucune paire reçue")
+        data["retail"] = {"asof": NOW.strftime("%Y-%m-%dT%H:%MZ"), "src": "Myfxbook Community Outlook", "s": out}
+        note("myfxbook", lab, "daily", True, TODAY, url=url_info)
+    except Exception as e:
+        if prev:
+            data["retail"] = prev  # on garde les derniers chiffres valides, avec leur date
+        msg = fr_err(e)
+        if em:
+            msg = msg.replace(em, "***")
+        if pw:
+            msg = msg.replace(pw, "***")
+        note("myfxbook", lab, "daily", False, err=msg, url=url_info)
+    finally:
+        if session and not MOCK:
+            try:
+                http("mfb_logout.json", "https://www.myfxbook.com/api/logout.json?session=" + urllib.parse.quote(session), tries=1, timeout=15)
+            except Exception:
+                pass
+
+
 # ---------------------------------------------------------------- Historique macro depuis 2001 (fichier séparé)
 def do_history(force=False):
     """Inflation et croissance annuelles de tous les pays depuis 2001 (Banque mondiale). Recalcul une fois par semaine."""
@@ -1341,7 +1392,7 @@ def do_history(force=False):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step

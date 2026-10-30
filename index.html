@@ -413,6 +413,11 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
 .drawer p { margin: 0 0 6px; font-size: 13px; line-height: 1.55; }
 .drawer .now { border: 1px solid var(--line); background: var(--amber-soft); padding: 10px 12px; font-size: 13px; }
 .drawer .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; }
+.rbar { display: flex; height: 18px; min-width: 140px; font: 600 10px/18px var(--font-mono); }
+.rbar i { display: block; font-style: normal; text-align: center; color: #0a0a0a; overflow: hidden; white-space: nowrap; }
+.rbar .l { background: var(--up); } .rbar .s { background: var(--down); }
+details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--font-mono); color: var(--amber); border-top: 1px solid var(--line2); }
+.cfg { padding: 12px; } .cfg ol { margin: 6px 0 0; padding-left: 20px; font-size: 13px; } .cfg li { margin: 4px 0; }
 </style>
 
 </head><body><div class="shell">
@@ -718,9 +723,10 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
     <section class="panel" id="sentiment">
       <div class="ph"><h2>Sentiment des particuliers</h2><span class="meta">saisie datée</span></div>
       <div id="sentWidget"></div>
-      <div class="links" id="sentLinks"></div>
-      <div id="sentMan"></div>
-      <p class="note">Aucun courtier ne fournit d'accès gratuit automatisable à ces chiffres : relevez-les sur leurs pages publiques. Lecture habituelle à contre-courant : quand plus de 70 % des particuliers sont acheteurs, le prix a souvent tendance à baisser, et inversement.</p>
+      <div class="tbl"><table id="retTbl"></table></div>
+      <div id="retCfg"></div>
+      <details class="mansent"><summary>Autres sources et saisie manuelle</summary><div class="links" id="sentLinks"></div><div id="sentMan"></div></details>
+      <p class="note">Positions des comptes de particuliers reliés à Myfxbook (API officielle, compte gratuit), relevées par le robot toutes les 2 h. Lecture habituelle à contre-courant : quand plus de 70 % des particuliers sont acheteurs, le prix a souvent tendance à baisser, et inversement. Un contexte, pas un signal d'entrée.</p>
     </section>
 
     <section class="panel" id="outils">
@@ -1673,10 +1679,11 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
   function oecd(k) { return AUTO && AUTO.oecd && AUTO.oecd[k]; }
   function srcState(s) {
     if (!s.ok && s.kind === "nofree") return "nf";
+    if (!s.ok && s.kind === "config") return "cf";
     if (!s.ok) return "ko";
     return ageDays(s.asof) <= (MAXAGE[s.kind] || 30) ? "ok" : "old";
   }
-  var BL = { ok: "à jour", old: "ancien", ko: "échec", nf: "non gratuit" };
+  var BL = { ok: "à jour", old: "ancien", ko: "échec", nf: "non gratuit", cf: "à configurer" };
   function badge(st, txt) { return '<span class="badge ' + st + '">' + (txt || BL[st]) + "</span>"; }
 
   /* Compare la saisie manuelle au chiffre automatique : ✓ concordant, ⚠ écart (le chiffre auto est affiché). */
@@ -1755,7 +1762,7 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
     } else {
       var st = age <= 6 ? "ok" : age <= 36 ? "old" : "ko";
       meta = "robot : " + (age < 1 ? "il y a moins d'1 h" : age < 48 ? "il y a " + Math.round(age) + " h" : "il y a " + Math.round(age / 24) + " j");
-      var cnt = { ok: 0, old: 0, ko: 0, nf: 0 }; AUTO.sources.forEach(function (s) { cnt[srcState(s)]++; });
+      var cnt = { ok: 0, old: 0, ko: 0, nf: 0, cf: 0 }; AUTO.sources.forEach(function (s) { cnt[srcState(s)]++; });
       h += '<div class="pad">' + badge(st, st === "ok" ? "robot actif" : st === "old" ? "robot en retard" : "robot arrêté?") + " &nbsp;" + cnt.ok + " sources à jour · " + cnt.old + " anciennes · " + cnt.ko + " en échec" + (cnt.nf ? " · " + cnt.nf + " non disponibles gratuitement" : "") + "</div>";
       if (st === "ko") h += '<p class="warn" style="margin:0 12px 8px">Le robot n\'a pas écrit de données depuis plus de 36 h : les chiffres automatiques ci-dessus peuvent être périmés. Vérifiez l\'onglet Actions du dépôt.</p>';
       h += '<details class="srcs"><summary>Détail des ' + AUTO.sources.length + ' sources</summary><ul class="src-list">' + AUTO.sources.map(function (s) {
@@ -2309,7 +2316,28 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
   }
 
   /* ---------- Sentiment ---------- */
+  var RET_ORDER = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD", "EURJPY", "GBPJPY", "EURGBP", "XAGUSD"];
+  function retRead(x) { return x.long >= 70 ? ["particuliers très acheteurs → biais contraire baissier", "down"] : x.short >= 70 ? ["particuliers très vendeurs → biais contraire haussier", "up"] : x.long >= 60 ? ["plutôt acheteurs", ""] : x.short >= 60 ? ["plutôt vendeurs", ""] : ["équilibré", ""]; }
+  function renderRetail() {
+    var r = AUTO && AUTO.retail, s = srcOf("myfxbook"), tb = $("retTbl"), cfg = $("retCfg");
+    if (r && r.s) {
+      var ks = RET_ORDER.filter(function (k) { return r.s[k]; }).concat(Object.keys(r.s).filter(function (k) { return RET_ORDER.indexOf(k) < 0; }).sort()).slice(0, 20);
+      tb.innerHTML = '<thead><tr><th>Paire</th><th>Acheteurs / vendeurs</th><th class="col-core">Lecture</th></tr></thead><tbody>' + ks.map(function (k) {
+        var x = r.s[k], rd = retRead(x);
+        return '<tr data-det="ret:' + k + '"><td><b>' + k.slice(0, 3) + "/" + k.slice(3) + '</b><span class="more">›</span></td><td><div class="rbar" title="' + x.long + " % acheteurs, " + x.short + ' % vendeurs"><i class="l" style="width:' + x.long + '%">' + Math.round(x.long) + ' %</i><i class="s" style="width:' + x.short + '%">' + Math.round(x.short) + ' %</i></div></td><td class="col-core ' + rd[1] + '"><small>' + rd[0] + "</small></td></tr>";
+      }).join("") + "</tbody>";
+      var a = r.asof ? r.asof.slice(0, 10) : null;
+      tb.insertAdjacentHTML("beforeend", "");
+      $("sentiment").querySelector(".ph .meta").innerHTML = "Myfxbook · relevé " + (a ? shortD(a) + " " + r.asof.slice(11, 16) + " UTC " + badge(s && s.ok ? fresh(a, "daily") : "old") : "");
+    } else { tb.innerHTML = ""; }
+    if (!s || s.kind === "config") {
+      cfg.innerHTML = '<div class="cfg"><b class="mono" style="color:var(--amber)">À configurer une seule fois (gratuit)</b><ol><li>Créez un compte gratuit sur <a href="https://www.myfxbook.com" target="_blank" rel="noopener">myfxbook.com</a> avec un e-mail et un mot de passe (pas la connexion Google).</li><li>Sur GitHub, dépôt <b>macro-forex</b> → <b>Paramètres</b> → <b>Secrets and variables</b> → <b>Actions</b> → <b>New repository secret</b>.</li><li>Créez le secret <b>MYFXBOOK_EMAIL</b> (votre e-mail), puis <b>MYFXBOOK_PASSWORD</b> (votre mot de passe Myfxbook).</li><li>Le robot affichera les chiffres à son prochain passage (2 h au plus). Vos identifiants restent dans le coffre-fort de GitHub : ils ne sont jamais publiés sur le site.</li></ol></div>';
+    } else if (s && !s.ok) {
+      cfg.innerHTML = '<p class="warn" style="margin:0">Myfxbook n\'a pas répondu au dernier passage (' + esc(s.err || "") + ")" + (r ? " : derniers chiffres valides affichés." : ".") + "</p>";
+    } else cfg.innerHTML = "";
+  }
   function renderSent() {
+    renderRetail();
     $("sentLinks").innerHTML = [["Myfxbook", "https://www.myfxbook.com/community/outlook", "Positions des comptes reliés, par paire."], ["IG", "https://www.ig.com/en/trading-strategies/client-sentiment", "Sentiment des clients IG."],
       ["Dukascopy SWFX", "https://www.dukascopy.com/swiss/english/marketwatch/sentiment/", "Indice de sentiment de la banque suisse."], ["Forex Factory", "https://www.forexfactory.com/market/", "Positions des traders du site."]]
       .map(function (x) { return '<a href="' + x[1] + '" target="_blank" rel="noopener"><b>' + x[0] + "</b><span>" + x[2] + "</span></a>"; }).join("");
@@ -2808,6 +2836,16 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
         now: id === "USD" ? "Voir la branche Taux & pricing pour ce que le marché anticipe aux prochaines réunions." : (p.v > us.v ? "Le taux de cette banque est <b>au-dessus</b> de celui de la Fed : cela soutient la devise face au dollar (portage)." : "Le taux est <b>sous</b> celui de la Fed : le dollar rapporte plus, ce qui pèse sur la devise face au dollar."),
         what: "Taux auquel la banque centrale prête aux banques : il oriente tous les taux de l'économie et la valeur de la devise.", how: "Une hausse (ou un discours plus ferme que prévu) soutient souvent la devise ; une baisse l'affaiblit.", src: COMLINK[m.b] });
     }
+    if (type === "ret") {
+      var rr = AUTO && AUTO.retail && AUTO.retail.s && AUTO.retail.s[id]; if (!rr) return;
+      var rd = retRead(rr), pair = id.slice(0, 3) + "/" + id.slice(3), pp = pairOf(id), px = null;
+      if (pp) { var ser = series(pp); px = ser[ser.length - 1].v; } else if (id === "XAUUSD" && state.gold) px = state.gold[state.gold.length - 1].c;
+      var dd = pp ? pp.dec : 2, gap = function (avg) { return px && avg ? (px > avg ? "+" : "−") + Math.abs((px / avg - 1) * 100).toFixed(2).replace(".", ",") + " %" : "–"; };
+      return openDetail({ t: "Sentiment · " + pair, val: Math.round(rr.long) + " % acheteurs", sub: Math.round(rr.short) + " % vendeurs · Myfxbook, " + shortD(AUTO.retail.asof.slice(0, 10)),
+        extra: '<h3>Chiffres</h3><div class="stats"><div class="stat"><small>Positions acheteuses</small><b>' + (rr.lpos || 0).toLocaleString("fr-FR") + '</b></div><div class="stat"><small>Positions vendeuses</small><b>' + (rr.spos || 0).toLocaleString("fr-FR") + '</b></div><div class="stat"><small>Prix moyen des acheteurs</small><b>' + (rr.alp ? fmtN(rr.alp, dd) : "–") + '</b><span class="dsub">cours vs moyenne : ' + gap(rr.alp) + '</span></div><div class="stat"><small>Prix moyen des vendeurs</small><b>' + (rr.asp ? fmtN(rr.asp, dd) : "–") + '</b><span class="dsub">cours vs moyenne : ' + gap(rr.asp) + "</span></div></div>",
+        now: "Lecture : <b>" + rd[0] + "</b>." + (px && rr.alp ? (px < rr.alp ? " Les acheteurs sont en moyenne <b>en perte</b> : leurs stops peuvent accélérer une baisse." : " Les acheteurs sont en moyenne <b>en gain</b>.") : "") + (px && rr.asp ? (px > rr.asp ? " Les vendeurs sont en moyenne <b>en perte</b> : un rachat forcé peut accélérer une hausse." : " Les vendeurs sont en moyenne <b>en gain</b>.") : ""),
+        what: "Part des comptes de particuliers (reliés à Myfxbook) qui sont acheteurs ou vendeurs sur cette paire.", how: "Les particuliers ont souvent tort aux extrêmes : au-delà de 70 % d'un côté, le marché a tendance à aller dans l'autre sens. À combiner avec la tendance et le COT des fonds.", src: "https://www.myfxbook.com/community/outlook", srcTxt: "API officielle, compte gratuit" });
+    }
     if (type === "ind") {
       var row = IND[+id]; if (!row || row.g) return;
       var how = (HOW.filter(function (x) { return row.l.toLowerCase().indexOf(x[0].toLowerCase().split(" ")[0]) >= 0; })[0] || ["", ""])[1];
@@ -2845,7 +2883,7 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
