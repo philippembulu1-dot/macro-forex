@@ -30,8 +30,15 @@ jobs:
         run: |
           git config user.name "macro-forex-robot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/macro.json data/seasonal.json data/macro-history.json 2>/dev/null || git add data/macro.json data/seasonal.json
-          if git diff --staged --quiet; then echo "Rien de nouveau"; exit 0; fi
-          git commit -m "Données mises à jour"
-          git pull --rebase origin main
-          git push
+          mkdir -p /tmp/out && cp data/macro.json data/seasonal.json /tmp/out/ && (cp data/macro-history.json /tmp/out/ 2>/dev/null || true)
+          for i in 1 2 3; do
+            # On repart de la dernière version du dépôt et on y pose les nouvelles données (évite les conflits entre deux passages du robot)
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp /tmp/out/*.json data/
+            git add data/macro.json data/seasonal.json $( [ -f data/macro-history.json ] && echo data/macro-history.json )
+            if git diff --staged --quiet; then echo "Rien de nouveau"; exit 0; fi
+            git commit -q -m "Données mises à jour"
+            if git push -q origin HEAD:main; then echo "Publié"; exit 0; fi
+            echo "Envoi refusé, nouvel essai ($i)"; sleep 5
+          done
+          exit 1
