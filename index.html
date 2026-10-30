@@ -2048,7 +2048,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   function vesselMap(box, lat, lon, zoom, label) {
     var doc = '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#0d0d0f}</style></head><body><script>var width="100%";var height="420";var latitude="' + lat + '";var longitude="' + lon + '";var zoom="' + zoom + '";var names=false;<\/script><script src="https://www.vesselfinder.com/aismap.js"><\/script></body></html>';
     var f = document.createElement("iframe"); f.setAttribute("title", "Navires en direct : " + label); f.style.cssText = "width:100%;height:430px;border:0;display:block;background:#0d0d0f";
-    f.srcdoc = doc; box.innerHTML = '<p class="note" style="border-top:0">Navires en temps réel autour de : <b>' + esc(label) + "</b> (VesselFinder, positions AIS). Pétroliers en rouge sur la carte.</p>"; box.appendChild(f);
+    f.srcdoc = doc; box.innerHTML = '<p class="note" style="border-top:0">Navires en temps réel autour de : <b>' + esc(label) + "</b> (VesselFinder, positions AIS). Cliquez sur un navire pour voir son type (pétrolier, porte-conteneurs…).</p>"; box.appendChild(f);
     box.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
   function straitStats(name) {
