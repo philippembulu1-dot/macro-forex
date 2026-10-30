@@ -427,63 +427,32 @@ def fallbacks(data):
             note("ecb.dfr", "Taux de dépôt BCE (BCE, secours)", "daily", True, F["ECBDFR"]["asof"], url="https://data.ecb.europa.eu/")
         except Exception as e:
             note("ecb.dfr", "Taux de dépôt BCE (BCE, secours)", "daily", False, err=e, url="https://data.ecb.europa.eu/")
-    # Bilan de la Fed : publication H.4.1 directement chez la Réserve fédérale (programme de téléchargement)
+    # Bilan de la Fed : page officielle de la publication hebdomadaire H.4.1 (ligne « Total assets »)
     if need("WALCL"):
         try:
-            url = ("https://www.federalreserve.gov/datadownload/Output.aspx?rel=H41&filetype=csv&label=include"
-                   "&layout=seriescolumn&lastobs=60")
-            rows = list(csv.reader(io.StringIO(http("fed_h41.csv", url, timeout=60, tries=2))))
-            col = None
-            for r in rows[:8]:
-                for i, c in enumerate(r):
-                    if "RESPPANWW" in c.upper():
-                        col = i
-                        break
-                if col is not None:
-                    break
-            if col is None:
-                DIAG["h41_entetes"] = [r[:4] for r in rows[:6]]
-                raise ValueError("colonne du total de l'actif (RESPPANWW) introuvable")
-            obs = []
-            for r in rows:
-                if len(r) > col and re.match(r"\d{4}-\d{2}-\d{2}$", r[0].strip()) and num(r[col]) is not None:
-                    obs.append((r[0].strip(), num(r[col])))
-            put(data, "WALCL", obs, "Réserve fédérale (H.4.1)")
-            note("fed.h41", "Bilan de la Fed (Réserve fédérale, H.4.1)", "weekly", True, F["WALCL"]["asof"], url="https://www.federalreserve.gov/releases/h41/")
+            html = http("fed_h41.html", "https://www.federalreserve.gov/releases/h41/current/default.htm", timeout=60, tries=2)
+            txt = re.sub(r"<[^>]+>", " ", html)
+            txt = re.sub(r"&nbsp;|&#160;", " ", txt)
+            txt = re.sub(r"\s+", " ", txt)
+            m = re.search(r"Total assets\s+([\d,]{6,})\s+([+\-−]?\s?[\d,]+)", txt)
+            if not m:
+                DIAG["h41_extrait"] = txt[txt.find("Total assets") - 80: txt.find("Total assets") + 160] if "Total assets" in txt else txt[:200]
+                raise ValueError("ligne « Total assets » introuvable sur la page H.4.1")
+            v = num(m.group(1))
+            ch = num(m.group(2).replace("−", "-").replace(" ", ""))
+            dm = re.search(r"(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4})", txt)
+            asof = datetime.strptime(dm.group(0), "%B %d, %Y").strftime("%Y-%m-%d") if dm else TODAY
+            F["WALCL"] = {"v": v, "prev": v - ch if ch is not None else None, "asof": asof, "hist": [], "via": "Réserve fédérale (H.4.1)"}
+            note("fed.h41", "Bilan de la Fed (Réserve fédérale, H.4.1)", "weekly", True, asof, url="https://www.federalreserve.gov/releases/h41/current/")
         except Exception as e:
-            note("fed.h41", "Bilan de la Fed (Réserve fédérale, H.4.1)", "weekly", False, err=e, url="https://www.federalreserve.gov/releases/h41/")
+            note("fed.h41", "Bilan de la Fed (Réserve fédérale, H.4.1)", "weekly", False, err=e, url="https://www.federalreserve.gov/releases/h41/current/")
     # Dernière chance pour les séries qui n'existent que chez la Fed de St. Louis : délai long, FRED puis ALFRED
-    rest = need("STLFSI4", "BAMLH0A0HYM2", "BAMLC0A0CM", "PCEPILFE", "WALCL")
-    tries_log = {}
-
-    def slow(sid):
-        start = (NOW - timedelta(days=400)).strftime("%Y-%m-%d")
-        for host, path in (("fred", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=%s&cosd=%s"),
-                           ("alfred", "https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=%s&cosd=%s")):
-            try:
-                txt = http("slow_%s_%s.csv" % (host, sid), path % (sid, start), tries=1, timeout=90)
-                rows = list(csv.reader(io.StringIO(txt)))
-                obs = [(r[0][:10], num(r[1])) for r in rows[1:] if len(r) > 1 and num(r[1]) is not None]
-                if not obs:
-                    raise ValueError("série vide")
-                if sid == "PCEPILFE":
-                    y = yoy(obs)
-                    if y:
-                        data["derived"]["us_pce_core"] = y
-                else:
-                    put(data, sid, obs, "FRED (délai long)" if host == "fred" else "ALFRED (Fed de St. Louis)")
-                tries_log[sid] = host + " : ok"
-                return
-            except Exception as e:
-                tries_log[sid] = tries_log.get(sid, "") + host + " : " + fr_err(e)[:50] + " ; "
-    if rest:
-        with ThreadPoolExecutor(len(rest)) as ex:
-            list(ex.map(slow, rest))
-        DIAG["fred_delai_long"] = tries_log
-        for sid in rest:
-            if sid in F or (sid == "PCEPILFE" and data["derived"].get("us_pce_core")):
-                note("fred.slow." + sid, "Fed de St. Louis, " + sid + " (délai long)", "weekly" if sid in ("STLFSI4", "WALCL") else "daily", True,
-                     F[sid]["asof"] if sid in F else data["derived"]["us_pce_core"]["asof"], url="https://fred.stlouisfed.org/series/" + sid)
+    # FRED et ALFRED testés le 31 oct. 2026 avec 90 s d'attente : inaccessibles depuis GitHub. Ces séries n'ont pas d'autre source gratuite.
+    with LOCK:
+        for x in SOURCES:
+            if x["id"] in ("fred.STLFSI4", "fred.BAMLH0A0HYM2", "fred.BAMLC0A0CM", "fred.PCEPILFE") and not x["ok"]:
+                x["kind"] = "nofree"
+                x["err"] = "non disponible gratuitement depuis GitHub (FRED seulement) : à consulter sur le site"
     # Une série FRED remplacée par une source de secours n'est plus affichée comme une panne
     with LOCK:
         SOURCES[:] = [x for x in SOURCES if not (x["id"].startswith("fred.") and not x["ok"] and x["id"][5:] in F)]
