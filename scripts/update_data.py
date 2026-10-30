@@ -19,6 +19,12 @@ OUT = os.environ.get("MF_OUT", os.path.join(ROOT, "data", "macro.json"))
 OUT_SEAS = os.environ.get("MF_OUT_SEAS", os.path.join(ROOT, "data", "seasonal.json"))
 OUT_HIST = os.environ.get("MF_OUT_HIST", os.path.join(ROOT, "data", "macro-history.json"))
 DIAG = {}
+PREVIOUS = {}
+try:  # fichier précédent : sert à conserver les dernières données valides d'une source instable
+    with open(OUT, encoding="utf-8") as _f:
+        PREVIOUS = json.load(_f)
+except Exception:
+    PREVIOUS = {}
 MOCK = os.environ.get("MF_MOCK_DIR")
 ONLY = set(x for x in os.environ.get("MF_ONLY", "").split(",") if x)
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
@@ -1020,48 +1026,57 @@ def do_videos(data):
 # ---------------------------------------------------------------- Trafic maritime : détroits stratégiques (FMI PortWatch)
 def do_shipping(data):
     url0 = "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query"
+    lab = "Trafic des détroits stratégiques (FMI PortWatch)"
     try:
-        since = (NOW - timedelta(days=75)).strftime("%Y-%m-%d")
-        base = {"outFields": "date,portid,portname,n_total,n_tanker,n_container,capacity", "f": "json"}
-        variants = [
-            dict(base, where="1=1", orderByFields="date DESC", resultRecordCount="2000"),
-            dict(base, where="year >= %d" % (NOW - timedelta(days=75)).year, orderByFields="date DESC", resultRecordCount="2000"),
-            dict(base, where="date >= timestamp '%s 00:00:00'" % since),
-            dict(base, where="1=1", outFields="*", resultRecordCount="1000"),
-        ]
-        j, errs = None, []
-        for k, v in enumerate(variants):
-            try:
-                jj = json.loads(http("portwatch.json" if k == 0 else "portwatch_%d.json" % k, url0 + "?" + urllib.parse.urlencode(v), timeout=40, tries=1))
-                if jj.get("error"):
-                    raise ValueError(str(jj["error"].get("message"))[:60])
-                if not jj.get("features"):
-                    raise ValueError("aucune ligne")
-                j = jj
-                DIAG["portwatch"] = {"variante": k, "lignes": len(jj["features"]), "erreurs_avant": errs}
+        d0 = NOW - timedelta(days=70)
+        # Filtre sur des champs numériques (année, mois), sans tri côté serveur : plus léger et plus fiable.
+        where = "(year > %d) OR (year = %d AND month >= %d)" % (d0.year, d0.year, d0.month)
+        feats, off, errs = [], 0, []
+        for page in range(6):
+            q = urllib.parse.urlencode({"where": where, "outFields": "date,portname,n_total,n_tanker,n_container,capacity",
+                                        "resultOffset": str(off), "resultRecordCount": "1000", "f": "json"})
+            jj = json.loads(http("portwatch.json" if page == 0 else "portwatch_p%d.json" % page, url0 + "?" + q, timeout=40, tries=2))
+            if jj.get("error"):
+                raise ValueError("ArcGIS : " + str(jj["error"].get("message"))[:70])
+            got = jj.get("features") or []
+            feats += got
+            off += len(got)
+            if not got or not jj.get("exceededTransferLimit"):
                 break
-            except Exception as e:
-                errs.append("variante %d : %s" % (k, fr_err(e)))
-        if j is None:
-            DIAG["portwatch"] = errs
-            raise ValueError("ArcGIS : aucune variante de requête acceptée")
         by = {}
-        for f in j.get("features") or []:
-            a = f.get("attributes") or {}
-            d = a.get("date")
+        for f in feats:
+            a_ = f.get("attributes") or {}
+            d = a_.get("date")
             d = datetime.fromtimestamp(d / 1000, timezone.utc).strftime("%Y-%m-%d") if isinstance(d, (int, float)) else str(d)[:10]
-            by.setdefault(a.get("portname") or a.get("portid"), []).append([d, a.get("n_total"), a.get("n_tanker"), a.get("n_container"), a.get("capacity")])
+            by.setdefault(a_.get("portname"), []).append([d, a_.get("n_total"), a_.get("n_tanker"), a_.get("n_container"), a_.get("capacity")])
         out, newest = {}, ""
         for name, rows in by.items():
+            if not name:
+                continue
             rows.sort()
             out[name] = rows[-60:]
             newest = max(newest, rows[-1][0])
+        DIAG["portwatch"] = {"lignes": len(feats), "passages": len(out), "dernier_jour": newest}
         if not out:
             raise ValueError("aucune donnée")
+        if ageDaysPy(newest) > 30:  # garde-fou : jamais de vieilles données présentées comme récentes
+            raise ValueError("données reçues trop anciennes (%s)" % newest)
         data["shipping"] = {"src": "UN Global Platform ; FMI PortWatch (portwatch.imf.org)", "asof": newest, "c": out}
-        note("imf.portwatch", "Trafic des détroits stratégiques (FMI PortWatch)", "weekly", True, newest, url="https://portwatch.imf.org/")
+        note("imf.portwatch", lab, "weekly", True, newest, url="https://portwatch.imf.org/")
     except Exception as e:
-        note("imf.portwatch", "Trafic des détroits stratégiques (FMI PortWatch)", "weekly", False, err=e, url="https://portwatch.imf.org/")
+        prev = PREVIOUS.get("shipping")
+        if prev and prev.get("asof") and ageDaysPy(prev["asof"]) <= 30:
+            data["shipping"] = prev  # on garde les dernières données valides, avec leur vraie date
+            note("imf.portwatch", lab + " — dernières données valides conservées", "weekly", True, prev["asof"], url="https://portwatch.imf.org/")
+        else:
+            note("imf.portwatch", lab, "weekly", False, err=e, url="https://portwatch.imf.org/")
+
+
+def ageDaysPy(d):
+    try:
+        return (NOW.date() - date.fromisoformat(str(d)[:10])).days
+    except Exception:
+        return 9999
 
 
 # ---------------------------------------------------------------- Sentiment des particuliers : widget gratuit Dukascopy (vérifié par le robot)

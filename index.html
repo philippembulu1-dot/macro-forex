@@ -605,7 +605,8 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       <div class="mapwrap" id="mapBox"></div>
       <div class="legend" id="mapLeg"></div>
       <div class="cinfo" id="mapInfo"><p class="hint">Touchez un pays (ou choisissez-le dans la liste) pour voir ses chiffres.</p></div>
-      <p class="note">Source : Banque mondiale (dernière valeur annuelle disponible, l'année est indiquée à côté de chaque chiffre). Les prévisions du FMI ne sont pas affichées : son site refuse les robots. Contours : Natural Earth (domaine public). Taux directeurs des 8 grandes banques : voir « Banques centrales ».</p>
+      <div id="mapLive"></div>
+      <p class="note">Mode « Trafic maritime » : passages de navires par les 28 détroits et canaux stratégiques (UN Global Platform ; FMI PortWatch, quelques jours de retard) et, au clic, carte VesselFinder en temps réel. Autres modes : Banque mondiale (dernière valeur annuelle disponible, l'année est indiquée à côté de chaque chiffre). Les prévisions du FMI ne sont pas affichées : son site refuse les robots. Contours : Natural Earth (domaine public). Taux directeurs des 8 grandes banques : voir « Banques centrales ».</p>
     </section>
 
     <section class="panel" id="maritime">
@@ -2021,7 +2022,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   /* ---------- Carte du monde ---------- */
   var WMAP = null, mapSel = "", EZ = ["AUT", "BEL", "BGR", "HRV", "CYP", "EST", "FIN", "FRA", "DEU", "GRC", "IRL", "ITA", "LVA", "LTU", "LUX", "MLT", "NLD", "PRT", "SVK", "SVN", "ESP"];
   var MAJ = { USA: "USD", GBR: "GBP", JPN: "JPY", CHE: "CHF", AUS: "AUD", CAN: "CAD", NZL: "NZD" };
-  var MAPIND = [["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"]];
+  var MAPIND = [["ship", "Trafic maritime (détroits, pétroliers)", ""], ["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"]];
   function loadMap() {
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "world-map.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.c) throw new Error("format"); return j; }); }); });
@@ -2029,13 +2030,55 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   }
   function initMap() {
     $("mapInd").innerHTML = MAPIND.map(function (m, i) { return '<option value="' + i + '">' + m[1] + "</option>"; }).join("");
-    $("mapInd").addEventListener("change", drawMap);
-    $("mapCty").addEventListener("change", function () { mapSel = this.value; drawMap(); });
-    $("mapBox").addEventListener("click", function (e) { var a = e.target.getAttribute && e.target.getAttribute("data-c"); if (a) { mapSel = a; $("mapCty").value = a; drawMap(); } });
+    $("mapInd").value = "1";
+    $("mapInd").addEventListener("change", function () { mapPt = ""; drawMap(); });
+    $("mapCty").addEventListener("change", function () { mapSel = this.value; if (MAPIND[+$("mapInd").value][0] === "ship") $("mapInd").value = "1"; drawMap(); });
+    $("mapBox").addEventListener("click", function (e) {
+      var pt = e.target.closest && e.target.closest("[data-p]");
+      if (pt) { mapPt = pt.getAttribute("data-p"); drawMap(); return; }
+      var a = e.target.getAttribute && e.target.getAttribute("data-c"); if (a) { mapSel = a; $("mapCty").value = a; drawMap(); }
+    });
+    $("mapInfo").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("button[data-live]"); if (!b) return;
+      var q = b.getAttribute("data-live").split(","); vesselMap($("mapLive"), +q[0], +q[1], +q[2], b.getAttribute("data-name"));
+    });
+  }
+  var mapPt = "";
+  /* Carte VesselFinder en temps réel (positions AIS), centrée sur un point. */
+  function vesselMap(box, lat, lon, zoom, label) {
+    var doc = '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#0d0d0f}</style></head><body><script>var width="100%";var height="420";var latitude="' + lat + '";var longitude="' + lon + '";var zoom="' + zoom + '";var names=false;<\/script><script src="https://www.vesselfinder.com/aismap.js"><\/script></body></html>';
+    var f = document.createElement("iframe"); f.setAttribute("title", "Navires en direct : " + label); f.style.cssText = "width:100%;height:430px;border:0;display:block;background:#0d0d0f";
+    f.srcdoc = doc; box.innerHTML = '<p class="note" style="border-top:0">Navires en temps réel autour de : <b>' + esc(label) + "</b> (VesselFinder, positions AIS). Pétroliers en rouge sur la carte.</p>"; box.appendChild(f);
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  function straitStats(name) {
+    var s = AUTO && AUTO.shipping && AUTO.shipping.c && AUTO.shipping.c[name]; if (!s || !s.length) return null;
+    var av = function (a) { a = a.filter(function (x) { return typeof x === "number"; }); return a.length ? a.reduce(function (p, q) { return p + q; }, 0) / a.length : null; };
+    var l7 = s.slice(-7), p7 = s.slice(-14, -7), a = av(l7.map(function (x) { return x[1]; })), b = av(p7.map(function (x) { return x[1]; }));
+    return { a: a, ch: a !== null && b ? (a / b - 1) * 100 : null, tk: av(l7.map(function (x) { return x[2]; })), tkPrev: av(p7.map(function (x) { return x[2]; })), cap: av(l7.map(function (x) { return x[4]; })), last: s[s.length - 1][0], sp: s.slice(-30) };
+  }
+  function drawShipMap() {
+    var pts = WMAP.pts || {}, names = Object.keys(pts), mx = 1;
+    var st = {}; names.forEach(function (n) { st[n] = straitStats(n); if (st[n] && st[n].a > mx) mx = st[n].a; });
+    var circles = names.map(function (n) {
+      var p = pts[n], x = st[n], r = x ? 4 + 16 * Math.sqrt(x.a / mx) : 4, col = !x || x.ch === null ? "#8d8878" : x.ch <= -15 ? "#ff5c4f" : x.ch <= -5 ? "#e07a3a" : x.ch < 5 ? "#f2b01e" : "#3ddc97";
+      return '<g data-p="' + esc(n) + '" style="cursor:pointer"><circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + r.toFixed(1) + '" fill="' + col + '" fill-opacity=".55" stroke="' + (n === mapPt ? "#ece8dc" : col) + '" stroke-width="' + (n === mapPt ? 2.2 : 1) + '"><title>' + esc(shipName(n).fr) + (x ? " : " + fmt(x.a, 0) + " navires/jour, dont " + fmt(x.tk || 0, 0) + " pétroliers" + (x.ch === null ? "" : ", " + pct(x.ch) + " sur 7 j") : " : pas de donnée") + "</title></circle></g>";
+    }).join("");
+    $("mapBox").innerHTML = '<svg viewBox="0 0 ' + WMAP.w + " " + WMAP.h + '" role="img" aria-label="Carte du trafic maritime mondial">' + WMAP.c.map(function (c) { return '<path d="' + c[2] + '" fill="#1e1d1a" data-c="' + c[0] + '"></path>'; }).join("") + circles + "</svg>";
+    var sh = AUTO && AUTO.shipping;
+    $("mapLeg").innerHTML = '<span><i style="background:#ff5c4f"></i> trafic en chute (−15 % ou plus)</span><span><i style="background:#e07a3a"></i> en baisse</span><span><i style="background:#f2b01e"></i> stable</span><span><i style="background:#3ddc97"></i> en hausse</span><span>taille = navires par jour</span>' + (sh ? "<span>FMI PortWatch, jusqu'au " + shortD(sh.asof) + " " + badge(ageDays(sh.asof) <= 10 ? "ok" : "old") + "</span>" : "");
+    $("mapMeta").textContent = sh ? names.filter(function (n) { return st[n]; }).length + " passages · données du " + shortD(sh.asof) : "trafic : robot en attente";
+    if (mapPt) {
+      var x = st[mapPt], p = pts[mapPt], nm = shipName(mapPt).fr;
+      $("mapInfo").innerHTML = "<h3>" + esc(nm) + '</h3><div class="kv">' + (x ? "<span>Navires par jour (moy. 7 j)</span><b>" + fmt(x.a, 0) + "</b><span>Variation sur 7 jours</span><b class=\"" + (x.ch === null ? "" : cls(x.ch)) + "\">" + (x.ch === null ? "–" : pct(x.ch)) + "</b><span>Pétroliers par jour</span><b>" + (x.tk === null ? "–" : fmt(x.tk, 0)) + (x.tkPrev ? " <small>(" + pct((x.tk / x.tkPrev - 1) * 100) + ")</small>" : "") + "</b><span>Volume transporté (moy. 7 j)</span><b>" + (x.cap ? fmtN(x.cap / 1e6, 2) + " Mt/jour" : "–") + "</b><span>Dernier jour connu</span><b>" + shortD(x.last) + "</b>" : "<span>Pas de donnée du robot</span><b>–</b>") + "</div>" +
+        (x && x.sp.length > 3 ? '<div class="pair-name" style="margin:10px 0 4px">30 derniers jours</div>' + spark(x.sp.map(function (q) { return { v: q[1] || 0 }; })).replace('class="spark"', 'class="spark" style="width:100%;height:60px"') : "") +
+        '<div style="margin-top:10px"><button type="button" class="btn" data-live="' + p[2] + "," + p[3] + ',8" data-name="' + esc(nm) + '">Voir les navires en direct ici</button></div>';
+    } else $("mapInfo").innerHTML = '<p class="hint">Touchez un cercle pour voir le trafic d\'un détroit et ouvrir la carte des navires en temps réel. Une chute brutale à Ormuz, Bab el-Mandeb ou Suez signale un risque sur le pétrole, souvent favorable à l\'or.</p>';
   }
   function drawMap() {
     if (!WMAP) return;
     var W = (AUTO && AUTO.world) || {}, mi = MAPIND[+$("mapInd").value], key = mi[0];
+    if (key === "ship") { drawShipMap(); return; }
     var vals = WMAP.c.map(function (c) { var x = W[c[0]] && W[c[0]][key]; return x ? x[0] : null; }).filter(function (v) { return v !== null; }).sort(function (a, b) { return a - b; });
     var q = function (p) { return vals.length ? vals[Math.floor(p * (vals.length - 1))] : 0; }, cuts = [q(0.2), q(0.4), q(0.6), q(0.8)];
     var pal = key === "unemp" || key === "inf" || key === "inf_f" || key === "lend" ? ["#2a3b2f", "#3f5a33", "#7a6a1e", "#a8521f", "#c4382e"] : ["#c4382e", "#a8521f", "#7a6a1e", "#3f5a33", "#2fb27a"];
