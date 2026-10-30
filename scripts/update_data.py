@@ -1045,8 +1045,9 @@ def do_shipping(data):
                 if jj.get("error"):
                     raise ValueError(str(jj["error"].get("message"))[:60])
                 got = jj.get("features") or []
-                dd = [x["attributes"].get("date") for x in got if isinstance((x.get("attributes") or {}).get("date"), (int, float))]
-                newest_ = datetime.fromtimestamp(max(dd) / 1000, timezone.utc).strftime("%Y-%m-%d") if dd else ""
+                dd = [pw_date((x.get("attributes") or {}).get("date")) for x in got]
+                dd = [d for d in dd if d]
+                newest_ = max(dd) if dd else ""
                 if not got or ageDaysPy(newest_) > 30:
                     raise ValueError("lignes trop anciennes ou vides (%s)" % (newest_ or "aucune date"))
                 feats = got
@@ -1060,8 +1061,9 @@ def do_shipping(data):
         by = {}
         for f in feats:
             a_ = f.get("attributes") or {}
-            d = a_.get("date")
-            d = datetime.fromtimestamp(d / 1000, timezone.utc).strftime("%Y-%m-%d") if isinstance(d, (int, float)) else str(d)[:10]
+            d = pw_date(a_.get("date"))
+            if not d:
+                continue
             by.setdefault(a_.get("portname"), []).append([d, a_.get("n_total"), a_.get("n_tanker"), a_.get("n_container"), a_.get("capacity")])
         out, newest = {}, ""
         for name, rows in by.items():
@@ -1084,6 +1086,20 @@ def do_shipping(data):
             note("imf.portwatch", lab + " — dernières données valides conservées", "weekly", True, prev["asof"], url="https://portwatch.imf.org/")
         else:
             note("imf.portwatch", lab, "weekly", False, err=e, url="https://portwatch.imf.org/")
+
+
+def pw_date(v):
+    """PortWatch donne la date soit en millisecondes, soit en texte (« 2026-10-25 … » ou « 10/25/2026 »)."""
+    if isinstance(v, (int, float)):
+        return datetime.fromtimestamp(v / 1000, timezone.utc).strftime("%Y-%m-%d")
+    t = str(v or "").strip()
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", t)
+    if m:
+        return m.group(0)
+    m = re.match(r"(\d{1,2})/(\d{1,2})/(\d{4})", t)
+    if m:
+        return "%s-%02d-%02d" % (m.group(3), int(m.group(1)), int(m.group(2)))
+    return None
 
 
 def ageDaysPy(d):
