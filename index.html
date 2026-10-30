@@ -336,6 +336,64 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .vgrid small { color: var(--muted); font: 10px var(--font-mono); }
 .vplay { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
 .vplay iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+/* ---------- Branches : accueil en tuiles, vues, transitions ---------- */
+.bnav { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; overflow-x: auto; padding: 8px 0; background: linear-gradient(var(--bg) 80%, transparent); scrollbar-width: none; }
+.bnav::-webkit-scrollbar { display: none; }
+.bnav a { flex: none; font: 600 11px var(--font-mono); letter-spacing: .06em; text-decoration: none; color: var(--muted); border: 1px solid var(--line); padding: 6px 11px; background: var(--panel); transition: color .2s, border-color .2s, background .2s; }
+.bnav a:hover { color: var(--fg); border-color: var(--amber); }
+.bnav a[aria-current="page"] { color: #111; background: var(--amber); border-color: var(--amber); }
+.hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.tilecard { position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 150px; padding: 16px; text-decoration: none; color: inherit; background: linear-gradient(160deg, var(--panel2), var(--panel)); border: 1px solid var(--line); overflow: hidden; transition: transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s, box-shadow .25s; }
+.tilecard::after { content: ""; position: absolute; inset: auto -40% -60% auto; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(242,176,30,.14), transparent 70%); transition: transform .4s; }
+.tilecard:hover, .tilecard:focus-visible { transform: translateY(-3px); border-color: var(--amber); box-shadow: 0 10px 30px -12px rgba(242,176,30,.35); }
+.tilecard:hover::after { transform: scale(1.4); }
+.tilecard .tk { display: flex; align-items: center; justify-content: space-between; font: 600 11px var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--amber); }
+.tilecard .tk i { font-style: normal; font-size: 16px; color: var(--fg); opacity: .8; }
+.tilecard .big { font: 500 24px/1.15 var(--font-mono); font-variant-numeric: tabular-nums; }
+.tilecard .sub { font: 11px var(--font-mono); color: var(--muted); min-height: 15px; }
+.tilecard .desc { margin-top: auto; font-size: 12px; color: var(--muted); }
+.tilecard .go { font: 600 11px var(--font-mono); color: var(--amber); letter-spacing: .08em; }
+.hubhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px; margin: 4px 0 -2px; }
+.hubhead h1 { margin: 0; font: 600 13px var(--font-mono); letter-spacing: .2em; color: var(--fg); }
+.hubhead span { font: 11px var(--font-mono); color: var(--muted); }
+.branch { display: none; }
+.branch.on { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px; align-items: start; animation: benter .45s cubic-bezier(.2,.8,.2,1) both; }
+.branch.on > .wide { grid-column: 1 / -1; }
+.branch.on > * { animation: benter .5s cubic-bezier(.2,.8,.2,1) both; }
+.branch.on > *:nth-child(2) { animation-delay: .05s; } .branch.on > *:nth-child(3) { animation-delay: .1s; } .branch.on > *:nth-child(4) { animation-delay: .15s; } .branch.on > *:nth-child(n+5) { animation-delay: .2s; }
+.hub.on { animation: benter .4s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes benter { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .branch.on, .branch.on > *, .hub.on, .tilecard { animation: none !important; transition: none !important; } }
+.bhead { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 4px 0 2px; }
+.bhead a { font: 600 11px var(--font-mono); color: var(--amber); text-decoration: none; border: 1px solid var(--line); padding: 5px 10px; }
+.bhead a:hover { border-color: var(--amber); }
+.bhead h1 { margin: 0; font: 600 18px var(--font-mono); letter-spacing: .08em; }
+.bhead p { margin: 0; color: var(--muted); font-size: 12px; flex-basis: 100%; }
+.oldwrap { display: none !important; }
+/* Recherche globale */
+.cmdbar { position: relative; }
+.sres { position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 40; background: var(--panel); border: 1px solid var(--amber); max-height: 60vh; overflow-y: auto; box-shadow: 0 16px 40px -10px #000; }
+.sres button { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; width: 100%; text-align: left; padding: 9px 12px; background: transparent; color: inherit; border: 0; border-top: 1px solid var(--line2); cursor: pointer; font: 13px var(--font-body); }
+.sres button:first-child { border-top: 0; }
+.sres button:hover, .sres button.sel { background: var(--amber-soft); }
+.sres small { font: 600 10px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--amber); padding-top: 2px; }
+.sres span b { font-weight: 600; } .sres span em { display: block; font-style: normal; color: var(--muted); font-size: 11px; }
+.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0%, 30% { box-shadow: 0 0 0 2px var(--amber); } 100% { box-shadow: 0 0 0 0 transparent; } }
+/* Pricing et analyses */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 1px; background: var(--line2); }
+.pcard { background: var(--panel); padding: 12px; min-width: 0; }
+.pcard h3 { margin: 0 0 4px; font: 600 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); }
+.pcard .m { font: 11px var(--font-mono); color: var(--muted); margin-bottom: 6px; }
+.lg { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 11px var(--font-mono); color: var(--muted); margin-top: 6px; }
+.lg i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 4px; }
+.lg i.d { background: transparent !important; border-top: 2px dashed; height: 0; }
+.alist { list-style: none; margin: 0; padding: 0; }
+.alist li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; padding: 9px 12px; border-top: 1px solid var(--line2); font-size: 13px; }
+.alist li:first-child { border-top: 0; }
+.alist a { color: inherit; text-decoration: none; } .alist a:hover { color: var(--amber); text-decoration: underline; }
+.alist .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.t-usd { color: var(--up) !important; border-color: #1f5a41 !important; } .t-eur { color: #4da3ff !important; border-color: #234a73 !important; } .t-bank { color: var(--amber) !important; border-color: #6b5214 !important; }
 </style>
 
 </head><body><div class="shell">
@@ -665,6 +723,32 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
           <p class="hint" id="cvNote"></p>
         </div>
       </div>
+    </section>
+
+
+    <section class="panel" id="pricing">
+      <div class="ph"><h2>Pricing des taux</h2><span class="meta" id="prMeta">robot</span></div>
+      <div class="pgrid">
+        <div class="pcard"><h3>Ce que le marché anticipe pour la Fed</h3><div class="m" id="fedMeta"></div><svg id="fedPath" class="chart" viewBox="0 0 400 190" role="img" aria-label="Trajectoire implicite du taux de la Fed"></svg><div class="tbl"><table id="fedTbl"></table></div></div>
+        <div class="pcard"><h3>Courbe des taux : États-Unis et zone euro</h3><div class="m" id="crvMeta"></div>
+          <div class="seg" role="group" aria-label="Comparer avec"><button type="button" data-cv="w1" aria-pressed="false">vs 1 semaine</button><button type="button" data-cv="m1" aria-pressed="true">vs 1 mois</button></div>
+          <svg id="crvSvg" class="chart" viewBox="0 0 400 210" role="img" aria-label="Courbes des taux"></svg><div class="lg" id="crvLg"></div></div>
+        <div class="pcard"><h3>Écart de taux à 2 ans : États-Unis − zone euro</h3><div class="m" id="sp2Meta"></div><svg id="sp2Svg" class="chart" viewBox="0 0 400 170" role="img" aria-label="Écart de taux à 2 ans"></svg><p class="hint" id="sp2Txt"></p></div>
+        <div class="pcard"><h3>Écart de taux à 10 ans : États-Unis − zone euro</h3><div class="m" id="sp10Meta"></div><svg id="sp10Svg" class="chart" viewBox="0 0 400 170" role="img" aria-label="Écart de taux à 10 ans"></svg><p class="hint" id="sp10Txt"></p></div>
+      </div>
+      <div class="ph" style="border-top:1px solid var(--line2)"><h2>En temps réel</h2><span class="meta">TradingView</span></div>
+      <div class="minigrid" id="rateMinis"></div>
+      <p class="note">Anticipations de la Fed : calcul maison à partir des contrats Kalshi « taux de la Fed au-dessus de X % » (niveau médian = premier seuil que le marché juge moins probable qu'une chance sur deux ; probabilités lues directement, prix prudent quand l'écart achat/vente est large), mis à jour toutes les 2 h. Courbes : Trésor américain et BCE (obligations d'États de la zone euro notés AAA), clôtures quotidiennes. Un écart US − zone euro qui monte soutient en général le dollar face à l'euro (EUR/USD en baisse), et inversement. Les graphiques « en temps réel » viennent de TradingView.</p>
+    </section>
+
+    <section class="panel" id="analyses">
+      <div class="ph"><h2>Analyses : dollar, euro et taux</h2><span class="meta" id="anMeta">robot</span></div>
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Filtrer"><button type="button" data-af="all" aria-pressed="true">Tout</button><button type="button" data-af="usd" aria-pressed="false">Dollar</button><button type="button" data-af="eur" aria-pressed="false">Euro</button><button type="button" data-af="bank" aria-pressed="false">Banques</button></div>
+        <label class="chk" for="anQ">Recherche <input id="anQ" placeholder="ex. Fed, ING" size="10"></label>
+      </div>
+      <ul class="alist" id="anList"></ul>
+      <p class="note">Titres des notes et articles publiés en accès libre par la banque ING (ING THINK) et par le site de marché investingLive (qui cite souvent les notes d'autres banques), filtrés par le robot sur le dollar, l'euro et les taux. Le nom de la banque est repéré dans le titre quand il y figure. Titres en anglais : le lien « traduire » ouvre l'article en français. Ce sont des opinions, pas des conseils.</p>
     </section>
 
     <section class="panel" id="marches">
@@ -1517,7 +1601,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       });
   }
   function renderAll() {
-    setStatus(); renderPairs(); drawPair(); drawStrength(); drawGauge(); renderGold(); renderFx2();
+    setStatus(); renderPairs(); drawPair(); drawStrength(); drawGauge(); renderGold(); renderFx2(); if (typeof curBr !== "undefined" && !curBr && $("hub")) renderHub();
     if (!touched && $("cPair").options.length) { resetEntry(); calc(); } else if ($("cPair").options.length) calc();
   }
 
@@ -1745,7 +1829,8 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       if (!code) return;
       if (!c) { msg.textContent = "Commande inconnue : " + code + ". Essayez OR, CAL, COT, SEAS, MAP, FED…"; return; }
       msg.textContent = c[0] + " → " + c[1];
-      var t = $(c[2]); if (t) { t.scrollIntoView({ behavior: "smooth", block: "start" }); t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); }
+      if (typeof PANEL_BR !== "undefined" && PANEL_BR[c[2]]) openPanel(c[2]);
+      else { var t = $(c[2]); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }
       inp.value = "";
     }
     inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(inp.value); } if (e.key === "Escape") inp.blur(); });
@@ -2039,6 +2124,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       var a = e.target.getAttribute && e.target.getAttribute("data-c"); if (a) { mapSel = a; $("mapCty").value = a; drawMap(); }
     });
     $("mapInfo").addEventListener("click", function (e) {
+      var ez = e.target.closest && e.target.closest("button[data-ezgo]"); if (ez) { openPanel(ez.getAttribute("data-ezgo")); return; }
       var b = e.target.closest && e.target.closest("button[data-live]"); if (!b) return;
       var q = b.getAttribute("data-live").split(","); vesselMap($("mapLive"), +q[0], +q[1], +q[2], b.getAttribute("data-name"));
     });
@@ -2084,10 +2170,10 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     var pal = key === "unemp" || key === "inf" || key === "inf_f" || key === "lend" ? ["#2a3b2f", "#3f5a33", "#7a6a1e", "#a8521f", "#c4382e"] : ["#c4382e", "#a8521f", "#7a6a1e", "#3f5a33", "#2fb27a"];
     var col = function (v) { if (v === null) return "#1a1a1d"; var i = 0; while (i < 4 && v > cuts[i]) i++; return pal[i]; };
     var cty = $("mapCty");
-    if (cty.options.length <= 1) cty.innerHTML += WMAP.c.filter(function (c) { return c[0]; }).sort(function (a, b) { return a[1].localeCompare(b[1], "fr"); }).map(function (c) { return '<option value="' + c[0] + '">' + esc(c[1]) + "</option>"; }).join("");
+    if (cty.options.length <= 1) cty.innerHTML += '<option value="EZ">— Zone euro (21 pays) —</option>' + WMAP.c.filter(function (c) { return c[0]; }).sort(function (a, b) { return a[1].localeCompare(b[1], "fr"); }).map(function (c) { return '<option value="' + c[0] + '">' + esc(c[1]) + "</option>"; }).join("");
     $("mapBox").innerHTML = '<svg viewBox="0 0 ' + WMAP.w + " " + WMAP.h + '" role="img" aria-label="Carte du monde : ' + esc(mi[1]) + '">' + WMAP.c.map(function (c) {
       var x = W[c[0]] && W[c[0]][key];
-      return '<path d="' + c[2] + '" fill="' + col(x ? x[0] : null) + '" data-c="' + c[0] + '"' + (c[0] && c[0] === mapSel ? ' class="on"' : "") + "><title>" + esc(c[1]) + (x ? " : " + fmt(x[0], 1) + mi[2] + " (" + x[1] + ")" : " : pas de donnée") + "</title></path>";
+      return '<path d="' + c[2] + '" fill="' + col(x ? x[0] : null) + '" data-c="' + c[0] + '"' + (c[0] && (c[0] === mapSel || (mapSel === "EZ" && EZ.indexOf(c[0]) >= 0)) ? ' class="on"' : "") + "><title>" + esc(c[1]) + (x ? " : " + fmt(x[0], 1) + mi[2] + " (" + x[1] + ")" : " : pas de donnée") + "</title></path>";
     }).join("") + "</svg>";
     $("mapLeg").innerHTML = vals.length ? pal.map(function (p, i) { return "<span><i style=\"background:" + p + '"></i> ' + (i === 0 ? "≤ " + fmt(cuts[0], 1) : i === 4 ? "> " + fmt(cuts[3], 1) : fmt(cuts[i - 1], 1) + " à " + fmt(cuts[i], 1)) + "</span>"; }).join("") + '<span><i style="background:#1a1a1d"></i> pas de donnée</span>' : "Aucune donnée mondiale du robot pour l'instant.";
     var srcs = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return /^(wb|imf)\./.test(s.id); }) : [], okn = srcs.filter(function (s) { return s.ok; }).length;
@@ -2118,6 +2204,16 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
       '<p class="hint"><span style="color:#ff5c4f">━</span> inflation · <span style="color:#3ddc97">━</span> croissance du PIB, en % par an (Banque mondiale' + (hi >= 40 || lo <= -15 ? ", valeurs extrêmes coupées" : "") + ").</p>";
   }
   function showCountry(a3) {
+    if (a3 === "EZ") {
+      var W0 = (AUTO && AUTO.world) || {}, m = MACRO.filter(function (k) { return k.c === "EUR"; })[0], pr = policyRate(m), ce = AUTO && AUTO.national && AUTO.national.cpi_EZ;
+      var names = WMAP.c.filter(function (c) { return EZ.indexOf(c[0]) >= 0; }).map(function (c) { return c[1]; }).sort(function (a, b) { return a.localeCompare(b, "fr"); });
+      var gdp = EZ.map(function (k) { return W0[k] && W0[k].gdp; }).filter(Boolean);
+      $("mapInfo").innerHTML = "<h3>Zone euro (" + EZ.length + ' pays)</h3><div class="kv"><span>Taux de dépôt BCE</span><b>' + fmt(pr.v, 2) + " % <small>" + pr.src + ", " + shortD(String(pr.d).slice(0, 10)) + "</small></b>" +
+        "<span>Inflation zone euro (IPCH)</span><b>" + (ce ? fmt(ce.v, 1) + " % <small>" + shortD(ce.asof) + " " + badge(fresh(ce.asof, "monthly")) + "</small>" : "–") + "</b>" +
+        "<span>Croissance moyenne des pays (simple)</span><b>" + (gdp.length ? fmt(gdp.reduce(function (s, x) { return s + x[0]; }, 0) / gdp.length, 1) + " % <small>(" + gdp[0][1] + ", Banque mondiale)</small>" : "–") + "</b></div>" +
+        '<p class="hint">Pays : ' + names.join(", ") + '.</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" data-ezgo="banques">BCE</button><button type="button" class="btn" data-ezgo="pricing">Courbe des taux euro</button><button type="button" class="btn" data-ezgo="analyses">Analyses euro</button></div>';
+      return;
+    }
     var W = (AUTO && AUTO.world) || {}, x = W[a3] || {}, c = WMAP.c.filter(function (k) { return k[0] === a3; })[0], name = c ? c[1] : a3;
     var h = "<h3>" + esc(name) + "</h3><div class=\"kv\">" + MAPIND.map(function (m) { var v = x[m[0]]; return "<span>" + m[1] + "</span><b>" + (v ? fmt(v[0], 1) + m[2] + " <small>(" + v[1] + ")</small>" : "–") + "</b>"; }).join("");
     var cur = MAJ[a3] || (EZ.indexOf(a3) >= 0 ? "EUR" : null);
@@ -2351,6 +2447,265 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     });
   });
 
+
+  /* =====================================================================
+     BRANCHES : accueil en tuiles, chaque outil dans sa branche (31 oct. 2026)
+     ===================================================================== */
+  var BR = [
+    { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, saisonnalité 20 ans", p: ["or", "scorecard", "saison"] },
+    { id: "devises", t: "Devises", ic: "⇄", d: "Paires, graphique, force des devises, appétit pour le risque, corrélations", p: ["selPanel", "paires", "force", "~duo", "heat", "correl", "vola"] },
+    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts de taux", p: ["pricing", "ecarts", "taux", "desk"] },
+    { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités, réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"] },
+    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier filtrable, publications de la semaine, indicateurs", p: ["calendrier", "semaine", "indicateurs", "lecture"] },
+    { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Notes et articles sur le dollar, l'euro et les taux, consensus, vidéos", p: ["analyses", "consensus", "videos"] },
+    { id: "monde", t: "Monde & maritime", ic: "◍", d: "Carte macro des pays, détroits, navires en temps réel", p: ["monde", "maritime"] },
+    { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, peur et avidité, sessions", p: ["marches", "sessions"] },
+    { id: "position", t: "Positionnement", ic: "⚖", d: "Positions des fonds (COT), sentiment des particuliers", p: ["cot", "sentiment"] },
+    { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, pivots, convertisseur, checklist, notes", p: ["calc", "outils", "check", "conseils", "notes", "liens"] },
+    { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source et liens", p: ["robot"] }
+  ];
+  var WIDE = { force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var PANEL_BR = {}, curBr = "", rateMinisDone = false;
+  function buildBranches() {
+    var main = document.querySelector(".main"), anchor = document.querySelector(".main > .grid"); /* après le bandeau et sa note */
+    var nav = document.createElement("nav"); nav.className = "bnav"; nav.id = "bnav"; nav.setAttribute("aria-label", "Branches");
+    nav.innerHTML = '<a href="#/">Accueil</a>' + BR.map(function (b) { return '<a href="#/' + b.id + '">' + b.t + "</a>"; }).join("");
+    main.insertBefore(nav, anchor);
+    var hub = document.createElement("section"); hub.className = "hub"; hub.id = "hub"; hub.setAttribute("aria-label", "Accueil");
+    main.insertBefore(hub, anchor);
+    BR.forEach(function (b) {
+      var box = document.createElement("div"); box.className = "branch"; box.id = "br-" + b.id; box.setAttribute("role", "region"); box.setAttribute("aria-label", b.t);
+      box.innerHTML = '<div class="bhead"><a href="#/">← Accueil</a><h1>' + b.t + "</h1><p>" + b.d + "</p></div>";
+      b.p.forEach(function (id) {
+        var el = id === "~duo" ? document.querySelector(".duo.o-duo") : $(id);
+        if (!el) return;
+        if (WIDE[id]) el.classList.add("wide");
+        box.appendChild(el); PANEL_BR[id] = b.id;
+        if (id === "~duo") { PANEL_BR.risque = b.id; PANEL_BR.rang = b.id; el.classList.add("wide"); }
+      });
+      main.insertBefore(box, anchor);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".main > .grid, .main > .tools, .main > .duo2"), function (x) { x.classList.add("oldwrap"); });
+    var side = document.querySelector(".side-in");
+    if (side) side.innerHTML = '<div class="brand"><span class="mark"></span>MACRO FOREX</div><div class="grp">BRANCHES</div><a href="#/">Accueil</a>' + BR.map(function (b) { return '<a href="#/' + b.id + '">' + b.ic + " " + b.t + "</a>"; }).join("");
+    $("fkeys").innerHTML = "";
+    window.addEventListener("hashchange", route);
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
+      var h = a.getAttribute("href"); if (/^#\//.test(h)) return;
+      var id = h.slice(1); if (PANEL_BR[id]) { e.preventDefault(); openPanel(id); }
+    });
+  }
+  function route() {
+    var m = /^#\/([\w-]*)/.exec(location.hash || ""), id = m ? m[1] : "";
+    if (id && !BR.some(function (b) { return b.id === id; })) id = "";
+    var apply = function () {
+      curBr = id;
+      $("hub").classList.toggle("on", !id); $("hub").style.display = id ? "none" : "";
+      BR.forEach(function (b) { $("br-" + b.id).classList.toggle("on", b.id === id); });
+      Array.prototype.forEach.call(document.querySelectorAll("#bnav a, .side-in a"), function (a) { a.setAttribute("aria-current", a.getAttribute("href") === "#/" + id ? "page" : "false"); });
+      var cur = document.querySelector('#bnav a[aria-current="page"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest", inline: "center" });
+      if (id === "taux" && !rateMinisDone) { rateMinisDone = true; initRateMinis(); }
+      if (id === "taux") renderPricing();
+      if (!id) renderHub();
+      setTimeout(function () { window.dispatchEvent(new Event("resize")); }, 60); /* redessine les graphiques qui étaient cachés */
+    };
+    if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(apply); else apply();
+  }
+  function goBranch(id) { if (location.hash === "#/" + id) route(); else location.hash = "#/" + id; }
+  function openPanel(id) {
+    var b = PANEL_BR[id]; if (!b) return;
+    goBranch(b);
+    setTimeout(function () { var el = $(id); if (!el) return; el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }, 380);
+  }
+
+  /* ---------- Tuiles de l'accueil (chiffres vivants) ---------- */
+  function renderHub() {
+    var hub = $("hub"); if (!hub) return;
+    var T = {};
+    if (state.gold) { var g = goldStats(state.gold); T.or = [fmtN(g.px, 2) + " $", '<span class="' + cls(g.day) + '">' + pct(g.day) + "</span> jour · PAXG"]; }
+    else { var sc = AUTO && AUTO.cot && AUTO.cot.XAU; T.or = ["XAU/USD", "cours en chargement" + (sc ? " · fonds acheteurs nets" : "")]; }
+    var eu = pairOf("EURUSD"), s = series(eu); T.devises = ["EUR/USD " + fmt(s[s.length - 1].v, 4), '<span class="' + cls(change7(s)) + '">' + pct(change7(s)) + "</span> sur 7 j · BCE"];
+    var t10 = fred("DGS10"), cv = AUTO && AUTO.curves;
+    if (t10) T.taux = ["US 10 ans " + fmt(t10.v, 2) + " %", cv && cv.us && cv.eu && cv.us.now && cv.eu.now ? "écart 2 ans US − euro " + fmt(cv.us.now.v[4] - cv.eu.now.v[4], 2) + " pt" : "au " + shortD(t10.asof)];
+    var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    var nx = MEETINGS.filter(function (m) { return parseD(m.d) >= t0; })[0];
+    if (nx) { var dd = Math.round((parseD(nx.d) - t0) / 864e5); T.banques = [nx.b, dd === 0 ? "décision aujourd'hui" : "prochaine décision dans " + dd + " j"]; }
+    var cal = AUTO && AUTO.calendar;
+    if (cal && cal.events) { var n7 = cal.events.filter(function (e) { var x = Date.parse(e.d); return e.i === "High" && x > Date.now() && x < Date.now() + 7 * 864e5; }).length; T.macro = [n7 + " publications", "à fort impact d'ici 7 jours"]; }
+    var an = AUTO && AUTO.analyses; if (an && an.length) T.analyses = [an.length + " articles", "dernier : " + (an[0].d ? shortD(an[0].d) : "–") + (an[0].bank ? " · " + esc(an[0].bank) : "")];
+    var hz = typeof straitStats === "function" && straitStats("Strait of Hormuz"); if (!hz && WMAP) T.monde = ["176 pays", "carte macro et trafic maritime"]; if (hz) T.monde = ["Ormuz " + fmt(hz.a, 0) + " navires/j", hz.ch === null ? "" : '<span class="' + cls(hz.ch) + '">' + pct(hz.ch) + "</span> sur 7 j · FMI"];
+    var v = fred("VIXCLS"), fg = AUTO && AUTO.fng; if (v) T.marches = ["VIX " + fmt(v.v, 1), fg ? "Peur et avidité : " + Math.round(fg.score) : ""];
+    var cg = AUTO && AUTO.cot && AUTO.cot.XAU; if (cg) T.position = ["Or : " + (cg.net >= 0 ? "+" : "−") + Math.abs(cg.net).toLocaleString("fr-FR"), "positions nettes des fonds · " + shortD(cg.date)];
+    T.outils = ["Lots, pivots", "calculs instantanés"];
+    if (AUTO && AUTO.sources) { var ok = AUTO.sources.filter(function (x) { return x.ok; }).length; T.donnees = [ok + " / " + AUTO.sources.length, "sources à jour ou valides"]; }
+    hub.innerHTML = '<div class="hubhead" style="grid-column:1/-1"><h1>TERMINAL MACRO</h1><span>Touchez une branche pour entrer · tapez une recherche en haut (ex. zone euro, Ormuz, inflation)</span></div>' + BR.map(function (b) {
+      var x = T[b.id] || ["–", ""];
+      return '<a class="tilecard" href="#/' + b.id + '"><div class="tk">' + b.t + "<i>" + b.ic + '</i></div><div class="big">' + x[0] + '</div><div class="sub">' + x[1] + '</div><div class="desc">' + b.d + '</div><div class="go">Entrer →</div></a>';
+    }).join("");
+  }
+
+  /* ---------- Taux & pricing ---------- */
+  var cvCmp = "m1";
+  function fedPath() {
+    var m = AUTO && AUTO.markets && AUTO.markets.kalshi; if (!m) return [];
+    var ev = {};
+    m.filter(function (x) { return x.s === "KXFED" && x.p !== null; }).forEach(function (x) {
+      var src = (x.o || "") + " " + (x.t || ""), n = /(-?\d+(?:\.\d+)?)\s*%/.exec(src); if (!n) return;
+      /* Estimation prudente : prix milieu si l'écart achat/vente est serré, sinon le côté le plus proche de 0 ou 1. */
+      var pr = x.p;
+      if (typeof x.bid === "number" && typeof x.ask === "number" && x.ask - x.bid > 0.12) pr = x.p < 0.5 ? x.bid : x.ask;
+      var th = parseFloat(n[1]), below = /below|under|less than/i.test(x.o || "");
+      (ev[x.ev] = ev[x.ev] || { close: x.close, th: [] }).th.push([th, below ? 1 - pr : pr]);
+    });
+    var today = iso(new Date());
+    return Object.keys(ev).map(function (k) {
+      var e = ev[k], th = e.th.sort(function (a, b) { return a[0] - b[0]; });
+      if (th.length < 3 || (e.close || "") < today) return null;
+      /* P(taux > seuil) doit diminuer quand le seuil monte : on impose cette logique. */
+      var run = 1; th.forEach(function (q) { q[1] = Math.max(0, Math.min(run, q[1])); run = q[1]; });
+      if (th[0][1] < 0.5) return null; /* seuils trop hauts : médiane impossible à situer */
+      var med = null; for (var i = 0; i < th.length; i++) { if (th[i][1] < 0.5) { med = th[i][0]; break; } }
+      if (med === null) return null;
+      var curU = fred("DFEDTARU"), cu = curU ? curU.v : null;
+      var pAbove = function (x) { var r = null; th.forEach(function (q) { if (Math.abs(q[0] - x) < 1e-6) r = q[1]; }); return r; };
+      var up = cu !== null ? pAbove(cu) : null, dn = cu !== null && pAbove(cu - 0.25) !== null ? 1 - pAbove(cu - 0.25) : null;
+      var mo = /-(\d{2})([A-Z]{3})/.exec(k);
+      return { k: k, close: e.close, label: mo ? (MOIS_EN[mo[2]] || mo[2]) + " " + mo[1] : e.close, exp: med, up: up, dn: dn };
+    }).filter(Boolean).sort(function (a, b) { return a.close < b.close ? -1 : 1; }).slice(0, 8);
+  }
+  function lineChart(svg, W, H, series, opts) {
+    var all = []; series.forEach(function (s) { s.pts.forEach(function (p) { if (p[1] !== null && p[1] !== undefined) all.push(p[1]); }); });
+    if (opts.ref !== undefined) all.push(opts.ref);
+    if (!all.length) { svg.innerHTML = ""; return; }
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), pad = (hi - lo) * 0.15 || 0.2; lo -= pad; hi += pad;
+    var L = 36, R = 8, T = 10, B = 22, n = opts.n;
+    var sx = function (i) { return L + (W - L - R) * (n > 1 ? i / (n - 1) : 0.5); }, sy = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
+    var h = "";
+    for (var k = 0; k < 4; k++) { var v = lo + (hi - lo) * k / 3; h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + sy(v).toFixed(1) + '" y2="' + sy(v).toFixed(1) + '" stroke="#1c1a12"/><text x="' + (L - 4) + '" y="' + (sy(v) + 3).toFixed(1) + '" text-anchor="end">' + v.toFixed(2).replace(".", ",") + "</text>"; }
+    if (opts.ref !== undefined) h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + sy(opts.ref).toFixed(1) + '" y2="' + sy(opts.ref).toFixed(1) + '" stroke="#8d8878" stroke-dasharray="4 4"/>';
+    if (opts.zero && lo < 0 && hi > 0) h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + sy(0).toFixed(1) + '" y2="' + sy(0).toFixed(1) + '" stroke="#4a4430"/>';
+    (opts.xl || []).forEach(function (l, i) { if (l) h += '<text x="' + sx(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(l) + "</text>"; });
+    series.forEach(function (s) {
+      var d = "", started = false;
+      s.pts.forEach(function (p) { if (p[1] === null || p[1] === undefined) return; d += (started ? "L" : "M") + sx(p[0]).toFixed(1) + " " + sy(p[1]).toFixed(1); started = true; });
+      if (d) h += '<path d="' + d + '" fill="none" stroke="' + s.c + '" stroke-width="' + (s.w || 1.8) + '"' + (s.dash ? ' stroke-dasharray="5 4"' : "") + ' stroke-linejoin="round"/>';
+      if (s.dots) s.pts.forEach(function (p) { if (p[1] !== null) h += '<circle cx="' + sx(p[0]).toFixed(1) + '" cy="' + sy(p[1]).toFixed(1) + '" r="3" fill="' + s.c + '"/>'; });
+    });
+    svg.innerHTML = h;
+  }
+  function renderPricing() {
+    if (!$("fedPath")) return;
+    var cur = fred("DFEDTARU"), fp = fedPath(), ks = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return s.id === "pm.kalshi.KXFED"; })[0] : null;
+    if (fp.length) {
+      lineChart($("fedPath"), 400, 190, [{ pts: fp.map(function (p, i) { return [i, p.exp]; }), c: "#f2b01e", dots: 1 }], { n: fp.length, ref: cur ? cur.v : undefined, xl: fp.map(function (p) { return p.label; }) });
+      $("fedTbl").innerHTML = '<thead><tr><th>Réunion</th><th class="r">Niveau médian (borne haute)</th><th class="r">Proba. au-dessus du taux actuel</th><th class="r">Proba. en dessous</th></tr></thead><tbody>' + fp.map(function (p) {
+        var P = function (v) { return v === null || v === undefined ? "–" : Math.round(v * 100) + " %"; };
+        return "<tr><td>" + esc(p.label) + '</td><td class="r num">' + fmt(p.exp, 2) + ' %</td><td class="r num up">' + P(p.up) + '</td><td class="r num down">' + P(p.dn) + "</td></tr>";
+      }).join("") + "</tbody>";
+      $("fedMeta").innerHTML = "ligne pointillée = taux actuel " + (cur ? fmt(cur.v, 2) + " %" : "") + " · Kalshi " + (ks && ks.asof ? shortD(ks.asof) + " " + badge(fresh(ks.asof, "daily")) : "");
+    } else { $("fedPath").innerHTML = ""; $("fedTbl").innerHTML = ""; $("fedMeta").textContent = "Pas encore de contrats Kalshi exploitables (robot)."; }
+    var C = (AUTO && AUTO.curves) || {}, us = C.us, eu = C.eu, ser = [], lg = [];
+    if (us && us.now) { ser.push({ pts: us.now.v.map(function (v, i) { return [i, v]; }), c: "#f2b01e" }); lg.push('<span><i style="background:#f2b01e"></i>États-Unis ' + shortD(us.now.d) + "</span>"); if (us[cvCmp]) { ser.push({ pts: us[cvCmp].v.map(function (v, i) { return [i, v]; }), c: "#f2b01e", dash: 1, w: 1.2 }); lg.push('<span><i class="d" style="border-color:#f2b01e"></i>États-Unis ' + shortD(us[cvCmp].d) + "</span>"); } }
+    if (eu && eu.now) { ser.push({ pts: eu.now.v.map(function (v, i) { return [i, v]; }), c: "#4da3ff" }); lg.push('<span><i style="background:#4da3ff"></i>Zone euro ' + shortD(eu.now.d) + "</span>"); if (eu[cvCmp]) { ser.push({ pts: eu[cvCmp].v.map(function (v, i) { return [i, v]; }), c: "#4da3ff", dash: 1, w: 1.2 }); lg.push('<span><i class="d" style="border-color:#4da3ff"></i>Zone euro ' + shortD(eu[cvCmp].d) + "</span>"); } }
+    var ten = (us && us.tenors) || (eu && eu.tenors) || [];
+    lineChart($("crvSvg"), 400, 210, ser, { n: ten.length, xl: ten });
+    $("crvLg").innerHTML = lg.join("") || "Courbes pas encore publiées par le robot.";
+    $("crvMeta").innerHTML = (us && us.now ? "Trésor US " + badge(fresh(us.now.d, "daily")) : "") + (eu && eu.now ? " · BCE " + badge(fresh(eu.now.d, "daily")) : "") + " · échéances de 1 mois à 30 ans";
+    [["2", "sp2"], ["10", "sp10"]].forEach(function (q) {
+      var a = us && us["hist" + q[0]], b = eu && eu["hist" + q[0]];
+      if (!a || !b || !a.length || !b.length) { $(q[1] + "Svg").innerHTML = ""; $(q[1] + "Txt").textContent = "Données pas encore publiées par le robot."; $(q[1] + "Meta").textContent = ""; return; }
+      var mb = {}; b.forEach(function (p) { mb[p[0]] = p[1]; });
+      var pts = a.filter(function (p) { return mb[p[0]] !== undefined; }).map(function (p) { return [p[0], Math.round((p[1] - mb[p[0]]) * 100) / 100]; });
+      if (pts.length < 3) { $(q[1] + "Txt").textContent = "Pas assez de dates communes."; return; }
+      lineChart($(q[1] + "Svg"), 400, 170, [{ pts: pts.map(function (p, i) { return [i, p[1]]; }), c: "#c77dff" }], { n: pts.length, zero: 1, xl: pts.map(function (p, i) { return i === 0 || i === pts.length - 1 || i === Math.floor(pts.length / 2) ? shortD(p[0]) : ""; }) });
+      var last = pts[pts.length - 1], m1 = pts[Math.max(0, pts.length - 22)], d = last[1] - m1[1];
+      $(q[1] + "Meta").innerHTML = "au " + shortD(last[0]) + " : <b>" + fmt(last[1], 2) + " pt</b> " + badge(fresh(last[0], "daily"));
+      $(q[1] + "Txt").innerHTML = "Sur un mois, l'écart a " + (Math.abs(d) < 0.05 ? "peu bougé" : d > 0 ? "<b>augmenté</b> de " + fmt(d, 2) + " pt : plutôt favorable au <b>dollar</b> face à l'euro" : "<b>baissé</b> de " + fmt(-d, 2) + " pt : plutôt favorable à l'<b>euro</b> face au dollar") + ". Une piste de lecture, pas un signal.";
+    });
+    $("prMeta").textContent = "Kalshi · Trésor US · BCE";
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-cv]"), function (b) {
+    b.addEventListener("click", function () { cvCmp = b.getAttribute("data-cv"); Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-cv]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); }); renderPricing(); });
+  });
+  function initRateMinis() {
+    var g = $("rateMinis");
+    [{ t: "US 2 ans", s: "TVC:US02Y" }, { t: "Allemagne 2 ans", s: "TVC:DE02Y" }, { t: "US 10 ans", s: "TVC:US10Y" }, { t: "Allemagne 10 ans", s: "TVC:DE10Y" }].forEach(function (m) {
+      var box = document.createElement("div"); box.className = "mini"; g.appendChild(box);
+      tvEmbed(box, "embed-widget-mini-symbol-overview.js", { symbol: m.s, width: "100%", height: 190, locale: "fr", dateRange: "1M", colorTheme: "dark", isTransparent: true, autosize: false, largeChartUrl: "" }, m.t);
+      box.className = "mini";
+    });
+  }
+
+  /* ---------- Analyses de banques ---------- */
+  var anF = "all";
+  function renderAnalyses() {
+    var a = (AUTO && AUTO.analyses) || [], q = ($("anQ").value || "").trim().toLowerCase();
+    var L = a.filter(function (x) { return (anF === "all" || (anF === "usd" && x.usd) || (anF === "eur" && x.eur) || (anF === "bank" && x.bank)) && (!q || (x.t + " " + (x.bank || "") + " " + x.src).toLowerCase().indexOf(q) >= 0); });
+    $("anList").innerHTML = L.length ? L.slice(0, 40).map(function (x) {
+      var ok = /^https?:\/\//.test(x.l || "");
+      return '<li><span class="d mono" style="font-size:11px;color:var(--muted)">' + (x.d ? shortD(x.d) : "–") + "</span><span>" + (ok ? '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" : esc(x.t)) + (ok ? trLink(x.l) : "") +
+        '<span class="tags"><span class="pill">' + esc(x.src) + "</span>" + (x.bank ? '<span class="pill t-bank">' + esc(x.bank) + "</span>" : "") + (x.usd ? '<span class="pill t-usd">USD</span>' : "") + (x.eur ? '<span class="pill t-eur">EUR</span>' : "") + (x.rate ? '<span class="pill">taux</span>' : "") + "</span></span></li>";
+    }).join("") : '<li><span></span><span>' + (a.length ? "Aucun article avec ce filtre." : "Pas encore d'articles du robot. Voir la branche « Données ».") + "</span></li>";
+    var srcs = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return /^an\./.test(s.id); }) : [], okS = srcs.filter(function (s) { return s.ok; });
+    $("anMeta").innerHTML = srcs.length ? okS.length + "/" + srcs.length + " sources · " + a.length + " articles " + (okS.length ? badge("ok") : badge("ko")) : "robot : en attente";
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-af]"), function (b) {
+    b.addEventListener("click", function () { anF = b.getAttribute("data-af"); Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-af]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); }); renderAnalyses(); });
+  });
+  $("anQ").addEventListener("input", renderAnalyses);
+
+  /* ---------- Recherche globale ---------- */
+  var CUR_AL = { USD: "dollar américain états-unis usa us fed", EUR: "euro zone euro eurozone bce europe", GBP: "livre sterling royaume-uni angleterre boe", JPY: "yen japon boj", CHF: "franc suisse suisse bns",
+    AUD: "dollar australien australie rba", CAD: "dollar canadien canada boc", NZD: "dollar néo-zélandais nouvelle-zélande rbnz" };
+  var KW = { or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
+    ecarts: "écart différentiel taux carry", taux: "rendement 10 ans vix dollar treasury", desk: "breakeven inflation anticipée gvz conditions financières", banques: "taux directeur décision",
+    probas: "probabilité fedwatch kalshi polymarket", agenda: "réunion prochaine décision", comite: "comité hawkish dovish", actus: "communiqué actualité news", calendrier: "calendrier cpi nfp pib pmi publication",
+    indicateurs: "inflation chômage pib salaires pmi indicateurs", analyses: "analyse banque note article ing goldman", consensus: "consensus prévision banques", videos: "vidéo youtube",
+    monde: "carte monde pays", maritime: "maritime navires détroits pétrole ormuz suez", marches: "marchés direct graphique peur avidité", cot: "cot positions fonds cftc", sentiment: "sentiment retail particuliers",
+    calc: "calculateur lot position risque", outils: "pivots convertisseur", robot: "fraîcheur données sources", heat: "carte thermique heatmap", correl: "corrélation", vola: "volatilité pips" };
+  function norm(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  function searchAll(q) {
+    var nq = norm(q).trim(), out = []; if (nq.length < 2) return out;
+    var hit = function (txt) { return norm(txt).indexOf(nq) >= 0; };
+    if (/zone ?euro|eurozone|^euro|bce|^eur/.test(nq)) {
+      out.push({ k: "Carte", t: "Zone euro sur la carte", e: "Les 21 pays, taux BCE, inflation", a: function () { mapPt = ""; $("mapInd").value = "1"; mapSel = "EZ"; goBranch("monde"); setTimeout(drawMap, 60); } });
+      out.push({ k: "Banque", t: "BCE : taux, réunions, communiqués", e: "Branche Banques centrales", a: function () { openPanel("banques"); } });
+      out.push({ k: "Taux", t: "Courbe des taux zone euro vs États-Unis", e: "Branche Taux & pricing", a: function () { openPanel("pricing"); } });
+      out.push({ k: "Calendrier", t: "Publications de la zone euro (EUR)", e: "Calendrier filtré sur l'euro", a: function () { CAL_CUR.forEach(function (c) { calCur[c] = c === "EUR"; }); Array.prototype.forEach.call(document.querySelectorAll("#calCur input"), function (i) { i.checked = i.getAttribute("data-c") === "EUR"; }); renderCal(); openPanel("calendrier"); } });
+      out.push({ k: "Analyses", t: "Analyses sur l'euro", e: "Notes de banques filtrées", a: function () { anF = "eur"; Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-af]"), function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-af") === "eur")); }); renderAnalyses(); openPanel("analyses"); } });
+      out.push({ k: "Paire", t: "EUR/USD", e: "Graphique et variation", a: function () { state.sel = "EURUSD"; renderPairs(); drawPair(); openPanel("selPanel"); } });
+    }
+    BR.forEach(function (b) { if (hit(b.t + " " + b.d)) out.push({ k: "Branche", t: b.t, e: b.d, a: function () { goBranch(b.id); } }); });
+    Object.keys(CUR_AL).forEach(function (c) { if (hit(c + " " + CUR_AL[c])) out.push({ k: "Devise", t: c + " : calendrier, banque, analyses", e: CUR_AL[c].split(" ").slice(0, 3).join(" "), a: function () { CAL_CUR.forEach(function (x) { calCur[x] = x === c; }); Array.prototype.forEach.call(document.querySelectorAll("#calCur input"), function (i) { i.checked = i.getAttribute("data-c") === c; }); renderCal(); openPanel("calendrier"); } }); });
+    PAIRS.forEach(function (p) { if (hit(p.n) || hit(p.id)) out.push({ k: "Paire", t: p.n, e: "Graphique, force, volatilité", a: function () { state.sel = p.id; renderPairs(); drawPair(); openPanel("selPanel"); } }); });
+    SHIPFR.forEach(function (s) { if (hit(s[1]) || hit(s[0])) { var full = WMAP && WMAP.pts ? Object.keys(WMAP.pts).filter(function (k) { return k.indexOf(s[0]) >= 0; })[0] : null; if (full) out.push({ k: "Détroit", t: s[1], e: "Trafic maritime et navires en direct", a: function () { $("mapInd").value = "0"; mapPt = full; goBranch("monde"); setTimeout(drawMap, 60); } }); } });
+    Object.keys(KW).forEach(function (id) { var el = $(id), h2 = el && el.querySelector("h2"); if (h2 && hit(h2.textContent + " " + KW[id])) out.push({ k: "Outil", t: h2.textContent, e: "Branche " + (BR.filter(function (b) { return b.id === PANEL_BR[id]; })[0] || {}).t, a: function () { openPanel(id); } }); });
+    if (WMAP) WMAP.c.forEach(function (c) { if (c[0] && hit(c[1])) out.push({ k: "Pays", t: c[1], e: "Inflation, croissance, historique depuis 2001", a: function () { mapPt = ""; if (MAPIND[+$("mapInd").value][0] === "ship") $("mapInd").value = "1"; mapSel = c[0]; $("mapCty").value = c[0]; goBranch("monde"); setTimeout(drawMap, 60); } }); });
+    ((AUTO && AUTO.analyses) || []).forEach(function (x) { if (out.length < 40 && hit(x.t + " " + (x.bank || ""))) out.push({ k: "Analyse", t: x.t, e: x.src + (x.d ? " · " + shortD(x.d) : ""), a: function () { if (/^https?:/.test(x.l)) window.open(x.l, "_blank", "noopener"); } }); });
+    var seen = {}; return out.filter(function (r) { var k = r.k + r.t; if (seen[k]) return false; seen[k] = 1; return true; }).slice(0, 14);
+  }
+  function initSearch() {
+    var inp = $("cmdIn"), box = document.createElement("div"); box.className = "sres"; box.id = "sres"; box.hidden = true; box.setAttribute("role", "listbox");
+    inp.parentNode.appendChild(box); inp.setAttribute("placeholder", "Rechercher : zone euro, Ormuz, inflation, BCE… (touche /)"); inp.style.textTransform = "none"; inp.style.maxWidth = "none"; inp.removeAttribute("list");
+    var res = [], sel = -1;
+    var show = function () {
+      res = searchAll(inp.value); sel = -1;
+      if (!res.length) { box.hidden = !inp.value.trim(); box.innerHTML = inp.value.trim().length >= 2 ? '<button type="button" disabled><small>—</small><span>Aucun résultat. Essayez : euro, or, Ormuz, inflation, COT…</span></button>' : ""; return; }
+      box.hidden = false;
+      box.innerHTML = res.map(function (r, i) { return '<button type="button" role="option" data-i="' + i + '"><small>' + esc(r.k) + "</small><span><b>" + esc(r.t) + "</b><em>" + esc(r.e || "") + "</em></span></button>"; }).join("");
+    };
+    var pick = function (i) { var r = res[i]; if (!r) return; box.hidden = true; inp.value = ""; inp.blur(); $("cmdMsg").textContent = r.k + " → " + r.t; r.a(); };
+    inp.addEventListener("input", show);
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (!res.length) return; sel = (sel + (e.key === "ArrowDown" ? 1 : -1) + res.length) % res.length; Array.prototype.forEach.call(box.children, function (b, i) { b.classList.toggle("sel", i === sel); }); }
+      if (e.key === "Enter" && res.length) { e.preventDefault(); e.stopImmediatePropagation(); pick(sel < 0 ? 0 : sel); }
+      if (e.key === "Escape") { box.hidden = true; }
+    }, true);
+    box.addEventListener("click", function (e) { var b = e.target.closest("button[data-i]"); if (b) pick(+b.getAttribute("data-i")); });
+    document.addEventListener("click", function (e) { if (!e.target.closest(".cmdbar")) box.hidden = true; });
+  }
+
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
   function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
@@ -2364,7 +2719,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); }
+  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
@@ -2384,7 +2739,8 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
   $("agendaMore").addEventListener("click", function () { agendaAll = !agendaAll; renderAgenda(); });
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
-  initCmd(); initCal(); initMap(); initConv();
+  buildBranches();
+  initCmd(); initCal(); initMap(); initConv(); initSearch();
   initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });
@@ -2396,6 +2752,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
     rzT = setTimeout(function () { if (state.gold && gCur) { drawGoldChart(state.gold); gShow(gCur.s.length - 1, true); } }, 150);
   });
   function refresh() { loadLive().then(renderAll).catch(function () { /* garde les données en place */ }); }
+  route();
   refresh();
   setInterval(function () { if (state.live) refresh(); }, 15 * 60 * 1000);
 })();

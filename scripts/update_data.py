@@ -787,9 +787,17 @@ def do_markets(data):
     out = {"kalshi": [], "polymarket": []}
     for series in ("KXFEDDECISION", "KXFED"):
         try:
-            url = "https://api.elections.kalshi.com/trade-api/v2/markets?" + urllib.parse.urlencode({"series_ticker": series, "status": "open", "limit": "200"})
-            j = json.loads(http("kalshi_%s.json" % series, url, tries=2))
-            ms = j.get("markets") or []
+            ms, cursor = [], ""
+            for page in range(8):
+                prm = {"series_ticker": series, "status": "open", "limit": "200"}
+                if cursor:
+                    prm["cursor"] = cursor
+                url = "https://api.elections.kalshi.com/trade-api/v2/markets?" + urllib.parse.urlencode(prm)
+                j = json.loads(http("kalshi_%s.json" % series if page == 0 else "kalshi_%s_%d.json" % (series, page), url, tries=2))
+                ms += j.get("markets") or []
+                cursor = j.get("cursor") or ""
+                if not cursor or not j.get("markets"):
+                    break
             if not ms:
                 raise ValueError("aucun marché ouvert")
             for m in ms:
@@ -1031,7 +1039,9 @@ def do_shipping(data):
         d0 = NOW - timedelta(days=70)
         flds = "date,portname,n_total,n_tanker,n_container,capacity"
         variants = [  # chaque variante est contrôlée : il faut des données de moins de 30 jours
-            {"where": "1=1", "orderByFields": "ObjectId DESC", "resultRecordCount": "2000"},
+            {"where": "year >= %d" % d0.year, "orderByFields": "date DESC", "resultRecordCount": "2000"},
+            {"where": "year >= %d AND month >= %d" % (NOW.year, max(1, NOW.month - 1)) if NOW.month > 1 else "year >= %d" % NOW.year, "orderByFields": "date DESC", "resultRecordCount": "2000"},
+            {"where": "1=1", "orderByFields": "date DESC", "resultRecordCount": "2000"},
             {"where": "1=1", "orderByFields": "OBJECTID DESC", "resultRecordCount": "2000"},
             {"where": "1=1", "orderByFields": "FID DESC", "resultRecordCount": "2000"},
             {"where": "year >= %d" % d0.year, "orderByFields": "date DESC", "resultRecordCount": "2000"},
@@ -1050,6 +1060,9 @@ def do_shipping(data):
                 newest_ = max(dd) if dd else ""
                 if not got or ageDaysPy(newest_) > 30:
                     raise ValueError("lignes trop anciennes ou vides (%s)" % (newest_ or "aucune date"))
+                nports = len(set((x.get("attributes") or {}).get("portname") for x in got))
+                if nports < 20:  # le serveur range ses lignes détroit par détroit : il faut couvrir tous les passages
+                    raise ValueError("seulement %d passage(s) dans la réponse" % nports)
                 feats = got
                 DIAG["portwatch_variante"] = k
                 break
@@ -1196,8 +1209,7 @@ def do_curves(data):
 # ---------------------------------------------------------------- Analyses de marché et de banques (flux publics)
 ANALYSIS_FEEDS = [
     ("ING THINK", ["https://think.ing.com/rss/", "https://think.ing.com/feed/", "https://think.ing.com/rss"]),
-    ("FXStreet", ["https://www.fxstreet.com/rss/news", "https://www.fxstreet.com/rss"]),
-    ("FXStreet analyses", ["https://www.fxstreet.com/rss/analysis"]),
+    # FXStreet retiré le 31 oct. 2026 : refuse les serveurs de GitHub (403).
     ("investingLive", ["https://investinglive.com/feed/news", "https://investinglive.com/feed/", "https://investinglive.com/rss"]),
 ]
 BANKS = ["ING", "Goldman", "JPMorgan", "JP Morgan", "Morgan Stanley", "Citi", "UBS", "BofA", "Bank of America", "HSBC", "Barclays", "Commerzbank",
@@ -1206,6 +1218,7 @@ BANKS = ["ING", "Goldman", "JPMorgan", "JP Morgan", "Morgan Stanley", "Citi", "U
          "Mizuho", "Julius Baer", "Pictet", "BBH", "Saxo", "Capital Economics", "Pantheon", "Macquarie", "Jefferies", "Bank of Montreal", "BMO"]
 RX_USD = re.compile(r"\b(USD|US dollar|dollar|DXY|Fed|FOMC|Powell|Treasur|US yields?|EUR/USD|USD/JPY|GBP/USD)\b", re.I)
 RX_EUR = re.compile(r"\b(EUR|euro|ECB|Lagarde|eurozone|euro area|Bund|EUR/USD|EUR/GBP)\b", re.I)
+RX_BANKFX = re.compile(r"\b(FX|rates?|dollar|euro|Fed|ECB|yields?|inflation|eurozone|Treasur\w*|Bund|central bank|US|America|Europe\w*|German\w*|policy)\b", re.I)
 RX_RATE = re.compile(r"\b(rate|rates|hike|cut|yield|yields|inflation|CPI|PCE|policy|hawk|dove|hawkish|dovish|pricing|basis points|bps)\b", re.I)
 
 
@@ -1225,8 +1238,19 @@ def do_analyses(data):
                     t = g["t"]
                     usd, eur, rate = bool(RX_USD.search(t)), bool(RX_EUR.search(t)), bool(RX_RATE.search(t))
                     bank = next((b for b in BANKS if re.search(r"\b" + re.escape(b) + r"\b", t)), None)
-                    if name == "ING THINK":
+                    if name == "ING THINK":  # recherche de banque : on garde changes, taux et macro US / zone euro
                         bank = bank or "ING"
+                        if RX_BANKFX.search(t):
+                            usd = usd or bool(re.search(r"\b(US|America|Fed|dollar|Treasur)", t, re.I))
+                            eur = eur or bool(re.search(r"\b(euro|ECB|Europe|German|Bund|eurozone)", t, re.I))
+                            rate = rate or bool(re.search(r"rates?|yield|Fed|ECB|central bank|policy", t, re.I))
+                            if not (usd or eur):
+                                usd = eur = False
+                            g.update({"src": name, "usd": usd, "eur": eur, "bank": bank, "rate": rate})
+                            with LOCK:
+                                items.append(g)
+                            keep += 1
+                        continue
                     if (usd or eur) and (rate or bank):
                         g.update({"src": name, "usd": usd, "eur": eur, "bank": bank, "rate": rate})
                         with LOCK:
