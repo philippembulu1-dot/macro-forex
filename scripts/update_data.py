@@ -1029,17 +1029,23 @@ YT = "{http://www.youtube.com/xml/schemas/2015}"
 
 
 def do_videos(data):
-    vids = []
+    vids, ids = [], dict(PREVIOUS.get("video_ids") or {})
+    old = PREVIOUS.get("videos") or []
 
     def one(ch):
         name, lang, handle = ch
         try:
-            page = http("yt_%s.html" % handle, "https://www.youtube.com/@%s" % handle, tries=1, timeout=25,
-                        headers={"Cookie": "CONSENT=YES+1", "Accept-Language": "fr-FR,fr;q=0.9"})
-            m = re.search(r'"(?:channelId|externalId)":"(UC[\w-]{22})"', page) or re.search(r'channel_id=(UC[\w-]{22})', page)
-            if not m:
-                raise ValueError("identifiant de chaîne introuvable")
-            feed = http("yt_%s.xml" % handle, "https://www.youtube.com/feeds/videos.xml?channel_id=" + m.group(1), tries=2, timeout=25)
+            cid = ids.get(handle)
+            if not cid:  # identifiant mémorisé après la première découverte : ensuite on va directement au flux
+                page = http("yt_%s.html" % handle, "https://www.youtube.com/@%s" % handle, tries=2, timeout=25,
+                            headers={"Cookie": "CONSENT=YES+1", "Accept-Language": "fr-FR,fr;q=0.9"})
+                m = re.search(r'"(?:channelId|externalId)":"(UC[\w-]{22})"', page) or re.search(r'channel_id=(UC[\w-]{22})', page)
+                if not m:
+                    raise ValueError("identifiant de chaîne introuvable")
+                cid = m.group(1)
+                with LOCK:
+                    ids[handle] = cid
+            feed = http("yt_%s.xml" % handle, "https://www.youtube.com/feeds/videos.xml?channel_id=" + cid, tries=2, timeout=25)
             root = ET.fromstring(feed.encode("utf-8"))
             got = []
             for e in list(root.iter(ATOM + "entry"))[:6]:
@@ -1054,11 +1060,18 @@ def do_videos(data):
                 vids.extend(got)
             note("yt." + handle, "Vidéos " + name, "news", True, max(g["d"] or "" for g in got) or None, url="https://www.youtube.com/@" + handle)
         except Exception as e:
-            note("yt." + handle, "Vidéos " + name, "news", False, err=e, url="https://www.youtube.com/@" + handle)
+            keep = [v for v in old if v.get("ch") == name]
+            if keep:  # on garde les dernières vidéos connues de la chaîne
+                with LOCK:
+                    vids.extend(keep)
+                note("yt." + handle, "Vidéos " + name + " — dernières vidéos connues conservées", "news", True, max(v.get("d") or "" for v in keep) or None, url="https://www.youtube.com/@" + handle)
+            else:
+                note("yt." + handle, "Vidéos " + name, "news", False, err=e, url="https://www.youtube.com/@" + handle)
     with ThreadPoolExecutor(6) as ex:
         list(ex.map(one, VIDEO_CHANNELS))
     vids.sort(key=lambda v: v["d"] or "", reverse=True)
     data["videos"] = vids[:36]
+    data["video_ids"] = ids
 
 
 # ---------------------------------------------------------------- Trafic maritime : détroits stratégiques (FMI PortWatch)
