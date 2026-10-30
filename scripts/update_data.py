@@ -432,14 +432,16 @@ def fallbacks(data):
         try:
             html = http("fed_h41.html", "https://www.federalreserve.gov/releases/h41/current/default.htm", timeout=60, tries=2)
             txt = re.sub(r"<[^>]+>", " ", html)
-            txt = re.sub(r"&nbsp;|&#160;", " ", txt)
+            txt = re.sub(r"&nbsp;|&#160;|&#xa0;|&#xA0;|\xa0", " ", txt)
             txt = re.sub(r"\s+", " ", txt)
-            m = re.search(r"Total assets\s+([\d,]{6,})\s+([+\-−]?\s?[\d,]+)", txt)
+            m = re.search(r"Total assets(?:\s*\(\d+\))?\s+([\d,]{6,})\s+([+\-−])\s*([\d,]+)", txt)
             if not m:
                 DIAG["h41_extrait"] = txt[txt.find("Total assets") - 80: txt.find("Total assets") + 160] if "Total assets" in txt else txt[:200]
                 raise ValueError("ligne « Total assets » introuvable sur la page H.4.1")
             v = num(m.group(1))
-            ch = num(m.group(2).replace("−", "-").replace(" ", ""))
+            ch = num(m.group(3))
+            if ch is not None and m.group(2) in "-−":
+                ch = -ch
             dm = re.search(r"(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4})", txt)
             asof = datetime.strptime(dm.group(0), "%B %d, %Y").strftime("%Y-%m-%d") if dm else TODAY
             F["WALCL"] = {"v": v, "prev": v - ch if ch is not None else None, "asof": asof, "hist": [], "via": "Réserve fédérale (H.4.1)"}
