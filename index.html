@@ -2252,6 +2252,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (bb && (!a || bb.d > a.d)) a = bb;
     else if (a && bb && Math.abs(a.v - bb.v) < 1e-9 && !a.since) { a.since = bb.since; a.prev = bb.prev; }
     else if (a && bb && Math.abs(a.v - bb.v) > 1e-9 && !a.since) { a.since = a.d; a.prev = bb.v; a.recent = true; } /* changement plus récent que la BRI */
+    /* Décision annoncée dans la presse après la dernière donnée officielle (la BRI a environ une semaine de retard) */
+    var nw = AUTO && AUTO.cb_news && AUTO.cb_news[m.c];
+    if (a && nw && nw.d > String(a.d).slice(0, 10) && Math.abs(nw.v - (m.c === "USD" ? a.v - 0.125 : a.v)) > 0.001) a = { v: nw.v, d: nw.d, s: "presse (" + nw.cb + ", à vérifier)", since: nw.d, prev: a.v, recent: true };
     if (a && ageDays(a.d) <= 60) return { v: a.v, d: a.d, src: a.s, auto: true, since: a.since || null, prev: a.prev === undefined ? null : a.prev, recent: !!a.recent };
     return { v: m.r, d: MANUAL[0].d, src: "saisie manuelle", auto: false };
   }

@@ -594,7 +594,7 @@ def do_policy(data):
             DIAG["bis_" + cc] = fr_err(e)[:120]
     data["policy"] = out
     newest = max((v["asof"] for v in out.values()), default=None)
-    note("bis.policy", "Taux directeurs des 8 banques centrales (BRI) %d/8" % len(out), "daily", len(out) > 0, newest,
+    note("bis.policy", "Taux directeurs des 8 banques centrales (BRI, publiés avec environ une semaine de retard) %d/8" % len(out), "weekly", len(out) > 0, newest,
          err=None if out else "aucune réponse", url="https://data.bis.org/topics/CBPOL")
 
 
@@ -1008,7 +1008,7 @@ def snb_rate():
 def do_national(data):
     nat(data, "rate_GB", "Taux directeur BoE (Banque d'Angleterre)", "daily", "https://www.bankofengland.co.uk/boeapps/database/", boe_rate)
     nat(data, "rate_CA", "Taux directeur BoC (Banque du Canada)", "daily", "https://www.bankofcanada.ca/valet/", lambda: valet("V39079", "boc_rate.json"))
-    nat(data, "rate_AU", "Taux directeur RBA (Banque de réserve d'Australie)", "daily", "https://www.rba.gov.au/statistics/tables/", rba_or_bis)
+    nat(data, "rate_AU", "Taux directeur RBA (Banque de réserve d'Australie ; via la BRI, environ une semaine de retard)", "weekly", "https://www.rba.gov.au/statistics/tables/", rba_or_bis)
     nat(data, "rate_CH", "Taux directeur BNS (Banque nationale suisse)", "monthly", "https://data.snb.ch/", snb_rate)
     nat(data, "cpi_EZ", "Inflation zone euro (Eurostat / BCE, IPCH)", "monthly", "https://ec.europa.eu/eurostat/web/hicp", ez_cpi)
     nat(data, "cpi_GB", "Inflation Royaume-Uni (ONS)", "monthly", "https://www.ons.gov.uk/economy/inflationandpriceindices", ons_cpi)
@@ -1198,7 +1198,7 @@ def do_fred_api(data):
             if old and old.get("asof", "") >= obs[-1][0]:
                 continue  # la source déjà lue est au moins aussi récente
             data["fred"][sid] = {"v": obs[-1][1], "prev": obs[-6][1], "asof": obs[-1][0], "hist": obs[-260:], "via": "FRED (API officielle)"}
-            note("fredapi." + sid, lab, "daily", True, obs[-1][0], url="https://fred.stlouisfed.org/series/" + sid)
+            note("fredapi." + sid, lab, "weekly" if sid == "NFCI" else "daily", True, obs[-1][0], url="https://fred.stlouisfed.org/series/" + sid)
         except Exception as e:
             msg = fr_err(e).replace(key, "***")
             note("fredapi." + sid, lab, "daily", False, err=msg, url="https://fred.stlouisfed.org/series/" + sid)
@@ -1522,6 +1522,41 @@ def do_ffmem(data):
             mem[k]["a"] = e["a"]
     data["ffmem"] = mem
     note("ff.mem", "Derniers chiffres publiés, mémorisés depuis le calendrier (%d indicateurs)" % len(mem), "weekly", bool(mem), TODAY if mem else None, url="https://www.forexfactory.com/calendar")
+
+
+CB_NEWS = [("AUD", "RBA", r"\bRBA\b|Reserve Bank of Australia", "RBA cash rate decision"), ("NZD", "RBNZ", r"\bRBNZ\b|Reserve Bank of New Zealand", "RBNZ official cash rate decision"),
+           ("JPY", "BoJ", r"\bBOJ\b|\bBoJ\b|Bank of Japan", "Bank of Japan interest rate decision"), ("CHF", "BNS", r"\bSNB\b|Swiss National Bank", "Swiss National Bank interest rate decision"),
+           ("GBP", "BoE", r"\bBoE\b|Bank of England", "Bank of England interest rate decision"), ("CAD", "BoC", r"Bank of Canada|\bBoC\b", "Bank of Canada interest rate decision")]
+
+
+def do_cb_news(data):
+    """Décisions de taux annoncées dans la presse le jour même (la BRI ne les publie qu'avec une semaine de retard)."""
+    out = {}
+    for cur, cb, rx, q in CB_NEWS:
+        url = "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q + " when:10d", "hl": "en-US", "gl": "US", "ceid": "US:en"})
+        try:
+            root = ET.fromstring(http("gn_cb_%s.xml" % cur, url, tries=1, timeout=20).encode("utf-8"))
+        except Exception as e:
+            DIAG["cbnews_" + cur] = fr_err(e)[:60]
+            continue
+        for it in root.iter("item"):
+            t = it.findtext("title") or ""
+            if not re.search(rx, t):
+                continue
+            m = re.search(r"\b(raises?|hikes?|lifts?|increases?|cuts?|lowers?|reduces?|holds?|keeps?|leaves?|maintains?|stays?|unchanged)\b.{0,70}?(-?\d{1,2}(?:\.\d{1,2})?)\s?(?:%|per ?cent)", t, re.I)
+            if not m or re.search(r"\b(expect|expected|seen|likely|could|may|might|forecast|poll|preview|bets?|odds|will)\b", t, re.I):
+                continue  # on ne garde que les décisions annoncées, pas les prévisions
+            try:
+                d = datetime.strptime((it.findtext("pubDate") or "")[:25], "%a, %d %b %Y %H:%M:%S").strftime("%Y-%m-%d")
+            except Exception:
+                continue
+            v = num(m.group(2))
+            verb = m.group(1).lower()
+            act = "hausse" if re.match(r"rais|hike|lift|increas", verb) else "baisse" if re.match(r"cut|lower|reduc", verb) else "maintien"
+            if v is not None and 0 <= v <= 15 and (cur not in out or out[cur]["d"] < d):
+                out[cur] = {"v": v, "d": d, "act": act, "t": t[:160], "l": it.findtext("link") or "", "cb": cb}
+    data["cb_news"] = out
+    note("news.cbdecision", "Décisions de taux annoncées dans la presse (complément de la BRI) : %d" % len(out), "daily", True, TODAY, url="https://news.google.com/")
 
 
 def retail_public(data):
@@ -2760,7 +2795,7 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("kei", do_kei),
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
              ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d)))]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
