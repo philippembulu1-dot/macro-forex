@@ -627,8 +627,13 @@ def do_gld(data):
     """Or détenu par le fonds GLD (SPDR Gold Shares), en tonnes : le plus grand ETF d'or, publié chaque jour par l'émetteur."""
     url = "https://www.spdrgoldshares.com/assets/dynamic/GLD/GLD_US_archive_EN.csv"
     try:
-        txt = http("gld.csv", url, tries=2, timeout=40)
-        rows = list(csv.reader(io.StringIO(txt)))
+        txt = http("gld.csv", url, tries=2, timeout=40).replace("\r\n", "\n").replace("\r", "\n")
+        rows = []
+        for line in txt.split("\n"):  # lecture ligne par ligne : le fichier contient des guillemets mal fermés
+            try:
+                rows.extend(csv.reader([line]))
+            except csv.Error:
+                rows.append(line.split(","))
         hi, head = None, None
         for i, r in enumerate(rows[:15]):
             if r and any("tonnes" in c.lower() for c in r):
