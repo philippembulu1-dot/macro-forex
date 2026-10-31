@@ -548,7 +548,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         <section class="panel o-gold" id="or">
           <div class="ph"><h2>Or · XAU/USD</h2><span class="meta" id="goldMeta">Chargement…</span></div>
           <div class="pb">
-            <div class="pair-name">XAU/USD <span style="color:var(--muted);font-weight:400">· via PAXG</span></div>
+            <div class="pair-name">XAU/USD <span id="gVia" style="color:var(--muted);font-weight:400">· via PAXG</span></div>
             <div class="price" id="gPrice">–</div>
             <div class="asof" id="gAsof"></div>
             <div class="gold-chips">
@@ -1546,7 +1546,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (!validK(k)) throw new Error("données invalides");
       var b = { p: +r[1].lastPrice, c: +r[1].priceChangePercent };
       if (!(b.p > 0) || !isFinite(b.c)) b = null;
-      state.gold = k; state.btc = b; state.goldTs = Date.now(); state.goldLive = true;
+      state.gold = k; state.btc = b; state.goldTs = Date.now(); state.goldLive = true; state.goldRobot = false;
       try { localStorage.setItem("mf-gold", JSON.stringify({ t: state.goldTs, k: k, b: b })); } catch (e) { /* ignoré */ }
     }).catch(function () { state.goldLive = false; });
   }
@@ -1651,9 +1651,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       renderPerf(null); renderTape(); return;
     }
     var g = goldStats(k);
-    meta.textContent = state.goldLive ? "EN DIRECT · PAXG · maj " + hhmm(state.goldTs) : "HORS LIGNE · dernière maj " + tzDate(state.goldTs) + " " + hhmm(state.goldTs);
+    meta.textContent = state.goldLive ? "EN DIRECT · PAXG · maj " + hhmm(state.goldTs) : state.goldRobot ? "CLÔTURE · contrat à terme · robot" : "HORS LIGNE · dernière maj " + tzDate(state.goldTs) + " " + hhmm(state.goldTs);
     meta.style.color = state.goldLive ? "var(--up)" : "var(--amber)";
-    gAsofText = (state.goldLive ? "Bougie du jour en cours · " : "Dernier cours connu · ") + tzDate(g.t) + " (UTC)";
+    if ($("gVia")) $("gVia").textContent = state.goldRobot ? "· contrat à terme" : "· via PAXG";
+    gAsofText = state.goldRobot ? "Binance injoignable : dernière clôture du contrat à terme sur l'or (Yahoo, via le robot) · " + tzDate(g.t) + " · hauts et bas = extrêmes des clôtures." : (state.goldLive ? "Bougie du jour en cours · " : "Dernier cours connu · ") + tzDate(g.t) + " (UTC)";
     setChip("gDay", g.day); setChip("gWeek", g.week); setChip("g7", g.d7); setChip("g30", g.d30);
     $("sWH").textContent = fmtN(g.wh, 2); $("sWL").textContent = fmtN(g.wl, 2); $("s7H").textContent = fmtN(g.h7, 2); $("s7L").textContent = fmtN(g.l7, 2);
     $("rLo").textContent = fmtN(g.wl, 2); $("rHi").textContent = fmtN(g.wh, 2);
@@ -1665,7 +1666,16 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     drawGoldChart(k); gShow(gCur.s.length - 1, true);
     renderPerf(g); renderTape();
   }
-  function refreshGold() { return loadGold().then(function () { renderGold(); renderPiv(); if (typeof renderOrVol === "function") renderOrVol(); }); }
+  /* Secours si Binance est injoignable : clôtures quotidiennes du contrat à terme sur l'or relevées par le robot (Yahoo). */
+  function goldFromRobot() {
+    if (state.gold && !state.goldRobot) return false;
+    var g = AUTO && AUTO.daily && AUTO.daily.gold; if (!g || !g.c || g.c.length < 25) return false;
+    var c = g.c.filter(function (p) { return p[1] > 0; });
+    state.gold = c.slice(1).map(function (p, i) { return { t: Date.parse(p[0] + "T00:00:00Z"), o: c[i][1], h: p[1], l: p[1], c: p[1] }; });
+    state.goldRobot = true; state.goldLive = false; state.goldTs = Date.parse(c[c.length - 1][0] + "T00:00:00Z");
+    return true;
+  }
+  function refreshGold() { return loadGold().then(function () { if (!state.goldLive) goldFromRobot(); renderGold(); renderPiv(); if (typeof renderOrVol === "function") renderOrVol(); }); }
   function initTV() {
     var box = $("tv"), fb = function () {
       if (box.querySelector("iframe") || box.querySelector(".tv-fb")) return;
@@ -3056,7 +3066,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         var m = px * sig * Math.sqrt(hz[1] / 252);
         return "<tr><td><b>" + hz[0] + '</b><br><small>± ' + fmtN(m, 0) + ' $</small></td><td class="r num">' + fmtN(px - m, 0) + " – " + fmtN(px + m, 0) + '</td><td class="r num">' + fmtN(px - 2 * m, 0) + " – " + fmtN(px + 2 * m, 0) + "</td></tr>";
       }).join("") + "</tbody>";
-      $("rgMeta").innerHTML = "cours " + fmtN(px, 2) + " $ (PAXG) · GVZ " + fmt(gv.v, 1) + " au " + shortD(gv.asof) + " " + badge(fresh(gv.asof, "daily"));
+      $("rgMeta").innerHTML = "cours " + fmtN(px, 2) + (state.goldRobot ? " $ (contrat à terme, clôture)" : " $ (PAXG)") + " · GVZ " + fmt(gv.v, 1) + " au " + shortD(gv.asof) + " " + badge(fresh(gv.asof, "daily"));
     } else { $("rgTbl").innerHTML = '<tbody><tr><td>' + (!gv ? "GVZ pas encore récupéré par le robot." : "Cours de l'or en chargement (Binance)…") + "</td></tr></tbody>"; $("rgMeta").textContent = ""; }
     /* 2. Volatilité attendue contre réelle */
     if (gc.length > 25) {
@@ -3347,7 +3357,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       }
       if (isUSD && state.gold) {
         var gk = state.gold.filter(function (k) { return new Date(k.t).toISOString().slice(0, 10) === t.toISOString().slice(0, 10); })[0];
-        if (gk) react += "<li>Or (PAXG) : <b class=\"" + cls(gk.c - gk.o) + "\">" + pct((gk.c / gk.o - 1) * 100) + "</b> sur la journée.</li>";
+        if (gk) react += "<li>" + (state.goldRobot ? "Or (contrat à terme)" : "Or (PAXG)") + " : <b class=\"" + cls(gk.c - gk.o) + "\">" + pct((gk.c / gk.o - 1) * 100) + "</b> sur la journée.</li>";
       }
       react = react ? '<h3>Réaction du marché ce jour-là</h3><ul class="advice" style="padding-top:0">' + react + '</ul><p class="hint" style="max-width:none">Cours de clôture quotidiens : d\'autres nouvelles du même jour peuvent aussi jouer.</p>' : "";
     }
@@ -3598,7 +3608,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
