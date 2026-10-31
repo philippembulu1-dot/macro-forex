@@ -471,7 +471,8 @@ def fallbacks(data):
 
 def do_oecd(data):
     if not fred_reachable():
-        note("oecd.fred", "Séries OCDE via FRED (taux et inflation des autres pays)", "monthly", False, err=FRED_OK["err"])
+        # FRED refuse les serveurs de GitHub : ces séries sont remplacées par les sources nationales (BoE, BoC, BNS, ONS, BCE, BRI…).
+        note("oecd.fred", "Séries OCDE via FRED (remplacées par les sources nationales)", "nofree", False, err="non disponible gratuitement depuis GitHub (FRED seulement) : remplacé par les sources nationales")
         return
     start_m = (NOW - timedelta(days=900)).strftime("%Y-%m-%d")
     for cc, name in OECD_RATES:
@@ -546,6 +547,39 @@ def boc_cpi():
         v = o.get("STATIC_TOTALCPICHANGE") or o.get("CPI_TOTAL_CHANGE") or {}
         obs.append((o["d"], num(v.get("v"))))
     return last2(obs)
+
+
+def bis_rate(cc):
+    """Taux directeur publié par la BRI (Banque des règlements internationaux), série quotidienne WS_CBPOL."""
+    start = (NOW - timedelta(days=200)).strftime("%Y-%m-%d")
+    last = None
+    for url in ("https://stats.bis.org/api/v2/data/dataflow/BIS/WS_CBPOL/1.0/D.%s?startPeriod=%s&format=csv" % (cc, start),
+                "https://stats.bis.org/api/v1/data/WS_CBPOL/D.%s?startPeriod=%s&format=csv" % (cc, start)):
+        try:
+            txt = http("bis_%s.csv" % cc, url, tries=1, timeout=25)
+            rows = list(csv.DictReader(io.StringIO(txt)))
+            obs = [(r.get("TIME_PERIOD", "")[:10], num(r.get("OBS_VALUE"))) for r in rows if r.get("TIME_PERIOD")]
+            obs = sorted(o for o in obs if o[1] is not None)
+            if not obs:
+                DIAG["bis_" + cc] = txt[:160]
+                raise ValueError("aucune valeur dans la réponse")
+            res = last2(obs)
+            res["prev"] = next((v for d, v in reversed(obs) if v != res["v"]), None)  # dernier niveau différent = avant la dernière décision
+            res["via"] = "BRI (WS_CBPOL)"
+            return res
+        except Exception as e:
+            last = e
+    raise last
+
+
+def rba_or_bis():
+    try:
+        res = rba_rate()
+        if res and res.get("v") is not None:
+            return res
+    except Exception as e:
+        DIAG["rba"] = fr_err(e)[:120]
+    return bis_rate("AU")
 
 
 def rba_rate():
@@ -653,7 +687,7 @@ def snb_rate():
 def do_national(data):
     nat(data, "rate_GB", "Taux directeur BoE (Banque d'Angleterre)", "daily", "https://www.bankofengland.co.uk/boeapps/database/", boe_rate)
     nat(data, "rate_CA", "Taux directeur BoC (Banque du Canada)", "daily", "https://www.bankofcanada.ca/valet/", lambda: valet("V39079", "boc_rate.json"))
-    nat(data, "rate_AU", "Taux directeur RBA (Banque de réserve d'Australie)", "daily", "https://www.rba.gov.au/statistics/tables/", rba_rate)
+    nat(data, "rate_AU", "Taux directeur RBA (Banque de réserve d'Australie)", "daily", "https://www.rba.gov.au/statistics/tables/", rba_or_bis)
     nat(data, "rate_CH", "Taux directeur BNS (Banque nationale suisse)", "monthly", "https://data.snb.ch/", snb_rate)
     nat(data, "cpi_EZ", "Inflation zone euro (Eurostat / BCE, IPCH)", "monthly", "https://ec.europa.eu/eurostat/web/hicp", ez_cpi)
     nat(data, "cpi_GB", "Inflation Royaume-Uni (ONS)", "monthly", "https://www.ons.gov.uk/economy/inflationandpriceindices", ons_cpi)
