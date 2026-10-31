@@ -3462,11 +3462,457 @@ def geo_note(data):
     data["geo"] = g
 
 
+# ---------------------------------------------------------------- Zone euro : écarts de taux, fragmentation ; déficits publics ; MOVE
+EZ_CC = [("FR", "France"), ("IT", "Italie"), ("ES", "Espagne"), ("PT", "Portugal"), ("GR", "Grèce"),
+         ("BE", "Belgique"), ("NL", "Pays-Bas"), ("AT", "Autriche"), ("IE", "Irlande"), ("FI", "Finlande")]
+EZ_HIST = ["DE", "FR", "IT", "ES", "PT", "GR", "BE"]  # historiques quotidiens sur 1 an (CNBC)
+EZ_LONG = ["FR", "IT", "ES", "PT", "GR"]  # historiques mensuels BCE envoyés au site (depuis 2005)
+CNBC_Q = "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=%s&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json"
+CNBC_H = "https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=%s10Y-%s"
+ECB_API = "https://data-api.ecb.europa.eu/service/data/"
+BBK_BUND = "https://api.statistiken.bundesbank.de/rest/data/BBSIS/D.I.ZST.ZI.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A?lastNObservations=10&format=csv"
+TPI_URL = "https://www.ecb.europa.eu/press/pr/date/2022/html/ecb.pr220721~973e6e7273.en.html"
+
+
+def ecb_rows(fname, path, timeout=60):
+    """Séries BCE (CSV, sans clé) : dictionnaire clé de série → [(période, valeur)] triés."""
+    url = ECB_API + path + ("&" if "?" in path else "?") + "format=csvdata&detail=dataonly"
+    out = {}
+    rd = csv.DictReader(io.StringIO(http(fname, url, timeout=timeout)))
+    for r in rd:
+        v = num(r.get("OBS_VALUE"))
+        if v is None:
+            continue
+        k = r.get("KEY")
+        if not k:
+            cols = rd.fieldnames or []
+            k = ".".join(r.get(c, "") for c in cols[:cols.index("TIME_PERIOD")] if c != "FREQ") if "TIME_PERIOD" in cols else "?"
+        out.setdefault(k, []).append((r["TIME_PERIOD"], v))
+    for k in out:
+        out[k].sort()
+    if not out:
+        raise ValueError("réponse vide")
+    return out
+
+
+def pct_of(vals, v):
+    """Rang centile (0-100) de v dans vals."""
+    vals = [x for x in vals if x is not None]
+    if not vals or v is None:
+        return None
+    below = sum(1 for x in vals if x < v)
+    eq = sum(1 for x in vals if x == v)
+    return int(round(100.0 * (below + 0.5 * eq) / len(vals)))
+
+
+def qgrid(vals):
+    s = sorted(x for x in vals if x is not None)
+    if len(s) < 30:
+        return None
+    return [round(s[int(round(i * (len(s) - 1) / 100.0))], 5) for i in range(101)]
+
+
+def qpct(grid, v):
+    if not grid or v is None:
+        return None
+    import bisect
+    lo, hi = bisect.bisect_left(grid, v), bisect.bisect_right(grid, v)
+    return int(max(0, min(100, round((lo + hi) / 2.0 - 0.5))))
+
+
+def do_euro(data):
+    """Écarts de taux 10 ans contre le Bund (en direct différé + historique) puis état de fragmentation de la zone euro."""
+    E = {"cc": []}
+    # 1) cotations du moment (CNBC, source secondaire, différé de quelques minutes)
+    Q = {}
+    try:
+        syms = "|".join("%s10Y-%s" % (c, c) for c in ["DE"] + [x[0] for x in EZ_CC])
+        j = json.loads(http("cnbc_ezq.json", CNBC_Q % urllib.parse.quote(syms, safe=""), timeout=30))
+        for q in j["FormattedQuoteResult"]["FormattedQuote"]:
+            cc = (q.get("symbol") or "")[:2]
+            v = num((q.get("last") or "").replace("%", ""))
+            p = num((q.get("previous_day_closing") or "").replace("%", ""))
+            if v is not None:
+                Q[cc] = {"y": v, "prev": p, "t": (q.get("last_time") or "")[:19], "mkt": q.get("curmktstatus")}
+        if "DE" not in Q:
+            raise ValueError("rendement du Bund absent")
+        note("ez.quotes", "Rendements 10 ans zone euro, %d pays (CNBC, source secondaire, différé)" % len(Q), "daily", True, Q["DE"]["t"][:10], url="https://www.cnbc.com/bonds/")
+    except Exception as e:
+        note("ez.quotes", "Rendements 10 ans zone euro (CNBC, source secondaire, différé)", "daily", False, err=e, url="https://www.cnbc.com/bonds/")
+    # 2) historique quotidien sur un an (même fournisseur, clôtures)
+    H = {}
+    for c in EZ_HIST:
+        try:
+            j = json.loads(http("cnbc_ezh_%s.json" % c, CNBC_H % (c, c), timeout=30))
+            ser = {}
+            for b in j["barData"]["priceBars"]:
+                d, v = str(b.get("tradeTime", ""))[:8], num(b.get("close"))
+                if len(d) == 8 and v is not None:
+                    ser["%s-%s-%s" % (d[:4], d[4:6], d[6:])] = v
+            if len(ser) > 30:
+                H[c] = ser
+        except Exception as e:
+            DIAG["ez_h_" + c] = fr_err(e)[:80]
+    if "DE" in H and len(H) >= 3:
+        note("ez.hist", "Historique 1 an des rendements 10 ans (CNBC) : %d pays" % len(H), "daily", True, max(H["DE"]), url="https://www.cnbc.com/bonds/")
+    else:
+        note("ez.hist", "Historique 1 an des rendements 10 ans (CNBC)", "daily", False, err="historique indisponible", url="https://www.cnbc.com/bonds/")
+    # 3) référence officielle : taux longs de convergence (BCE, moyenne mensuelle, depuis 2005)
+    L = {}
+    try:
+        S = ecb_rows("ecb_irs.csv", "IRS/M.DE+%s.L.L40.CI.0000.EUR.N.Z?startPeriod=2005-01" % "+".join(c for c, _ in EZ_CC))
+        by = {}
+        for k, ser in S.items():
+            parts = k.split(".")
+            cc = parts[2] if parts[0] == "IRS" else parts[0]
+            by[cc] = dict(ser)
+        de = by.get("DE") or {}
+        for c, _ in EZ_CC:
+            s = by.get(c) or {}
+            L[c] = [(m, round((s[m] - de[m]) * 100, 1)) for m in sorted(s) if m in de]
+        note("ez.irs", "Taux longs officiels de convergence, 11 pays (BCE, mensuel)", "monthly", True, max(de) + "-01" if de else None, url="https://data.ecb.europa.eu/data/datasets/IRS")
+    except Exception as e:
+        note("ez.irs", "Taux longs officiels de convergence (BCE, mensuel)", "monthly", False, err=e, url="https://data.ecb.europa.eu/data/datasets/IRS")
+    # 4) contrôle croisé du Bund : Bundesbank (courbe ajustée, officielle)
+    try:
+        rows = []
+        for ln in http("bbk_bund.csv", BBK_BUND, timeout=30).splitlines():
+            m = re.match(r"(\d{4}-\d{2}-\d{2});([-\d,\.]+);", ln)
+            if m:
+                rows.append((m.group(1), num(m.group(2).replace(",", "."))))
+        rows = [r for r in rows if r[1] is not None]
+        if not rows:
+            raise ValueError("aucune valeur")
+        E["bbk"] = {"d": rows[-1][0], "v": rows[-1][1]}
+        note("ez.bbk", "Bund 10 ans officiel (Bundesbank, courbe ajustée)", "daily", True, rows[-1][0], url="https://www.bundesbank.de/en/statistics/money-and-capital-markets/interest-rates-and-yields")
+    except Exception as e:
+        note("ez.bbk", "Bund 10 ans officiel (Bundesbank)", "daily", False, err=e, url="https://www.bundesbank.de/en/statistics/money-and-capital-markets/interest-rates-and-yields")
+    de = Q.get("DE")
+    if de:
+        E["de"] = {"y": de["y"], "prev": de["prev"], "t": de["t"]}
+        if E.get("bbk"):
+            E["de"]["chk"] = round((de["y"] - E["bbk"]["v"]) * 100, 1)  # écart entre les deux sources, en pb
+    elif H.get("DE"):
+        d = max(H["DE"])
+        E["de"] = {"y": H["DE"][d], "t": d, "stale": True}
+    for c, name in EZ_CC:
+        r = {"cc": c, "name": name}
+        q = Q.get(c)
+        if q and de:
+            r["y"], r["bp"], r["t"], r["src"] = q["y"], round((q["y"] - de["y"]) * 100, 1), q["t"], "CNBC"
+            if q.get("prev") is not None and de.get("prev") is not None:
+                r["d1"] = round(r["bp"] - (q["prev"] - de["prev"]) * 100, 1)
+        if c in H and "DE" in H:
+            hs = [(d, round((H[c][d] - H["DE"][d]) * 100, 1)) for d in sorted(H[c]) if d in H["DE"]]
+            if len(hs) > 25:
+                vals = [v for _, v in hs]
+                if "bp" not in r:
+                    r["bp"], r["t"], r["src"] = vals[-1], hs[-1][0], "CNBC (clôture)"
+                cur = r["bp"]
+                r["d5"] = round(cur - vals[-6], 1)
+                r["d20"] = round(cur - vals[-21], 1)
+                r["p1y"] = pct_of(vals, cur)
+                r["hi1y"], r["lo1y"] = max(vals), min(vals)
+                r["hist"] = [[d, v] for d, v in hs[-260:]]
+        lg = L.get(c) or []
+        if lg:
+            if "bp" not in r:
+                r["bp"], r["t"], r["src"] = lg[-1][1], lg[-1][0], "BCE (mensuel)"
+            r["plong"] = pct_of([v for _, v in lg], r["bp"])
+            mx = max(lg, key=lambda x: x[1])
+            r["maxlong"] = [mx[0], mx[1]]
+            r["irs"] = [lg[-1][0], lg[-1][1]]
+            r["since"] = lg[0][0]
+            if c in EZ_LONG:
+                r["long"] = [[m, v] for m, v in lg]
+        if "bp" in r:
+            E["cc"].append(r)
+    data["ezspread"] = E
+    if E["cc"]:
+        note("ez.spreads", "Écarts de taux 10 ans contre le Bund (calcul) : %d pays" % len(E["cc"]), "daily", True, (E.get("de") or {}).get("t", TODAY)[:10], url="https://data.ecb.europa.eu/data/datasets/IRS")
+    else:
+        note("ez.spreads", "Écarts de taux 10 ans contre le Bund (calcul)", "daily", False, err="aucune source de rendement", url="https://data.ecb.europa.eu/data/datasets/IRS")
+    do_frag(data)
+
+
+FRAG_CC = ["FR", "IT", "ES", "PT", "GR", "BE", "NL", "AT", "IE", "FI", "DE"]
+
+
+def do_frag(data):
+    """Fragmentation : indices de stress souverain (SovCISS) et systémique (CISS) de la BCE, soldes TARGET, écarts de taux."""
+    F = {"cc": {}}
+    prevF = PREVIOUS.get("frag") or {}
+    full = prevF.get("full_d") != TODAY or not prevF.get("grids")
+    grids = {} if full else dict(prevF.get("grids") or {})
+    try:
+        S = ecb_rows("ecb_ciss.csv", "CISS/D.U2+%s.Z0Z.4F.EC.SOV_GDPWN+SOV_CIN+SS_CIN.IDX?%s"
+                     % ("+".join(FRAG_CC), "startPeriod=2008-01-01" if full else "lastNObservations=30"), timeout=90)
+        def pick(cc, kind):
+            for k, ser in S.items():
+                p = k.split(".")
+                if len(p) >= 7 and p[0] == "CISS" and p[2] == cc and p[6] == kind:
+                    return ser
+                if len(p) >= 5 and p[0] == cc and kind in p:
+                    return ser
+            return None
+        for key, cc, kind, lab in (("sov", "U2", "SOV_GDPWN", "SovCISS zone euro"), ("ciss", "U2", "SS_CIN", "CISS zone euro")):
+            ser = pick(cc, kind)
+            if not ser:
+                continue
+            vals = [v for _, v in ser]
+            if full:
+                grids[key] = qgrid(vals)
+                mx = max(ser, key=lambda x: x[1])
+                wk = ser[::5]
+                if wk[-1] != ser[-1]:
+                    wk.append(ser[-1])
+                hist = [[d, round(v, 4)] for d, v in wk]
+                F[key] = {"max": [mx[0], round(mx[1], 4)], "since": ser[0][0]}
+            else:
+                old = prevF.get(key) or {}
+                hist = [x for x in (old.get("hist") or []) if x[0] < ser[-1][0]] + [[ser[-1][0], round(ser[-1][1], 4)]]
+                F[key] = {"max": old.get("max"), "since": old.get("since")}
+            F[key].update({"v": round(vals[-1], 4), "d": ser[-1][0], "p": qpct(grids.get(key), vals[-1]), "lab": lab, "hist": hist,
+                           "d20": round(vals[-1] - vals[-21], 4) if len(vals) > 21 else None})
+        for cc in FRAG_CC:
+            ser = pick(cc, "SOV_CIN")
+            if not ser:
+                continue
+            vals = [v for _, v in ser]
+            if full:
+                grids[cc] = qgrid(vals)
+            F["cc"][cc] = {"v": round(vals[-1], 4), "d": ser[-1][0], "p": qpct(grids.get(cc), vals[-1]),
+                           "d20": round(vals[-1] - vals[-21], 4) if len(vals) > 21 else None}
+        if not F.get("sov"):
+            raise ValueError("SovCISS zone euro absent")
+        F["grids"], F["full_d"] = grids, (TODAY if full else prevF.get("full_d"))
+        note("ecb.ciss", "Stress souverain SovCISS + CISS, zone euro et %d pays (BCE, quotidien)" % len(F["cc"]), "daily", True, F["sov"]["d"], url="https://data.ecb.europa.eu/data/datasets/CISS")
+    except Exception as e:
+        note("ecb.ciss", "Stress souverain SovCISS + CISS (BCE, quotidien)", "daily", False, err=e, url="https://data.ecb.europa.eu/data/datasets/CISS")
+        for k in ("sov", "ciss", "cc", "grids", "full_d"):
+            if prevF.get(k):
+                F[k] = prevF[k]
+        F["stale"] = True
+    # Soldes TARGET (milliards d'euros) : fuite des capitaux du Sud vers le Nord = fragmentation des flux
+    try:
+        S = ecb_rows("ecb_tgb.csv", "TGB/M.DE+IT+ES+FR+GR+PT+NL+BE.N.A094T.U2.EUR.E?startPeriod=2008-01")
+        T = {}
+        for k, ser in S.items():
+            p = k.split(".")
+            cc = p[2] if p[0] == "TGB" else p[0]
+            vals = [(d, round(v / 1000.0, 1)) for d, v in ser]
+            T[cc] = {"v": vals[-1][1], "d": vals[-1][0], "d3": round(vals[-1][1] - vals[-4][1], 1) if len(vals) > 3 else None,
+                     "d12": round(vals[-1][1] - vals[-13][1], 1) if len(vals) > 12 else None}
+            if cc in ("DE", "IT", "ES", "FR"):
+                T[cc]["hist"] = [[d, v] for d, v in vals]
+        F["tgb"] = T
+        note("ecb.tgb", "Soldes TARGET des banques centrales nationales (BCE, mensuel)", "monthly", True, max(t["d"] for t in T.values()) + "-01", url="https://data.ecb.europa.eu/data/datasets/TGB")
+    except Exception as e:
+        note("ecb.tgb", "Soldes TARGET (BCE, mensuel)", "monthly", False, err=e, url="https://data.ecb.europa.eu/data/datasets/TGB")
+    # Règle transparente du terminal (points) : aucune vérité, chaque critère est affiché
+    crit, score = [], 0
+    def add(lab, val, pts, rule):
+        crit.append({"l": lab, "v": val, "pts": pts, "r": rule})
+        return pts
+    sp = {r["cc"]: r for r in (data.get("ezspread") or {}).get("cc", [])}
+    s = F.get("sov") or {}
+    if s.get("p") is not None:
+        score += add("Stress souverain zone euro (SovCISS), rang depuis 2008", "%d/100" % s["p"], 2 if s["p"] >= 90 else 1 if s["p"] >= 75 else 0, "≥ 75 : 1 pt ; ≥ 90 : 2 pts")
+    it, fr = sp.get("IT") or {}, sp.get("FR") or {}
+    if it.get("d20") is not None:
+        score += add("Écart Italie − Allemagne sur 20 séances", "%+.0f pb" % it["d20"], 2 if it["d20"] >= 40 else 1 if it["d20"] >= 20 else 0, "≥ +20 pb : 1 pt ; ≥ +40 pb : 2 pts")
+    if fr.get("d20") is not None:
+        score += add("Écart France − Allemagne sur 20 séances", "%+.0f pb" % fr["d20"], 2 if fr["d20"] >= 25 else 1 if fr["d20"] >= 12 else 0, "≥ +12 pb : 1 pt ; ≥ +25 pb : 2 pts")
+    pl = [sp[c]["plong"] for c in ("IT", "FR", "ES", "PT") if sp.get(c, {}).get("plong") is not None]
+    if pl:
+        m = sum(pl) / float(len(pl))
+        score += add("Niveau moyen des écarts (IT, FR, ES, PT), rang depuis 2005", "%d/100" % round(m), 1 if m >= 80 else 0, "≥ 80 : 1 pt")
+    hot = [c for c, x in (F.get("cc") or {}).items() if c != "DE" and (x.get("p") or 0) >= 90]
+    if F.get("cc"):
+        score += add("Pays en stress souverain élevé (rang ≥ 90)", ", ".join(hot) or "aucun", 1 if len(hot) >= 2 else 0, "2 pays ou plus : 1 pt")
+    T = F.get("tgb") or {}
+    if T.get("IT", {}).get("d3") is not None and T.get("ES", {}).get("d3") is not None:
+        d3 = T["IT"]["d3"] + T["ES"]["d3"]
+        score += add("Soldes TARGET Italie + Espagne sur 3 mois", "%+.0f Md€" % d3, 1 if d3 <= -50 else 0, "baisse de 50 Md€ ou plus : 1 pt")
+    if crit:
+        F["rule"] = {"score": score, "max": sum(2 if "2 pts" in c["r"] else 1 for c in crit), "crit": crit,
+                     "state": "Fragmentation" if score >= 5 else "Tension" if score >= 3 else "Calme", "tpi": TPI_URL}
+    data["frag"] = F
+
+
+EU_EA = ["AT", "BE", "BG", "CY", "DE", "EE", "ES", "FI", "FR", "EL", "HR", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SI", "SK"]
+OECD_FISC = {"USA": "US", "JPN": "JP", "GBR": "GB", "CAN": "CA", "AUS": "AU", "NZL": "NZ", "CHE": "CH", "EA17": "EA"}
+MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+
+def jsonstat(j):
+    """Eurostat JSON-stat 2.0 → liste de dicts {dimension: code, 'v': valeur}."""
+    ids, size, dims = j["id"], j["size"], j["dimension"]
+    codes = []
+    for d in ids:
+        idx = dims[d]["category"]["index"]
+        codes.append(sorted(idx, key=lambda c: idx[c]) if isinstance(idx, dict) else list(idx))
+    out = []
+    for k, v in (j.get("value") or {}).items():
+        n, rec = int(k), {}
+        for i in range(len(ids) - 1, -1, -1):
+            rec[ids[i]] = codes[i][n % size[i]]
+            n //= size[i]
+        rec["v"] = v
+        rec["st"] = (j.get("status") or {}).get(k)
+        out.append(rec)
+    return out, {d: dims[d]["category"].get("label", {}) for d in ids}
+
+
+def do_deficits(data):
+    """Soldes publics (déficit < 0) et dettes : Eurostat (UE), OCDE (8 économies), Trésor US (mensuel), ONS (mensuel)."""
+    D = {}
+    EST = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
+    try:
+        rows, lab = jsonstat(json.loads(http("es_edp.json", EST + "gov_10dd_edpt1?format=JSON&sector=S13&unit=PC_GDP&na_item=B9&na_item=GD&lastTimePeriod=3", timeout=60)))
+        A = {}
+        for r in rows:
+            g = r["geo"]
+            if g in EU_EA or g.startswith("EA") or g == "EU27_2020":
+                x = A.setdefault(g, {"name": lab["geo"].get(g, g)})
+                x.setdefault("b9" if r["na_item"] == "B9" else "gd", {})[r["time"]] = r["v"]
+        if not A:
+            raise ValueError("aucun pays")
+        D["eu"] = A
+        last = max(t for x in A.values() for t in (x.get("b9") or {}))
+        note("es.edp", "Déficit et dette publics des pays de la zone euro (Eurostat, annuel)", "annual", True, last + "-12-31", url="https://ec.europa.eu/eurostat/databrowser/view/gov_10dd_edpt1/default/table")
+    except Exception as e:
+        note("es.edp", "Déficit et dette publics, zone euro (Eurostat, annuel)", "annual", False, err=e, url="https://ec.europa.eu/eurostat/databrowser/view/gov_10dd_edpt1/default/table")
+    try:
+        geo = "".join("&geo=" + g for g in ["EA20", "EA21", "DE", "FR", "IT", "ES", "NL", "BE", "PT", "EL", "AT", "IE", "FI"])
+        rows, lab = jsonstat(json.loads(http("es_q.json", EST + "gov_10q_ggnfa?format=JSON&na_item=B9&sector=S13&unit=PC_GDP&s_adj=SCA&lastTimePeriod=4" + geo, timeout=60)))
+        Qd = {}
+        for r in rows:
+            Qd.setdefault(r["geo"], {})[r["time"]] = r["v"]
+        if not Qd:
+            raise ValueError("aucune valeur")
+        D["euq"] = Qd
+        lq = max(t for x in Qd.values() for t in x)
+        note("es.q", "Déficit public trimestriel, corrigé des saisons (Eurostat)", "quarterly", True, lq.replace("-Q1", "-03-31").replace("-Q2", "-06-30").replace("-Q3", "-09-30").replace("-Q4", "-12-31"), url="https://ec.europa.eu/eurostat/databrowser/view/gov_10q_ggnfa/default/table")
+    except Exception as e:
+        note("es.q", "Déficit public trimestriel (Eurostat)", "quarterly", False, err=e, url="https://ec.europa.eu/eurostat/databrowser/view/gov_10q_ggnfa/default/table")
+    try:
+        url = ("https://sdmx.oecd.org/public/rest/data/OECD.ECO.MAD,DSD_EO@DF_EO,/%s.NLGQ+GGFLQ.A?startPeriod=%d&dimensionAtObservation=AllDimensions&format=csvfilewithlabels"
+               % ("+".join(OECD_FISC), NOW.year - 4))
+        O, ed = {}, None
+        for r in csv.DictReader(io.StringIO(http("oecd_eo.csv", url, timeout=60))):
+            a, m, t, v = r.get("REF_AREA"), r.get("MEASURE"), r.get("TIME_PERIOD"), num(r.get("OBS_VALUE"))
+            ed = ed or r.get("STRUCTURE_NAME")
+            if a in OECD_FISC and v is not None:
+                O.setdefault(OECD_FISC[a], {}).setdefault("bal" if m == "NLGQ" else "debt", {})[t] = round(v, 2)
+        if not O:
+            raise ValueError("aucune valeur")
+        D["oecd"] = {"ed": ed, "cc": O, "yr": NOW.year}
+        note("oecd.eo", "Solde et dette publics des 8 économies, avec prévisions (OCDE, %s)" % (ed or "Perspectives économiques"), "annual", True, "%d-12-31" % (NOW.year - 1), url="https://data-explorer.oecd.org/")
+    except Exception as e:
+        note("oecd.eo", "Solde et dette publics des 8 économies (OCDE)", "annual", False, err=e, url="https://data-explorer.oecd.org/")
+    try:
+        base = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/mts/mts_table_1?"
+        ytd = json.loads(http("mts_ytd.json", base + "filter=classification_desc:eq:Year-to-Date&sort=-record_date&page[size]=15&fields=record_date,current_month_dfct_sur_amt,current_month_gross_rcpt_amt,current_month_gross_outly_amt,record_fiscal_year", timeout=30))["data"]
+        ytd = [x for x in ytd if num(x.get("current_month_dfct_sur_amt")) is not None]
+        if not ytd:
+            raise ValueError("aucune ligne")
+        L0 = ytd[0]
+        rd = L0["record_date"]
+        mo = int(rd[5:7])
+        mrows = json.loads(http("mts_m.json", base + "filter=record_date:eq:%s&page[size]=40&fields=classification_desc,current_month_dfct_sur_amt,current_month_gross_rcpt_amt,current_month_gross_outly_amt" % rd, timeout=30))["data"]
+        mrow = next((x for x in mrows if x.get("classification_desc") == MONTHS_EN[mo - 1]), None)
+        prev_rd = "%d%s" % (int(rd[:4]) - 1, rd[4:])
+        py = next((x for x in ytd if x["record_date"][:7] == prev_rd[:7]), None)
+        fy_end = next((x for x in ytd if x["record_date"][:7] == "%d-09" % (int(L0["record_fiscal_year"]) - 1)), None)
+        bn = lambda x: round(num(x) / 1e9, 1) if num(x) is not None else None
+        U = {"d": rd, "fy": L0["record_fiscal_year"], "ytd": bn(L0["current_month_dfct_sur_amt"]),
+             "rcpt": bn(L0["current_month_gross_rcpt_amt"]), "outl": bn(L0["current_month_gross_outly_amt"]),
+             "m": bn(mrow["current_month_dfct_sur_amt"]) if mrow else None, "pytd": bn(py["current_month_dfct_sur_amt"]) if py else None}
+        if mo == 9:
+            U["r12"] = U["ytd"]
+        elif py and fy_end:
+            U["r12"] = round(U["ytd"] + bn(fy_end["current_month_dfct_sur_amt"]) - U["pytd"], 1)
+        D["us"] = U
+        note("ust.mts", "Déficit fédéral américain, mensuel (Trésor US, Monthly Treasury Statement)", "monthly", True, rd, url="https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/")
+    except Exception as e:
+        note("ust.mts", "Déficit fédéral américain (Trésor US)", "monthly", False, err=e, url="https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/")
+    try:
+        txt = http("ons_psnb.csv", "https://www.ons.gov.uk/generator?format=csv&uri=/economy/governmentpublicsectorandtaxes/publicsectorfinance/timeseries/dzls/pusf", timeout=30)
+        MM = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+        ms = []
+        for r in csv.reader(io.StringIO(txt)):
+            if len(r) >= 2:
+                m = re.match(r"^(\d{4}) ([A-Z]{3})$", r[0].strip())
+                v = num(r[1])
+                if m and m.group(2) in MM and v is not None:
+                    ms.append(("%s-%02d" % (m.group(1), MM.index(m.group(2)) + 1), v))
+        ms.sort()
+        if not ms:
+            raise ValueError("aucun mois")
+        def fytd(ym):  # exercice britannique : avril → mars
+            y, mo_ = int(ym[:4]), int(ym[5:])
+            start = "%d-04" % (y if mo_ >= 4 else y - 1)
+            return round(sum(v for d, v in ms if start <= d <= ym) / 1000.0, 1)
+        lm = ms[-1][0]
+        prev = "%d%s" % (int(lm[:4]) - 1, lm[4:])
+        D["uk"] = {"d": lm, "m": round(ms[-1][1] / 1000.0, 1), "ytd": fytd(lm), "pytd": fytd(prev) if any(d == prev for d, _ in ms) else None,
+                   "r12": round(sum(v for _, v in ms[-12:]) / 1000.0, 1)}
+        note("ons.psnb", "Emprunt net du secteur public britannique, mensuel (ONS)", "monthly", True, lm + "-01", url="https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance")
+    except Exception as e:
+        note("ons.psnb", "Emprunt net du secteur public britannique (ONS)", "monthly", False, err=e, url="https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance")
+    data["deficits"] = D
+
+
+def do_move(data):
+    """Indice MOVE (volatilité implicite des Treasuries, ICE BofA) : Yahoo, non officiel ; repli CNBC."""
+    M = None
+    try:
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE?interval=1d&range=2y"
+        r = json.loads(http("yh_move.json", url, tries=2, timeout=25))["chart"]["result"][0]
+        q = r["indicators"]["quote"][0]
+        rows = [(datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), round(c, 2)) for t, c in zip(r.get("timestamp") or [], q.get("close") or []) if c is not None]
+        if len(rows) < 60:
+            raise ValueError("trop peu de clôtures")
+        live = (r.get("meta") or {}).get("regularMarketPrice")
+        M = {"src": "Yahoo Finance (non officiel)", "rows": rows, "live": live}
+    except Exception as e:
+        DIAG["move_yahoo"] = fr_err(e)[:100]
+        try:
+            j = json.loads(http("cnbc_move.json", CNBC_Q % ".MOVE", timeout=25))
+            qq = j["FormattedQuoteResult"]["FormattedQuote"][0]
+            v = num((qq.get("last") or "").replace(",", ""))
+            if v is None:
+                raise ValueError("pas de valeur")
+            M = {"src": "CNBC (non officiel)", "rows": [], "live": v, "t": (qq.get("last_time") or "")[:10]}
+        except Exception as e2:
+            DIAG["move_cnbc"] = fr_err(e2)[:100]
+    if not M:
+        prev = PREVIOUS.get("move")
+        if prev:
+            data["move"] = dict(prev, stale=True)
+        note("move", "Indice MOVE (volatilité des obligations US)", "daily", False, err="Yahoo et CNBC indisponibles", url="https://www.ice.com/")
+        return
+    rows = M["rows"]
+    vals = [v for _, v in rows]
+    cur = M["live"] if M.get("live") else (vals[-1] if vals else None)
+    out = {"v": round(cur, 2) if cur is not None else None, "src": M["src"], "d": rows[-1][0] if rows else M.get("t", TODAY)}
+    if vals:
+        out.update({"d1": round(cur - vals[-2], 2) if len(vals) > 1 else None, "d5": round(cur - vals[-6], 2) if len(vals) > 5 else None,
+                    "d20": round(cur - vals[-21], 2) if len(vals) > 20 else None, "p1y": pct_of(vals[-252:], cur), "p2y": pct_of(vals, cur),
+                    "hi1y": max(vals[-252:]), "lo1y": min(vals[-252:]), "hist": [[d, v] for d, v in rows[-260:]]})
+        vix = (data.get("fred") or {}).get("VIXCLS") or {}
+        if vix.get("v"):
+            out["ratio_vix"] = round(cur / vix["v"], 2)
+    data["move"] = out
+    note("move", "Indice MOVE, volatilité implicite des obligations US (%s)" % M["src"], "daily", True, out["d"], url="https://www.ice.com/")
+
+
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
-             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo)]
+             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
