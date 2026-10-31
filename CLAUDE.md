@@ -18,33 +18,24 @@
 7. Il a un **forfait gratuit** : avancer **par étapes**, livrer à chaque étape quelque chose qui marche, et lui dire quoi taper pour continuer.
 8. Ne jamais prétendre qu'une source marche sans l'avoir exécutée. **Vérifier chaque source avec un vrai appel réseau** et corriger (le premier jet a été écrit sans accès Internet : voir §6).
 
-## 3. État actuel (ce qui existe déjà)
-Fichiers : `index.html` (site complet, ~1100 lignes de JS), `scripts/update_data.py` (robot, bibliothèque standard Python), `.github/workflows/update-data.yml` (cron toutes les 30 min + lancement manuel, permission `contents: write`).
+## 3. État au 31 oct. 2026, 9 h 30 : TERMINÉ, 79 sources sur 79, aucune erreur
+**Site** : https://philippembulu1-dot.github.io/macro-forex/ — dépôt `philippembulu1-dot/macro-forex`, branche `main`.
+Fichiers : `index.html` (site complet, CSS + JS inline, ~4 500 lignes), `scripts/update_data.py` (robot, Python standard), `.github/workflows/update-data.yml` (cron `17,47 * * * *` ≈ 1 passage/h réel, lancement manuel, relance à chaque envoi du robot ; actions checkout v5 / setup-python v6), `data/` : `macro.json`, `seasonal.json`, `macro-history.json`, `surprises.json`, `reactions.json`, `gold-etf.json`, `world-map.json`.
+**Secrets GitHub** (remplis par l'utilisateur, ne jamais les demander ni les afficher) : `FRED_API_KEY`, `MYFXBOOK_EMAIL`, `MYFXBOOK_PASSWORD`. Le robot n'écrit que « présent / vide » dans `diag`.
 
-Déjà fait :
-- Bandeau de cotations TradingView (XAUUSD, NAS100, paires, US10Y, DXY, BTC) + performances de l'or (jour / semaine / 7 j / 30 j, hauts/bas, SMA5/20) via PAXG sur Binance (proxy étiqueté).
-- 9 paires forex (taux BCE via Frankfurter, rafraîchis toutes les 15 min), graphique interactif, force relative des 8 devises (1 mois / 3 mois), jauge risk-on/off à partir des devises, classement.
-- Banques centrales (8) : taux, dernière décision, inflation, avec **✓/⚠ qui compare la saisie manuelle au chiffre automatique**.
-- Calendrier des réunions (Fed, BCE, BoE, BoJ, BNS, RBA, BoC, RBNZ) jusqu'à fin 2027, dates officielles confirmées seulement (Fed 2027 = provisoire ; BoJ après le 30 oct. 2026, BoE et BNS fin 2026 : à compléter depuis les sites officiels).
-- Tableau d'indicateurs macro des 8 économies (saisie manuelle, à automatiser) + guide « comment lire les indicateurs » + publications de la semaine.
-- Robot : FRED (US 10 ans, 2 ans, écart 10a−2a, rendement réel TIPS, VIX, dollar large, spread de crédit HY, taux Fed, taux BCE, IPC/chômage/emplois US), séries OCDE via FRED pour les autres banques (en retard), COT CFTC (fonds + commerciaux), indice Fear & Greed CNN, communiqués RSS des banques centrales.
-- Panneaux : Marchés en direct (Fear & Greed + 6 graphiques TradingView : VIX, S&P 500, MOVE, Or, AUD/JPY, US10Y), Taux/VIX/dollar, COT, communiqués, **Fraîcheur des données** (santé du robot, détail par source, âge des blocs saisis à la main), sessions de marché, calculateur de lots (risque %, lot arrondi vers le bas), checklist, Notes rapides, avertissement légal.
-- L'adresse des données est déduite automatiquement (`compte.github.io/dépôt`), avec repli sur `data/macro.json`.
+**12 branches** (hub en tuiles, transitions, recherche globale, fiche détaillée au clic sur tout chiffre `data-det`, étiquette de nature de donnée EN DIRECT / DIFFÉRÉ / QUOTIDIEN / HEBDO / MENSUEL / CALCUL / OFFICIEL sur chaque panneau, effets de mouvement) :
+- **Ce matin** : résumé de la veille, publications du jour (heure de Kinshasa), biais par actif, **lecture macro et scénarios or/dollar** (facteurs, confirmation par le prix, contradictions, données manquantes, conditions de confirmation/invalidation), **régime macro**, **moteurs du marché** (8 moteurs classés en écarts-types, 4 majeurs).
+- **Or** : PAXG en direct + contrat à terme COMEX différé (secours robot si Binance injoignable), **flux de l'or** (COT détaillé gestionnaires/producteurs/swaps, ETF GLD/IAU via encours Nasdaq mémorisé, demande WGC lue automatiquement), volatilité GVZ, sensibilités, 6 piliers (contribution + confiance, « non validé statistiquement »), saisonnalité 20 ans.
+- **Devises** : force multi-horizons 1 h / 4 h / 1 j / 1 sem. (Yahoo horaire) avec taux, inflation et fonds à levier ; paires BCE, heatmap, corrélations, volatilité.
+- **Taux & pricing** : pricing Fed (Kalshi + méthode CME recalculée), courbe des taux 2/5/10/30 ans, pentes 2s10s et 5s30s, décomposition 10 ans (réel / inflation attendue), Taylor (r* et u* du dot plot), écarts, taux/VIX/dollar (vrai DXY ICE), indicateurs des desks.
+- **Banques centrales** : taux, décisions et inflation automatiques (BRI + sources nationales + presse du jour), **probabilités méthode CME FedWatch** recalculées sur les contrats ZQ, Kalshi/Polymarket, réunions (Fed lue sur son site), comité (orientation calculée), communiqués.
+- **Macro & calendrier** : cycle (4 phases + horloge), dot plot Fed, projections BCE (tableau lu automatiquement), calendrier filtrable avec chiffres officiels « off. » et analyse de chaque publication, surprises, publications de la semaine, indicateurs des 8 économies (OCDE KEI + mémoire `ffmem` des derniers chiffres du calendrier), guide de lecture.
+- **Analyses** : notes ING/investingLive, consensus des banques relevé automatiquement dans la presse, vidéos. **Monde & maritime** : carte, détroits (FMI PortWatch), réserves. **Marchés** : graphiques TradingView, moniteur multi-actifs (corrélations 20/120 j, divergences). **Positionnement** : COT, sentiment Myfxbook. **Outils** : lots, pivots, convertisseur, checklist, notes. **Données** : fraîcheur de chaque source. Plus la **mémoire des réactions** (event study 1→240 min, continuation / retournement).
 
-## 4. À faire (par ordre de priorité proposé)
-1. **Vérifier et réparer le robot** avec de vrais appels (§6). Corriger les sources en échec (formats, en-têtes, codes).
-2. **Recherche : quels indicateurs et outils utilisent les grands fonds / banques / desks macro ?** (§5) puis proposer la liste, **l'utilisateur valide avant d'ajouter**.
-3. Saisonnalité 20 ans (XAUUSD et paires clés : rendement moyen par mois et par semaine, taux de réussite) : données historiques fixes, calculées par le robot à partir d'un historique gratuit si possible.
-4. Calendrier économique avancé et filtrable (impact, pays, indicateur : CPI, NFP, PCE, PIB). Chercher une source gratuite légale ; sinon intégrer le widget de calendrier TradingView.
-5. Carte thermique / pouls du marché (heatmap multi-actifs), widget TradingView ou calcul maison.
-6. Carte ou globe du monde cliquable : clic sur un pays → taux, inflation, croissance.
-7. Consensus des banques d'investissement (Morgan Stanley, Goldman, JPMorgan, Citi) sur l'or, les devises et les taux : **saisie manuelle sourcée (lien + date)**, aucune valeur inventée.
-8. Comité des banques centrales (orientation hawkish/dovish, membres) : jugement qualitatif, étiqueté « Démo » ou « à vérifier ».
-9. Probabilités de taux (type CME FedWatch) : pas de source gratuite fiable ; chercher (ex. marchés de prédiction publics) et sinon lien + saisie manuelle datée.
-10. Sentiment des particuliers (long/short %) : pas d'API gratuite officielle ; lien vers les pages publiques des courtiers + saisie datée.
-11. Étendre l'automatisation des indicateurs aux 8 économies (Eurostat, ONS, BoJ, SNB, ABS, StatCan, Stats NZ, API FRED/OCDE) et à la place de la saisie manuelle.
-12. Vidéos / analyses intégrées (flux YouTube de chaînes de marché via iframe, sans clé).
-13. Base macro élargie à 82 économies depuis 2001 (inflation, croissance) : Banque mondiale / FMI / OCDE en données ouvertes. Le plus long : à faire en dernier, par lots.
+## 4. Pistes possibles (non demandées pour l'instant)
+- Se remplissent seuls dans les jours suivant le 31 oct. : PMI et balances commerciales (mémoire du calendrier), flux ETF GLD/IAU (2e jour de bourse), inflation sous-jacente du Japon (« National Core CPI »).
+- Idées proposées à l'utilisateur, non commencées : alertes Telegram, application installable (PWA), bloc NAS100 (résultats des entreprises, heatmap), backtest réel des scores quand l'historique sera assez long, base macro élargie (82 économies).
+- Second projet annoncé par l'utilisateur le 31 oct. 2026 (à définir).
 
 ## 5. Mission de recherche demandée
 Avant d'ajouter des indicateurs, **rechercher sur le web et citer des sources** :
