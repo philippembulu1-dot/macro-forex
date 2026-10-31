@@ -315,6 +315,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .galert { font-size: 12px; padding: 6px 10px; border-left: 3px solid #ff5c4f; background: #1a0f0e; }
 .galert.ok { border-color: #3ddc97; background: #0e1a14; } .galert.note, .galert.pm { border-color: #f2b01e; background: #1a160b; } .galert.ship { border-color: #5fb4ff; background: #0d141c; }
 .geo-crises { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; padding: 0 12px 10px; }
+.gcrise .kv { grid-template-columns: minmax(96px, 46%) minmax(0, 1fr); } .gcrise .kv b { text-align: right; overflow-wrap: anywhere; }
 .gcrise { border: 1px solid var(--line2); background: #0d0d0f; padding: 8px 10px; font-size: 12px; }
 .gcrise.active { border-color: #ff5c4f; } .gcrise.tendue { border-color: #a8521f; }
 .gch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; } .gch b { color: var(--amber); font: 600 12px var(--font-mono); }
@@ -798,6 +799,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     <section class="panel" id="geopol">
       <div class="ph"><h2>Géopolitique : moniteur de risque</h2><span class="meta" id="geoMeta">robot</span></div>
       <div class="geo-alerts" id="geoAlerts"></div>
+      <div class="geo-top">
+        <div class="geo-card" id="geoNote"><p class="hint">En attente du robot.</p></div>
+        <div class="geo-card" id="geoGpr"></div>
+      </div>
       <div class="pair-name pad">Grandes crises : la situation en un coup d'œil</div>
       <div class="geo-crises" id="geoCrises"></div>
       <div class="geo-grid">
@@ -808,10 +813,6 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div class="tbl"><table id="geoMkt"></table></div>
       <div class="pair-name pad">Marchés de prédiction géopolitiques (probabilités payées par les parieurs)</div>
       <div class="tbl"><table id="geoPm"></table></div>
-      <div class="geo-top">
-        <div class="geo-card" id="geoNote"><p class="hint">En attente du robot.</p></div>
-        <div class="geo-card" id="geoGpr"></div>
-      </div>
       <div class="geo-grid">
         <div><div class="pair-name pad">Escalades : tension des dernières 24 h contre les 30 jours précédents</div><div class="tbl"><table id="geoEsc"></table></div></div>
         <div><div class="pair-name pad">Pays les plus tendus (24 h)</div><div class="tbl"><table id="geoTop"></table></div></div>
@@ -2750,7 +2751,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       var ships = k.st.map(function (n) { var x = AUTO && AUTO.shipping ? straitStats(n) : null; return x && x.ch !== null ? shipName(n).fr + " " + pct(x.ch) : null; }).filter(Boolean);
       var drop = k.st.some(function (n) { var x = AUTO && AUTO.shipping ? straitStats(n) : null; return x && x.ch !== null && x.ch <= -15; });
       var e = k.nrj && mk[k.nrj];
-      var pms = (G.pm || []).filter(function (p) { return kwHit(p.ev + " " + p.q, k.kw); }).slice(0, 2);
+      var pms = (G.pm || []).filter(function (p) { return (p.p >= 0.03 || p.q === p.ev) && kwHit(p.ev + " " + p.q, k.kw); }).slice(0, 2);
       var nws = (G.news || []).filter(function (n) { return kwHit(n.t, k.kw); }).slice(0, 2);
       var hotState = (zmx !== null && zmx >= 2) || drop ? "active" : lv.some(function (l) { return l >= 90; }) ? "tendue" : "calme";
       var lect = hotState === "active" ? "Crise qui s'aggrave : canal « " + k.canal + " ». Soutien possible pour l'or si le marché confirme (code R1 ou R4)." : hotState === "tendue" ? "Tension élevée mais stable : la prime de risque est en partie dans le prix." : "Pas de signal particulier aujourd'hui.";
@@ -2771,17 +2772,17 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     /* Énergie et défense */
     var order = ["BZ=F", "CL=F", "TTF=F", "ITA", "LMT", "RHM.DE", "BA.L", "^GSPC"], grpL = { energie: "Énergie", defense: "Défense" };
     var rows = order.filter(function (s) { return mk[s]; });
-    $("geoMkt").innerHTML = rows.length ? '<thead><tr><th>Actif</th><th class="r">Dernier</th><th class="r">1 j</th><th class="r">5 j</th><th class="r">20 j</th><th>3 mois</th></tr></thead><tbody>' + rows.map(function (s) { var x = mk[s]; return "<tr><td>" + esc(x.n) + ' <small class="hint">' + grpL[x.g] + '</small></td><td class="r num">' + fmt(x.c, x.c > 100 ? 1 : 2) + '</td><td class="r num">' + sgnP(x.c1) + '</td><td class="r num">' + sgnP(x.c5) + '</td><td class="r num">' + sgnP(x.c20) + "</td><td>" + geoSpark(x.sp, 120, 24) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">En attente du robot.</td></tr></tbody>';
+    $("geoMkt").innerHTML = rows.length ? '<thead><tr><th>Actif</th><th class="r">Dernier</th><th class="r">1 j</th><th class="r">5 j</th><th class="r">20 j</th><th>3 mois</th></tr></thead><tbody>' + rows.map(function (s) { var x = mk[s]; return "<tr><td>" + esc(x.n) + ' <small class="hint">' + (s === "^GSPC" ? "référence" : grpL[x.g]) + '</small></td><td class="r num">' + fmt(x.c, x.c > 100 ? 1 : 2) + '</td><td class="r num">' + sgnP(x.c1) + '</td><td class="r num">' + sgnP(x.c5) + '</td><td class="r num">' + sgnP(x.c20) + "</td><td>" + geoSpark(x.sp, 120, 24) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">En attente du robot.</td></tr></tbody>';
     var def = ["ITA", "LMT", "RHM.DE", "BA.L"].filter(function (s) { return mk[s] && mk[s].c20 !== null; }), sp = mk["^GSPC"];
     if (def.length && sp && sp.c20 !== null) { var avg = def.reduce(function (s, k) { return s + mk[k].c20; }, 0) / def.length, gap = avg - sp.c20; $("geoMkt").innerHTML += '<tbody><tr><td colspan="6" class="hint">Thermomètre défense : les valeurs de l\'armement font ' + sgnP(gap) + " point(s) " + (gap >= 0 ? "de mieux" : "de moins") + " que le S&P 500 sur 20 séances. " + (gap >= 5 ? "Le marché paie un risque de conflit durable." : gap <= -5 ? "Le marché parie sur une détente." : "Pas de pari net du marché.") + "</td></tr></tbody>"; }
     /* Marchés de prédiction */
-    var pm = (G.pm || []).slice(0, 15);
+    var pm = (G.pm || []).filter(function (p) { return p.p >= 0.03 || p.q === p.ev; }).slice(0, 15);
     $("geoPm").innerHTML = pm.length ? '<thead><tr><th>Question</th><th class="r">Oui</th><th class="r">Variation</th><th class="r">Volume</th><th>Échéance</th></tr></thead><tbody>' + pm.map(function (p) { return '<tr><td><a href="https://polymarket.com/event/' + esc(p.slug) + '" target="_blank" rel="noopener">' + esc(p.q && p.q !== p.ev ? p.ev + " : " + p.q : p.ev) + '</a></td><td class="r num"><b>' + Math.round(p.p * 100) + ' %</b></td><td class="r num">' + (p.dp === undefined ? "–" : sgnP(p.dp * 100, 0) + " pts") + '</td><td class="r num">' + (p.vol >= 1e6 ? fmt(p.vol / 1e6, 1) + " M$" : Math.round(p.vol / 1e3) + " k$") + "</td><td>" + (p.end ? shortD(p.end) : "–") + "</td></tr>"; }).join("") + '</tbody><tbody><tr><td colspan="5" class="hint">Polymarket (questions en anglais, probabilité = prix du « oui »). Variation depuis le passage précédent du robot. Ce sont des paris, pas des prévisions officielles.</td></tr></tbody>' : '<tbody><tr><td class="hint">En attente du robot.</td></tr></tbody>';
     /* Sanctions */
     if ($("geoSanc")) { var sc = G.sanc; $("geoSanc").innerHTML = sc && sc.it ? sc.it.slice(0, 8).map(function (n) { return '<li><a href="' + esc(n.l) + '" target="_blank" rel="noopener">' + esc(n.t) + "</a> <small>" + esc(String(n.d || "").slice(0, 10)) + "</small></li>"; }).join("") + '<li class="hint">Source : ' + esc(sc.src) + "</li>" : '<li class="hint">En attente du robot.</li>'; }
     /* Estimation du jour de l'indice GPR */
     var gp = G.gpr;
-    if (gp && gp.now && gp.now.length && $("geoGpr")) { var ln = gp.now[gp.now.length - 1]; $("geoGpr").insertAdjacentHTML("beforeend", '<div class="kv" style="margin-top:6px"><span>Estimation du jour <small>(GDELT étalonné sur l\'indice, ' + gp.pairs + " jours communs)</small></span><b>" + fmt(ln[1], 0) + " <small>au " + shortD(ln[0]) + '</small></b></div><p class="hint">L\'indice officiel est publié avec quelques jours de retard (dernier jour : ' + shortD(gp.asof) + "). L'estimation couvre les jours manquants et sera remplacée par le chiffre officiel dès sa parution.</p>"); }
+    if (gp && gp.now && gp.now.length && $("geoGpr")) { var ln = gp.now[gp.now.length - 1], blend = gp.d.map(function (x) { return [x[0], x[1]]; }).concat(gp.now).slice(-7), b7 = blend.reduce(function (a, x) { return a + x[1]; }, 0) / blend.length; $("geoGpr").insertAdjacentHTML("beforeend", '<div class="kv" style="margin-top:6px"><span>Estimation, moyenne 7 jours <small>(officiel + GDELT étalonné, ' + gp.pairs + " jours communs)</small></span><b>" + fmt(b7, 0) + " <small>au " + shortD(ln[0]) + "</small></b><span>Estimation du seul jour <small>(dernier jour terminé, plus variable)</small></span><b>" + fmt(ln[1], 0) + '</b></div><p class="hint">L\'indice officiel est publié avec quelques jours de retard (dernier jour : ' + shortD(gp.asof) + "). L'estimation couvre les jours manquants et sera remplacée par le chiffre officiel dès sa parution.</p>"); }
   }
   /* ---------- Consensus des banques (recherche du 30 oct. 2026, à vérifier) ---------- */
   var CONS = [

@@ -3090,7 +3090,7 @@ def do_geo(data):
             if len(pairs) >= 5:
                 ratios = sorted(a / b for a, b in pairs)
                 k_ = ratios[len(ratios) // 2]
-                est = [[d_, round(w_ * k_, 1)] for d_, w_ in sorted(W.items()) if d_ > rows[-1][0]]
+                est = [[d_, round(w_ * k_, 1)] for d_, w_ in sorted(W.items()) if rows[-1][0] < d_ < TODAY]  # journées terminées seulement
                 gp["now"] = est
                 gp["k"] = round(k_, 4)
                 gp["pairs"] = len(pairs)
