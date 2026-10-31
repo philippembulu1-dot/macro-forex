@@ -292,7 +292,7 @@ table.perf th, table.perf td { padding: 7px 10px; }
 .sc .pil b { font: 600 14px var(--font-mono); }
 .sc .pil span { font-size: 11px; color: var(--muted); }
 .sc .pil.p b { color: var(--up); } .sc .pil.n b { color: var(--down); } .sc .pil.z b { color: var(--amber); }
-.total { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-top: 1px solid var(--line2); font: 12px var(--font-mono); }
+.total { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 12px; border-top: 1px solid var(--line2); font: 12px var(--font-mono); }
 .total b { font-size: 20px; }
 .bars { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; align-items: end; height: 140px; padding: 0 12px; }
 .bars .bcol { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center; }
@@ -419,6 +419,11 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
 .bia .bsc { margin-left: auto; font: 11px var(--font-mono); color: var(--muted); }
 .bia ul { margin: 0; padding: 0 12px 10px 14px; list-style: none; font-size: 12px; }
 .bia li { margin: 4px 0; color: var(--muted); } .bia li b { color: var(--fg); font-weight: 600; }
+.rgl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1px; background: var(--line2); }
+.rg { background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rg small { font: 600 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.rg b { font: 600 14px var(--font-mono); color: var(--amber); } .rg b.up { color: var(--up); } .rg b.down { color: var(--down); }
+.rg span { font-size: 12px; color: var(--fg); } .rg em { font: 10px var(--font-mono); color: var(--muted); font-style: normal; }
 /* Cycle en 4 phases et moteurs du marché */
 .ph4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .ph4c { position: relative; border: 1px solid var(--line); padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow: hidden; }
@@ -857,6 +862,15 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       </div>
     </section>
 
+    <section class="panel" id="courbe">
+      <div class="ph"><h2>Courbe des taux : pentes et décomposition</h2><span class="meta" id="ciMeta">Trésor US</span></div>
+      <div class="pgrid">
+        <div class="pcard"><h3>Taux 2, 5, 10 et 30 ans et pentes</h3><div class="tbl"><table id="ciTbl"></table></div><p class="hint" id="ciTxt" style="max-width:none"></p></div>
+        <div class="pcard"><h3>D'où vient le mouvement du 10 ans ?</h3><div class="tbl" id="ciDec"></div></div>
+      </div>
+      <p class="note">Le taux à 10 ans se décompose en deux morceaux : le taux réel (ce que l'on gagne après inflation, mesuré par les obligations indexées TIPS) et l'inflation attendue (point mort). Savoir lequel bouge change la lecture : un taux réel en hausse pèse sur l'or, une inflation attendue en hausse peut au contraire le soutenir. Pentes en points de base (pb : 100 pb = 1 point). Données officielles du Trésor américain, quotidiennes.</p>
+    </section>
+
     <section class="panel" id="taylor">
       <div class="ph"><h2>Règle de Taylor : où devrait être le taux de la Fed</h2><span class="meta" id="tyMeta">calcul maison</span></div>
       <div class="calc">
@@ -908,6 +922,12 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <p class="note">Projections des services de la BCE publiées le 10 septembre 2026 (en % ; chômage en % de la population active). Chiffres repris d'un résumé de presse qui concorde avec la page officielle de la BCE : à vérifier sur le lien. Le robot surveille la page de la BCE et signale ici toute nouvelle publication (prochaine attendue en décembre).</p>
     </section>
 
+    <section class="panel" id="regime">
+      <div class="ph"><h2>Régime macro</h2><span class="meta" id="rgMeta2">calcul maison</span></div>
+      <div id="rgList" class="rgl"></div>
+      <p class="note">Le régime résume cinq questions que se posent les desks chaque matin : la croissance accélère-t-elle ? l'inflation est-elle sous contrôle ? la Fed freine-t-elle ou soutient-elle l'économie ? les investisseurs cherchent-ils du risque ou des refuges ? où en est le cycle ? Chaque ligne montre le chiffre utilisé et sa date. Seuils fixés à l'avance (par exemple taux réel de la Fed à plus de 0,5 pt au-dessus du taux neutre = restrictif), pas optimisés.</p>
+    </section>
+
     <section class="panel" id="moteurs">
       <div class="ph"><h2>Moteurs du marché</h2><span class="meta" id="drvMeta">robot</span></div>
       <p class="hint" id="drvTop" style="max-width:none;padding:10px 12px 0"></p>
@@ -933,7 +953,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         <div class="pcard"><h3>Hier : ce qui a bougé</h3><div class="m" id="mtYmeta"></div><div class="tbl"><table id="mtYday"></table></div></div>
         <div class="pcard"><h3>Aujourd'hui (heure de Kinshasa)</h3><div class="m" id="mtTmeta"></div><div class="tbl"><table id="mtToday"></table></div></div>
       </div>
-      <div class="pcard"><h3>Biais par actif</h3><div class="m">calcul maison, chaque élément est expliqué · cliquez sur un actif pour le détail</div><div id="mtBias" class="bias"></div></div>
+      <div class="pcard"><h3>Biais par actif</h3><div class="m">calcul maison, chaque élément est expliqué · cliquez sur un actif pour le détail · <span class="pill warn" title="Aucun test historique (backtest) : à lire comme un résumé des signaux, pas comme une probabilité">non validé statistiquement</span></div><div id="mtBias" class="bias"></div></div>
       <p class="note">« Hier » = dernière séance terminée ; « nuit » = de cette clôture jusqu'au dernier passage du robot (toutes les 30 min). Clôtures : Yahoo Finance (gratuit, non officiel) ; contrats à terme pour l'or et le Nasdaq. Le biais additionne des signaux simples (+1 / 0 / −1) tirés des données du site : une lecture d'ensemble, pas un signal d'achat ou de vente.</p>
     </section>
 
@@ -941,7 +961,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div class="ph"><h2>Mémoire des réactions du marché</h2><span class="meta" id="rcMeta">robot</span></div>
       <div id="rcTop" class="pad"></div>
       <div class="tbl"><table id="rcTbl"></table></div>
-      <p class="note">À chaque publication importante, le robot enregistre comment l'or, le dollar (DXY), l'EUR/USD, le Nasdaq 100 et le taux US à 10 ans ont bougé 15 min, 1 h et 4 h après la sortie (bougies de 15 min, Yahoo Finance). Le registre a commencé le 31 octobre 2026 et s'enrichit à chaque publication : les moyennes deviennent fiables après plusieurs mois. Les colonnes « au-dessus / en dessous du prévu » se remplissent au fil des publications, quand le chiffre officiel peut être comparé à la prévision. Cliquez sur une ligne pour le détail. Des statistiques passées, pas une garantie.</p>
+      <p class="note">À chaque publication importante, le robot enregistre comment l'or, le dollar (DXY), l'EUR/USD, le Nasdaq 100 et le taux US à 10 ans ont bougé 1, 5, 15 et 30 min, 1 h et 4 h après la sortie (bougies de 1, 5 et 15 min, Yahoo Finance), et si le premier mouvement s'est prolongé ou retourné. Le registre a commencé le 31 octobre 2026 et s'enrichit à chaque publication : les moyennes deviennent fiables après plusieurs mois. Les colonnes « au-dessus / en dessous du prévu » se remplissent au fil des publications, quand le chiffre officiel peut être comparé à la prévision. Cliquez sur une ligne pour le détail. Des statistiques passées, pas une garantie.</p>
     </section>
 
     <section class="panel" id="marches">
@@ -2015,7 +2035,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
      saisie datée et sourcée, marquée « à vérifier ».
      ===================================================================== */
   var CMDS = [
-    ["AM", "Ce matin (résumé)", "matin"], ["DRV", "Moteurs du marché", "moteurs"], ["REACT", "Mémoire des réactions", "reactions"], ["DOTS", "Projections de la Fed (dot plot)", "dotplot"], ["BCEP", "Projections BCE zone euro", "bceproj"], ["CYC", "Cycle économique", "cycle"],
+    ["AM", "Ce matin (résumé)", "matin"], ["DRV", "Moteurs du marché", "moteurs"], ["REG", "Régime macro", "regime"], ["CRV", "Courbe des taux : pentes", "courbe"], ["REACT", "Mémoire des réactions", "reactions"], ["DOTS", "Projections de la Fed (dot plot)", "dotplot"], ["BCEP", "Projections BCE zone euro", "bceproj"], ["CYC", "Cycle économique", "cycle"],
     ["OR", "Or XAU/USD", "or"], ["GOLD", "Tableau de bord or (6 piliers)", "scorecard"], ["FX", "Paires", "paires"], ["FORCE", "Force des devises", "force"],
     ["CB", "Banques centrales", "banques"], ["ECO", "Indicateurs macro", "indicateurs"], ["CAL", "Calendrier économique", "calendrier"],
     ["AG", "Prochaines réunions", "agenda"], ["DESK", "Indicateurs des desks", "desk"], ["TX", "Taux, VIX, dollar", "taux"], ["DIFF", "Écarts de taux", "ecarts"],
@@ -2095,7 +2115,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (f) add("Anticipations Fed", f.d < -0.1 ? 1 : f.d > 0.1 ? -1 : 0, (f.d >= 0 ? "+" : "−") + fmt(Math.abs(f.d), 2) + " pt / 20 séances", "US 2 ans : en baisse = marché attend des baisses de taux", f.asof, "daily");
     else add("Anticipations Fed", null, "indisponible", "FRED DGS2", null);
     var d = chgN("DTWEXBGS", 20), dn = "Dollar large";
-    if (!d) { d = chgN("DXY", 20); dn = "DXY (recalculé, taux BCE)"; }
+    if (!d) { d = chgN("DXY", 20); dn = fred("DXY") && fred("DXY").real ? "DXY (ICE, clôture)" : "DXY (recalculé, taux BCE)"; }
     if (d) add("Dollar", d.p < -1 ? 1 : d.p > 1 ? -1 : 0, pct(d.p) + " / 20 séances", dn + " : en baisse = favorable à l'or", d.asof, "daily");
     else add("Dollar", null, "indisponible", "FRED DTWEXBGS", null);
     if (g && g.hist && g.hist.length >= 5) {
@@ -2107,14 +2127,16 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     else add("Risque / refuge", null, "indisponible", "FRED VIX", null);
     if (g && typeof g.idx3y === "number") add("Positionnement", g.idx3y > 85 ? -1 : g.idx3y < 15 ? 1 : 0, "indice COT 3 ans : " + g.idx3y + " / 100", "Au-dessus de 85 : marché déjà très acheteur (risque de reflux)", g.date, "weekly");
     else add("Positionnement", null, "indisponible", "CFTC", null);
-    var tot = 0, n = 0;
+    var tot = 0, n = 0, npos = 0, nneg = 0;
     b.innerHTML = '<div class="sc">' + P.map(function (p) {
-      if (p.s !== null) { tot += p.s; n++; }
+      if (p.s !== null) { tot += p.s; n++; if (p.s > 0) npos++; if (p.s < 0) nneg++; }
       var c = p.s === null ? "" : p.s > 0 ? "p" : p.s < 0 ? "n" : "z", lab = p.s === null ? "–" : p.s > 0 ? "FAVORABLE" : p.s < 0 ? "DÉFAVORABLE" : "NEUTRE";
-      return '<div class="pil ' + c + '"' + (p.det ? ' data-det="' + p.det + '"' : "") + "><small>" + p.n + (p.det ? ' <span class="more">›</span>' : "") + "</small><b>" + lab + "</b><span>" + p.v + "</span><span>" + p.w + "</span>" + (p.a ? '<span class="asof">au ' + shortD(String(p.a).slice(0, 10)) + " " + badge(fresh(p.a, p.k)) + "</span>" : badge("ko")) + "</div>";
+      return '<div class="pil ' + c + '"' + (p.det ? ' data-det="' + p.det + '"' : "") + "><small>" + p.n + (p.det ? ' <span class="more">›</span>' : "") + "</small><b>" + lab + (p.s === null ? "" : ' <span style="font-size:11px;opacity:.8">(' + (p.s > 0 ? "+1" : p.s < 0 ? "−1" : "0") + ")</span>") + "</b><span>" + p.v + "</span><span>" + p.w + "</span>" + (p.a ? '<span class="asof">au ' + shortD(String(p.a).slice(0, 10)) + " " + badge(fresh(p.a, p.k)) + "</span>" : badge("ko")) + "</div>";
     }).join("") + "</div>" +
       '<div class="total">Bilan <b class="' + (tot > 0 ? "up" : tot < 0 ? "down" : "") + '">' + (tot > 0 ? "+" : tot < 0 ? "−" : "") + Math.abs(tot) + "</b> sur " + n + " piliers disponibles · " +
-      (tot >= 3 ? "contexte plutôt porteur pour l'or" : tot <= -3 ? "contexte plutôt défavorable à l'or" : "contexte mitigé") + "</div>";
+      (tot >= 3 ? "contexte plutôt porteur pour l'or" : tot <= -3 ? "contexte plutôt défavorable à l'or" : "contexte mitigé") +
+      " · confiance <b>" + (n >= 5 && Math.abs(tot) >= 3 ? "élevée" : n >= 4 && Math.abs(tot) >= 2 ? "moyenne" : "faible") + "</b> <small>(" + n + " piliers sur 6 disponibles ; " + Math.max(npos, nneg) + " sur " + n + " vont dans le même sens)</small>" +
+      ' <span class="pill warn" style="white-space:normal" title="Règles fixes, aucun test historique (backtest) : à lire comme un résumé des signaux, pas comme une probabilité">non validé statistiquement</span></div>';
     $("scMeta").textContent = n + "/6 piliers calculés"; SCORE_OR = { tot: tot, n: n };
   }
 
@@ -2680,10 +2702,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
      BRANCHES : accueil en tuiles, chaque outil dans sa branche (31 oct. 2026)
      ===================================================================== */
   var BR = [
-    { id: "matin", t: "Ce matin", ic: "☀", d: "Résumé de la veille, publications du jour à l'heure de Kinshasa, biais par actif, moteurs du marché", p: ["matin", "moteurs"] },
+    { id: "matin", t: "Ce matin", ic: "☀", d: "Résumé de la veille, publications du jour à l'heure de Kinshasa, biais par actif, moteurs du marché", p: ["matin", "regime", "moteurs"] },
     { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, saisonnalité 20 ans", p: ["or", "orvol", "scorecard", "saison"] },
     { id: "devises", t: "Devises", ic: "⇄", d: "Paires, graphique, force des devises, appétit pour le risque, corrélations", p: ["selPanel", "paires", "force", "~duo", "heat", "correl", "vola"] },
-    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts de taux", p: ["pricing", "taylor", "ecarts", "taux", "desk"] },
+    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts de taux", p: ["pricing", "courbe", "taylor", "ecarts", "taux", "desk"] },
     { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités, réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"] },
     { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Cycle économique, projections de la Fed (dot plot) et de la BCE, calendrier avec analyse de chaque publication, indicateurs", p: ["cycle", "dotplot", "bceproj", "calendrier", "reactions", "surprises", "semaine", "indicateurs", "lecture"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Notes et articles sur le dollar, l'euro et les taux, consensus, vidéos", p: ["analyses", "consensus", "videos"] },
@@ -2693,7 +2715,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, pivots, convertisseur, checklist, notes", p: ["calc", "outils", "check", "conseils", "notes", "liens"] },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source et liens", p: ["robot"] }
   ];
-  var WIDE = { moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   function buildBranches() {
     var main = document.querySelector(".main"), anchor = document.querySelector(".main > .grid"); /* après le bandeau et sa note */
@@ -2914,7 +2936,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* ---------- Recherche globale ---------- */
   var CUR_AL = { USD: "dollar américain états-unis usa us fed", EUR: "euro zone euro eurozone bce europe", GBP: "livre sterling royaume-uni angleterre boe", JPY: "yen japon boj", CHF: "franc suisse suisse bns",
     AUD: "dollar australien australie rba", CAD: "dollar canadien canada boc", NZD: "dollar néo-zélandais nouvelle-zélande rbnz" };
-  var KW = { moteurs: "moteurs drivers marché facteurs fed taux réels dollar pétrole peur vix inflation emploi", matin: "ce matin résumé hier veille journée aujourd'hui biais brief", reactions: "réactions marché mémoire publication historique or dollar après", dotplot: "dot plot fed projections sep membres fomc taux médiane", bceproj: "bce projections zone euro europe croissance inflation scénarios ecb", cycle: "cycle économique récession sahm horloge expansion ralentissement stagflation reprise", orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
+  var KW = { regime: "régime macro croissance inflation politique monétaire restrictive accommodante risk-on risk-off", courbe: "courbe des taux pente 2s10s 5s30s 2 ans 5 ans 30 ans taux réel point mort décomposition steepener flattener", moteurs: "moteurs drivers marché facteurs fed taux réels dollar pétrole peur vix inflation emploi", matin: "ce matin résumé hier veille journée aujourd'hui biais brief", reactions: "réactions marché mémoire publication historique or dollar après", dotplot: "dot plot fed projections sep membres fomc taux médiane", bceproj: "bce projections zone euro europe croissance inflation scénarios ecb", cycle: "cycle économique récession sahm horloge expansion ralentissement stagflation reprise", orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
     ecarts: "écart différentiel taux carry", taux: "rendement 10 ans vix dollar treasury", desk: "breakeven inflation anticipée gvz conditions financières", banques: "taux directeur décision",
     probas: "probabilité fedwatch kalshi polymarket", agenda: "réunion prochaine décision", comite: "comité hawkish dovish", actus: "communiqué actualité news", calendrier: "calendrier cpi nfp pib pmi publication",
     indicateurs: "inflation chômage pib salaires pmi indicateurs", analyses: "analyse banque note article ing goldman", consensus: "consensus prévision banques", videos: "vidéo youtube",
@@ -3620,9 +3642,22 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var lst = '<div class="tbl"><table><thead><tr><th>Date</th><th class="r">Prévu → réel</th>' + RA.map(function (a) { return '<th class="r">' + a[1] + " 15 min / 1 h / 4 h</th>"; }).join("") + "</tr></thead><tbody>" + st.evs.slice().reverse().slice(0, 40).map(function (e) {
       return "<tr><td>" + new Date(e.d).toLocaleDateString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", year: "2-digit" }) + " " + kinTime(new Date(e.d)) + '</td><td class="r num">' + (typeof e.fv === "number" ? fmt(e.fv, 2) + " → " + fmt(e.av, 2) : esc(e.f || "–")) + "</td>" + RA.map(function (a) { var r = e.r && e.r[a[0]]; return '<td class="r num">' + (r ? r.map(function (v) { return mv(v, a[0]); }).join(" ") : "–") + "</td>"; }).join("") + "</tr>";
     }).join("") + "</tbody></table></div>";
+    /* Event study : profil moyen 1 → 240 min et continuation / retournement */
+    var WIN = [["1 min", "rf", 0], ["5 min", "rf", 1], ["15 min", "r", 0], ["30 min", "rf", 2], ["1 h", "r", 1], ["4 h", "r", 2]];
+    var val = function (e, a, w) { var src = e[w[1]] && e[w[1]][a]; var v = src ? src[w[2]] : null; return typeof v === "number" ? v : null; };
+    var prof = '<div class="tbl"><table><thead><tr><th>Moyenne (cas)</th>' + WIN.map(function (w) { return '<th class="r">' + w[0] + "</th>"; }).join("") + "</tr></thead><tbody>" + RA.map(function (a) {
+      return "<tr><td>" + a[1] + "</td>" + WIN.map(function (w) { var v = st.evs.map(function (e) { return val(e, a[0], w); }).filter(function (x) { return x !== null; }); return '<td class="r num">' + (v.length ? mv(mean(v), a[0]) + " <small>(" + v.length + ")</small>" : "–") + "</td>"; }).join("") + "</tr>";
+    }).join("") + "</tbody></table></div>";
+    var cont = RA.map(function (a) {
+      var pairs = st.evs.map(function (e) { var x = val(e, a[0], WIN[2]), y = val(e, a[0], WIN[5]); return x !== null && y !== null && Math.abs(x) > 1e-9 ? [x, y] : null; }).filter(Boolean);
+      if (!pairs.length) return null;
+      var same = pairs.filter(function (p) { return (p[1] - p[0]) * p[0] > 0; }).length, rev = pairs.filter(function (p) { return p[1] * p[0] < 0; }).length;
+      return "<li><b>" + a[1] + "</b> : le mouvement des 15 premières minutes s'est <b>prolongé</b> jusqu'à 4 h " + same + " fois, s'est <b>retourné</b> (signe inversé à 4 h) " + rev + " fois, sur " + pairs.length + ".</li>";
+    }).filter(Boolean).join("");
     var g = st.gold;
     openDetail({ t: "Réactions · " + c + " " + (RTYPE[t] || t), val: st.n + " publication" + (st.n > 1 ? "s" : ""), sub: "mesures du robot · Yahoo Finance",
-      extra: "<h3>En moyenne, 1 h après</h3>" + tbl + "<h3>Chaque publication</h3>" + lst,
+      extra: "<h3>En moyenne, 1 h après</h3>" + tbl + "<h3>Profil de la réaction (event study)</h3>" + prof + '<p class="hint" style="max-width:none">1, 5 et 30 min : mesurées depuis le 31 oct. 2026 avec des bougies de 1 min (7 derniers jours) ou 5 min (60 derniers jours). Entre parenthèses : nombre de publications mesurées.</p>' +
+        (cont ? '<h3>Continuation ou retournement</h3><ul class="advice" style="padding-top:0">' + cont + "</ul>" : "") + "<h3>Chaque publication</h3>" + lst,
       now: g && g.abs1 !== null ? "Une heure après cette publication, l'or a bougé en moyenne de <b>± " + fmt(g.abs1, 2) + " %</b> et a monté " + Math.round(g.up1) + " % des fois (sur " + g.n + "). " + (st.n < 8 ? "Encore peu de cas : à prendre comme un ordre de grandeur, la statistique s'affinera avec le temps." : "") : "Pas encore assez de mesures.",
       how: "« Prévu → réel » apparaît quand le robot a pu comparer le chiffre officiel à la prévision des économistes. Si l'or monte en moyenne quand le chiffre sort en dessous du prévu, c'est le schéma attendu (taux et dollar en baisse). Un schéma qui s'inverse est une information en soi : le marché regarde autre chose.",
       src: "https://finance.yahoo.com/", srcTxt: "bougies de 15 min et 1 h (non officiel)" });
@@ -3767,6 +3802,79 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       how: "Un moteur est « majeur » quand il bouge nettement plus que d'habitude : on compare son mouvement sur " + (dv.monthly ? "3 mois" : "20 séances") + " à tous ses mouvements de même durée sur l'historique disponible (en écarts-types). Les effets indiqués sont les relations habituelles ; elles peuvent s'inverser pendant un temps, d'où la corrélation mesurée.",
       src: dv.monthly ? "https://www.bls.gov/" : (dv.k === "oil" ? "https://finance.yahoo.com/" : "https://home.treasury.gov/"), srcTxt: "chiffres relevés par le robot" });
   }
+
+  /* =====================================================================
+     RÉGIME MACRO ET COURBE DES TAUX (pentes, décomposition) — 31 oct. 2026
+     ===================================================================== */
+  function histAt(h, daysBack) {
+    if (!h || !h.length) return null;
+    var lastD = Date.parse(String(h[h.length - 1][0]).slice(0, 10)), target = lastD - daysBack * 864e5, best = null;
+    for (var i = h.length - 1; i >= 0; i--) { if (Date.parse(String(h[i][0]).slice(0, 10)) <= target) { best = h[i]; break; } }
+    return best;
+  }
+  function renderRegime() {
+    var box = $("rgList"); if (!box) return;
+    var rows = [], x = typeof cycleCalc === "function" ? cycleCalc() : null, c4 = typeof cycle4 === "function" ? cycle4() : null;
+    var add = function (dim, state, tone, why, asof) { rows.push({ dim: dim, state: state, tone: tone, why: why, asof: asof }); };
+    if (x) {
+      add("Croissance", x.a3 >= 150 ? "forte" : x.a3 >= 50 ? "modérée" : x.a3 >= 0 ? "faible" : "en recul", x.a3 >= 50 ? "up" : "down",
+        "emplois créés : " + Math.round(x.a3) + " k par mois (moyenne 3 mois), " + (x.a3 > x.a12 ? "en accélération" : "en ralentissement") + " ; chômage " + fmt(x.u3, 1) + " %", x.asof);
+      add("Inflation", x.cNow >= 3 ? "haute" : x.cNow >= 2.3 ? "au-dessus de la cible" : x.cNow >= 1.7 ? "proche de la cible" : "basse", x.cNow >= 2.3 ? "down" : "up",
+        "sous-jacente " + fmt(x.cNow, 2) + " % sur 1 an (" + (x.cNow > x.c6 ? "en hausse" : "en baisse") + " sur 6 mois) ; globale " + (x.hNow !== null ? fmt(x.hNow, 2) + " %" : "–"), x.asof);
+    }
+    var cur = fred("DFEDTARU"), L = typeof sepLR === "function" ? sepLR() : null;
+    if (cur && x) {
+      var real = cur.v - 0.125 - x.cNow, rs = L ? L.rstar : 1, gap = real - rs;
+      add("Politique monétaire", gap > 0.5 ? "restrictive" : gap < -0.5 ? "accommodante" : "neutre", gap > 0.5 ? "down" : gap < -0.5 ? "up" : "",
+        "taux réel de la Fed " + fmt(real, 2) + " % (taux − inflation sous-jacente) contre un taux neutre r* de " + fmt(rs, 2) + " %" + (L ? " (dot plot)" : "") + (L && L.ffr0 !== null ? " ; la Fed prévoit " + fmt(L.ffr0, 2) + " % fin " + L.y0 : ""), cur.asof);
+    }
+    var vx = fred("VIXCLS"), fg = AUTO && AUTO.fng;
+    if (vx && vx.hist && vx.hist.length > 100) {
+      var vs = vx.hist.map(function (p) { return p[1]; }).filter(function (v) { return v !== null; }).sort(function (a, b) { return a - b; }), med = vs[Math.floor(vs.length / 2)];
+      var fgv = fg && typeof fg.score === "number" ? fg.score : (fg && typeof fg.v === "number" ? fg.v : null);
+      var off = vx.v > med * 1.2 || (fgv !== null && fgv < 30), on = vx.v < med * 0.95 && (fgv === null || fgv > 55);
+      add("Appétit pour le risque", off ? "risk-off (prudence)" : on ? "risk-on (appétit)" : "neutre", off ? "down" : on ? "up" : "",
+        "VIX " + fmt(vx.v, 1) + " contre une médiane de " + fmt(med, 1) + " sur un an" + (fgv !== null ? " ; peur et avidité " + Math.round(fgv) : ""), vx.asof);
+    }
+    if (c4) add("Phase du cycle", c4.P[c4.best].n.toLowerCase(), "", c4.P[c4.best].s + " critères sur 5 (voir le panneau Cycle)", x ? x.asof : null);
+    box.innerHTML = rows.map(function (r) {
+      return '<div class="rg"><small>' + r.dim + '</small><b class="' + r.tone + '">' + r.state.toUpperCase() + "</b><span>" + r.why + "</span><em>" + (r.asof ? "au " + shortD(String(r.asof).slice(0, 10)) : "") + "</em></div>";
+    }).join("") || '<p class="hint">Données du robot pas encore disponibles.</p>';
+    $("rgMeta2").innerHTML = "calcul maison · robot " + (AUTO && AUTO.generated ? badge(ageDays(AUTO.generated.slice(0, 10)) <= 1 ? "ok" : "old") : "");
+  }
+  function renderCurveIntel() {
+    var box = $("ciTbl"); if (!box) return;
+    var C = AUTO && AUTO.curves && AUTO.curves.us; if (!C || !C.now) { box.innerHTML = '<tbody><tr><td>Courbe pas encore publiée par le robot.</td></tr></tbody>'; return; }
+    var T = C.tenors, at = function (snap, ten) { var i = T.indexOf(ten); return snap && i >= 0 ? snap.v[i] : null; };
+    var bp = function (a, b) { if (a === null || b === null || a === undefined || b === undefined) return "–"; var v = Math.round((a - b) * 100); return '<span class="' + cls(v) + '">' + (v >= 0 ? "+" : "−") + Math.abs(v) + " pb</span>"; };
+    var ten = [["2A", "2 ans"], ["5A", "5 ans"], ["10A", "10 ans"], ["30A", "30 ans"]];
+    box.innerHTML = '<thead><tr><th>Taux US</th><th class="r">Niveau</th><th class="r">1 semaine</th><th class="r">1 mois</th></tr></thead><tbody>' + ten.map(function (t) {
+      return "<tr><td>" + t[1] + '</td><td class="r num">' + fmt(at(C.now, t[0]), 2) + ' %</td><td class="r num">' + bp(at(C.now, t[0]), at(C.w1, t[0])) + '</td><td class="r num">' + bp(at(C.now, t[0]), at(C.m1, t[0])) + "</td></tr>";
+    }).join("") + [["2s10s (10 ans − 2 ans)", "10A", "2A"], ["5s30s (30 ans − 5 ans)", "30A", "5A"]].map(function (p) {
+      var sp = function (s) { var a = at(s, p[1]), b = at(s, p[2]); return a === null || b === null ? null : a - b; };
+      return '<tr><td><b>Pente ' + p[0] + '</b></td><td class="r num"><b>' + (sp(C.now) === null ? "–" : (sp(C.now) >= 0 ? "+" : "−") + Math.round(Math.abs(sp(C.now)) * 100) + " pb") + '</b></td><td class="r num">' + bp(sp(C.now), sp(C.w1)) + '</td><td class="r num">' + bp(sp(C.now), sp(C.m1)) + "</td></tr>";
+    }).join("") + "</tbody>";
+    /* Type de mouvement sur un mois (vocabulaire des desks) */
+    var d2 = at(C.now, "2A") - at(C.m1, "2A"), d10 = at(C.now, "10A") - at(C.m1, "10A"), sh = "";
+    if (isFinite(d2) && isFinite(d10)) {
+      var steep = d10 - d2 > 0.03, flat = d10 - d2 < -0.03, bull = d2 + d10 < 0;
+      sh = steep ? (bull ? "pentification par le bas (« bull steepener ») : les taux courts baissent plus vite, le marché anticipe des baisses de taux de la Fed" : "pentification par le haut (« bear steepener ») : les taux longs montent plus vite, prime de risque ou inflation à long terme") :
+        flat ? (bull ? "aplatissement par le bas (« bull flattener ») : les taux longs baissent plus vite, crainte sur la croissance" : "aplatissement par le haut (« bear flattener ») : les taux courts montent, la Fed est perçue plus ferme") : "mouvement parallèle de la courbe";
+    }
+    /* Décomposition du 10 ans : nominal = taux réel + inflation attendue */
+    var N = fred("DGS10"), R = fred("DFII10"), B = fred("T10YIE"), dec = "";
+    if (N && R && B && N.hist && R.hist && B.hist) {
+      dec = '<table><thead><tr><th>Variation du 10 ans</th><th class="r">Nominal</th><th class="r">dont taux réel</th><th class="r">dont inflation attendue</th></tr></thead><tbody>' + [["1 jour", 1], ["1 semaine", 7], ["1 mois", 30]].map(function (w) {
+        var n0 = histAt(N.hist, w[1]), r0 = histAt(R.hist, w[1]), b0 = histAt(B.hist, w[1]);
+        return "<tr><td>" + w[0] + '</td><td class="r num">' + (n0 ? bp(N.v, n0[1]) : "–") + '</td><td class="r num">' + (r0 ? bp(R.v, r0[1]) : "–") + '</td><td class="r num">' + (b0 ? bp(B.v, b0[1]) : "–") + "</td></tr>";
+      }).join("") + "</tbody></table>";
+      var r30 = histAt(R.hist, 30), b30 = histAt(B.hist, 30);
+      if (r30 && b30) { var dr = R.v - r30[1], db = B.v - b30[1]; dec += '<p class="hint" style="max-width:none">Sur un mois, le mouvement du 10 ans vient surtout ' + (Math.abs(dr) >= Math.abs(db) ? "du <b>taux réel</b> (" + bp(R.v, r30[1]) + ") : c'est lui qui pèse le plus sur l'or (taux réel en baisse = favorable à l'or)." : "de l'<b>inflation attendue</b> (" + bp(B.v, b30[1]) + ") : le marché révise ses craintes d'inflation.") + "</p>"; }
+    }
+    $("ciDec").innerHTML = dec;
+    $("ciTxt").innerHTML = sh ? "Sur un mois : " + sh + "." : "";
+    $("ciMeta").innerHTML = "Trésor US " + shortD(C.now.d) + " " + badge(fresh(C.now.d, "daily")) + (R ? " · réel et inflation attendue " + shortD(R.asof) : "");
+  }
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
   function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
@@ -3780,7 +3888,16 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  /* DXY : le vrai indice (ICE, clôture via Yahoo) quand le robot l'a ; sinon le recalcul à partir des taux BCE, étiqueté */
+  function preferRealDxy() {
+    var F = AUTO && AUTO.fred, d = AUTO && AUTO.daily && AUTO.daily.dxy; if (!F || !d || !d.c || d.c.length < 60) return;
+    var last = d.c[d.c.length - 1]; if (ageDays(last[0]) > 6) return;
+    if (F.DXY && !F.DXY.real) F.DXY_BCE = F.DXY;
+    var bce = F.DXY_BCE;
+    F.DXY = { v: last[1], asof: last[0], hist: d.c, real: true, via: "ICE, clôture (Yahoo Finance, non officiel)" + (bce ? " · recalcul BCE : " + fmt(bce.v, 2) + " au " + shortD(bce.asof) : "") };
+    DET.DXY[3] = "Valeur du dollar face à 6 grandes devises (euro surtout). Ici : clôture du vrai indice ICE relevée par le robot (Yahoo Finance) ; à défaut, recalculé avec les taux de la BCE (même formule officielle).";
+  }
+  function renderAuto() { preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
