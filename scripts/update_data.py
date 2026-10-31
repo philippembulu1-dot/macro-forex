@@ -665,7 +665,7 @@ def do_gld(data):
     except Exception as e:
         if PREVIOUS.get("gld"):
             data["gld"] = PREVIOUS["gld"]
-        note("gld", "Or détenu par l'ETF GLD (SPDR, tonnes)", "daily", False, err=e, url="https://www.spdrgoldshares.com/usa/historical-data/")
+        note("gld", "Or détenu par l'ETF GLD (SPDR, tonnes)", "nofree" if "PDF" in str(e) else "daily", False, err=e, url="https://www.spdrgoldshares.com/usa/historical-data/")
 
 
 def rba_or_bis():
@@ -839,7 +839,7 @@ def cot_detail(dataset, codes, groups, key):
 def do_cot_detail(data):
     res = {}
     for dataset, codes, groups, key, lab in (
-            ("72hh-3qpy", {"088691": "XAU", "084691": "XAG"}, [("mm", "m_money_positions"), ("prod", "prod_merc_positions"), ("swap", "swap_positions")], "disagg",
+            ("72hh-3qpy", {"088691": "XAU", "084691": "XAG"}, [("mm", "m_money_positions"), ("prod", "prod_merc_positions"), ("swap", "swap")], "disagg",
              "COT détaillé or et argent (gestionnaires de fonds, producteurs, banques de swap)"),
             ("gpe5-46if", {v: k for k, v in (("EUR", "099741"), ("GBP", "096742"), ("JPY", "097741"), ("CHF", "092741"), ("AUD", "232741"), ("CAD", "090741"), ("NZD", "112741"))},
              [("am", "asset_mgr_positions"), ("lev", "lev_money_positions"), ("dealer", "dealer_positions")], "tff",
