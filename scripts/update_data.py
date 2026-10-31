@@ -2801,11 +2801,390 @@ def do_daily(data):
          "daily", len(bad) < len(DAILY), last, err=("échec : " + ", ".join(bad)) if bad else None, url="https://finance.yahoo.com/")
 
 
+
+# =====================================================================
+# GÉOPOLITIQUE (31 oct. 2026) : équivalent gratuit d'un moniteur de risque pays.
+# Sources vérifiées depuis GitHub le 31 oct. 2026 :
+#  - GDELT 2.0 : événements codés toutes les 15 min (https://data.gdeltproject.org/gdeltv2/) ;
+#  - indice de risque géopolitique de Caldara et Iacoviello (quotidien + 44 pays, mensuel) ;
+#  - avis de voyage officiels des États-Unis (cadataapi.state.gov) ;
+#  - séismes USGS ; titres Google Actualités.
+# Les scores sont des calculs maison étiquetés comme tels : aucune note d'agence n'est simulée.
+# =====================================================================
+OUT_GEO = os.environ.get("MF_OUT_GEO", os.path.join(ROOT, "data", "geo-history.json"))
+FIPS3 = dict((p[:2], p[2:]) for p in "AAABW ACATG AEARE AFAFG AGDZA AJAZE ALALB AMARM ANAND AOAGO AQASM ARARG ASAUS AUAUT AVAIA AYATA BABHR BBBRB BCBWA BDBMU BEBEL BFBHS BGBGD BHBLZ BKBIH BLBOL BMMMR BNBEN BOBLR BPSLB BRBRA BTBTN BUBGR BVBVT BXBRN BYBDI CACAN CBKHM CDTCD CELKA CFCOG CGCOD CHCHN CICHL CJCYM CKCCK CMCMR CNCOM COCOL CQMNP CSCRI CTCAF CUCUB CVCPV CWCOK CYCYP DADNK DJDJI DODMA DRDOM ECECU EGEGY EIIRL EKGNQ ENEST ERERI ESSLV ETETH EZCZE FGGUF FIFIN FJFJI FKFLK FMFSM FOFRO FPPYF FRFRA FSATF GAGMB GBGAB GGGEO GHGHA GIGIB GJGRD GKGGY GLGRL GMDEU GPGLP GQGUM GRGRC GTGTM GVGIN GYGUY GZWEPSE HAHTI HKHKG HMHMD HOHND HRHRV HUHUN ICISL IDIDN IMIMN ININD IOIOT IRIRN ISISR ITITA IVCIV IZIRQ JAJPN JEJEY JMJAM JOJOR KEKEN KGKGZ KNPRK KRKIR KSKOR KTCXR KUKWT KVXKX KZKAZ LALAO LELBN LGLVA LHLTU LILBR LOSVK LSLIE LTLSO LULUX LYLBY MAMDG MBMTQ MCMAC MDMDA MFMYT MGMNG MHMSR MIMWI MJMNE MKMKD MLMLI MNMCO MOMAR MPMUS MRMRT MTMLT MUOMN MVMDV MXMEX MYMYS MZMOZ NCNCL NENIU NFNFK NGNER NHVUT NINGA NLNLD NNSXM NONOR NPNPL NRNRU NSSUR NUNIC NZNZL ODSSD PAPRY PCPCN PEPER PKPAK PLPOL PMPAN POPRT PPPNG PSPLW PUGNB QAQAT REREU RIKVSRB RMMHL RNMAF ROROU RPPHL RQPRI RSRUS RWRWA SASAU SBSPM SCKNA SESYC SFZAF SGSEN SHSHN SISVN SLSLE SMSMR SNSGP SOSOM SPESP STLCA SUSDN SVJNSJM SWSWE SXSGS SYSYR SZCHE TBBLM TDTTO THTHA TITJK TKTCA TLTKL TNTON TOTGO TPSTP TSTUN TTTLS TUTUR TVTUV TWTWN TXTKM TZTZA UCCUW UGUGA UKGBR UPUKR USUSA UVBFA UYURY UZUZB VCVCT VEVEN VIVGB VMVNM VQVIR VTVAT WANAM WFWLF WIESH WSWSM WZSWZ YMYEM ZAZMB ZIZWE aUMI  ALA".split())
+FIPS3.update({"WE": "PSE", "GZ": "PSE"})
+ISO23 = dict((p[:2], p[2:]) for p in "ADAND AEARE AFAFG AGATG AIAIA ALALB AMARM AOAGO AQATA ARARG ASASM ATAUT AUAUS AWABW AXALA AZAZE BABIH BBBRB BDBGD BEBEL BFBFA BGBGR BHBHR BIBDI BJBEN BLBLM BMBMU BNBRN BOBOL BQBES BRBRA BSBHS BTBTN BVBVT BWBWA BYBLR BZBLZ CACAN CCCCK CDCOD CFCAF CGCOG CHCHE CICIV CKCOK CLCHL CMCMR CNCHN COCOL CRCRI CUCUB CVCPV CWCUW CXCXR CYCYP CZCZE DEDEU DJDJI DKDNK DMDMA DODOM DZDZA ECECU EEEST EGEGY EHESH ERERI ESESP ETETH FIFIN FJFJI FKFLK FMFSM FOFRO FRFRA GAGAB GBGBR GDGRD GEGEO GFGUF GGGGY GHGHA GIGIB GLGRL GMGMB GNGIN GPGLP GQGNQ GRGRC GSSGS GTGTM GUGUM GWGNB GYGUY HKHKG HMHMD HNHND HRHRV HTHTI HUHUN IDIDN IEIRL ILISR IMIMN ININD IOIOT IQIRQ IRIRN ISISL ITITA JEJEY JMJAM JOJOR JPJPN KEKEN KGKGZ KHKHM KIKIR KMCOM KNKNA KPPRK KRKOR KWKWT KYCYM KZKAZ LALAO LBLBN LCLCA LILIE LKLKA LRLBR LSLSO LTLTU LULUX LVLVA LYLBY MAMAR MCMCO MDMDA MEMNE MFMAF MGMDG MHMHL MKMKD MLMLI MMMMR MNMNG MOMAC MPMNP MQMTQ MRMRT MSMSR MTMLT MUMUS MVMDV MWMWI MXMEX MYMYS MZMOZ NANAM NCNCL NENER NFNFK NGNGA NINIC NLNLD NONOR NPNPL NRNRU NUNIU NZNZL OMOMN PAPAN PEPER PFPYF PGPNG PHPHL PKPAK PLPOL PMSPM PNPCN PRPRI PSPSE PTPRT PWPLW PYPRY QAQAT REREU ROROU RSSRB RURUS RWRWA SASAU SBSLB SCSYC SDSDN SESWE SGSGP SHSHN SISVN SJSJM SKSVK SLSLE SMSMR SNSEN SOSOM SRSUR SSSSD STSTP SVSLV SXSXM SYSYR SZSWZ TCTCA TDTCD TFATF TGTGO THTHA TJTJK TKTKL TLTLS TMTKM TNTUN TOTON TRTUR TTTTO TVTUV TWTWN TZTZA UAUKR UGUGA UMUMI USUSA UYURY UZUZB VAVAT VCVCT VEVEN VGVGB VIVIR VNVNM VUVUT WFWLF WSWSM XKXKX YEYEM YTMYT ZAZAF ZMZMB ZWZWE".split())
+CAMEO_FR = {"14": "manifestations", "15": "démonstration de force", "16": "rupture de relations, sanctions", "17": "coercition",
+            "18": "attaque", "19": "combats", "20": "violence de masse"}
+# Pays dont une escalade touche un canal direct de l'or (énergie, détroits, grandes puissances)
+GEO_CANAL = {"IRN": "énergie, Ormuz", "ISR": "Moyen-Orient", "PSE": "Moyen-Orient", "LBN": "Moyen-Orient", "SYR": "Moyen-Orient",
+             "YEM": "mer Rouge, Bab el-Mandeb", "SAU": "énergie", "IRQ": "énergie", "ARE": "énergie, Ormuz", "QAT": "énergie, gaz",
+             "KWT": "énergie", "OMN": "Ormuz", "LBY": "énergie", "VEN": "énergie", "NGA": "énergie", "RUS": "grande puissance, énergie",
+             "UKR": "guerre en Europe", "CHN": "grande puissance", "TWN": "Taïwan, semi-conducteurs", "PRK": "nucléaire",
+             "KOR": "péninsule coréenne", "IND": "puissance nucléaire", "PAK": "puissance nucléaire", "EGY": "canal de Suez",
+             "USA": "grande puissance", "TUR": "Bosphore", "PAN": "canal de Panama", "SDN": "mer Rouge", "ERI": "mer Rouge", "DJI": "Bab el-Mandeb"}
+ADV_FR = {"terrorism": "terrorisme", "unrest": "troubles civils", "civil unrest": "troubles civils", "crime": "criminalité",
+          "kidnapping": "enlèvements", "armed conflict": "conflit armé", "wrongful detention": "détentions arbitraires",
+          "health": "santé", "natural disasters": "catastrophes naturelles", "hostage taking": "prises d'otages",
+          "landmines": "mines", "civil war": "guerre civile", "military conflict": "conflit militaire"}
+
+
+def http_bytes(url, timeout=40):
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def gdelt_file(stamp):
+    """Lit un fichier d'événements GDELT de 15 min ; renvoie les lignes utiles."""
+    import zipfile
+    z = http_bytes("https://data.gdeltproject.org/gdeltv2/%s.export.CSV.zip" % stamp, timeout=40)
+    zf = zipfile.ZipFile(io.BytesIO(z))
+    txt = zf.read(zf.namelist()[0]).decode("utf-8", "replace")
+    rows = []
+    for line in txt.split("\n"):
+        f = line.split("\t")
+        if len(f) < 61:
+            continue
+        rows.append(f)
+    return rows
+
+
+def geo_hist_load():
+    try:
+        with open(OUT_GEO, encoding="utf-8") as f:
+            h = json.load(f)
+        if isinstance(h, dict) and "days" in h:
+            return h
+    except Exception:
+        pass
+    return {"done": [], "days": {}, "hot": []}
+
+
+def do_geo(data):
+    g = {"src": "GDELT 2.0 (événements codés dans la presse mondiale), calcul maison"}
+    # ---------- 1. GDELT : nouveaux fichiers de 15 min depuis le dernier passage ----------
+    try:
+        last = http_bytes("https://data.gdeltproject.org/gdeltv2/lastupdate.txt", timeout=30).decode()
+        m = re.search(r"/(\d{14})\.export\.CSV\.zip", last)
+        if not m:
+            raise ValueError("fichier « lastupdate » illisible")
+        newest = datetime.strptime(m.group(1), "%Y%m%d%H%M%S").replace(tzinfo=timezone.utc)
+        h = geo_hist_load()
+        done = set(h.get("done") or [])
+        bf = set(h.get("bf") or [])
+        # 24 h de fichiers au maximum ; 16 par passage en temps normal, 96 si l'historique est vide
+        want_n = 96 if len(done) < 40 else 16
+        stamps = [(newest - timedelta(minutes=15 * k)).strftime("%Y%m%d%H%M%S") for k in range(96)]
+        todo = [s for s in stamps if s not in done][:want_n]
+        # Base de comparaison : 30 jours passés échantillonnés (12 fichiers par jour, un toutes les 2 h),
+        # remplis 3 jours par passage pour ne pas alourdir le robot.
+        old_days = h.get("days") or {}
+        miss = []
+        for k in range(2, 32):
+            dd = (newest - timedelta(days=k)).strftime("%Y-%m-%d")
+            if (old_days.get(dd) or {}).get("n", 0) < 8:
+                miss.append(dd)
+        for dd in miss[:3]:
+            for hh in range(0, 24, 2):
+                st = dd.replace("-", "") + "%02d0000" % hh
+                if st not in bf and st not in done:
+                    todo.append(st)
+
+        def one(st):
+            try:
+                return st, gdelt_file(st)
+            except Exception as e:  # un fichier manquant n'arrête pas les autres
+                return st, e
+        got = []
+        with ThreadPoolExecutor(8) as ex:
+            for st, rows in ex.map(one, todo):
+                if isinstance(rows, Exception):
+                    continue
+                got.append((st, rows))
+        if not got and not done:
+            raise ValueError("aucun fichier d'événements lu")
+        days = h.get("days") or {}
+        hot = [x for x in (h.get("hot") or []) if x.get("t", "") >= (newest - timedelta(hours=24)).strftime("%Y%m%d%H%M%S")]
+        for st, rows in got:
+            day = st[:4] + "-" + st[4:6] + "-" + st[6:8]
+            D = days.setdefault(day, {"n": 0, "c": {}})
+            D["n"] += 1
+            for f in rows:
+                cc = FIPS3.get(f[53])
+                if not cc:
+                    continue
+                root, quad = f[28][:2], f[29]
+                try:
+                    ment = int(f[31] or 0)
+                except ValueError:
+                    ment = 0
+                c = D["c"].setdefault(cc, [0, 0, 0, 0])  # événements, conflit matériel, manifestations, mentions des conflits
+                c[0] += 1
+                if quad == "4":
+                    c[1] += 1
+                    c[3] += ment
+                if root == "14":
+                    c[2] += 1
+                if root in ("15", "16", "17", "18", "19", "20") and ment >= 4 and st >= (newest - timedelta(hours=24)).strftime("%Y%m%d%H%M%S"):
+                    try:
+                        lat, lon = round(float(f[56]), 2), round(float(f[57]), 2)
+                    except ValueError:
+                        continue
+                    hot.append({"t": st, "iso": cc, "r": root, "m": ment, "lat": lat, "lon": lon, "loc": f[52][:60], "u": f[60].strip()[:300]})
+            if st >= (newest - timedelta(hours=30)).strftime("%Y%m%d%H%M%S"):
+                done.add(st)
+            else:
+                bf.add(st)
+        keep = (newest - timedelta(days=45)).strftime("%Y-%m-%d")
+        days = {k: v for k, v in days.items() if k >= keep}
+        h = {"done": sorted(s for s in done if s >= (newest - timedelta(hours=30)).strftime("%Y%m%d%H%M%S")),
+             "bf": sorted(s for s in bf if s[:8] >= keep.replace("-", "")), "days": days, "hot": hot[-1500:]}
+        with LOCK:
+            try:
+                with open(OUT_GEO, "w", encoding="utf-8") as f:
+                    json.dump(h, f, ensure_ascii=False, separators=(",", ":"))
+            except Exception as e:
+                DIAG["geo_ecriture"] = fr_err(e)
+        # ---------- agrégats sur 24 h glissantes ----------
+        cut = (newest - timedelta(hours=24)).strftime("%Y%m%d%H%M%S")
+        last24 = [s for s in done if s >= cut]
+        n24 = len(last24)
+        if n24 < 8:
+            raise ValueError("seulement %d fichiers de 15 min sur 24 h" % n24)
+        # Taux par fichier : jour en cours + veille au prorata, pour comparer à l'historique
+        today = newest.strftime("%Y-%m-%d")
+        cur, curn = {}, 0
+        for dkey in (today, (newest - timedelta(days=1)).strftime("%Y-%m-%d")):
+            D = days.get(dkey)
+            if not D:
+                continue
+            curn += D["n"]
+            for cc, v in D["c"].items():
+                a = cur.setdefault(cc, [0, 0, 0, 0])
+                for i in range(4):
+                    a[i] += v[i]
+        past = [days[k] for k in sorted(days) if k < (newest - timedelta(days=1)).strftime("%Y-%m-%d") and days[k]["n"] >= 8][-30:]
+        world_conf = sum(v[1] for v in cur.values()) or 1
+        ranked = sorted(cur.items(), key=lambda kv: -kv[1][1])
+        rk = {cc: i for i, (cc, v) in enumerate(ranked)}
+        nct = max(1, len(ranked))
+        C = {}
+        for cc, v in cur.items():
+            rate = v[1] / max(1, curn)
+            hist = [p["c"].get(cc, [0, 0, 0, 0])[1] / p["n"] for p in past]
+            z = None
+            if len(hist) >= 5 and v[1] >= 10:
+                mu = sum(hist) / len(hist)
+                sd = (sum((x - mu) ** 2 for x in hist) / len(hist)) ** 0.5
+                z = round((rate - mu) / max(sd, 0.25 * mu, 0.02), 2)
+            lvl = round(100 * (1 - rk[cc] / nct)) if v[1] >= 3 else 0
+            C[cc] = [lvl, z, v[0], v[1], v[2], round(v[1] / world_conf * 100, 2)]
+        # Points chauds : regroupement par cellule de 1 degré, on garde la plus citée
+        cells = {}
+        for x in hot:
+            if x["t"] < cut:
+                continue
+            k = (round(x["lat"]), round(x["lon"]))
+            c = cells.get(k)
+            if c is None or x["m"] > c["m"]:
+                nb = (c["nb"] if c else 0) + 1
+                cells[k] = dict(x, nb=nb)
+            else:
+                c["nb"] += 1
+        hotl = sorted(cells.values(), key=lambda x: -(x["m"] + 3 * x["nb"]))[:40]
+        g.update({"asof": newest.strftime("%Y-%m-%dT%H:%MZ"), "n24": n24, "days": len(past), "c": C,
+                  "hot": [[x["lat"], x["lon"], x["iso"], x["r"], x["m"], x["nb"], x["loc"], x["u"], x["t"]] for x in hotl],
+                  "esc": [cc for cc, v in sorted(C.items(), key=lambda kv: -(kv[1][1] or -99)) if v[1] is not None and v[1] >= 1.5][:15]})
+        DIAG["geo"] = {"fichiers_lus": len(got), "fichiers_24h": n24, "jours_historique": len(past), "pays": len(C)}
+        note("geo.gdelt", "Géopolitique : tension par pays et points chauds (GDELT, calcul maison)", "daily", True, newest.strftime("%Y-%m-%d"), url="https://www.gdeltproject.org/")
+    except Exception as e:
+        prev = (PREVIOUS.get("geo") or {})
+        if prev.get("c") and prev.get("asof") and ageDaysPy(prev["asof"][:10]) <= 2:
+            for k in ("asof", "n24", "days", "c", "hot", "esc"):
+                g[k] = prev.get(k)
+            note("geo.gdelt", "Géopolitique GDELT — dernières données valides conservées", "daily", True, prev["asof"][:10], url="https://www.gdeltproject.org/")
+        else:
+            note("geo.gdelt", "Géopolitique : tension par pays et points chauds (GDELT)", "daily", False, err=e, url="https://www.gdeltproject.org/")
+    # ---------- 2. Indice de risque géopolitique (Caldara et Iacoviello, Réserve fédérale) ----------
+    try:
+        import xlrd  # installé par le workflow (pip install xlrd) : lecture des fichiers .xls
+        b = http_bytes("https://www.matteoiacoviello.com/gpr_files/data_gpr_daily_recent.xls", timeout=60)
+        sh = xlrd.open_workbook(file_contents=b).sheet_by_index(0)
+        hd = [str(x) for x in sh.row_values(0)]
+        ix = {k: hd.index(k) for k in ("DAY", "GPRD", "GPRD_ACT", "GPRD_THREAT", "GPRD_MA7", "GPRD_MA30") if k in hd}
+        rows = []
+        for r in range(1, sh.nrows):
+            v = sh.row_values(r)
+            d = str(v[ix["DAY"]]).split(".")[0]
+            if len(d) != 8:
+                continue
+            try:
+                rows.append([d[:4] + "-" + d[4:6] + "-" + d[6:], round(float(v[ix["GPRD"]]), 1), round(float(v[ix["GPRD_MA7"]]), 1),
+                             round(float(v[ix["GPRD_MA30"]]), 1), round(float(v[ix["GPRD_ACT"]]), 1), round(float(v[ix["GPRD_THREAT"]]), 1)])
+            except (ValueError, TypeError):
+                continue
+        if len(rows) < 400:
+            raise ValueError("série quotidienne trop courte")
+        ma7_3y = sorted(x[2] for x in rows[-1095:])
+        pct = round(sum(1 for x in ma7_3y if x < rows[-1][2]) / len(ma7_3y) * 100)
+        gp = {"asof": rows[-1][0], "d": rows[-400:], "pct3y": pct}
+        try:  # indices par pays (mensuels)
+            b2 = http_bytes("https://www.matteoiacoviello.com/gpr_files/data_gpr_export.xls", timeout=60)
+            s2 = xlrd.open_workbook(file_contents=b2).sheet_by_index(0)
+            h2 = [str(x) for x in s2.row_values(0)]
+            last_r = s2.nrows - 1
+            mserial = s2.row_values(last_r)[h2.index("month")]
+            month = (datetime(1899, 12, 30) + timedelta(days=float(mserial))).strftime("%Y-%m")
+            ct = {}
+            for j, name in enumerate(h2):
+                if not name.startswith("GPRC_"):
+                    continue
+                iso = name[5:]
+                vals = []
+                for r in range(max(1, last_r - 119), last_r + 1):
+                    try:
+                        vals.append(float(s2.row_values(r)[j]))
+                    except (ValueError, TypeError):
+                        pass
+                if len(vals) < 24:
+                    continue
+                cur_v = vals[-1]
+                p = round(sum(1 for x in vals if x < cur_v) / len(vals) * 100)
+                ct[iso] = [round(cur_v, 2), p, round(vals[-2], 2)]
+            gp["ctry"] = ct
+            gp["month"] = month
+        except Exception as e:
+            DIAG["gpr_pays"] = fr_err(e)
+        g["gpr"] = gp
+        note("geo.gpr", "Indice de risque géopolitique (Caldara et Iacoviello)", "daily", True, rows[-1][0], url="https://www.matteoiacoviello.com/gpr.htm")
+    except Exception as e:
+        prev = (PREVIOUS.get("geo") or {}).get("gpr")
+        if prev and ageDaysPy(prev.get("asof", "2000-01-01")) <= 21:
+            g["gpr"] = prev
+            note("geo.gpr", "Indice de risque géopolitique — dernières données valides conservées", "daily", True, prev["asof"], url="https://www.matteoiacoviello.com/gpr.htm")
+        else:
+            note("geo.gpr", "Indice de risque géopolitique (Caldara et Iacoviello)", "daily", False, err=e, url="https://www.matteoiacoviello.com/gpr.htm")
+    # ---------- 3. Avis de voyage officiels des États-Unis ----------
+    try:
+        j = json.loads(http("travel_us.json", "https://cadataapi.state.gov/api/TravelAdvisories", timeout=40))
+        # Codes pays : on choisit le système (ISO ou FIPS) qui fait correspondre le plus de noms
+        def score(tab):
+            return sum(1 for a in j for c in (a.get("Category") or [])[:1] if tab.get(c))
+        tab = ISO23 if score(ISO23) >= score(FIPS3) else FIPS3
+        adv, newest = {}, ""
+        for a in j:
+            t = a.get("Title") or ""
+            mm = re.search(r"Level\s*(\d)", t)
+            cs = a.get("Category") or []
+            if not mm or not cs:
+                continue
+            iso = tab.get(cs[0])
+            if not iso:
+                continue
+            summ = (a.get("Summary") or "").lower()
+            why = []
+            for k_, v_ in ADV_FR.items():
+                if k_ in summ and v_ not in why:
+                    why.append(v_)
+            up = (a.get("Updated") or a.get("Published") or "")[:10]
+            newest = max(newest, up)
+            adv[iso] = [int(mm.group(1)), up, why[:5], a.get("Link") or ""]
+        if len(adv) < 100:
+            raise ValueError("seulement %d pays lus" % len(adv))
+        g["adv"] = adv
+        g["adv_codes"] = "ISO" if tab is ISO23 else "FIPS"
+        note("geo.adv", "Avis de voyage officiels (Département d'État américain)", "weekly", True, newest, url="https://travel.state.gov/")
+    except Exception as e:
+        prev = (PREVIOUS.get("geo") or {}).get("adv")
+        if prev:
+            g["adv"] = prev
+            note("geo.adv", "Avis de voyage officiels — dernières données valides conservées", "weekly", True, max(v[1] for v in prev.values()), url="https://travel.state.gov/")
+        else:
+            note("geo.adv", "Avis de voyage officiels (Département d'État américain)", "weekly", False, err=e, url="https://travel.state.gov/")
+    # ---------- 4. Séismes importants (USGS) ----------
+    try:
+        j = json.loads(http("usgs.json", "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson", timeout=30))
+        q = []
+        for f in j.get("features") or []:
+            p, gm = f.get("properties") or {}, (f.get("geometry") or {}).get("coordinates") or []
+            if (p.get("mag") or 0) >= 5.5 and len(gm) >= 2:
+                q.append([round(gm[1], 2), round(gm[0], 2), p.get("mag"), (p.get("place") or "")[:80], datetime.fromtimestamp((p.get("time") or 0) / 1000, timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), p.get("url") or ""])
+        q.sort(key=lambda x: -x[2])
+        g["quakes"] = q[:15]
+        note("geo.usgs", "Séismes de magnitude 5,5 et plus (USGS, 7 jours)", "daily", True, TODAY, url="https://earthquake.usgs.gov/")
+    except Exception as e:
+        note("geo.usgs", "Séismes (USGS)", "daily", False, err=e, url="https://earthquake.usgs.gov/")
+    # ---------- 5. Titres géopolitiques du jour ----------
+    try:
+        qq = urllib.parse.quote('(guerre OR frappe OR missile OR sanctions OR "cessez-le-feu" OR attaque OR blocus OR Ormuz OR Taïwan) when:1d')
+        items = parse_feed(http("geo_news.xml", "https://news.google.com/rss/search?q=%s&hl=fr&gl=FR&ceid=FR:fr" % qq, timeout=25))
+        seen, out = set(), []
+        for it in items:
+            key = it["t"][:60].lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(it)
+        if not out:
+            raise ValueError("aucun titre")
+        g["news"] = out[:15]
+        note("geo.news", "Titres géopolitiques du jour (Google Actualités)", "daily", True, TODAY, url="https://news.google.com/")
+    except Exception as e:
+        note("geo.news", "Titres géopolitiques (Google Actualités)", "daily", False, err=e, url="https://news.google.com/")
+    data["geo"] = g
+
+
+def geo_note(data):
+    """Note proposée du pilier « Risque et refuge » (stratégie, étape 4) : proposition automatique, à valider."""
+    g = data.get("geo") or {}
+    gp = g.get("gpr") or {}
+    vix = (data.get("fred") or {}).get("VIXCLS") or {}
+    why, val = [], 0
+    vv, vh = vix.get("v"), [x[1] for x in (vix.get("hist") or []) if x[1] is not None]
+    v5 = (vv - vh[-6]) if vv is not None and len(vh) >= 6 else None
+    pct = gp.get("pct3y")
+    d = gp.get("d") or []
+    ma7, ma30 = (d[-1][2], d[-1][3]) if d else (None, None)
+    esc = [c for c in (g.get("esc") or []) if c in GEO_CANAL and ((g.get("c") or {}).get(c) or [0, 0])[1] is not None and g["c"][c][1] >= 2]
+    sh = (data.get("shipping") or {}).get("c") or {}
+    drops = []
+    for nm, lab in (("Strait of Hormuz", "Ormuz"), ("Bab el-Mandeb Strait", "Bab el-Mandeb"), ("Suez Canal", "Suez")):
+        s = [x[1] for x in sh.get(nm, []) if isinstance(x[1], (int, float))]
+        if len(s) >= 14:
+            a, b = sum(s[-7:]) / 7, sum(s[-14:-7]) / 7
+            if b and (a / b - 1) * 100 <= -15:
+                drops.append(lab)
+    if esc and (drops or (pct is not None and pct >= 90)) and vv is not None and vv >= 20:
+        val = 2
+    elif (pct is not None and pct >= 75) or (esc and v5 is not None and v5 > 0):
+        val = 1
+    elif pct is not None and pct <= 25 and vv is not None and vv < 15:
+        val = -2
+    elif ma7 and ma30 and ma7 <= ma30 * 0.9 and v5 is not None and v5 < 0:
+        val = -1
+    if pct is not None:
+        why.append("indice GPR (moyenne 7 jours) au %de percentile sur 3 ans" % pct)
+    if ma7 and ma30:
+        why.append("moyenne 7 jours %s la moyenne 30 jours (%.0f contre %.0f)" % ("au-dessus de" if ma7 > ma30 else "sous", ma7, ma30))
+    if esc:
+        why.append("escalade dans un pays à canal direct pour l'or : " + ", ".join(esc[:4]))
+    if drops:
+        why.append("trafic en chute de 15 % ou plus : " + ", ".join(drops))
+    if vv is not None:
+        why.append("VIX %.1f%s" % (vv, "" if v5 is None else " (%+.1f sur 5 séances)" % v5))
+    if not why:
+        return
+    g["note"] = {"v": val, "why": why, "asof": TODAY}
+    data["geo"] = g
+
+
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
-             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d)))]
+             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
@@ -2843,6 +3222,11 @@ def main():
         do_core(data)  # après les autres blocs : utilise l'inflation sous-jacente américaine déjà lue
     except Exception as e:
         note("core.cpi", "Inflation sous-jacente des 8 économies", "monthly", False, err=e)
+    if want("geo"):
+        try:
+            geo_note(data)  # après les autres blocs : utilise le VIX et le trafic des détroits
+        except Exception as e:
+            note("geo.note", "Note proposée du pilier Risque et refuge", "daily", False, err=e)
     if want("reactions") or want("calendar"):
         try:
             do_reactions(data)
