@@ -1641,7 +1641,7 @@ def do_fng(data):
 
 # ---------------------------------------------------------------- Communiqués officiels (RSS)
 FEEDS = [
-    ("Fed", "USD", ["https://www.federalreserve.gov/feeds/press_all.xml"]),
+    ("Fed", "USD", ["https://www.federalreserve.gov/feeds/press_all.xml", "https://www.federalreserve.gov/feeds/press_monetary.xml", "https://www.federalreserve.gov/feeds/speeches.xml"]),
     ("BCE", "EUR", ["https://www.ecb.europa.eu/rss/press.html"]),
     ("BoE", "GBP", ["https://www.bankofengland.co.uk/rss/news", "https://www.bankofengland.co.uk/rss/publications"]),
     ("BoJ", "JPY", ["https://www.boj.or.jp/en/rss/whatsnew.xml"]),

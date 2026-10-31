@@ -51,9 +51,13 @@ require('fs').mkdirSync('audit-out', { recursive: true });
       console.log(name, id.padEnd(9), 'panneaux', panels.length, '| débordement', r.ow, '| fiches testées', n, 'texte cassé dans fiches', detErr, r.res.length ? '| PROBLÈMES : ' + r.res.join(' ; ') : '| ok');
       if (r.res.length || r.ow > 2 || detErr) problems.push(id);
     }
+    // graphiques maison (CNBC)
+    for (const br of ['marches', 'taux']) { await p.goto(BASE + '#/' + br); await p.waitForTimeout(9000);
+      console.log(name, 'graphiques ' + br + ' :', await p.evaluate((g) => [...document.querySelectorAll('#' + g + ' .cmini')].map(b => b.querySelector('.mh').innerText.replace(/\n/g, ' ') + ' [' + b.querySelectorAll('svg path').length + ' courbe] ' + b.querySelector('.mfb').innerText).join(' || '), br === 'marches' ? 'miniGrid' : 'rateMinis'));
+      await p.evaluate((g) => document.getElementById(g).scrollIntoView(), br === 'marches' ? 'miniGrid' : 'rateMinis'); await p.screenshot({ path: 'audit-out/' + name + '_graph_' + br + '.png' }); }
     // calendrier : vues
     await p.goto('' + BASE + '#/macro'); await p.waitForTimeout(1200);
-    for (const v of ['term', 'inv', 'pro']) { await p.click('#calTabs [data-calv="' + v + '"]'); await p.waitForTimeout(200); }
+    for (const v of ['term', 'pro']) { await p.click('#calTabs [data-calv="' + v + '"]'); await p.waitForTimeout(200); }
     console.log(name, 'calendrier : iframe', await p.evaluate(() => (document.querySelector('#calPro iframe') || {}).src || 'aucun').then(x => x.slice(0, 60)), '| vue terminal cachée', await p.evaluate(() => document.getElementById('calTerm').hidden));
     // carte : mini-fenêtre
     await p.goto('' + BASE + '#/monde'); await p.waitForTimeout(1500);
@@ -62,7 +66,7 @@ require('fs').mkdirSync('audit-out', { recursive: true });
     console.log(name, 'carte : mini-fenêtre', await p.evaluate(() => !document.getElementById('mapPop').hidden), (await p.locator('#mapPop').innerText()).slice(0, 80).replace(/\n/g, ' | '));
     // recherche
     await p.fill('#cmdIn', 'ormuz'); await p.waitForTimeout(400);
-    console.log(name, 'recherche « ormuz » :', (await p.evaluate(() => (document.getElementById('cmdMsg') || {}).innerText || '')).slice(0, 120).replace(/\n/g, ' | '));
+    console.log(name, 'recherche « ormuz » :', (await p.evaluate(() => (document.getElementById('sres') || {}).innerText || '')).slice(0, 160).replace(/\n/g, ' | '));
     console.log(name, 'REQUÊTES EN ÉCHEC :', JSON.stringify([...new Set(fails)].slice(0, 40)));
     console.log(name, 'ERREURS :', errs.length ? JSON.stringify([...new Set(errs)]) : 'aucune', '| branches à revoir :', problems.join(', ') || 'aucune');
     await p.close();

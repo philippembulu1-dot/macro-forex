@@ -147,6 +147,11 @@ details.srcs summary { cursor: pointer; padding: 8px 12px; font: 11px var(--font
 .fgprev b { color: var(--text, #ece8dc); font-weight: 500; }
 .minigrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
 .mini { background: var(--panel); min-height: 190px; position: relative; }
+.cmini { display: flex; flex-direction: column; padding: 10px 12px 8px; min-height: 0; }
+.cmini .mh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.cmini .mh b { flex-basis: 100%; font: 600 10px var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.cmini .mv { font: 600 20px var(--font-mono); } .cmini .mh small { font: 12px var(--font-mono); } .cmini .mh em { flex-basis: 100%; font: normal 10px var(--font-mono); color: var(--muted); }
+.cmini .mchart { width: 100%; height: 120px; display: block; margin-top: 4px; } .cmini .mfb { font: 11px var(--font-mono); color: var(--muted); } .cmini .msrc { font: 9px var(--font-mono); color: var(--muted); text-align: right; }
 .mini .tv-fb { padding: 12px; font: 11px var(--font-mono); color: var(--muted); }
 @media (max-width: 560px) { .fgwrap { grid-template-columns: 1fr; } }
 
@@ -826,7 +831,6 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div class="toolbar caltabs" id="calTabs">
         <button type="button" class="btn" data-calv="pro">Pro en direct (Myfxbook)</button>
         <button type="button" class="btn" data-calv="term">Terminal : analyse et chiffres officiels</button>
-        <button type="button" class="btn" data-calv="inv">Investing.com</button>
       </div>
       <div id="calPro" hidden></div>
       <div id="calTerm">
@@ -984,7 +988,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         <div class="pcard"><h3>Écart de taux à 2 ans : États-Unis − zone euro</h3><div class="m" id="sp2Meta"></div><svg id="sp2Svg" class="chart" viewBox="0 0 400 170" role="img" aria-label="Écart de taux à 2 ans"></svg><p class="hint" id="sp2Txt"></p></div>
         <div class="pcard"><h3>Écart de taux à 10 ans : États-Unis − zone euro</h3><div class="m" id="sp10Meta"></div><svg id="sp10Svg" class="chart" viewBox="0 0 400 170" role="img" aria-label="Écart de taux à 10 ans"></svg><p class="hint" id="sp10Txt"></p></div>
       </div>
-      <div class="ph" style="border-top:1px solid var(--line2)"><h2>En temps réel</h2><span class="meta">TradingView</span></div>
+      <div class="ph" style="border-top:1px solid var(--line2)"><h2>En temps réel</h2><span class="meta">CNBC · relu toutes les 60 s</span></div>
       <div class="minigrid" id="rateMinis"></div>
       <p class="note">Anticipations de la Fed : calcul maison à partir des contrats Kalshi « taux de la Fed au-dessus de X % » (niveau médian = premier seuil que le marché juge moins probable qu'une chance sur deux ; probabilités lues directement, prix prudent quand l'écart achat/vente est large), mis à jour toutes les 2 h. Courbes : Trésor américain et BCE (obligations d'États de la zone euro notés AAA), clôtures quotidiennes. Un écart US − zone euro qui monte soutient en général le dollar face à l'euro (EUR/USD en baisse), et inversement. Les graphiques « en temps réel » viennent de TradingView.</p>
     </section>
@@ -1142,10 +1146,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     </section>
 
     <section class="panel" id="marches">
-      <div class="ph"><h2>Marchés en direct</h2><span class="meta">TradingView · peur et avidité</span></div>
+      <div class="ph"><h2>Marchés en direct</h2><span class="meta">CNBC · peur et avidité</span></div>
       <div class="fgwrap"><svg id="fgSvg" viewBox="0 0 200 128" role="img" aria-label="Indice Fear and Greed"></svg><div id="fgInfo"></div></div>
       <div class="minigrid" id="miniGrid"></div>
-      <p class="note">Les graphiques viennent de TradingView et se mettent à jour seuls. Si un cadre reste vide, le symbole est peut-être refusé (changez-le dans la liste MINIS du code) ou un bloqueur de publicités l'empêche de charger.</p>
+      <p class="note">Graphiques maison : 3 mois de clôtures quotidiennes et la cotation du moment, lues par votre navigateur chez CNBC (source non officielle, différée de quelques minutes) et relues toutes les 60 secondes. TradingView n'autorise plus VIX, S&amp;P 500, MOVE ni US 10 ans dans ses mini-widgets gratuits. Touchez la courbe pour lire une valeur.</p>
     </section>
 
     <section class="panel" id="taux">
@@ -1773,8 +1777,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     symbols: [
       { proName: "OANDA:XAUUSD", description: "XAUUSD" }, { proName: "CAPITALCOM:US100", description: "NAS100" },
       { proName: "FX:EURUSD", description: "EURUSD" }, { proName: "FX:GBPUSD", description: "GBPUSD" },
-      { proName: "FX:USDJPY", description: "USDJPY" }, { proName: "TVC:US10Y", description: "US10Y" },
-      { proName: "TVC:DXY", description: "DXY" }, { proName: "BITSTAMP:BTCUSD", description: "BTC" }
+      { proName: "FX:USDJPY", description: "USDJPY" }, { proName: "FX:AUDJPY", description: "AUDJPY" },
+      { proName: "BITSTAMP:BTCUSD", description: "BTC" }
     ],
     showSymbolLogo: false, colorTheme: "dark", isTransparent: true, displayMode: "adaptive", locale: "fr"
   };
@@ -2196,23 +2200,55 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   }
 
 
-  /* ---------- Marchés en direct : Fear & Greed + mini-graphiques TradingView ---------- */
+  /* ---------- Mini-graphiques maison (CNBC : historique quotidien + cotation en direct) ----------
+     Remplacent les mini-widgets TradingView : VIX, S&P 500, MOVE, US 10 ans… y sont refusés (« symbole uniquement disponible sur TradingView »). */
   var MINIS = [
-    { t: "VIX", s: "CBOE:VIX" }, { t: "S&P 500", s: "SP:SPX" }, { t: "MOVE (volatilité obligataire)", s: "TVC:MOVE" },
-    { t: "Or / Dollar", s: "OANDA:XAUUSD" }, { t: "AUD/JPY (appétit pour le risque)", s: "FX:AUDJPY" }, { t: "US 10 ans", s: "TVC:US10Y" }
+    { t: "VIX", s: ".VIX", d: 2, u: "" }, { t: "S&P 500", s: ".SPX", d: 0, u: "" }, { t: "MOVE (volatilité obligataire)", s: ".MOVE", d: 1, u: "" },
+    { t: "Or spot", s: "XAU=", d: 2, u: " $" }, { t: "AUD/JPY (appétit pour le risque)", s: "AUDJPY=", d: 3, u: "" }, { t: "US 10 ans", s: "US10Y", d: 3, u: " %" }
   ];
-  function initMinis() {
-    var g = $("miniGrid");
-    MINIS.forEach(function (m) {
-      var box = document.createElement("div"); box.className = "mini"; box.setAttribute("aria-label", m.t); g.appendChild(box);
-      var wrap = document.createElement("div"); wrap.className = "tradingview-widget-container";
-      var w = document.createElement("div"); w.className = "tradingview-widget-container__widget"; wrap.appendChild(w);
-      var s = document.createElement("script"); s.async = true; s.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
-      s.innerHTML = JSON.stringify({ symbol: m.s, width: "100%", height: 190, locale: "fr", dateRange: "1M", colorTheme: "dark", isTransparent: true, autosize: false, largeChartUrl: "" });
-      var fb = function () { if (box.querySelector("iframe") || box.querySelector(".tv-fb")) return; var d = document.createElement("div"); d.className = "tv-fb"; d.textContent = m.t + " : graphique non chargé (réseau, bloqueur ou symbole " + m.s + " refusé)."; box.appendChild(d); };
-      s.onerror = fb; wrap.appendChild(s); box.appendChild(wrap); setTimeout(fb, 9000);
+  var RATE_MINIS = [{ t: "US 2 ans", s: "US2Y", d: 3, u: " %" }, { t: "Allemagne 2 ans", s: "DE2Y-DE", d: 3, u: " %" }, { t: "US 10 ans", s: "US10Y", d: 3, u: " %" }, { t: "Allemagne 10 ans", s: "DE10Y-DE", d: 3, u: " %" }];
+  var CHARTS = {}, MINI_BOXES = [];
+  function cnbcHist(sym) {
+    var c = CHARTS[sym]; if (c && (c.p || Date.now() - c.at < 15 * 6e4)) return c.p || Promise.resolve(c.rows);
+    var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 12000);
+    var p = fetch("https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=" + encodeURIComponent(sym), ctl ? { signal: ctl.signal } : {})
+      .then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (j) {
+        var rows = ((j.barData || {}).priceBars || []).map(function (b) { var t = String(b.tradeTime || ""); return [t.slice(0, 4) + "-" + t.slice(4, 6) + "-" + t.slice(6, 8), parseFloat(b.close)]; }).filter(function (x) { return !isNaN(x[1]); });
+        if (rows.length < 10) throw new Error("historique vide");
+        CHARTS[sym] = { rows: rows, at: Date.now() }; return rows;
+      });
+    CHARTS[sym] = { p: p, at: Date.now() };
+    p.catch(function () { CHARTS[sym] = { rows: null, at: Date.now() }; });
+    return p;
+  }
+  function drawMini(box) {
+    var m = box.__m, rows = (CHARTS[m.s] || {}).rows, q = LIVE.q[m.s];
+    var head = box.querySelector(".mh");
+    var v = q ? q.v : rows ? rows[rows.length - 1][1] : null, base = q && q.p ? q.p : rows && rows.length > 1 ? rows[rows.length - 2][1] : null;
+    var ch = v !== null && base ? (m.u === " %" ? (v - base) * 100 : (v / base - 1) * 100) : null;
+    head.innerHTML = "<b>" + esc(m.t) + '</b><span class="mv">' + (v !== null ? fmtN(v, m.d) + m.u : "–") + "</span>" + (ch !== null ? '<small class="' + (ch > 0 ? "up" : ch < 0 ? "down" : "") + '">' + (m.u === " %" ? (ch >= 0 ? "+" : "−") + Math.abs(Math.round(ch)) + " pb" : pct(ch)) + "</small>" : "") +
+      '<em>' + (q && q.t ? (liveFresh(q) ? '<span class="lv">●</span> direct ' : "dernière cotation ") + new Date(q.t).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "CNBC") + "</em>";
+    var svg = box.querySelector("svg");
+    if (!rows) { svg.innerHTML = ""; box.querySelector(".mfb").textContent = CHARTS[m.s] && CHARTS[m.s].rows === null ? "Historique non chargé (réseau ou bloqueur) : la cotation reste affichée." : "Chargement…"; return; }
+    box.querySelector(".mfb").textContent = "";
+    var s = rows.slice(-66); if (q && liveFresh(q)) s = s.concat([["maintenant", q.v]]);
+    var W = Math.max(260, Math.min(520, Math.round(box.clientWidth || 300))); svg.setAttribute("viewBox", "0 0 " + W + " 120");
+    var mx = Math.max.apply(null, s.map(function (p) { return Math.abs(p[1]); })), Lw = Math.max(36, Math.round((mx >= 1000 ? Math.round(mx).toLocaleString("fr-FR").length : mx.toFixed(2).length) * 6.6 + 10));
+    lineChart(svg, W, 120, [{ pts: s.map(function (p, i) { return [i, p[1]]; }), c: "#f2b01e", w: 1.5 }], { L: Lw, n: s.length, xl: s.map(function (p, i) { return i === 0 || i === s.length - 1 ? (p[0] === "maintenant" ? "" : shortD(p[0])) : ""; }), lab: s.map(function (p) { return p[0] === "maintenant" ? "en direct" : longD(p[0]); }) });
+  }
+  function buildMinis(g, list) {
+    if (!g) return;
+    list.forEach(function (m) {
+      var box = document.createElement("div"); box.className = "mini cmini"; box.setAttribute("aria-label", m.t); box.__m = m;
+      box.innerHTML = '<div class="mh"></div><svg class="mchart" role="img" aria-label="' + esc(m.t) + ' sur 3 mois"></svg><div class="mfb"></div><div class="msrc">3 mois · CNBC (non officiel, différé)</div>';
+      g.appendChild(box); MINI_BOXES.push(box);
+      cnbcHist(m.s).then(function () { drawMini(box); }, function () { drawMini(box); });
+      drawMini(box);
     });
   }
+  function initMinis() { buildMinis($("miniGrid"), MINIS); }
+  function refreshMinis() { MINI_BOXES.forEach(function (b) { if (b.offsetParent) { if (!CHARTS[b.__m.s] || (CHARTS[b.__m.s].rows && Date.now() - CHARTS[b.__m.s].at > 15 * 6e4)) cnbcHist(b.__m.s).then(function () { drawMini(b); }, function () { drawMini(b); }); drawMini(b); } }); }
   var FGR = { "extreme fear": "Peur extrême", fear: "Peur", neutral: "Neutre", greed: "Avidité", "extreme greed": "Avidité extrême" };
   function fgLabel(v) { return v < 25 ? "Peur extrême" : v < 45 ? "Peur" : v <= 55 ? "Neutre" : v < 75 ? "Avidité" : "Avidité extrême"; }
   function renderFG() {
@@ -2965,8 +3001,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   }
 
   /* ---------- Calendrier économique : vues pro (Myfxbook, Investing.com) et terminal ---------- */
-  var CALV = { pro: { src: "https://widgets.myfxbook.com/widgets/calendar.html?lang=fr&impacts=0,1,2,3&symbols=AUD,CAD,CHF,CNY,EUR,GBP,JPY,NZD,USD", t: "Myfxbook", note: "Calendrier Myfxbook en direct : impact (faible, moyen, fort), chiffres réel, prévu et précédent mis à jour à la seconde de la publication, compte à rebours, filtres par devise et par impact, heures dans le fuseau de ton appareil. Vérifié depuis nos serveurs le 31 oct. 2026." },
-    inv: { src: "https://sslecal2.investing.com/?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone,timeselector,filters&countries=5,72,4,35,12,6,25,43,37&calType=week&lang=5", t: "Investing.com", note: "Calendrier Investing.com : filtres par pays et importance, sélecteur de date et de fuseau horaire (choisis GMT+1 pour Kinshasa). Ce widget refuse nos serveurs de test : nous n'avons pas pu vérifier son affichage. S'il reste vide chez toi, utilise la vue Myfxbook." } };
+  var CALV = { pro: { src: "https://widgets.myfxbook.com/widgets/calendar.html?lang=fr&impacts=0,1,2,3&symbols=AUD,CAD,CHF,CNY,EUR,GBP,JPY,NZD,USD", t: "Myfxbook", note: "Calendrier Myfxbook en direct : impact (faible, moyen, fort), chiffres réel, prévu et précédent mis à jour à la seconde de la publication, compte à rebours, filtres par devise et par impact, heures dans le fuseau de ton appareil. Vérifié depuis nos serveurs le 31 oct. 2026." } };
   function showCalView(v) {
     if (!CALV[v] && v !== "term") v = "pro";
     try { localStorage.setItem("mf_calv", v); } catch (e) { }
@@ -3285,7 +3320,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     outils: ["CALCUL", "calculs dans votre navigateur"], pricing: ["DIFFÉRÉ", "Kalshi (robot) et courbes officielles quotidiennes"], analyses: ["DIFFÉRÉ", "flux RSS relus par le robot"], orvol: ["QUOTIDIEN", "GVZ (CBOE) et or"],
     courbe: ["QUOTIDIEN", "Trésor américain"], taylor: ["CALCUL", "chiffres officiels BLS et dot plot"], surprises: ["MENSUEL", "prévisions contre chiffres officiels"], reserves: ["ANNUEL", "Banque mondiale"], dotplot: ["TRIMESTRIEL", "projections officielles de la Fed"],
     bceproj: ["TRIMESTRIEL", "tableau lu automatiquement sur la page officielle de la BCE à chaque nouvelle publication"], regime: ["CALCUL", "règles fixes sur données officielles"], moteurs: ["CALCUL", "données quotidiennes du robot"], cycle: ["MENSUEL", "chiffres officiels BLS"],
-    matin: ["DIFFÉRÉ", "clôtures de la veille et dernier passage du robot"], reactions: ["DIFFÉRÉ", "bougies 1 à 60 min (Yahoo) autour de chaque publication"], marches: ["EN DIRECT", "graphiques TradingView"], taux: ["QUOTIDIEN", "Trésor US, CBOE, BCE"],
+    matin: ["DIFFÉRÉ", "clôtures de la veille et dernier passage du robot"], reactions: ["DIFFÉRÉ", "bougies 1 à 60 min (Yahoo) autour de chaque publication"], marches: ["EN DIRECT", "graphiques maison : historique et cotation CNBC relue toutes les 60 s ; peur et avidité CNN"], taux: ["QUOTIDIEN", "Trésor US, CBOE, BCE"],
     cot: ["HEBDO", "CFTC : positions du mardi, publiées le vendredi"], actus: ["DIFFÉRÉ", "communiqués RSS relus par le robot"], videos: ["DIFFÉRÉ", "flux YouTube relus par le robot"], robot: ["DIFFÉRÉ", "état du dernier passage du robot"],
     flux: ["QUOTIDIEN", "ETF GLD (émetteur), CFTC, Banque mondiale"], multi: ["QUOTIDIEN", "clôtures quotidiennes (Yahoo, Trésor)"], scenarios: ["CALCUL", "règles fixes sur les données du robot"], fstr: ["DIFFÉRÉ", "cotations heure par heure (robot) et fixings BCE"]
   };
@@ -3330,6 +3365,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var m = /^#\/([\w-]*)/.exec(location.hash || ""), id = m ? m[1] : "";
     if (id && !BR.some(function (b) { return b.id === id; })) id = "";
     var apply = function () {
+      if ($("drawer") && $("drawer").classList.contains("on")) closeDetail();
       curBr = id;
       $("hub").classList.toggle("on", !id); $("hub").style.display = id ? "none" : "";
       BR.forEach(function (b) { $("br-" + b.id).classList.toggle("on", b.id === id); });
@@ -3338,6 +3374,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (id === "taux" && !rateMinisDone) { rateMinisDone = true; initRateMinis(); }
       if (id === "or") { initGoldSilver(); renderOrVol(); }
       if (id === "taux") renderPricing();
+      if (id === "taux" || id === "marches") setTimeout(refreshMinis, 80);
       if (!id) renderHub();
       setTimeout(function () { window.dispatchEvent(new Event("resize")); }, 60); /* redessine les graphiques qui étaient cachés */
       countUp(id ? $("br-" + id) : $("hub"));
@@ -3414,7 +3451,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (opts.ref !== undefined) all.push(opts.ref);
     if (!all.length) { svg.innerHTML = ""; return; }
     var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), pad = (hi - lo) * 0.15 || 0.2; lo -= pad; hi += pad;
-    var L = hi - lo > 100 ? 62 : 36, R = 8, T = 10, B = 22, n = opts.n;
+    var L = opts.L || (hi - lo > 100 ? 62 : 36), R = 8, T = 10, B = 22, n = opts.n;
     var sx = function (i) { return L + (W - L - R) * (n > 1 ? i / (n - 1) : 0.5); }, sy = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
     var h = "";
     for (var k = 0; k < 4; k++) { var v = lo + (hi - lo) * k / 3; h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + sy(v).toFixed(1) + '" y2="' + sy(v).toFixed(1) + '" stroke="#1c1a12"/><text x="' + (L - 4) + '" y="' + (sy(v) + 3).toFixed(1) + '" text-anchor="end">' + (hi - lo > 100 ? Math.round(v).toLocaleString("fr-FR") : v.toFixed(2).replace(".", ",")) + "</text>"; }
@@ -3490,14 +3527,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-cv]"), function (b) {
     b.addEventListener("click", function () { cvCmp = b.getAttribute("data-cv"); Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-cv]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); }); renderPricing(); });
   });
-  function initRateMinis() {
-    var g = $("rateMinis");
-    [{ t: "US 2 ans", s: "TVC:US02Y" }, { t: "Allemagne 2 ans", s: "TVC:DE02Y" }, { t: "US 10 ans", s: "TVC:US10Y" }, { t: "Allemagne 10 ans", s: "TVC:DE10Y" }].forEach(function (m) {
-      var box = document.createElement("div"); box.className = "mini"; g.appendChild(box);
-      tvEmbed(box, "embed-widget-mini-symbol-overview.js", { symbol: m.s, width: "100%", height: 190, locale: "fr", dateRange: "1M", colorTheme: "dark", isTransparent: true, autosize: false, largeChartUrl: "" }, m.t);
-      box.className = "mini";
-    });
-  }
+  function initRateMinis() { buildMinis($("rateMinis"), RATE_MINIS); }
 
   /* ---------- Analyses de banques ---------- */
   var anF = "all";
@@ -4994,7 +5024,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       h += '<div class="li' + (liveFresh(q) ? "" : " stale") + '" data-det="live:' + s + '"><b>' + esc(d[1]) + "</b><span>" + fmt(q.v, d[2]) + (d[3] === "%" ? " %" : "") + "</span>" + (ch !== null ? '<small class="' + (ch > 0 ? "up" : ch < 0 ? "down" : "") + '">' + (d[3] === "%" ? (ch >= 0 ? "+" : "−") + Math.abs(Math.round(ch)) + " pb" : pct(ch)) + "</small>" : "") + "</div>";
     });
     el.innerHTML = h;
-    liveOverlay();
+    liveOverlay(); if (typeof refreshMinis === "function") refreshMinis();
     renderBrStatus();
   }
   /* Les panneaux qui ont un équivalent en direct l'affichent (avec l'heure) */
