@@ -1544,7 +1544,7 @@ def do_cb_news(data):
             if not re.search(rx, t):
                 continue
             m = re.search(r"\b(raises?|hikes?|lifts?|increases?|cuts?|lowers?|reduces?|holds?|keeps?|leaves?|maintains?|stays?|unchanged)\b.{0,70}?(-?\d{1,2}(?:\.\d{1,2})?)\s?(?:%|per ?cent)", t, re.I)
-            if not m or re.search(r"\b(expect|expected|seen|likely|could|may|might|forecast|poll|preview|bets?|odds|will)\b", t, re.I):
+            if not m or re.search(r"\b(expect|expected|seen|likely|could|may|might|forecast|poll|preview|bets?|odds|will|set to|ahead|eyes|weighs|to (?:hold|raise|hike|cut|keep))\b", t, re.I):
                 continue  # on ne garde que les décisions annoncées, pas les prévisions
             try:
                 d = datetime.strptime((it.findtext("pubDate") or "")[:25], "%a, %d %b %Y %H:%M:%S").strftime("%Y-%m-%d")
