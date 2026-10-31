@@ -714,13 +714,12 @@ def nasdaq_shares(tick):
     url = "https://api.nasdaq.com/api/quote/%s/summary?assetclass=etf" % tick
     j = json.loads(http("nq_%s.json" % tick, url, tries=2, timeout=20, headers={"Accept": "application/json, text/plain, */*", "Origin": "https://www.nasdaq.com", "Referer": "https://www.nasdaq.com/"}))
     sd = ((j.get("data") or {}).get("summaryData") or {})
-    DIAG["nq_" + tick] = ",".join(sd.keys())[:200]
-    for k, v in sd.items():
-        if "share" in k.lower() and "outstanding" in k.lower():
-            val = num(re.sub(r"[^\d.]", "", str((v or {}).get("value", ""))))
-            if val:
-                return val
-    raise ValueError("parts en circulation absentes")
+    g = lambda k: num(re.sub(r"[^\d.]", "", str((sd.get(k) or {}).get("value", "")))) if sd.get(k) else None
+    aum, mcap, pc = g("AUM"), g("MarketCap"), g("PreviousClose")
+    if not aum and not mcap:
+        DIAG["nq_" + tick] = json.dumps(sd)[:300]
+        raise ValueError("encours (AUM) absent")
+    return {"aum": aum, "mcap": mcap, "pc": pc, "raw": str((sd.get("AUM") or {}).get("value", ""))[:30]}
 
 
 def do_goldetf(data):
@@ -739,7 +738,7 @@ def do_goldetf(data):
         note("etf.gld", "Or détenu par l'ETF GLD (SPDR, archive officielle, tonnes)", "daily", True, arc[-1][0], url="https://www.spdrgoldshares.com/usa/historical-data/")
         ok_any = True
     except Exception as e:
-        note("etf.gld", "Or détenu par l'ETF GLD (SPDR, archive officielle, tonnes)", "daily", False, err=e, url="https://www.spdrgoldshares.com/usa/historical-data/")
+        note("etf.gld", "Or détenu par l'ETF GLD (SPDR, archive officielle, tonnes)", "nofree", False, err="le site de l'émetteur refuse le robot (PDF ou 404) : remplacé par l'encours Nasdaq", url="https://www.spdrgoldshares.com/usa/historical-data/")
     try:
         sn = ishares_snapshot("239561", "ishares-gold-trust-fund", "IAU")
         lst = st["snap"].setdefault("IAU", [])
@@ -751,11 +750,11 @@ def do_goldetf(data):
         note("etf.iau", "ETF IAU (iShares) : parts et or détenu, mémorisés chaque jour", "daily", True, sn["d"], url="https://www.ishares.com/us/products/239561/ishares-gold-trust-fund")
         ok_any = True
     except Exception as e:
-        note("etf.iau", "ETF IAU (iShares) : parts et or détenu, mémorisés chaque jour", "daily", False, err=e, url="https://www.ishares.com/us/products/239561/ishares-gold-trust-fund")
+        note("etf.iau", "ETF IAU (iShares) : parts et or détenu, mémorisés chaque jour", "nofree", False, err="le site d'iShares refuse le robot : remplacé par l'encours Nasdaq", url="https://www.ishares.com/us/products/239561/ishares-gold-trust-fund")
     # Parts en circulation de GLD et IAU (Nasdaq) : mémorisées chaque jour ; flux = variation des parts × cours
     for tick in ("GLD", "IAU"):
         try:
-            sh = nasdaq_shares(tick)
+            sh = nasdaq_shares(tick)  # encours (AUM) et capitalisation : flux = variation de l'encours non expliquée par le prix
             px = None
             try:
                 rj = json.loads(http("yq_%s.json" % tick, "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=5d" % tick, tries=1, timeout=15))
@@ -763,16 +762,16 @@ def do_goldetf(data):
             except Exception:
                 pass
             lst = st["snap"].setdefault(tick + "_nq", [])
-            row = {"d": TODAY, "shares": sh, "px": px}
+            row = {"d": TODAY, "aum": sh["aum"], "mcap": sh["mcap"], "pc": sh["pc"], "px": px, "raw": sh["raw"]}
             if lst and lst[-1]["d"] == TODAY:
                 lst[-1] = row
             else:
                 lst.append(row)
             st["snap"][tick + "_nq"] = lst[-500:]
-            note("etf.nq." + tick, "ETF %s : parts en circulation (Nasdaq), mémorisées chaque jour" % tick, "daily", True, TODAY, url="https://www.nasdaq.com/market-activity/etf/%s" % tick.lower())
+            note("etf.nq." + tick, "ETF %s : encours et capitalisation (Nasdaq), mémorisés chaque jour" % tick, "daily", True, TODAY, url="https://www.nasdaq.com/market-activity/etf/%s" % tick.lower())
             ok_any = True
         except Exception as e:
-            note("etf.nq." + tick, "ETF %s : parts en circulation (Nasdaq), mémorisées chaque jour" % tick, "daily", False, err=e, url="https://www.nasdaq.com/market-activity/etf/%s" % tick.lower())
+            note("etf.nq." + tick, "ETF %s : encours et capitalisation (Nasdaq), mémorisés chaque jour" % tick, "daily", False, err=e, url="https://www.nasdaq.com/market-activity/etf/%s" % tick.lower())
     st["generated"] = NOW.strftime("%Y-%m-%dT%H:%M:%SZ")
     with open(OUT_ETF, "w", encoding="utf-8") as f:
         json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
