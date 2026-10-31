@@ -3527,6 +3527,12 @@ def ecb_rows(fname, path, timeout=60):
     return out
 
 
+def month_end(ym):
+    """« 2026-08 » → « 2026-08-31 » : une donnée mensuelle est datée à la fin de son mois."""
+    y, m = int(ym[:4]), int(ym[5:7])
+    return (date(y + (m == 12), m % 12 + 1, 1) - timedelta(days=1)).isoformat()
+
+
 def pct_of(vals, v):
     """Rang centile (0-100) de v dans vals."""
     vals = [x for x in vals if x is not None]
@@ -3602,7 +3608,7 @@ def do_euro(data):
         for c, _ in EZ_CC:
             s = by.get(c) or {}
             L[c] = [(m, round((s[m] - de[m]) * 100, 1)) for m in sorted(s) if m in de]
-        note("ez.irs", "Taux longs officiels de convergence, 11 pays (BCE, mensuel)", "monthly", True, max(de) + "-01" if de else None, url="https://data.ecb.europa.eu/data/datasets/IRS")
+        note("ez.irs", "Taux longs officiels de convergence, 11 pays (BCE, mensuel)", "monthly", True, month_end(max(de)) if de else None, url="https://data.ecb.europa.eu/data/datasets/IRS")
     except Exception as e:
         note("ez.irs", "Taux longs officiels de convergence (BCE, mensuel)", "monthly", False, err=e, url="https://data.ecb.europa.eu/data/datasets/IRS")
     # 4) contrôle croisé du Bund : Bundesbank (courbe ajustée, officielle)
@@ -3739,7 +3745,7 @@ def do_frag(data):
             if cc in ("DE", "IT", "ES", "FR"):
                 T[cc]["hist"] = [[d, v] for d, v in vals]
         F["tgb"] = T
-        note("ecb.tgb", "Soldes TARGET des banques centrales nationales (BCE, mensuel)", "monthly", True, max(t["d"] for t in T.values()) + "-01", url="https://data.ecb.europa.eu/data/datasets/TGB")
+        note("ecb.tgb", "Soldes TARGET des banques centrales nationales (BCE, mensuel)", "monthly", True, month_end(max(t["d"] for t in T.values())), url="https://data.ecb.europa.eu/data/datasets/TGB")
     except Exception as e:
         note("ecb.tgb", "Soldes TARGET (BCE, mensuel)", "monthly", False, err=e, url="https://data.ecb.europa.eu/data/datasets/TGB")
     # Règle transparente du terminal (points) : aucune vérité, chaque critère est affiché
@@ -3903,7 +3909,7 @@ def do_deficits(data):
         prev = "%d%s" % (int(lm[:4]) - 1, lm[4:])
         D["uk"] = {"d": lm, "m": round(ms[-1][1] / 1000.0, 1), "ytd": fytd(lm), "pytd": fytd(prev) if any(d == prev for d, _ in ms) else None,
                    "r12": round(sum(v for _, v in ms[-12:]) / 1000.0, 1)}
-        note("ons.psnb", "Emprunt net du secteur public britannique, mensuel (ONS)", "monthly", True, lm + "-01", url="https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance")
+        note("ons.psnb", "Emprunt net du secteur public britannique, mensuel (ONS)", "monthly", True, month_end(lm), url="https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance")
     except Exception as e:
         note("ons.psnb", "Emprunt net du secteur public britannique (ONS)", "monthly", False, err=e, url="https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance")
     data["deficits"] = D
