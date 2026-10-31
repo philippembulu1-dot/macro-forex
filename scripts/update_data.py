@@ -2828,6 +2828,7 @@ GEO_TYPES = {"MIL", "REB", "INS", "SEP", "UAF", "SPY"}
 GEO_WORDS = ("guerre", "frappe", "missile", "sanction", "cessez", "attaque", "blocus", "ormuz", "taïwan", "taiwan", "armée", "militaire",
              "nucléaire", "drone", "conflit", "otan", "iran", "israël", "israel", "russie", "ukraine", "chine", "gaza", "liban", "houthi",
              "mer rouge", "corée", "pétrole", "riposte", "offensive", "bombard", "troupes", "géopolit", "tension", "terror", "coup d'état", "venezuela")
+GEO_NOT = ("basket", "football", "nba", "ligue 1", "match", "contre-attaque", "tennis", "rugby", "mercato", "cinéma", "série")
 ADV_FR = {"terrorism": "terrorisme", "unrest": "troubles civils", "civil unrest": "troubles civils", "crime": "criminalité",
           "kidnapping": "enlèvements", "armed conflict": "conflit armé", "wrongful detention": "détentions arbitraires",
           "health": "santé", "natural disasters": "catastrophes naturelles", "hostage taking": "prises d'otages",
@@ -3134,7 +3135,8 @@ def do_geo(data):
         seen, out = set(), []
         for it in items:
             key = it["t"][:60].lower()
-            if key in seen or not any(w in it["t"].lower() for w in GEO_WORDS):
+            low = it["t"].lower()
+            if key in seen or not any(w in low for w in GEO_WORDS) or any(w in low for w in GEO_NOT):
                 continue
             seen.add(key)
             out.append(it)
