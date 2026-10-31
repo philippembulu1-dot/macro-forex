@@ -847,6 +847,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     <section class="panel" id="reserves">
       <div class="ph"><h2>Réserves des banques centrales et or</h2><span class="meta" id="rsMeta">Banque mondiale</span></div>
       <div class="tbl"><table id="rsTbl"></table></div>
+      <p class="hint" id="rsNow" style="max-width:none;padding:8px 12px 0"></p>
       <p class="note">Réserves officielles en milliards de dollars (dernière année publiée par la Banque mondiale). Or = réserves totales − réserves hors or, valorisé au prix du marché : sa part monte quand les banques centrales achètent de l'or ou quand son prix grimpe. Données annuelles. Voir aussi la carte du monde, modes « Réserves ».</p>
     </section>
 
@@ -2090,7 +2091,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function loadSeas() {
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "seasonal.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.series) throw new Error("format"); return j; }); }); });
-    return p.then(function (j) { SEAS = j; }).catch(function (e) { seasErr = String(e && e.message || e); }).then(renderSeas);
+    return p.then(function (j) { SEAS = j; }).catch(function (e) { seasErr = String(e && e.message || e); }).then(function () { renderSeas(); renderReserves(); });
   }
   function renderSeas() {
     var sel = $("seasSel");
@@ -3116,7 +3117,15 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       return "<tr><td>" + (i + 1) + ". <b>" + esc(nm(r.k)) + "</b> <small>" + r.o.y + '</small></td><td class="r num">' + fmtN(r.o.tot, 0) + '</td><td class="r num">' + (r.o.gold === null ? "–" : fmtN(r.o.gold, 0)) + '</td><td class="r num">' + (r.o.gp === null ? "–" : fmt(r.o.gp, 1) + " %") + '</td><td class="r num col-core ' + (r.o.ch === null ? "" : cls(r.o.ch)) + '">' + (r.o.ch === null ? "–" : pct(r.o.ch)) + "</td></tr>";
     }).join("") + "</tbody>";
     var ss = AUTO.sources.filter(function (s) { return /^wb\.res/.test(s.id); });
-    $("rsMeta").innerHTML = "Banque mondiale · " + (ss.length && ss[0].asof ? "jusqu'à " + ss[0].asof.slice(0, 4) + " " + badge(ss.every(function (s) { return s.ok; }) ? "ok" : "ko") : "");
+    var yr = ss.length && ss[0].asof ? ss[0].asof.slice(0, 4) : "";
+    $("rsMeta").innerHTML = "Banque mondiale · chiffres annuels · fin " + yr + " " + (ss.every(function (s) { return s.ok; }) ? badge("ok", "dernière année publiée") : badge("ko"));
+    /* Depuis la dernière année publiée : variation du prix de l'or (moyennes mensuelles Banque mondiale) */
+    var gx = SEAS && SEAS.series && SEAS.series.XAUUSD, txt = "";
+    if (gx && gx.cur && gx.asof && yr && +gx.asof.slice(0, 4) === +yr + 1) {
+      var m = 1, last = -1; gx.cur.forEach(function (v, i) { if (v !== null && v !== undefined) { m *= 1 + v / 100; last = i; } });
+      if (last >= 0) txt = "Ces chiffres s'arrêtent à fin " + yr + " (la Banque mondiale publie une fois par an ; la Russie est encore à 2024). Depuis, le prix moyen de l'or est passé de décembre " + yr + " à " + MOIS[last] + " " + gx.asof.slice(0, 4) + " : <b class=\"" + cls(m - 1) + "\">" + pct((m - 1) * 100) + "</b>. À quantité d'or inchangée, la colonne « dont or » a donc bougé à peu près d'autant ; les achats ou ventes d'or de " + gx.asof.slice(0, 4) + " ne sont pas encore comptés. ";
+    }
+    $("rsNow").innerHTML = txt + "La « variation sur 1 an » vient surtout du prix de l'or : les États-Unis, l'Allemagne ou l'Italie n'ont presque pas acheté d'or, leurs réserves ont monté parce que l'or a monté en " + yr + ".";
     /* modes de la carte du monde */
     var W = AUTO.world = AUTO.world || {};
     Object.keys(R).forEach(function (k) { var o = resOf(R[k]); if (!o) return; W[k] = W[k] || {}; W[k].res = [o.tot, String(o.y)]; if (o.gp !== null) W[k].resg = [o.gp, String(o.y)]; });
