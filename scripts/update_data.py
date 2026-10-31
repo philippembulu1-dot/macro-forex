@@ -1674,7 +1674,15 @@ def move_after(bars, step, t, mins, rate=False):
 
 def bls_schedule():
     """Dates et heures officielles des publications IPC et emploi (calendrier BLS, ~2 ans)."""
-    txt = http("bls.ics", "https://www.bls.gov/schedule/news_release/bls.ics", tries=2, timeout=25)
+    txt = None
+    for hd in ({"User-Agent": "macro-forex robot (https://github.com/philippembulu1-dot/macro-forex)"}, None):  # le BLS demande un robot identifié
+        try:
+            txt = http("bls.ics", "https://www.bls.gov/schedule/news_release/bls.ics", tries=1, timeout=25, headers=hd)
+            break
+        except Exception as e:
+            last = e
+    if txt is None:
+        raise last
     evs = []
     for blk in txt.split("BEGIN:VEVENT")[1:]:
         summ = re.search(r"SUMMARY:(.*)", blk)
@@ -1797,10 +1805,38 @@ def do_reactions(data):
          True, TODAY, url="https://finance.yahoo.com/")
 
 
+# ---------------------------------------------------------------- Clôtures quotidiennes multi-actifs (résumé « Ce matin »)
+DAILY = [("gold", "GC=F", "Or (contrat à terme)"), ("silver", "SI=F", "Argent"), ("nq", "NQ=F", "Nasdaq 100 (contrat à terme)"), ("es", "ES=F", "S&P 500 (contrat à terme)"),
+         ("dxy", "DX-Y.NYB", "Dollar (DXY)"), ("us10", "^TNX", "Taux US 10 ans"), ("eur", "EURUSD=X", "EUR/USD"), ("gbp", "GBPUSD=X", "GBP/USD"),
+         ("jpy", "JPY=X", "USD/JPY"), ("oil", "CL=F", "Pétrole WTI"), ("vix", "^VIX", "VIX"), ("btc", "BTC-USD", "Bitcoin")]
+
+
+def do_daily(data):
+    out, bad = {}, []
+    for key, sym, name in DAILY:
+        try:
+            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=6mo" % urllib.parse.quote(sym)
+            r = json.loads(http("yd_%s.json" % key, url, tries=2, timeout=20))["chart"]["result"][0]
+            q = r["indicators"]["quote"][0]
+            rows = [[datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), round(c, 5)] for t, c in zip(r.get("timestamp") or [], q.get("close") or []) if c is not None]
+            if len(rows) < 25:
+                raise ValueError("trop peu de clôtures")
+            out[key] = {"n": name, "sym": sym, "c": rows[-130:], "live": (r.get("meta") or {}).get("regularMarketPrice")}
+        except Exception as e:
+            bad.append(key)
+            DIAG["daily_" + key] = fr_err(e)[:120]
+            if (PREVIOUS.get("daily") or {}).get(key):
+                out[key] = PREVIOUS["daily"][key]
+    data["daily"] = out
+    last = max((v["c"][-1][0] for v in out.values()), default=None)
+    note("yahoo.daily", "Clôtures quotidiennes : or, Nasdaq, S&P, dollar, taux, devises, pétrole (Yahoo Finance, non officiel) %d/%d" % (len(DAILY) - len(bad), len(DAILY)),
+         "daily", len(bad) < len(DAILY), last, err=("échec : " + ", ".join(bad)) if bad else None, url="https://finance.yahoo.com/")
+
+
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
