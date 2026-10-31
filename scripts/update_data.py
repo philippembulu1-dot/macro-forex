@@ -565,11 +565,102 @@ def bis_rate(cc):
                 raise ValueError("aucune valeur dans la réponse")
             res = last2(obs)
             res["prev"] = next((v for d, v in reversed(obs) if v != res["v"]), None)  # dernier niveau différent = avant la dernière décision
+            chg = None
+            for d, v in reversed(obs):
+                if v != res["v"]:
+                    break
+                chg = d
+            res["since"] = chg if res["prev"] is not None else None  # premier jour au niveau actuel (dans la fenêtre lue)
             res["via"] = "BRI (WS_CBPOL)"
             return res
         except Exception as e:
             last = e
     raise last
+
+
+BIS_CB = [("US", "USD", "Fed"), ("XM", "EUR", "BCE"), ("GB", "GBP", "BoE"), ("JP", "JPY", "BoJ"), ("CH", "CHF", "BNS"), ("AU", "AUD", "RBA"), ("CA", "CAD", "BoC"), ("NZ", "NZD", "RBNZ")]
+
+
+def do_policy(data):
+    """Taux directeurs des 8 banques centrales, source unique et officielle : BRI (WS_CBPOL, quotidien, quelques jours de retard)."""
+    out = {}
+    for cc, cur, name in BIS_CB:
+        try:
+            r = bis_rate(cc)
+            r["cb"] = name
+            out[cur] = r
+        except Exception as e:
+            DIAG["bis_" + cc] = fr_err(e)[:120]
+    data["policy"] = out
+    newest = max((v["asof"] for v in out.values()), default=None)
+    note("bis.policy", "Taux directeurs des 8 banques centrales (BRI) %d/8" % len(out), "daily", len(out) > 0, newest,
+         err=None if out else "aucune réponse", url="https://data.bis.org/topics/CBPOL")
+
+
+# Cotations différées (Yahoo, bougies d'1 h sur 7 jours) : or, dollar et les 7 paires du G8
+INTRA = [("gold", "GC=F"), ("dxy", "DX-Y.NYB"), ("EURUSD", "EURUSD=X"), ("GBPUSD", "GBPUSD=X"), ("USDJPY", "JPY=X"), ("USDCHF", "CHF=X"),
+         ("USDCAD", "CAD=X"), ("AUDUSD", "AUDUSD=X"), ("NZDUSD", "NZDUSD=X")]
+
+
+def do_intraday(data):
+    out, bad = {}, []
+    for key, sym in INTRA:
+        try:
+            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=60m&range=8d" % urllib.parse.quote(sym)
+            r = json.loads(http("yi_%s.json" % key, url, tries=2, timeout=20))["chart"]["result"][0]
+            q, m = r["indicators"]["quote"][0], r.get("meta") or {}
+            rows = [[datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), round(c, 6)] for t, c in zip(r.get("timestamp") or [], q.get("close") or []) if c is not None]
+            if len(rows) < 20:
+                raise ValueError("trop peu de bougies")
+            p_, t_ = m.get("regularMarketPrice"), m.get("regularMarketTime")
+            out[key] = {"sym": sym, "c": rows[-170:], "p": p_ if p_ else rows[-1][1],
+                        "t": datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%dT%H:%MZ") if t_ else rows[-1][0]}
+        except Exception as e:
+            bad.append(key)
+            DIAG["intra_" + key] = fr_err(e)[:120]
+    data["intraday"] = out
+    note("yahoo.intraday", "Cotations différées heure par heure : or, DXY, 7 paires (Yahoo Finance, non officiel) %d/%d" % (len(out), len(INTRA)),
+         "daily", len(out) > 0, max((v["t"] for v in out.values()), default=None), err=("échec : " + ", ".join(bad)) if bad else None, url="https://finance.yahoo.com/")
+
+
+def do_gld(data):
+    """Or détenu par le fonds GLD (SPDR Gold Shares), en tonnes : le plus grand ETF d'or, publié chaque jour par l'émetteur."""
+    url = "https://www.spdrgoldshares.com/assets/dynamic/GLD/GLD_US_archive_EN.csv"
+    try:
+        txt = http("gld.csv", url, tries=2, timeout=40)
+        rows = list(csv.reader(io.StringIO(txt)))
+        hi, head = None, None
+        for i, r in enumerate(rows[:15]):
+            if r and any("tonnes" in c.lower() for c in r):
+                hi, head = i, [c.strip().lower() for c in r]
+                break
+        if head is None:
+            DIAG["gld_head"] = txt[:200]
+            raise ValueError("colonne des tonnes absente")
+        ct = next(i for i, c in enumerate(head) if "tonnes" in c)
+        out = []
+        for r in rows[hi + 1:]:
+            if len(r) <= ct or not r[0].strip():
+                continue
+            d = None
+            for fmt_ in ("%d-%b-%Y", "%d-%b-%y", "%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y"):
+                try:
+                    d = datetime.strptime(r[0].strip(), fmt_).strftime("%Y-%m-%d")
+                    break
+                except ValueError:
+                    pass
+            v = num(re.sub(r"[^\d.\-]", "", r[ct]))
+            if d and v:
+                out.append([d, round(v, 2)])
+        out.sort()
+        if len(out) < 20:
+            raise ValueError("trop peu de lignes")
+        data["gld"] = {"t": out[-260:]}
+        note("gld", "Or détenu par l'ETF GLD (SPDR, tonnes)", "daily", True, out[-1][0], url="https://www.spdrgoldshares.com/usa/historical-data/")
+    except Exception as e:
+        if PREVIOUS.get("gld"):
+            data["gld"] = PREVIOUS["gld"]
+        note("gld", "Or détenu par l'ETF GLD (SPDR, tonnes)", "daily", False, err=e, url="https://www.spdrgoldshares.com/usa/historical-data/")
 
 
 def rba_or_bis():
@@ -1240,7 +1331,7 @@ def snap(series_by_tenor, labels):
     if not dates:
         return None
     out = {"tenors": labels}
-    for key, back in (("now", 0), ("w1", 5), ("m1", 21)):
+    for key, back in (("now", 0), ("w1", 5), ("m1", 21), ("m3", 63)):
         if len(dates) <= back:
             continue
         d = dates[-1 - back]
@@ -1887,7 +1978,7 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("gld", do_gld)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
