@@ -88,11 +88,22 @@ def yahoo_daily(sym):
 
 
 def yahoo_hourly(sym):
-    url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=60m&range=730d" % urllib.parse.quote(sym)
-    j = json.loads(http(url))
-    r = j["chart"]["result"][0]
-    q = r["indicators"]["quote"][0]
-    return [(t, h, l, c) for t, h, l, c in zip(r["timestamp"], q["high"], q["low"], q["close"]) if None not in (h, l, c)]
+    last = None
+    for host in ("query2", "query1"):
+        for q in ("interval=60m&range=730d", "interval=60m&range=1y", "interval=60m&range=6mo"):
+            try:
+                j = json.loads(http("https://%s.finance.yahoo.com/v8/finance/chart/%s?%s" % (host, urllib.parse.quote(sym), q), tries=1))
+                r = j["chart"]["result"][0]
+                qq = r["indicators"]["quote"][0]
+                out = [(t, h, l, c) for t, h, l, c in zip(r["timestamp"], qq["high"], qq["low"], qq["close"]) if None not in (h, l, c)]
+                if len(out) < 300:
+                    raise ValueError("trop peu de bougies horaires")
+                log("yahoo horaire", host, q)
+                return out
+            except Exception as e:  # noqa
+                last = e
+                time.sleep(6)
+    raise last
 
 
 def cot_gold():
@@ -295,10 +306,13 @@ def main():
             r["position"] = None
         return r
 
-    def S_of(r):
+    W2 = {"taux_reels": 0.25, "fed": 0.25, "dollar": 0.10, "flux": 0.15, "risque": 0.15, "position": 0.10}
+
+    def S_of(r, w=None):
         if any(r[k] is None for k in ("taux_reels", "fed", "dollar", "risque", "position")):
             return None
-        return sum(W[k] * r[k] for k in W)
+        w = w or W
+        return sum(w[k] * r[k] for k in w)
 
     ma200 = [None] * N
     acc = 0.0
@@ -314,7 +328,7 @@ def main():
         r20, r5 = notes(i, 20), notes(i, 5)
         f20 = (close[i + 20] / close[i] - 1) * 100 if i + 20 < N else None
         f5 = (close[i + 5] / close[i] - 1) * 100 if i + 5 < N else None
-        rows.append({"d": dates[i], "i": i, "n20": r20, "n5": r5, "S20": S_of(r20), "S5": S_of(r5), "f20": f20, "f5": f5,
+        rows.append({"d": dates[i], "i": i, "n20": r20, "n5": r5, "S20": S_of(r20), "S5": S_of(r5), "V20": S_of(r20, W2), "V5": S_of(r5, W2), "f20": f20, "f5": f5,
                      "trend": None if ma200[i] is None else (close[i] > ma200[i])})
 
     periods = (("2006-2021", "2006", "2022"), ("2022-2026", "2022", "2100"), ("tout", "2006", "2100"))
@@ -350,7 +364,7 @@ def main():
     sc = {}
     for per, lo, hi in periods:
         sc[per] = {}
-        for horizon, sk, fk in (("20j", "S20", "f20"), ("5j", "S5", "f5")):
+        for horizon, sk, fk in (("20j", "S20", "f20"), ("5j", "S5", "f5"), ("20j_variante", "V20", "f20"), ("5j_variante", "V5", "f5")):
             rr = [r for r in sel(lo, hi, fk) if r[sk] is not None]
             out = {}
             for th in (0.25, 0.5):
@@ -424,6 +438,7 @@ def main():
     r20, r5 = notes(i, 20), notes(i, 5)
     cur = {"date": dates[i], "or": round(close[i], 1), "notes_20j": r20, "S20": None if S_of(r20) is None else round(S_of(r20), 3),
            "notes_5j": r5, "S5": None if S_of(r5) is None else round(S_of(r5), 3),
+           "V20": None if S_of(r20, W2) is None else round(S_of(r20, W2), 3), "V5": None if S_of(r5, W2) is None else round(S_of(r5, W2), 3),
            "mesures": {"tips10": val("dfii10", i), "tips10_var20j_pb": None if chg("dfii10", i, 20) is None else round(chg("dfii10", i, 20) * 100),
                        "tips10_var5j_pb": None if chg("dfii10", i, 5) is None else round(chg("dfii10", i, 5) * 100),
                        "us2a": val("dgs2", i), "us2a_var20j_pb": None if chg("dgs2", i, 20) is None else round(chg("dgs2", i, 20) * 100),
