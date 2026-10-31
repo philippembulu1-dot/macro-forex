@@ -311,6 +311,21 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .mapwrap svg { width: 100%; height: auto; display: block; background: #08080a; }
 .mapwrap path { stroke: #060607; stroke-width: .5; cursor: pointer; }
 .mapwrap path:hover, .mapwrap path.on { stroke: var(--amber); stroke-width: 1.4; }
+.mapouter { position: relative; }
+.mappop { position: absolute; z-index: 30; max-height: 74%; overflow-y: auto; background: #0e0e11; border: 1px solid var(--amber); box-shadow: 0 10px 34px rgba(0,0,0,.65); padding: 12px 14px 10px; font-size: 12px; animation: popin .14s ease-out; }
+.mappop.sheet { position: relative; left: auto !important; top: auto !important; width: auto !important; max-height: 70vh; margin: 6px 8px 0; }
+@keyframes popin { from { opacity: 0; transform: translateY(4px) scale(.98); } to { opacity: 1; transform: none; } }
+.mappop { scroll-margin-top: 70px; } .mappop .kv { grid-template-columns: minmax(110px, 48%) minmax(0, 1fr); } .mappop .kv b { text-align: right; overflow-wrap: anywhere; }
+.pop-x { position: sticky; top: 0; float: right; background: none; border: 0; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.pop-x:hover { color: var(--amber); }
+.pop-t { font: 600 15px var(--font-mono); color: var(--amber); padding-right: 22px; }
+.pop-sub { color: var(--muted); font-size: 11px; margin: 2px 0 8px; }
+.pop-lect { border-left: 3px solid var(--amber); background: #17140b; padding: 6px 9px; margin-bottom: 8px; line-height: 1.45; }
+.pop-sec { border-top: 1px solid var(--line2); padding-top: 7px; margin-top: 7px; }
+.pop-h { font: 600 10px var(--font-mono); color: var(--amber); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.pop-m { font: 10px var(--font-mono); color: var(--muted); margin: 6px 0 2px; }
+.pop-sec p { margin: 4px 0; } .pop-sec .geo-news { padding-left: 16px; }
+.pop-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 .geo-alerts { padding: 8px 12px 0; display: grid; gap: 4px; }
 .galert { font-size: 12px; padding: 6px 10px; border-left: 3px solid #ff5c4f; background: #1a0f0e; }
 .galert.ok { border-color: #3ddc97; background: #0e1a14; } .galert.note, .galert.pm { border-color: #f2b01e; background: #1a160b; } .galert.ship { border-color: #5fb4ff; background: #0d141c; }
@@ -789,7 +804,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         <label class="chk" for="mapInd">Couleur <select id="mapInd"></select></label>
         <label class="chk" for="mapCty">Pays <select id="mapCty"><option value="">— choisir —</option></select></label>
       </div>
-      <div class="mapwrap" id="mapBox"></div>
+      <div class="mapouter"><div class="mapwrap" id="mapBox"></div><div id="mapPop" class="mappop" hidden></div></div>
       <div class="legend" id="mapLeg"></div>
       <div class="cinfo" id="mapInfo"><p class="hint">Touchez un pays (ou choisissez-le dans la liste) pour voir ses chiffres.</p></div>
       <div id="mapLive"></div>
@@ -2506,10 +2521,13 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     $("mapCty").addEventListener("change", function () { mapSel = this.value; if (MAPIND[+$("mapInd").value][0] === "ship") $("mapInd").value = "1"; drawMap(); });
     $("mapBox").addEventListener("click", function (e) {
       var gh = e.target.closest && e.target.closest("[data-h]");
-      if (gh) { geoPt = +gh.getAttribute("data-h"); mapSel = ""; drawMap(); return; }
+      if (gh) { geoPt = +gh.getAttribute("data-h"); mapSel = ""; drawMap(); popOpen(popHot(geoPt), e); return; }
+      var gq = e.target.closest && e.target.closest("[data-q]");
+      if (gq) { popOpen(popQuake(+gq.getAttribute("data-q")), e); return; }
       var pt = e.target.closest && e.target.closest("[data-p]");
-      if (pt) { mapPt = pt.getAttribute("data-p"); drawMap(); return; }
-      var a = e.target.getAttribute && e.target.getAttribute("data-c"); if (a) { mapSel = a; geoPt = -1; $("mapCty").value = a; drawMap(); }
+      if (pt) { mapPt = pt.getAttribute("data-p"); drawMap(); popOpen(popStrait(mapPt), e); return; }
+      var a = e.target.getAttribute && e.target.getAttribute("data-c"); if (a) { mapSel = a; geoPt = -1; $("mapCty").value = a; drawMap(); popOpen(popCountry(a), e); return; }
+      popClose();
     });
     $("mapInfo").addEventListener("click", function (e) {
       var ez = e.target.closest && e.target.closest("button[data-ezgo]"); if (ez) { openPanel(ez.getAttribute("data-ezgo")); return; }
@@ -2655,7 +2673,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     }).join("");
     var marks = "";
     if (geoLay.ship && AUTO && AUTO.shipping) Object.keys(WMAP.pts || {}).forEach(function (n) { var x = straitStats(n), p = WMAP.pts[n]; if (x && x.ch !== null && x.ch <= -10) marks += '<g data-p="' + esc(n) + '" style="cursor:pointer"><rect x="' + (p[0] - 4) + '" y="' + (p[1] - 4) + '" width="8" height="8" transform="rotate(45 ' + p[0] + " " + p[1] + ')" fill="none" stroke="#5fb4ff" stroke-width="1.8"><title>' + esc(shipName(n).fr) + " : trafic " + pct(x.ch) + " sur 7 jours</title></rect></g>"; });
-    if (geoLay.quake) (G.quakes || []).forEach(function (q) { var p = proj(q[0], q[1]); if (p) marks += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (2 + (q[2] - 5) * 3).toFixed(1) + '" fill="none" stroke="#b48cff" stroke-width="1.4"><title>Séisme M' + fmt(q[2], 1) + " : " + esc(q[3]) + "</title></circle>"; });
+    if (geoLay.quake) (G.quakes || []).forEach(function (q, qi) { var p = proj(q[0], q[1]); if (p) marks += '<circle data-q="' + qi + '" style="cursor:pointer" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (2 + (q[2] - 5) * 3).toFixed(1) + '" fill="none" stroke="#b48cff" stroke-width="1.4"><title>Séisme M' + fmt(q[2], 1) + " : " + esc(q[3]) + "</title></circle>"; });
     if (geoLay.hot) (G.hot || []).forEach(function (h, i) { var p = proj(h[0], h[1]); if (!p) return; var r = Math.min(9, 2.5 + Math.sqrt(h[4] + 2 * h[5]) / 1.6), col = +h[3] >= 18 ? "#ff5c4f" : "#f2b01e"; marks += '<circle data-h="' + i + '" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + col + '" fill-opacity=".7" stroke="' + (i === geoPt ? "#ece8dc" : "#060607") + '" stroke-width="' + (i === geoPt ? 2 : .6) + '" style="cursor:pointer"><title>' + esc((CAMEO[h[3]] || "événement") + " · " + h[6] + " · " + h[4] + " mentions") + "</title></circle>"; });
     $("mapBox").innerHTML = '<svg viewBox="0 0 ' + WMAP.w + " " + WMAP.h + '" role="img" aria-label="Carte géopolitique : ' + esc(mi[1]) + '">' + paths + marks + "</svg>";
     var labs = key === "geo" ? ["faible", "modérée", "élevée", "très élevée"] : key === "gpr" ? ["sous le 40e percentile", "40e à 70e", "70e à 90e", "90e et plus"] : ["1 · normal", "2 · vigilance", "3 · reconsidérer", "4 · ne pas voyager"];
@@ -2783,6 +2801,96 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     /* Estimation du jour de l'indice GPR */
     var gp = G.gpr;
     if (gp && gp.now && gp.now.length && $("geoGpr")) { var ln = gp.now[gp.now.length - 1], blend = gp.d.map(function (x) { return [x[0], x[1]]; }).concat(gp.now).slice(-7), b7 = blend.reduce(function (a, x) { return a + x[1]; }, 0) / blend.length; $("geoGpr").insertAdjacentHTML("beforeend", '<div class="kv" style="margin-top:6px"><span>Estimation, moyenne 7 jours <small>(officiel + GDELT étalonné, ' + gp.pairs + " jours communs)</small></span><b>" + fmt(b7, 0) + " <small>au " + shortD(ln[0]) + "</small></b><span>Estimation du seul jour <small>(dernier jour terminé, plus variable)</small></span><b>" + fmt(ln[1], 0) + '</b></div><p class="hint">L\'indice officiel est publié avec quelques jours de retard (dernier jour : ' + shortD(gp.asof) + "). L'estimation couvre les jours manquants et sera remplacée par le chiffre officiel dès sa parution.</p>"); }
+  }
+  /* ---------- Mini-fenêtre détaillée au clic sur la carte (31 oct. 2026) ---------- */
+  var EN_KW = { USA: ["u.s.", "united states", "trump", "american"], IRN: ["iran", "khamenei", "tehran"], ISR: ["israel", "netanyahu"], PSE: ["gaza", "palestin", "hamas"], LBN: ["lebanon", "hezbollah"], SYR: ["syria"], YEM: ["yemen", "houthi"], RUS: ["russia", "putin", "kremlin"], UKR: ["ukraine", "zelensky", "kyiv"], BLR: ["belarus", "lukashenko"], CHN: ["china", "xi jinping", "beijing"], TWN: ["taiwan"], PRK: ["north korea", "kim jong"], KOR: ["south korea"], JPN: ["japan"], IND: ["india", "modi"], PAK: ["pakistan"], VEN: ["venezuela", "maduro"], CUB: ["cuba"], GRL: ["greenland"], DNK: ["greenland", "denmark"], TUR: ["turkey", "erdogan"], SAU: ["saudi"], EGY: ["egypt"], IRQ: ["iraq"], FRA: ["france", "macron"], DEU: ["germany"], GBR: ["britain", "u.k."], MEX: ["mexico"], CAN: ["canada"], COL: ["colombia"], GUY: ["guyana"], PAN: ["panama"] };
+  var POP_MACRO = [["inf", "Inflation", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant", " % du PIB"], ["res", "Réserves de change", " Md $"], ["resg", "Part de l'or dans les réserves", " %"]];
+  function popOpen(html, e) {
+    var pop = $("mapPop"), outer = pop.parentNode, r = outer.getBoundingClientRect();
+    pop.innerHTML = '<button type="button" class="pop-x" aria-label="Fermer">×</button>' + html;
+    pop.hidden = false;
+    if (window.innerWidth < 760) { pop.className = "mappop sheet"; pop.style.left = pop.style.top = ""; pop.scrollTop = 0; setTimeout(function () { pop.scrollIntoView({ behavior: "smooth", block: "start" }); }, 30); return; }
+    pop.className = "mappop";
+    var w = Math.min(400, r.width - 20), x = e.clientX - r.left + 14, y = e.clientY - r.top + 10;
+    pop.style.width = w + "px";
+    if (x + w > r.width - 8) x = Math.max(8, e.clientX - r.left - w - 14);
+    var h = pop.offsetHeight; if (y + h > r.height - 8) y = Math.max(8, r.height - h - 8);
+    pop.style.left = x + "px"; pop.style.top = y + "px"; pop.scrollTop = 0;
+  }
+  function popClose() { var p = $("mapPop"); if (p) p.hidden = true; }
+  function popSec(t, body) { return body ? '<div class="pop-sec"><div class="pop-h">' + t + "</div>" + body + "</div>" : ""; }
+  function popKV(rows) { rows = rows.filter(function (r) { return r && r[1] !== null && r[1] !== undefined && r[1] !== ""; }); return rows.length ? '<div class="kv">' + rows.map(function (r) { return "<span>" + r[0] + "</span><b" + (r[2] ? ' class="' + r[2] + '"' : "") + ">" + r[1] + "</b>"; }).join("") + "</div>" : ""; }
+  function popCountry(a3) {
+    var G = geoData(), t = G.c && G.c[a3], nm = ctyName(a3), g = G.gpr && G.gpr.ctry && G.gpr.ctry[a3], a = G.adv && G.adv[a3], W = ((AUTO && AUTO.world) || {})[a3] || {};
+    var kw = [nm.toLowerCase()].concat(EN_KW[a3] || []);
+    var crises = CRISES.filter(function (k) { return k.c.indexOf(a3) >= 0; });
+    var lvl = t ? t[0] : 0, z = t ? t[1] : null;
+    var head = '<div class="pop-t">' + esc(nm) + '</div><div class="pop-sub">' + (t ? "Tension " + tensLab(lvl) + " · " + lvl + "/100" : "Aucun conflit recensé en 24 h") + (z !== null && z >= 2 ? ' · <b class="down">escalade</b>' : "") + (a ? " · avis US niveau " + a[0] : "") + "</div>";
+    /* Lecture pour l'or */
+    var canal = GEO_CANAL[a3], lect;
+    if (canal && (lvl >= 90 || (z !== null && z >= 2))) lect = "Canal direct pour l'or (" + canal + ") et tension " + (z !== null && z >= 2 ? "en forte hausse" : "très élevée") + " : à suivre pour le pilier Risque et refuge. Vérifie la réaction du marché (code R1 ou R4) avant de noter +1 ou +2.";
+    else if (canal) lect = "Canal direct pour l'or (" + canal + "), mais pas d'aggravation en ce moment : la prime de risque est en partie dans le prix.";
+    else if (lvl >= 90 || (z !== null && z >= 2)) lect = "Tension forte mais sans canal direct vers l'or : impact limité, sauf si la crise touche l'énergie, une grande puissance ou un détroit.";
+    else lect = "Pas de signal géopolitique notable pour l'or.";
+    var h = head + '<div class="pop-lect">' + esc(lect) + "</div>";
+    /* Tension */
+    var ts = G.ts && G.ts[a3];
+    h += popSec("Tension (GDELT, 24 h)", popKV([
+      ["Événements de conflit / total", t ? t[3] + " / " + t[2] : "0"], ["dont manifestations", t ? t[4] : null], ["Part du total mondial", t ? fmt(t[5], 1) + " %" : null],
+      ["Escalade contre 30 jours", t ? (z === null ? "historique insuffisant" : fmt(z, 1) + " écart-type" + (Math.abs(z) >= 2 ? "s : inhabituel" : "s")) : null, z !== null && z >= 2 ? "down" : ""],
+      ["Ton de la presse 24 h / 30 j", t && t[6] !== null && t[6] !== undefined ? fmt(t[6], 1) + " / " + (t[7] === null ? "–" : fmt(t[7], 1)) + (t[7] !== null && t[6] < t[7] - 0.5 ? " · dégradation" : "") : null, t && t[7] !== null && t[6] < t[7] - 0.5 ? "down" : ""],
+      ["Canal pour l'or", canal ? esc(canal) : "aucun canal direct"]
+    ]) + (ts ? '<div class="pop-m">Conflits par jour, 30 jours</div>' + geoSpark(ts, 360, 40) : ""));
+    /* Grandes crises */
+    if (crises.length) h += popSec("Grande crise suivie", crises.map(function (k) {
+      var ships = k.st.map(function (n) { var x = AUTO && AUTO.shipping ? straitStats(n) : null; return x && x.ch !== null ? esc(shipName(n).fr) + " " + pct(x.ch) : null; }).filter(Boolean), e = k.nrj && G.mkt && G.mkt[k.nrj];
+      return "<p><b>" + esc(k.t) + "</b> · " + esc(k.canal) + (ships.length ? "<br><small>Trafic sur 7 j : " + ships.join(" · ") + "</small>" : "") + (e ? "<br><small>" + esc(e.n) + " : " + sgnP(e.c1) + " % sur 1 j, " + sgnP(e.c5) + " % sur 5 j</small>" : "") + "</p>";
+    }).join(""));
+    /* Indice GPR et avis officiel */
+    h += popSec("Risque géopolitique officiel", popKV([
+      ["Indice GPR du pays (" + (G.gpr && G.gpr.month ? esc(G.gpr.month) : "mois") + ")", g ? fmt(g[0], 2) + " <small>(" + g[1] + "e percentile sur 10 ans" + (g[2] ? ", mois précédent " + fmt(g[2], 2) : "") + ")</small>" : "pays non couvert"],
+      ["Avis de voyage US", a ? ADV_LAB[a[0]] + " <small>(" + shortD(a[1]) + ")</small>" : "–", a && a[0] >= 3 ? "down" : ""],
+      ["Raisons citées", a && a[2] && a[2].length ? esc(a[2].join(", ")) : null]
+    ]) + (a && a[3] ? '<p><a href="' + esc(a[3]) + '" target="_blank" rel="noopener">Avis officiel complet ↗</a></p>' : ""));
+    /* Événements, paris, titres */
+    var hs = (G.hot || []).filter(function (x) { return x[2] === a3; }).slice(0, 5);
+    h += popSec("Points chauds du jour", hs.length ? '<ul class="geo-news">' + hs.map(function (x) { return "<li>" + esc(CAMEO[x[3]] || "événement") + " · " + esc(x[6]) + " · " + x[4] + " mentions" + (x[7] ? ' · <a href="' + esc(x[7]) + '" target="_blank" rel="noopener">article ↗</a>' : "") + "</li>"; }).join("") + "</ul>" : "");
+    var pm = (G.pm || []).filter(function (p) { return (p.p >= 0.03 || p.q === p.ev) && kwHit(p.ev + " " + p.q, kw); }).slice(0, 4);
+    h += popSec("Marchés de prédiction", pm.length ? '<ul class="geo-news">' + pm.map(function (p) { return '<li><a href="https://polymarket.com/event/' + esc(p.slug) + '" target="_blank" rel="noopener">' + esc(p.q && p.q !== p.ev ? p.ev + " : " + p.q : p.ev) + "</a> <b>" + Math.round(p.p * 100) + " %</b>" + (p.dp ? " <small>(" + sgnP(p.dp * 100, 0) + " pts)</small>" : "") + "</li>"; }).join("") + "</ul>" : "");
+    var nws = (G.news || []).filter(function (n) { return kwHit(n.t, kw); }).slice(0, 4);
+    h += popSec("Titres du jour", nws.length ? '<ul class="geo-news">' + nws.map(function (n) { return '<li><a href="' + esc(n.l) + '" target="_blank" rel="noopener">' + esc(n.t) + "</a></li>"; }).join("") + "</ul>" : "");
+    var sc = G.sanc && G.sanc.it ? G.sanc.it.filter(function (n) { return kwHit(n.t, kw); }).slice(0, 3) : [];
+    h += popSec("Sanctions récentes", sc.length ? '<ul class="geo-news">' + sc.map(function (n) { return '<li><a href="' + esc(n.l) + '" target="_blank" rel="noopener">' + esc(n.t) + "</a> <small>" + esc(String(n.d || "").slice(0, 10)) + "</small></li>"; }).join("") + "</ul>" : "");
+    /* Économie */
+    var cur = MAJ[a3] || (EZ.indexOf(a3) >= 0 ? "EUR" : null), pr = null;
+    if (cur) { var m = MACRO.filter(function (k) { return k.c === cur; })[0]; if (m) { var p = policyRate(m); pr = [m.b + " (taux directeur)", fmt(p.v, 2) + " % <small>" + p.src + ", " + shortD(String(p.d).slice(0, 10)) + "</small>"]; } }
+    h += popSec("Économie (Banque mondiale, dernière année)", popKV(POP_MACRO.map(function (k) { var v = W[k[0]]; return v ? [k[1], fmt(v[0], 1) + k[2] + " <small>(" + v[1] + ")</small>"] : null; }).concat([pr])));
+    h += '<div class="pop-btns"><button type="button" class="btn" data-popgo="geopol">Moniteur géopolitique</button>' + (cur ? '<button type="button" class="btn" data-popgo="banques">Banque centrale</button>' : "") + "</div>";
+    return h;
+  }
+  function popHot(i) {
+    var G = geoData(), x = G.hot && G.hot[i]; if (!x) return "";
+    return '<div class="pop-t">' + esc(CAMEO[x[3]] || "Événement") + '</div><div class="pop-sub">' + esc(x[6]) + "</div>" + popKV([["Pays", esc(ctyName(x[2]))], ["Mentions dans la presse", x[4]], ["Événements proches (24 h)", x[5]], ["Recensé le", x[8].slice(6, 8) + "/" + x[8].slice(4, 6) + " à " + x[8].slice(8, 10) + " h " + x[8].slice(10, 12) + " UTC"], ["Canal pour l'or", GEO_CANAL[x[2]] ? esc(GEO_CANAL[x[2]]) : "aucun canal direct"]]) +
+      (x[7] ? '<p><a href="' + esc(x[7]) + '" target="_blank" rel="noopener">Lire l\'article source ↗</a></p>' : "") + '<p class="hint">Codé automatiquement par GDELT : le type peut être approximatif.</p><div class="pop-btns"><button type="button" class="btn" data-popc="' + x[2] + '">Fiche du pays</button></div>';
+  }
+  function popQuake(i) {
+    var q = (geoData().quakes || [])[i]; if (!q) return "";
+    return '<div class="pop-t">Séisme de magnitude ' + fmt(q[2], 1) + '</div><div class="pop-sub">' + esc(q[3]) + "</div>" + popKV([["Date", q[4].slice(8, 10) + "/" + q[4].slice(5, 7) + " à " + q[4].slice(11, 16) + " UTC"], ["Position", fmt(q[0], 2) + "°, " + fmt(q[1], 2) + "°"]]) + (q[5] ? '<p><a href="' + esc(q[5]) + '" target="_blank" rel="noopener">Fiche USGS ↗</a></p>' : "") + '<p class="hint">Impact sur l\'or limité, sauf si une zone de production (mines, pétrole) ou un grand port est touché.</p>';
+  }
+  function popStrait(n) {
+    var x = straitStats(n), p = WMAP.pts[n], nm = shipName(n).fr;
+    return '<div class="pop-t">' + esc(nm) + '</div><div class="pop-sub">Trafic maritime (FMI PortWatch)</div>' + (x ? popKV([["Navires par jour (moy. 7 j)", fmt(x.a, 0)], ["Variation sur 7 jours", x.ch === null ? "–" : pct(x.ch), x.ch !== null && x.ch <= -10 ? "down" : ""], ["Pétroliers par jour", x.tk === null ? "–" : fmt(x.tk, 0) + (x.tkPrev ? " <small>(" + pct((x.tk / x.tkPrev - 1) * 100) + ")</small>" : "")], ["Volume transporté", x.cap ? fmtN(x.cap / 1e6, 2) + " Mt/jour" : "–"], ["Dernier jour connu", shortD(x.last)]]) + geoSpark(x.sp.map(function (q) { return q[1] || 0; }), 360, 40) : "<p class=\"hint\">Pas de donnée.</p>") +
+      '<div class="pop-btns"><button type="button" class="btn" data-live="' + p[2] + "," + p[3] + ',8" data-name="' + esc(nm) + '">Navires en direct</button></div>';
+  }
+  function initPop() {
+    var pop = $("mapPop"); if (!pop) return;
+    pop.addEventListener("click", function (e) {
+      if (e.target.closest(".pop-x")) { popClose(); return; }
+      var go = e.target.closest("[data-popgo]"); if (go) { popClose(); openPanel(go.getAttribute("data-popgo")); return; }
+      var pc = e.target.closest("[data-popc]"); if (pc) { var k = pc.getAttribute("data-popc"); mapSel = k; geoPt = -1; $("mapCty").value = k; drawMap(); var r = pop.getBoundingClientRect(); popOpen(popCountry(k), { clientX: r.left, clientY: r.top }); return; }
+      var lv = e.target.closest("[data-live]"); if (lv) { var q = lv.getAttribute("data-live").split(","); popClose(); vesselMap($("mapLive"), +q[0], +q[1], +q[2], lv.getAttribute("data-name")); }
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") popClose(); });
   }
   /* ---------- Consensus des banques (recherche du 30 oct. 2026, à vérifier) ---------- */
   var CONS = [
@@ -4579,7 +4687,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
   buildBranches(); tagNature(); initMotion();
-  initCmd(); initCal(); initMap(); initGeo(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
+  initCmd(); initCal(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
   initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });
