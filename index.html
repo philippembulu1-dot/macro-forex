@@ -829,8 +829,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     <section class="panel" id="calendrier">
       <div class="ph"><h2>Calendrier économique</h2><span class="meta" id="calMeta">robot</span></div>
       <div class="toolbar caltabs" id="calTabs">
-        <button type="button" class="btn" data-calv="pro">Pro en direct (Myfxbook)</button>
         <button type="button" class="btn" data-calv="term">Terminal : analyse et chiffres officiels</button>
+        <a class="btn" href="https://www.myfxbook.com/forex-economic-calendar" target="_blank" rel="noopener" title="S'ouvre dans un nouvel onglet, hors du terminal">Myfxbook ↗</a>
+        <a class="btn" href="https://www.tradingview.com/economic-calendar/" target="_blank" rel="noopener" title="S'ouvre dans un nouvel onglet, hors du terminal">TradingView ↗</a>
       </div>
       <div id="calPro" hidden></div>
       <div id="calTerm">
@@ -3003,7 +3004,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* ---------- Calendrier économique : vues pro (Myfxbook, Investing.com) et terminal ---------- */
   var CALV = { pro: { src: "https://widgets.myfxbook.com/widgets/calendar.html?lang=fr&impacts=0,1,2,3&symbols=AUD,CAD,CHF,CNY,EUR,GBP,JPY,NZD,USD", t: "Myfxbook", note: "Calendrier Myfxbook en direct : impact (faible, moyen, fort), chiffres réel, prévu et précédent, compte à rebours, filtres par devise et par impact, heures dans le fuseau de ton appareil. Vérifié dans un vrai navigateur le 31 oct. 2026 : le tableau s'affiche, mais le module de mise à jour à la seconde de Myfxbook est bloqué par Myfxbook lui-même ; recharge la page (ou l'onglet) juste après une publication pour voir le chiffre réel. La vue « Terminal » reçoit aussi les chiffres réels à chaque passage du robot." } };
   function showCalView(v) {
-    if (!CALV[v] && v !== "term") v = "pro";
+    if (!CALV[v] || v !== "term") v = "term";
     try { localStorage.setItem("mf_calv", v); } catch (e) { }
     Array.prototype.forEach.call(document.querySelectorAll("#calTabs [data-calv]"), function (b) { b.classList.toggle("on", b.getAttribute("data-calv") === v); });
     $("calTerm").hidden = v !== "term"; $("calPro").hidden = v === "term";
@@ -3016,8 +3017,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function initCalViews() {
     var t = $("calTabs"); if (!t) return;
     t.addEventListener("click", function (e) { var b = e.target.closest("[data-calv]"); if (b) showCalView(b.getAttribute("data-calv")); });
-    var v = "pro"; try { v = localStorage.getItem("mf_calv") || "pro"; } catch (e) { }
-    showCalView(v);
+    showCalView("term"); /* calendrier du terminal seul : l'iframe Myfxbook produisait une erreur interne (module bloqué par Myfxbook) */
   }
   /* ---------- Consensus des banques (recherche du 30 oct. 2026, à vérifier) ---------- */
   var CONS = [
@@ -3295,7 +3295,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, flux de l'or (ETF, banques centrales), volatilité, saisonnalité 20 ans", p: ["or", "scorecard", "flux", "orvol", "saison"], g: { or: "Cours", scorecard: "Analyse fondamentale", orvol: "Volatilité et saisonnalité" } },
     { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts France/Italie/Espagne − Allemagne et fragmentation, MOVE, taux réels, indicateurs des desks, règle de Taylor", p: ["pricing", "taylor", "courbe", "taux", "desk", "ezone", "ecarts"], g: { pricing: "Fed : où vont les taux", courbe: "Courbes, taux réels et volatilité", ezone: "Zone euro et écarts entre pays" } },
     { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"], g: { banques: "Taux et probabilités", agenda: "Réunions, comités, communiqués" } },
-    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique (pro en direct et analyse), surprises, réactions du marché, cycle, indicateurs, déficits et dettes publics, projections Fed et BCE", p: ["calendrier", "semaine", "surprises", "reactions", "cycle", "indicateurs", "deficits", "dotplot", "bceproj", "lecture"], g: { calendrier: "Calendrier", surprises: "Surprises et réactions du marché", cycle: "Économie : cycle, indicateurs, finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
+    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique sur 2 semaines (chiffres réels et analyse), surprises, réactions du marché, cycle, indicateurs, déficits et dettes publics, projections Fed et BCE", p: ["calendrier", "semaine", "surprises", "reactions", "cycle", "indicateurs", "deficits", "dotplot", "bceproj", "lecture"], g: { calendrier: "Calendrier", surprises: "Surprises et réactions du marché", cycle: "Économie : cycle, indicateurs, finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
     { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique avec fiche détaillée au clic, moniteur de risque (crises, alertes, prédictions, énergie, calendrier), détroits, réserves", p: ["monde", "geopol", "maritime", "reserves"], g: { monde: "Carte", geopol: "Risque géopolitique", maritime: "Commerce et réserves" } },
     { id: "devises", t: "Devises", ic: "⇄", d: "Force des devises multi-horizons, paires, graphique, appétit pour le risque, carte thermique, corrélations, volatilité", p: ["fstr", "force", "heat", "paires", "selPanel", "~duo", "correl", "vola"], g: { fstr: "Force des devises", paires: "Paires et graphique", correl: "Corrélations et volatilité" } },
     { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["marches", "multi", "sessions"], g: { marches: "En direct", multi: "Multi-actifs et sessions" } },
@@ -3314,7 +3314,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     or: ["EN DIRECT", "jeton PAXG (Binance), relu toutes les 30 s ; contrat à terme COMEX différé (robot)"], risque: ["QUOTIDIEN", "calculé à partir des fixings BCE"], rang: ["QUOTIDIEN", "fixings BCE"], force: ["QUOTIDIEN", "fixings BCE ; horizons 1 h et 4 h : cotations différées (robot)"],
     banques: ["QUOTIDIEN", "taux, décisions et inflation relus par le robot (BRI, banques centrales, OCDE, Eurostat, BLS)"], selPanel: ["QUOTIDIEN", "fixings BCE"], agenda: ["OFFICIEL", "Fed : calendrier officiel lu par le robot ; autres banques : calendriers officiels publiés un an à l'avance"],
     semaine: ["HEBDO", "calendrier Forex Factory relu par le robot"], indicateurs: ["MENSUEL", "OCDE, instituts officiels et derniers chiffres publiés (calendrier), relus par le robot ; « auto » sur chaque case"], scorecard: ["CALCUL", "règles fixes sur les données du robot ; non validé statistiquement"],
-    desk: ["QUOTIDIEN", "Trésor US, CBOE, BCE (robot)"], ecarts: ["QUOTIDIEN", "taux directeurs officiels"], saison: ["MENSUEL", "historique 20 ans, recalculé chaque semaine"], calendrier: ["HEBDO", "prévisions Forex Factory ; chiffres réels officiels quand disponibles"],
+    desk: ["QUOTIDIEN", "Trésor US, CBOE, BCE (robot)"], ecarts: ["QUOTIDIEN", "taux directeurs officiels"], saison: ["MENSUEL", "historique 20 ans, recalculé chaque semaine"], calendrier: ["DIFFÉRÉ", "Forex Factory (semaine en cours) et TradingView (semaine suivante) relus à chaque passage du robot ; chiffres réels officiels quand disponibles"],
     heat: ["QUOTIDIEN", "fixings BCE"], correl: ["QUOTIDIEN", "fixings BCE"], vola: ["QUOTIDIEN", "fixings BCE"], monde: ["QUOTIDIEN", "géopolitique : GDELT relu à chaque passage du robot ; macro : Banque mondiale (annuel)"], geopol: ["QUOTIDIEN", "GDELT (toutes les 15 min, relu par le robot), indice GPR (quotidien, quelques jours de retard), avis officiels US"], maritime: ["HEBDO", "FMI PortWatch ; carte des navires en direct (VesselFinder)"],
     consensus: ["DIFFÉRÉ", "relevé automatique des titres de presse (Google Actualités) à chaque passage du robot"], comite: ["CALCUL", "orientation calculée sur la dernière décision, l'inflation sous-jacente et les anticipations de marché"], probas: ["DIFFÉRÉ", "méthode CME FedWatch recalculée sur les contrats à terme fed funds (CBOT, différés) + marchés publics Kalshi et Polymarket"], sentiment: ["DIFFÉRÉ", "Myfxbook via le robot"],
     outils: ["CALCUL", "calculs dans votre navigateur"], pricing: ["DIFFÉRÉ", "Kalshi (robot) et courbes officielles quotidiennes"], analyses: ["DIFFÉRÉ", "flux RSS relus par le robot"], orvol: ["QUOTIDIEN", "GVZ (CBOE) et or"],

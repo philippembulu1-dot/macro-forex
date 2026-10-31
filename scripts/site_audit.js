@@ -57,8 +57,8 @@ require('fs').mkdirSync('audit-out', { recursive: true });
       await p.evaluate((g) => document.getElementById(g).scrollIntoView(), br === 'marches' ? 'miniGrid' : 'rateMinis'); await p.screenshot({ path: 'audit-out/' + name + '_graph_' + br + '.png' }); }
     // calendrier : vues
     await p.goto('' + BASE + '#/macro'); await p.waitForTimeout(1200);
-    for (const v of ['term', 'pro']) { await p.click('#calTabs [data-calv="' + v + '"]'); await p.waitForTimeout(200); }
-    console.log(name, 'calendrier : iframe', await p.evaluate(() => (document.querySelector('#calPro iframe') || {}).src || 'aucun').then(x => x.slice(0, 60)), '| vue terminal cachée', await p.evaluate(() => document.getElementById('calTerm').hidden));
+    await p.click('#calTabs [data-calv="term"]'); await p.waitForTimeout(300);
+    console.log(name, 'calendrier : lignes', await p.evaluate(() => document.querySelectorAll('#calTbl tr.calrow').length), '| iframe externe', await p.evaluate(() => !!document.querySelector('#calPro iframe')), '| vue terminal visible', await p.evaluate(() => !document.getElementById('calTerm').hidden));
     // carte : mini-fenêtre
     await p.goto('' + BASE + '#/monde'); await p.waitForTimeout(1500);
     await p.evaluate(() => { const e = document.querySelector('#mapBox path[data-c="BRA"]'); e.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 300, clientY: 300 })); });
