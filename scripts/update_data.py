@@ -1261,14 +1261,20 @@ def do_core(data):
         except Exception as e:
             DIAG["core_ca_" + ser] = fr_err(e)[:60]
     try:
-        obs, cols = [], None
+        obs, cols, tot = [], None, []
         for r in csv.reader(io.StringIO(http("snb_infl.csv", "https://data.snb.ch/api/cube/plkoprinfla/data/csv/en", tries=1, timeout=30)), delimiter=";"):
             if len(r) >= 3 and re.match(r"\d{4}-\d{2}", r[0]):
                 cols = cols or set()
                 cols.add(r[1].strip())
                 if r[1].strip() in ("SNB1", "KI1", "K1"):
                     obs.append((r[0][:7] + "-01", num(r[2])))
+                if r[1].strip() == "TLK" and num(r[2]) is not None:
+                    tot.append((r[0][:7] + "-01", num(r[2])))
         DIAG["snb_infl_cols"] = ",".join(sorted(cols or []))[:120]
+        rt = last2(tot)  # inflation globale suisse (BNS)
+        if rt and (not data["national"].get("cpi_CH") or data["national"]["cpi_CH"].get("asof", "") < rt["asof"]):
+            rt["src"], rt["via"] = "https://data.snb.ch/", "BNS"
+            data["national"]["cpi_CH"] = rt
         r = last2(obs)
         if r and (not core.get("CH") or core["CH"]["asof"] < r["asof"]):
             core["CH"] = {"v": r["v"], "prev": r["prev"], "asof": r["asof"], "via": "BNS (inflation sous-jacente 1)"}
@@ -1423,11 +1429,17 @@ def do_consensus_news(data):
                 continue
             val = None
             if asset == "gold" and re.search(r"gold", t, re.I):
-                m = re.search(r"\$\s?(\d{1,2},?\d{3})(?!\d)", t)
-                if m:
+                # garder le chiffre présenté comme une prévision, pas un niveau de prix du jour (« recule vers 4 000 $ », « support »…)
+                for m in re.finditer(r"\$\s?(\d{1,2},?\d{3})(?!\d)", t):
+                    before = t[max(0, m.start() - 30):m.start()].lower()
+                    if re.search(r"toward|falls?|retest|support|near|hits?|below|above|drops?|slips?|tumbles?|surges? past|breaks?|tops?|record", before):
+                        continue
+                    if not re.search(r"sees?|forecast|target|predicts?|projects?|raises?|lifts?|cuts?|keeps?|expects?|\bto\b|\bat\b|by", before + " " + t[m.end():m.end() + 25].lower()):
+                        continue
                     v = num(m.group(1).replace(",", ""))
                     if v and 1500 < v < 15000:
                         val = v
+                        break
             elif asset == "eurusd" and re.search(r"EUR/?USD|euro", t, re.I):
                 m = re.search(r"\b(1\.\d{2,4})\b", t)
                 if m:

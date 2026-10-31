@@ -641,7 +641,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
               <tbody id="macro"></tbody>
             </table>
           </div>
-          <p class="note">Sources : 1trader.com, Eurostat, ONS, Trading Economics. Inflation de sept. 2026 en glissement annuel, un tiret si non relevée. À vérifier avant de trader.</p>
+          <p class="note">Tout est relu automatiquement à chaque passage du robot : taux et dernière décision (BRI, Fed de New York, BCE, BoE, Banque du Canada), inflation et inflation sous-jacente sur 1 an (BLS, Eurostat, ONS, OCDE, BNS, Banque du Canada, BRI). La petite mention sous chaque chiffre donne la source et le mois.</p>
         </section>
       </div>
 
@@ -670,7 +670,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
           <p class="warn" id="weekWarn" hidden></p>
           <ul class="agenda" id="agendaList"></ul>
           <button type="button" class="moreBtn" id="agendaMore" hidden></button>
-          <p class="note">Calendriers officiels publiés, vérifiés le 30 oct. 2026 (BoE 2026–2027, BoJ 2027). Fed 2027 provisoire (la Fed peut l'ajuster). Banque du Japon, 18 déc. 2026 : source secondaire, marqué provisoire.</p>
+          <p class="note">Calendriers officiels publiés, vérifiés le 30 oct. 2026 (BoE 2026–2027, BoJ 2027). Dates de la Fed lues automatiquement sur son site à chaque passage du robot. Banque du Japon, 18 déc. 2026 : source secondaire, marqué provisoire.</p>
         </section>
 
         <section class="panel o-week" id="semaine">
@@ -682,10 +682,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     </div>
 
     <section class="panel" id="indicateurs">
-      <div class="ph"><h2>Indicateurs macro</h2><span class="meta">relevé du 25 oct. 2026 · dernier chiffre et précédent</span></div>
+      <div class="ph"><h2>Indicateurs macro</h2><span class="meta">automatique (« auto ») · repli : relevé du 25 oct. 2026</span></div>
       <div class="tbl"><table class="ind" id="indTable"></table></div>
       <p class="note" id="indBilan"></p>
-      <p class="note">Lecture : vert = évolution plutôt favorable à la devise (croissance, emploi, salaires, inflation et taux plus hauts, chômage plus bas), rouge = l'inverse. Le prix réagit surtout à l'écart avec les prévisions des économistes, pas au chiffre seul. Cases marquées « auto » : chiffre officiel récupéré par le robot (Trésor, BLS, BCE, BoE, BoC, BNS, ONS…), source au survol. Les autres cases sont saisies à la main d'après Trading Economics et les instituts nationaux, à vérifier avant de trader. États-Unis : PIB t/t annualisé. Indices de confiance non comparables d'un pays à l'autre.</p>
+      <p class="note">Lecture : vert = évolution plutôt favorable à la devise (croissance, emploi, salaires, inflation et taux plus hauts, chômage plus bas), rouge = l'inverse. Le prix réagit surtout à l'écart avec les prévisions des économistes, pas au chiffre seul. Cases marquées « auto » : chiffre récupéré par le robot (instituts officiels, OCDE, ou dernier chiffre publié relevé dans le calendrier), source au survol. Une case sans « auto » attend la prochaine publication de l'indicateur : le robot la remplit dès qu'elle passe dans le calendrier. PIB t/t : variation trimestrielle non annualisée (OCDE), y compris pour les États-Unis. Indices de confiance non comparables d'un pays à l'autre.</p>
     </section>
 
 
@@ -1444,6 +1444,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (ci && ageDays(ci.asof) <= 75) cpiCell = fmt(ci.v, 1) + ' %<br><small>auto · ' + MOIS[parseInt(String(ci.asof).slice(5, 7), 10) - 1] + "</small>";
       var cr = AUTO && AUTO.core && AUTO.core[({ USD: "US", EUR: "EZ", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" })[m.c]], coreCell = m.core + (m.core !== "–" ? " <small>man.</small>" : "");
       if (cr && ageDays(cr.asof) <= 150) coreCell = fmt(cr.v, 1) + ' %<br><small title="' + esc(cr.via) + '">auto · ' + MOIS[parseInt(String(cr.asof).slice(5, 7), 10) - 1] + "</small>";
+      else { var ia = indAuto("core", m.c); if (ia) coreCell = fmt(ia.v, 1) + ' %<br><small title="' + esc(ia.src) + '">auto · ' + esc(ia.per) + "</small>"; }
       return '<tr data-det="rate:' + m.c + '"><td><b>' + m.b + "</b> <small>" + m.c + '</small> <span class="more">›</span></td><td class="r num">' + rateCell + "</td><td>" + dec + '</td><td class="r num">' + cpiCell + '</td><td class="r num col-core">' + coreCell + "</td></tr>";
     }).join("");
   }
@@ -1472,22 +1473,22 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { g: "Politique monétaire" },
     { k: "rate", l: "Taux directeur (Fed : borne haute)", u: " %", d: 2, dir: 1, v: { USD: [4.00, 3.75, "sept."], EUR: [2.50, 2.25, "sept."], GBP: [3.75, 3.75, "sept."], JPY: [1.25, 1.00, "sept."], CHF: [0.00, 0.00, "sept."], AUD: [4.60, 4.35, "sept."], CAD: [2.50, 2.25, "oct."], NZD: [2.75, 2.50, "sept."] } },
     { g: "Croissance" },
-    { l: "PIB trimestriel t/t", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.5, "T2"], EUR: [0.6, 0.0, "T2"], GBP: [0.5, 0.6, "T2"], JPY: [0.4, 0.5, "T2"], CHF: [1.5, 0.5, "T2"], AUD: [0.4, 0.3, "T2"], CAD: [0.8, 0.1, "T2"], NZD: [0.2, 0.9, "T2"] } },
-    { l: "PIB a/a", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.6, "T2"], EUR: [1.2, 0.6, "T2"], GBP: [1.4, 0.8, "T2"], JPY: [0.7, 0.5, "T2"], CHF: [2.3, 0.4, "T2"], AUD: [2.1, 2.5, "T2"], CAD: [1.1, 0.1, "T2"], NZD: [2.6, 1.7, "T2"] } },
+    { k: "gdpq", l: "PIB trimestriel t/t", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.5, "T2"], EUR: [0.6, 0.0, "T2"], GBP: [0.5, 0.6, "T2"], JPY: [0.4, 0.5, "T2"], CHF: [1.5, 0.5, "T2"], AUD: [0.4, 0.3, "T2"], CAD: [0.8, 0.1, "T2"], NZD: [0.2, 0.9, "T2"] } },
+    { k: "gdpy", l: "PIB a/a", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.6, "T2"], EUR: [1.2, 0.6, "T2"], GBP: [1.4, 0.8, "T2"], JPY: [0.7, 0.5, "T2"], CHF: [2.3, 0.4, "T2"], AUD: [2.1, 2.5, "T2"], CAD: [1.1, 0.1, "T2"], NZD: [2.6, 1.7, "T2"] } },
     { g: "Inflation" },
     { k: "cpi", l: "Inflation (IPC) a/a", u: " %", d: 1, dir: 1, v: { USD: [3.7, 3.4, "sept."], EUR: [3.8, 3.2, "sept."], GBP: [3.5, 3.1, "sept."], JPY: [2.1, 1.9, "sept."], CHF: [1.0, 0.8, "sept."], AUD: [4.0, 3.5, "août"], CAD: [3.1, 3.0, "sept."], NZD: [3.7, 4.1, "sept."] } },
     { k: "core", l: "Inflation sous-jacente a/a", u: " %", d: 1, dir: 1, v: { USD: [2.6, 2.4, "sept."], EUR: [2.5, 2.4, "sept."], GBP: [2.8, 2.6, "sept."], JPY: [2.1, 1.7, "sept."], CHF: [0.5, 0.4, "sept."], AUD: [3.6, 3.6, "août"], CAD: [2.2, 2.4, "sept."], NZD: [3.2, 3.2, "sept."] } },
     { g: "Emploi" },
     { k: "unemp", l: "Taux de chômage", u: " %", d: 1, dir: -1, v: { USD: [4.2, 4.1, "sept."], EUR: [6.4, 6.4, "août"], GBP: [4.7, 4.9, "août"], JPY: [2.5, 2.4, "août"], CHF: [3.0, 3.0, "sept."], AUD: [4.7, 4.7, "sept."], CAD: [6.5, 6.4, "sept."], NZD: [5.6, 5.4, "T2"] } },
-    { l: "Salaires a/a", u: " %", d: 1, dir: 1, v: { USD: [4.17, 4.18, "août"], EUR: [3.0, 3.4, "T2"], GBP: [3.7, 3.9, "août"], JPY: [3.8, 4.3, "août"], CHF: null, AUD: [3.2, 3.2, "T2"], CAD: [3.2, 3.39, "juil."], NZD: [2.1, 2.0, "T2"] } },
+    { k: "wage", l: "Salaires a/a", u: " %", d: 1, dir: 1, v: { USD: [4.17, 4.18, "août"], EUR: [3.0, 3.4, "T2"], GBP: [3.7, 3.9, "août"], JPY: [3.8, 4.3, "août"], CHF: null, AUD: [3.2, 3.2, "T2"], CAD: [3.2, 3.39, "juil."], NZD: [2.1, 2.0, "T2"] } },
     { k: "nfp", l: "Emplois créés (NFP, milliers)", u: " k", d: 0, dir: 1, v: { USD: [29, 133, "sept."], EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { g: "Activité" },
-    { l: "PMI manufacturier", u: "", d: 1, dir: 1, v: { USD: [56.0, 55.9, "oct."], EUR: [52.4, 52.9, "oct."], GBP: [52.8, 51.9, "oct."], JPY: [53.3, 54.1, "oct."], CHF: [55.3, 57.1, "sept."], AUD: [49.7, 49.6, "oct."], CAD: [51.5, 53.0, "sept."], NZD: [56.5, 53.3, "sept."] } },
-    { l: "PMI services", u: "", d: 1, dir: 1, v: { USD: [57.9, 58.8, "oct."], EUR: [51.7, 53.0, "oct."], GBP: [53.1, 52.1, "oct."], JPY: [52.0, 51.3, "oct."], CHF: [59.8, 58.3, "sept."], AUD: [47.8, 51.9, "oct."], CAD: [48.3, 46.8, "sept."], NZD: [50.9, 51.0, "sept."] } },
-    { l: "Ventes au détail m/m (CH : a/a)", u: " %", d: 1, dir: 1, v: { USD: [0.8, 1.3, "sept."], EUR: [0.1, -0.6, "août"], GBP: [-0.4, 0.7, "sept."], JPY: [-1.2, 2.1, "août"], CHF: [3.2, 2.6, "août"], AUD: null, CAD: [0.7, 1.2, "sept."], NZD: [-0.5, 1.0, "juin"] } },
+    { k: "pmim", l: "PMI manufacturier", u: "", d: 1, dir: 1, v: { USD: [56.0, 55.9, "oct."], EUR: [52.4, 52.9, "oct."], GBP: [52.8, 51.9, "oct."], JPY: [53.3, 54.1, "oct."], CHF: [55.3, 57.1, "sept."], AUD: [49.7, 49.6, "oct."], CAD: [51.5, 53.0, "sept."], NZD: [56.5, 53.3, "sept."] } },
+    { k: "pmis", l: "PMI services", u: "", d: 1, dir: 1, v: { USD: [57.9, 58.8, "oct."], EUR: [51.7, 53.0, "oct."], GBP: [53.1, 52.1, "oct."], JPY: [52.0, 51.3, "oct."], CHF: [59.8, 58.3, "sept."], AUD: [47.8, 51.9, "oct."], CAD: [48.3, 46.8, "sept."], NZD: [50.9, 51.0, "sept."] } },
+    { k: "retail", l: "Ventes au détail m/m (CH : a/a)", u: " %", d: 1, dir: 1, v: { USD: [0.8, 1.3, "sept."], EUR: [0.1, -0.6, "août"], GBP: [-0.4, 0.7, "sept."], JPY: [-1.2, 2.1, "août"], CHF: [3.2, 2.6, "août"], AUD: null, CAD: [0.7, 1.2, "sept."], NZD: [-0.5, 1.0, "juin"] } },
     { g: "Commerce et confiance" },
-    { l: "Balance commerciale (Md, devise locale)", u: "", d: "auto", dir: 1, v: { USD: [-106.0, -92.83, "août"], EUR: [-16.11, 10.7, "août"], GBP: [-0.92, -3.45, "août"], JPY: [-537, -1112, "sept."], CHF: [1.353, 5.369, "sept."], AUD: [0.495, 1.351, "août"], CAD: [4.199, 0.787, "août"], NZD: [-1.971, -1.536, "sept."] } },
-    { l: "Confiance des consommateurs", u: "", d: 1, dir: 1, v: { USD: [48.0, 48.1, "oct."], EUR: [-17.9, -16.8, "oct."], GBP: [-24, -13, "oct."], JPY: [35.4, 35.5, "sept."], CHF: [-36, -33, "sept."], AUD: [80.4, 84.4, "oct."], CAD: [47.3, 48.2, "sept."], NZD: [89.5, 80.4, "sept."] } }
+    { k: "trade", l: "Balance commerciale (Md, devise locale)", u: "", d: "auto", dir: 1, v: { USD: [-106.0, -92.83, "août"], EUR: [-16.11, 10.7, "août"], GBP: [-0.92, -3.45, "août"], JPY: [-537, -1112, "sept."], CHF: [1.353, 5.369, "sept."], AUD: [0.495, 1.351, "août"], CAD: [4.199, 0.787, "août"], NZD: [-1.971, -1.536, "sept."] } },
+    { k: "conf", l: "Confiance des consommateurs", u: "", d: 1, dir: 1, v: { USD: [48.0, 48.1, "oct."], EUR: [-17.9, -16.8, "oct."], GBP: [-24, -13, "oct."], JPY: [35.4, 35.5, "sept."], CHF: [-36, -33, "sept."], AUD: [80.4, 84.4, "oct."], CAD: [47.3, 48.2, "sept."], NZD: [89.5, 80.4, "sept."] } }
   ];
   var HOW = [
     ["Taux directeur", "Prix de l'argent fixé par la banque centrale. Une hausse, ou un ton plus ferme que prévu, soutient souvent la devise. Une baisse l'affaiblit. Réunions toutes les 6 à 8 semaines."],
@@ -1532,6 +1533,30 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       else prev = N["rate_" + cc] && N["rate_" + cc].prev;
       return { v: p.v, p: prev === null || prev === undefined ? p.v : prev, per: shortD(String(p.d).slice(0, 10)), src: p.src + " du " + p.d };
     }
+    /* OCDE (indicateurs clés) : dernière observation et la précédente */
+    var K = AUTO.kei && AUTO.kei[c], kei = function (m, tr, fr) {
+      if (!K) return null; var best = null;
+      Object.keys(K).forEach(function (key) { var e = K[key]; if (e.m === m && e.tr === tr && fr.indexOf(e.f) >= 0 && e.obs.length) { if (!best || fr.indexOf(e.f) < fr.indexOf(best.f) || (e.f === best.f && e.obs[e.obs.length - 1][0] > best.obs[best.obs.length - 1][0])) best = e; } });
+      if (!best) return null; var o = best.obs, l = o[o.length - 1];
+      return { v: l[1], p: o.length > 1 ? o[o.length - 2][1] : l[1], per: String(l[0]).replace(/^(\d{4})-Q(\d)$/, "T$2 $1").replace(/^(\d{4})-(\d{2})$/, function (a, y, mm) { return MOIS[+mm - 1]; }), src: "OCDE (indicateurs clés), " + l[0], t: l[0] };
+    };
+    /* Calendrier : dernier chiffre publié mémorisé par le robot (champ « précédent » de Forex Factory) */
+    var M = AUTO.ffmem || {}, ff = function (rx) {
+      var best = null; Object.keys(M).forEach(function (key) { var p = key.split("|"); if (p[0] === c && rx.test(p.slice(1).join("|")) && (!best || M[key].d > best.d)) best = { d: M[key].d, p: M[key].p, t: p.slice(1).join("|") }; });
+      if (!best || ageDays(best.d) > 75) return null; var v = numOf(best.p); if (v === null) return null;
+      return { v: v, p: v, per: "avant le " + shortD(best.d), src: "dernier chiffre publié avant le " + best.d + " (« " + best.t + " », calendrier Forex Factory)" };
+    };
+    var fresh_ = function (o, days) { return o && (!o.t || ageDays(String(o.t).replace(/-Q(\d)$/, function (a, q) { return "-" + String(q * 3).padStart(2, "0"); }).slice(0, 7) + "-01") <= days) ? o : null; };
+    if (k === "gdpq") return fresh_(kei("B1GQ_Q", "G1", ["Q"]), 200);
+    if (k === "gdpy") return fresh_(kei("B1GQ_Q", "GY", ["Q"]), 200);
+    if (k === "wage") return fresh_(kei("H_EARN", "GY", ["M", "Q"]), 200);
+    if (k === "retail") return ff(/^(Core )?Retail Sales [my]\/[my]$/) || fresh_(kei("TOVM", "G1", ["M"]), 120);
+    if (k === "pmim") return ff(/(ISM |Flash |Final |)Manufacturing PMI$|Business NZ Manufacturing Index|^Manufacturing PMI$/);
+    if (k === "pmis") return ff(/(ISM |Flash |Final |)Services PMI$|^Services PMI$|Ivey PMI|BusinessNZ Services Index/);
+    if (k === "trade") return ff(/^(Goods )?Trade Balance$/);
+    if (k === "conf") return ff(/Consumer Confidence|GfK Consumer Climate|Consumer Sentiment|Westpac Consumer Sentiment/);
+    if (k === "unemp" && c !== "USD") { var ku = fresh_(kei("UNEMP", "_Z", ["M", "Q"]), 150); if (ku) return ku; }
+    if (k === "core" && c !== "USD" && AUTO.core) { var co = AUTO.core[cc === "EA" ? "EZ" : cc]; if (co && ageDays(co.asof) <= 120) x = co; else if (c === "JPY") { var fj = ff(/^National Core CPI y\/y$/); if (fj) return fj; } }
     if (k === "cpi") x = c === "USD" ? D.us_cpi : N["cpi_" + cc];
     if (k === "core" && c === "USD") x = D.us_core;
     if (k === "unemp" && c === "USD") x = D.us_unemp;
@@ -2812,8 +2837,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   var NATURE = {
     paires: ["QUOTIDIEN", "fixings de la BCE, 1 fois par jour ; graphique relu toutes les 15 min"], sessions: ["EN DIRECT", "horloges calculées dans votre navigateur"],
     or: ["EN DIRECT", "jeton PAXG (Binance), relu toutes les 30 s ; contrat à terme COMEX différé (robot)"], risque: ["QUOTIDIEN", "calculé à partir des fixings BCE"], rang: ["QUOTIDIEN", "fixings BCE"], force: ["QUOTIDIEN", "fixings BCE ; horizons 1 h et 4 h : cotations différées (robot)"],
-    banques: ["QUOTIDIEN", "taux, décisions et inflation relus par le robot (BRI, banques centrales, OCDE, Eurostat, BLS)"], selPanel: ["QUOTIDIEN", "fixings BCE"], agenda: ["MANUEL", "dates officielles recopiées des sites des banques centrales"],
-    semaine: ["HEBDO", "calendrier Forex Factory relu par le robot"], indicateurs: ["MENSUEL", "chiffres officiels quand le robot les a, sinon saisie manuelle datée"], scorecard: ["CALCUL", "règles fixes sur les données du robot ; non validé statistiquement"],
+    banques: ["QUOTIDIEN", "taux, décisions et inflation relus par le robot (BRI, banques centrales, OCDE, Eurostat, BLS)"], selPanel: ["QUOTIDIEN", "fixings BCE"], agenda: ["OFFICIEL", "Fed : calendrier officiel lu par le robot ; autres banques : calendriers officiels publiés un an à l'avance"],
+    semaine: ["HEBDO", "calendrier Forex Factory relu par le robot"], indicateurs: ["MENSUEL", "OCDE, instituts officiels et derniers chiffres publiés (calendrier), relus par le robot ; « auto » sur chaque case"], scorecard: ["CALCUL", "règles fixes sur les données du robot ; non validé statistiquement"],
     desk: ["QUOTIDIEN", "Trésor US, CBOE, BCE (robot)"], ecarts: ["QUOTIDIEN", "taux directeurs officiels"], saison: ["MENSUEL", "historique 20 ans, recalculé chaque semaine"], calendrier: ["HEBDO", "prévisions Forex Factory ; chiffres réels officiels quand disponibles"],
     heat: ["QUOTIDIEN", "fixings BCE"], correl: ["QUOTIDIEN", "fixings BCE"], vola: ["QUOTIDIEN", "fixings BCE"], monde: ["ANNUEL", "Banque mondiale, FMI"], maritime: ["HEBDO", "FMI PortWatch ; carte des navires en direct (VesselFinder)"],
     consensus: ["DIFFÉRÉ", "relevé automatique des titres de presse (Google Actualités) à chaque passage du robot"], comite: ["CALCUL", "orientation calculée sur la dernière décision, l'inflation sous-jacente et les anticipations de marché"], probas: ["DIFFÉRÉ", "méthode CME FedWatch recalculée sur les contrats à terme fed funds (CBOT, différés) + marchés publics Kalshi et Polymarket"], sentiment: ["DIFFÉRÉ", "Myfxbook via le robot"],
