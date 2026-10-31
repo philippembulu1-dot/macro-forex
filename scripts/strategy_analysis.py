@@ -63,19 +63,28 @@ def fred(sid, start=START):
 
 
 def yahoo_daily(sym):
-    url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&period1=%d&period2=%d" % (
-        urllib.parse.quote(sym), int(datetime(2005, 1, 1, tzinfo=timezone.utc).timestamp()), int(time.time()))
-    j = json.loads(http(url))
-    r = j["chart"]["result"][0]
-    q = r["indicators"]["quote"][0]
-    out = []
-    for t, h, l, c in zip(r["timestamp"], q["high"], q["low"], q["close"]):
-        if None in (h, l, c):
-            continue
-        out.append((datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), h, l, c))
-    if len(out) < 500:
-        raise ValueError("historique %s trop court" % sym)
-    return out
+    p1, p2 = int(datetime(2005, 1, 1, tzinfo=timezone.utc).timestamp()), int(time.time())
+    last = None
+    for host in ("query2", "query1"):
+        for q in ("interval=1d&range=max", "interval=1d&period1=%d&period2=%d" % (p1, p2), "interval=1d&range=25y"):
+            for ua in (UA, "macro-forex robot (https://github.com/philippembulu1-dot/macro-forex)"):
+                try:
+                    j = json.loads(http("https://%s.finance.yahoo.com/v8/finance/chart/%s?%s" % (host, urllib.parse.quote(sym), q), headers={"User-Agent": ua}, tries=1))
+                    r = j["chart"]["result"][0]
+                    qq = r["indicators"]["quote"][0]
+                    out = []
+                    for t, h, l, c in zip(r["timestamp"], qq["high"], qq["low"], qq["close"]):
+                        if None in (h, l, c):
+                            continue
+                        out.append((datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), h, l, c))
+                    if len(out) < 500 or out[0][0] > "2007-01-01":
+                        raise ValueError("historique %s trop court (%d, début %s)" % (sym, len(out), out[0][0] if out else "-"))
+                    log("yahoo", sym, host, q[:20])
+                    return out
+                except Exception as e:  # noqa
+                    last = e
+                    time.sleep(6)
+    raise last
 
 
 def yahoo_hourly(sym):
@@ -171,12 +180,12 @@ def note_change(d, big, small, invert=True):
 def main():
     res = {"genere": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), "sources": {}, "notes_methode": []}
     S = {}
-    for name, fn in (("gold", lambda: yahoo_daily("GC=F")), ("dxy", lambda: yahoo_daily("DX-Y.NYB")),
-                     ("dfii10", lambda: fred("DFII10", "2003-01-01")), ("dgs2", lambda: fred("DGS2", "2003-01-01")),
+    for name, fn in (("dfii10", lambda: fred("DFII10", "2003-01-01")), ("dgs2", lambda: fred("DGS2", "2003-01-01")),
                      ("vix", lambda: fred("VIXCLS", "2003-01-01")), ("cot", cot_gold),
                      ("t10y2y", lambda: fred("T10Y2Y", "2003-01-01")), ("nfci", lambda: fred("NFCI", "2003-01-01")),
                      ("sahm", lambda: fred("SAHMREALTIME", "2003-01-01")), ("icsa", lambda: fred("ICSA", "2003-01-01")),
-                     ("pcecore", lambda: fred("PCEPILFE", "2002-01-01")), ("hy", lambda: fred("BAMLH0A0HYM2", "2003-01-01"))):
+                     ("pcecore", lambda: fred("PCEPILFE", "2002-01-01")), ("hy", lambda: fred("BAMLH0A0HYM2", "2003-01-01")),
+                     ("gold", lambda: yahoo_daily("GC=F")), ("dxy", lambda: yahoo_daily("DX-Y.NYB"))):
         try:
             S[name] = fn()
             first = S[name][0][0]
