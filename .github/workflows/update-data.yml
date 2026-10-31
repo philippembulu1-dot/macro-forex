@@ -23,7 +23,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Lecteur de fichiers Excel (indice géopolitique GPR)
-        run: pip install --quiet xlrd==2.0.1 || echo "xlrd indisponible : l'indice GPR sera noté en échec"
+        run: |
+          pip install --quiet xlrd==2.0.1 || echo "xlrd indisponible, l'indice GPR sera noté en échec"
       - name: Récupérer les données
         env:
           PYTHONUNBUFFERED: "1"
