@@ -793,7 +793,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
 
     <section class="panel" id="probas">
       <div class="ph"><h2>Probabilités de taux</h2><span class="meta" id="pmMeta">robot</span></div>
-      <p class="hint" style="max-width:none;padding:8px 12px 0"><span class="pill warn">pas le CME FedWatch</span> Probabilités issues de <b>marchés de prédiction publics</b> (Kalshi, Polymarket). Le CME FedWatch, calculé sur les contrats à terme de taux, n'a pas d'accès gratuit automatique : comparez avec <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a> et notez son chiffre plus bas.</p>
+      <p class="hint" style="max-width:none;padding:8px 12px 0">Deux mesures, à ne pas confondre : <b>(1)</b> juste en dessous, les probabilités <b>recalculées avec la méthode CME FedWatch</b> sur les contrats à terme de taux (la référence des desks) ; <b>(2)</b> plus bas, les <b>marchés de prédiction publics</b> (Kalshi, Polymarket), où des particuliers parient sur la décision. Pour l'outil officiel : <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a>.</p>
+      <div class="pcard" style="margin:8px 0"><h3>Probabilités méthode CME FedWatch (recalculées) <span class="meta" id="fwMeta" style="font-weight:400"></span></h3><div id="fwBody"></div><p class="hint" id="fwTxt" style="max-width:none"></p><p class="hint" style="max-width:none">Calcul refait ici avec la méthode publiée par le CME, à partir des prix des contrats à terme sur le taux des fonds fédéraux (CBOT, différés). Ce n'est pas l'outil officiel, mais la même recette : les écarts avec le site du CME sont en général de quelques points. Touchez une réunion pour toutes les fourchettes.</p></div>
       <div id="pmBody"></div>
       <div id="pmMan"></div>
       <p class="note">Marchés de prédiction publics (Kalshi, Polymarket) : prix d'un contrat qui paie 1 $ si l'événement arrive, lu comme une probabilité. Ce n'est pas l'outil CME FedWatch (calculé sur les contrats à terme et sans accès gratuit automatisable) : comparez avec lui avant de trader.</p>
@@ -876,7 +877,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     <section class="panel" id="flux">
       <div class="ph"><h2>Flux de l'or</h2><span class="meta" id="fxMeta2">robot</span></div>
       <div class="tbl"><table id="fxList"></table></div>
-      <p class="note">« Observé » = chiffre publié par une source officielle (CFTC, Banque mondiale) ; « Calcul » = calcul maison sur ces chiffres ; « Manuel » = pas de source gratuite automatisable, lien vers la source. Les flux des ETF et la demande physique sont des données du World Gold Council, sans accès automatique gratuit : ils ne sont pas simulés.</p>
+      <div id="gdBody"></div>
+      <p class="note">« Observé » = chiffre publié par une source officielle (CFTC, Banque mondiale) ; « Calcul » = calcul maison sur ces chiffres ; « Manuel » = pas de source gratuite automatisable, lien vers la source. Flux des ETF : calculés chaque jour par le robot à partir de la taille des fonds GLD et IAU, plus le dernier chiffre mensuel publié. Demande physique : derniers chiffres trimestriels du World Gold Council (saisie datée et sourcée), le robot signale chaque nouvelle édition.</p>
     </section>
 
     <section class="panel" id="multi">
@@ -1755,8 +1757,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function goldFromRobot() {
     if (state.gold && !state.goldRobot) return false;
     var g = AUTO && AUTO.daily && AUTO.daily.gold; if (!g || !g.c || g.c.length < 25) return false;
-    var c = g.c.filter(function (p) { return p[1] > 0; });
-    state.gold = c.slice(1).map(function (p, i) { return { t: Date.parse(p[0] + "T00:00:00Z"), o: c[i][1], h: p[1], l: p[1], c: p[1] }; });
+    var c = g.c.filter(function (p) { return p[1] > 0; }), H = {}, Lo = {}, O = {};
+    (g.ohlc || []).forEach(function (q) { O[q[0]] = q[1]; H[q[0]] = q[2]; Lo[q[0]] = q[3]; });
+    state.gold = c.slice(1).map(function (p, i) { return { t: Date.parse(p[0] + "T00:00:00Z"), o: O[p[0]] || c[i][1], h: H[p[0]] || p[1], l: Lo[p[0]] || p[1], c: p[1], hl: !!H[p[0]] }; });
     state.goldRobot = true; state.goldLive = false; state.goldTs = Date.parse(c[c.length - 1][0] + "T00:00:00Z");
     return true;
   }
@@ -2611,10 +2614,12 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function renderPiv() {
     var k = state.gold;
     if (!k || k.length < 2) { $("pivTbl").innerHTML = ""; $("pivNote").textContent = "Cours de l'or indisponible."; return; }
-    var y = k[k.length - 2], P = (y.h + y.l + y.c) / 3, rg = y.h - y.l;
+    var y = k[k.length - 2];
+    if (state.goldRobot && !y.hl) { $("pivTbl").innerHTML = ""; $("pivNote").textContent = "Pivots indisponibles : Binance ne répond pas et le robot n'a pas encore le plus haut et le plus bas de la veille."; return; }
+    var P = (y.h + y.l + y.c) / 3, rg = y.h - y.l;
     var L = [["R3", y.h + 2 * (P - y.l)], ["R2", P + rg], ["R1", 2 * P - y.l], ["Pivot", P], ["S1", 2 * P - y.h], ["S2", P - rg], ["S3", y.l - 2 * (y.h - P)]], px = k[k.length - 1].c;
     $("pivTbl").innerHTML = "<tbody>" + L.map(function (x) { return "<tr" + (x[0] === "Pivot" ? ' style="background:var(--amber-soft)"' : "") + "><td><b>" + x[0] + '</b></td><td class="r num">' + fmtN(x[1], 2) + '</td><td class="r num ' + cls(x[1] - px) + '">' + (x[1] >= px ? "+" : "−") + fmtN(Math.abs(x[1] - px), 2) + "</td></tr>"; }).join("") + "</tbody>";
-    $("pivNote").textContent = "Pivots classiques calculés sur la bougie du " + tzDate(y.t) + " (PAXG, proxy de l'or). Écart affiché par rapport au dernier cours " + fmtN(px, 2) + ".";
+    $("pivNote").textContent = "Pivots classiques calculés sur la bougie du " + tzDate(y.t) + " (" + (state.goldRobot ? "contrat à terme COMEX, robot" : "PAXG, proxy de l'or") + "). Écart affiché par rapport au dernier cours " + fmtN(px, 2) + ".";
   }
   function initConv() {
     var o = CUR.map(function (c) { return '<option value="' + c + '">' + c + "</option>"; }).join("");
@@ -2787,7 +2792,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     semaine: ["HEBDO", "calendrier Forex Factory relu par le robot"], indicateurs: ["MENSUEL", "chiffres officiels quand le robot les a, sinon saisie manuelle datée"], scorecard: ["CALCUL", "règles fixes sur les données du robot ; non validé statistiquement"],
     desk: ["QUOTIDIEN", "Trésor US, CBOE, BCE (robot)"], ecarts: ["QUOTIDIEN", "taux directeurs officiels"], saison: ["MENSUEL", "historique 20 ans, recalculé chaque semaine"], calendrier: ["HEBDO", "prévisions Forex Factory ; chiffres réels officiels quand disponibles"],
     heat: ["QUOTIDIEN", "fixings BCE"], correl: ["QUOTIDIEN", "fixings BCE"], vola: ["QUOTIDIEN", "fixings BCE"], monde: ["ANNUEL", "Banque mondiale, FMI"], maritime: ["HEBDO", "FMI PortWatch ; carte des navires en direct (VesselFinder)"],
-    consensus: ["MANUEL", "relevé de presse daté et sourcé"], comite: ["MANUEL", "jugement qualitatif daté"], probas: ["DIFFÉRÉ", "marchés publics Kalshi et Polymarket (pas le CME FedWatch), relus par le robot"], sentiment: ["DIFFÉRÉ", "Myfxbook via le robot"],
+    consensus: ["MANUEL", "relevé de presse daté et sourcé"], comite: ["MANUEL", "jugement qualitatif daté"], probas: ["DIFFÉRÉ", "méthode CME FedWatch recalculée sur les contrats à terme fed funds (CBOT, différés) + marchés publics Kalshi et Polymarket"], sentiment: ["DIFFÉRÉ", "Myfxbook via le robot"],
     outils: ["CALCUL", "calculs dans votre navigateur"], pricing: ["DIFFÉRÉ", "Kalshi (robot) et courbes officielles quotidiennes"], analyses: ["DIFFÉRÉ", "flux RSS relus par le robot"], orvol: ["QUOTIDIEN", "GVZ (CBOE) et or"],
     courbe: ["QUOTIDIEN", "Trésor américain"], taylor: ["CALCUL", "chiffres officiels BLS et dot plot"], surprises: ["MENSUEL", "prévisions contre chiffres officiels"], reserves: ["ANNUEL", "Banque mondiale"], dotplot: ["TRIMESTRIEL", "projections officielles de la Fed"],
     bceproj: ["MANUEL", "projections BCE recopiées (sept. 2026), le robot surveille les nouvelles"], regime: ["CALCUL", "règles fixes sur données officielles"], moteurs: ["CALCUL", "données quotidiennes du robot"], cycle: ["MENSUEL", "chiffres officiels BLS"],
@@ -3162,6 +3167,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     }
     if (type === "rx") return reactDetail(id);
     if (type === "ph4") return detPhase(id);
+    if (type === "fw") return detFedWatch(id);
     if (type === "drv") return detDriver(id);
     if (type === "ev") { var ev_ = AUTO && AUTO.calendar && AUTO.calendar.events[+id]; if (ev_) evAnalysis(ev_); return; }
     if (type === "ind") {
@@ -4023,8 +4029,6 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     }
     var g = AUTO && AUTO.daily && AUTO.daily.gold;
     if (g && g.c && g.c.length > 21) { var a = g.c[g.c.length - 1][1], b = g.c[g.c.length - 21][1]; h += row("Prix de l'or sur 20 séances", (a / b - 1 >= 0 ? "+" : "−") + fmt(Math.abs(a / b - 1) * 100, 2) + " %", "À comparer aux flux : des fonds acheteurs pendant que le prix baisse signalent une divergence.", "contrat à terme, clôtures (Yahoo)", "CALCUL"); }
-    h += row("Flux des ETF d'or (GLD, IAU…)", "–", "Pas de source gratuite automatisable : le fichier historique de l'émetteur n'est plus un CSV. Consultez le <a href=\"https://www.gold.org/goldhub/data/gold-etfs-holdings-and-flows\" target=\"_blank\" rel=\"noopener\">World Gold Council</a>.", "non automatisé", "MANUEL");
-    h += row("Demande physique (bijoux, lingots, Inde, Chine)", "–", "Publiée chaque trimestre par le World Gold Council, sans accès automatique gratuit.", "non automatisé", "MANUEL");
     box.innerHTML = '<thead><tr><th>Flux</th><th class="r">Dernier</th><th>Lecture</th><th>Nature</th></tr></thead><tbody>' + h + "</tbody>";
     $("fxMeta2").innerHTML = x ? "COT détaillé du " + shortD(x.date) + " " + badge(fresh(x.date, "weekly")) : "robot";
   }
@@ -4118,6 +4122,107 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     }).join("");
     $("scnMeta").innerHTML = "calcul maison · " + (AUTO && AUTO.generated ? "robot " + badge(ageDays(AUTO.generated.slice(0, 10)) <= 1 ? "ok" : "old") : "");
   }
+
+  /* =====================================================================
+     PROBABILITÉS DE LA FED RECALCULÉES SELON LA MÉTHODE CME FEDWATCH (contrats à terme fed funds, CBOT)
+     ===================================================================== */
+  function fedWatchCalc() {
+    var Z = AUTO && AUTO.zq; if (!Z || Object.keys(Z).length < 4) return null;
+    var cur = fred("DFEDTARU"); if (!cur) return null;
+    var months = Object.keys(Z).sort(), today = iso(new Date());
+    var meet = {}; MEETINGS.filter(function (m) { return m.c === "USD" && m.d > today; }).forEach(function (m) { meet[m.d.slice(0, 7)] = m; });
+    var dim = function (ym) { var y = +ym.slice(0, 4), m = +ym.slice(5, 7); return new Date(Date.UTC(y, m, 0)).getUTCDate(); };
+    var avg = {}; months.forEach(function (ym) { avg[ym] = 100 - Z[ym].p; });
+    var start = {}, end = {};
+    /* Mois sans réunion : le taux moyen du mois est à la fois le début et la fin (« ancre ») */
+    months.forEach(function (ym) { if (!meet[ym]) { start[ym] = end[ym] = avg[ym]; } });
+    var nextYm = function (ym) { var y = +ym.slice(0, 4), m = +ym.slice(5, 7) + 1; if (m > 12) { m = 1; y++; } return y + "-" + String(m).padStart(2, "0"); };
+    var prevYm = function (ym) { var y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1; if (m < 1) { m = 12; y--; } return y + "-" + String(m).padStart(2, "0"); };
+    /* Mois avec réunion : à rebours depuis une ancre si le mois suivant n'a pas de réunion, sinon à partir de la fin du mois précédent */
+    var out = [];
+    months.forEach(function (ym) {
+      var mt = meet[ym]; if (!mt || avg[ym] === undefined) return;
+      var D = dim(ym), day = +mt.d.slice(8, 10), N = day, M = D - day;
+      var nx = nextYm(ym), pv = prevYm(ym);
+      if (avg[nx] !== undefined && !meet[nx]) { end[ym] = avg[nx]; start[ym] = (avg[ym] - (M / D) * end[ym]) / (N / D); }
+      else if (end[pv] !== undefined) { start[ym] = end[pv]; end[ym] = (avg[ym] - (N / D) * start[ym]) / (M / D); }
+      else if (avg[pv] !== undefined) { start[ym] = avg[pv]; end[ym] = (avg[ym] - (N / D) * start[ym]) / (M / D); }
+      else return;
+      out.push({ ym: ym, d: mt.d, t: mt.t, start: start[ym], end: end[ym], chg: end[ym] - start[ym] });
+    });
+    if (!out.length) return null;
+    /* Arbre de probabilités : chaque réunion = deux issues voisines (méthode CME), combinées d'une réunion à l'autre */
+    var dist = { 0: 1 }, res = [];
+    out.forEach(function (o) {
+      var steps = o.chg / 0.25, k = Math.floor(steps), r = steps - k, one = {}; one[k] = 1 - r; if (r > 1e-9) one[k + 1] = r;
+      var nd = {}; Object.keys(dist).forEach(function (a) { Object.keys(one).forEach(function (b) { var s = +a + +b; nd[s] = (nd[s] || 0) + dist[a] * one[b]; }); });
+      dist = nd;
+      var cumul = Object.keys(dist).map(function (s) { return { s: +s, p: dist[s] }; }).filter(function (x) { return x.p > 0.005; }).sort(function (a, b) { return a.s - b.s; });
+      res.push({ d: o.d, t: o.t, chg: o.chg, single: Object.keys(one).map(function (s) { return { s: +s, p: one[s] }; }), cumul: cumul, rate: o.end });
+    });
+    var lastT = months.map(function (ym) { return Z[ym].t; }).filter(Boolean).sort().pop();
+    return { res: res, up: cur.v, asof: lastT, effr: avg[months[0]] };
+  }
+  function renderFedWatch() {
+    var box = $("fwBody"); if (!box) return;
+    var F = fedWatchCalc();
+    if (!F) { box.innerHTML = '<p class="hint" style="padding:8px 12px">Contrats à terme fed funds pas encore relevés par le robot.</p>'; return; }
+    var rng = function (s) { var u = F.up + s * 0.25; return fmt(u - 0.25, 2) + "–" + fmt(u, 2) + " %"; };
+    var mv = function (s) { return s === 0 ? "maintien" : (s > 0 ? "hausse de " : "baisse de ") + fmt(Math.abs(s) * 0.25, 2) + " pt"; };
+    var kal = typeof fedPath === "function" ? fedPath() : [];
+    box.innerHTML = '<div class="tbl"><table><thead><tr><th>Réunion de la Fed</th><th>Issue la plus probable (cumulée)</th><th class="r">Probabilité</th><th class="r col-core">Taux implicite</th><th class="r col-core">Kalshi (médian)</th></tr></thead><tbody>' + F.res.map(function (r) {
+      var best = r.cumul.slice().sort(function (a, b) { return b.p - a.p; })[0];
+      var dt = parseD(r.d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "2-digit" });
+      var k = kal.filter(function (x) { return x.close && x.close.slice(0, 7) === r.d.slice(0, 7); })[0];
+      return '<tr data-det="fw:' + r.d + '"><td><b>' + dt + "</b>" + (r.t ? " <small>(date provisoire)</small>" : "") + ' <span class="more">›</span></td><td>' + rng(best.s) + " <small>(" + mv(best.s) + " depuis aujourd'hui)</small></td><td class=\"r num\"><b>" + Math.round(best.p * 100) + ' %</b></td><td class="r num col-core">' + fmt(r.rate, 3) + ' %</td><td class="r num col-core">' + (k ? fmt(k.exp - 0.125, 3) + " %" : "–") + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+    var n0 = F.res[0], s0 = n0.single.slice().sort(function (a, b) { return b.p - a.p; });
+    $("fwTxt").innerHTML = "Prochaine réunion (" + parseD(n0.d).toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) + ") : " + s0.map(function (x) { return "<b>" + mv(x.s) + " " + Math.round(x.p * 100) + " %</b>"; }).join(" · ") + ". Taux effectif implicite ce mois-ci : " + fmt(F.effr, 3) + " %.";
+    $("fwMeta").innerHTML = "contrats à terme CBOT (Yahoo, différé) · " + (F.asof ? kinTimeStr(F.asof) + " " + badge(Date.now() - Date.parse(F.asof) < 4 * 864e5 ? "ok" : "old") : "");
+  }
+  function detFedWatch(d) {
+    var F = fedWatchCalc(); if (!F) return; var r = F.res.filter(function (x) { return x.d === d; })[0]; if (!r) return;
+    var rng = function (s) { var u = F.up + s * 0.25; return fmt(u - 0.25, 2) + "–" + fmt(u, 2) + " %"; };
+    return openDetail({ t: "Fed · réunion du " + parseD(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }), val: fmt(r.rate, 3) + " %", sub: "taux effectif implicite après la réunion (contrats à terme fed funds)",
+      extra: '<h3>Fourchette de taux après cette réunion</h3><div class="tbl"><table><thead><tr><th>Fourchette cible</th><th class="r">Probabilité</th></tr></thead><tbody>' + r.cumul.map(function (c) { return "<tr><td>" + rng(c.s) + (c.s === 0 ? " <small>(actuelle)</small>" : "") + '</td><td class="r num">' + fmt(c.p * 100, 1) + " %</td></tr>"; }).join("") + "</tbody></table></div>" +
+        '<h3>À cette réunion seule</h3><p>' + r.single.map(function (x) { return (x.s === 0 ? "pas de changement" : (x.s > 0 ? "+" : "−") + fmt(Math.abs(x.s) * 0.25, 2) + " pt par rapport au taux attendu juste avant") + " : " + fmt(x.p * 100, 1) + " %"; }).join(" ; ") + ".</p>",
+      now: "Variation attendue à cette réunion : " + (r.chg >= 0 ? "+" : "−") + fmt(Math.abs(r.chg) * 100, 1) + " pb.",
+      how: "Même méthode que l'outil CME FedWatch : prix des contrats à terme sur le taux des fonds fédéraux (CBOT) → taux moyen de chaque mois (100 − prix) → taux avant et après chaque réunion selon le nombre de jours → probabilités des deux issues voisines, combinées d'une réunion à l'autre. Les chiffres peuvent différer de quelques points de l'outil officiel (heure des prix, dates provisoires de 2027, arrondis).",
+      src: "https://www.cmegroup.com/articles/2023/understanding-the-cme-group-fedwatch-tool-methodology.html", srcTxt: "méthode publiée par le CME" });
+  }
+
+  /* Flux des ETF d'or et demande physique : relevés automatiques + derniers chiffres officiels du World Gold Council (saisie datée) */
+  var WGC = [
+    { q: "T2 2026", pub: "2026-07-30", tot: 1269, totYoY: 0, jew: 278.2, bar: null, etf: -44.8, cb: 288.9, tech: null, src: "https://www.gold.org/goldhub/research/gold-demand-trends/gold-demand-trends-q2-2026", src2: "https://upstox.com/news/personal-finance/commodities/3-gold-demand-trends-in-q2-2026-jewellery-and-et-fs-fall-central-bank-buying-soars-411/article-198103/" },
+    { q: "T1 2026", pub: "2026-04-30", tot: 1231, totYoY: 2, jew: null, bar: 474, etf: 62.4, cb: 244, tech: 82, src: "https://www.coinworld.com/news/precious-metals/world-gold-council-publishes-global-gold-demand-trends" }
+  ];
+  var ETF_MONTH = { d: "2026-09-30", pub: "2026-10", us_sep: 3.7, us_q3: 11.7, us_q2: -5.6, china8m: 1141, src: "https://www.ssga.com/library-content/products/fund-docs/etfs/us/insights-investment-ideas/monthly-gold-monitor.pdf" };
+  function etfFlows(tick) {
+    var s = AUTO && AUTO.goldetf && AUTO.goldetf.snap && AUTO.goldetf.snap[tick + "_nq"]; if (!s || !s.length) return null;
+    var fl = [];
+    for (var i = 1; i < s.length; i++) {
+      var a = s[i - 1], b = s[i]; if (!a.mcap || !b.mcap || !a.px || !b.px) continue;
+      var f = (b.mcap - a.mcap * (b.px / a.px)) / 1e9; if (Math.abs(f) > 1e-6) fl.push([b.d, f]);
+    }
+    return { last: s[s.length - 1], flows: fl, days: s.length };
+  }
+  function renderGoldDemand() {
+    var box = $("gdBody"); if (!box) return;
+    var g = etfFlows("GLD"), ia = etfFlows("IAU"), W = WGC[0], wl = AUTO && AUTO.wgc;
+    var n = function (v, d) { return v === null || v === undefined ? "–" : (v >= 0 && d ? "+" : "") + fmt(v, 1); };
+    var etfRow = function (lab, e) {
+      if (!e) return "<tr><td>" + lab + '</td><td colspan="3"><small>pas encore relevé</small></td></tr>';
+      var f5 = e.flows.slice(-5).reduce(function (a, x) { return a + x[1]; }, 0);
+      return "<tr><td><b>" + lab + '</b></td><td class="r num">' + fmt(e.last.mcap / 1e9, 1) + ' Md $</td><td class="r num">' + (e.flows.length ? '<span class="' + cls(f5) + '">' + (f5 >= 0 ? "+" : "−") + fmt(Math.abs(f5), 2) + " Md $</span> <small>(" + e.flows.length + " j)</small>" : "<small>mémoire en construction (" + e.days + " relevé" + (e.days > 1 ? "s" : "") + ")</small>") + '</td><td><small>' + shortD(e.last.d) + "</small></td></tr>";
+    };
+    box.innerHTML = '<div class="pgrid"><div class="pcard"><h3>Flux des ETF d\'or <span class="nat nat-diffr">AUTO</span></h3><div class="tbl"><table><thead><tr><th>ETF</th><th class="r">Taille</th><th class="r">Flux récents</th><th>Relevé</th></tr></thead><tbody>' + etfRow("GLD (SPDR)", g) + etfRow("IAU (iShares)", ia) + "</tbody></table></div>" +
+      '<p class="hint" style="max-width:none">Flux = variation de la taille du fonds qui ne vient pas du prix (taille d\'aujourd\'hui − taille d\'hier × variation du cours) : de l\'argent qui entre (+) ou sort (−). Taille relevée chaque jour par le robot (Nasdaq) ; les flux apparaissent à partir du deuxième jour de bourse relevé.</p>' +
+      '<p class="hint" style="max-width:none"><b>Dernier chiffre mensuel publié</b> <span class="pill warn">à vérifier</span> : ETF d\'or cotés aux États-Unis <b class="up">+' + fmt(ETF_MONTH.us_sep, 1) + " Md $</b> en septembre 2026, <b class=\"up\">+" + fmt(ETF_MONTH.us_q3, 1) + ' Md $</b> sur le 3e trimestre (après −5,6 Md $ au 2e). Source : <a href="' + ETF_MONTH.src + '" target="_blank" rel="noopener">State Street, Monthly Gold Monitor (oct. 2026)</a>.</p></div>' +
+      '<div class="pcard"><h3>Demande physique (World Gold Council) <span class="nat nat-manuel">MANUEL</span></h3>' + (wl && wl.latest && wl.latest !== "Q2 2026" ? '<p class="warn">Nouvelle édition publiée (' + esc(wl.latest) + ') : <a href="' + esc(wl.url) + '" target="_blank" rel="noopener">voir le rapport</a>, les chiffres ci-dessous sont à mettre à jour.</p>' : "") +
+      '<div class="tbl"><table><thead><tr><th>Tonnes</th>' + WGC.map(function (w) { return '<th class="r">' + w.q + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      [["Demande totale", "tot"], ["Bijouterie", "jew"], ["Lingots et pièces", "bar"], ["ETF", "etf"], ["Banques centrales", "cb"], ["Technologie", "tech"]].map(function (r) { return "<tr><td>" + r[0] + "</td>" + WGC.map(function (w) { return '<td class="r num">' + n(w[r[1]], r[1] === "etf") + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>" +
+      '<p class="hint" style="max-width:none">Chiffres trimestriels du rapport « Gold Demand Trends », recopiés des publications (tiret = non relevé). Sources : <a href="' + WGC[0].src + '" target="_blank" rel="noopener">WGC T2 2026</a>, <a href="' + WGC[0].src2 + '" target="_blank" rel="noopener">détail T2</a>, <a href="' + WGC[1].src + '" target="_blank" rel="noopener">T1 2026</a>. Importations d\'or de la Chine : ' + ETF_MONTH.china8m.toLocaleString("fr-FR") + " t sur les 8 premiers mois de 2026 (State Street). Le robot surveille le site du WGC et signale chaque nouvelle édition" + (wl && wl.latest ? " (dernière vue : " + esc(wl.latest) + ")" : "") + ".</p></div></div>";
+  }
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
   function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
@@ -4140,7 +4245,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     F.DXY = { v: last[1], asof: last[0], hist: d.c, real: true, via: "ICE, clôture (Yahoo Finance, non officiel)" + (bce ? " · recalcul BCE : " + fmt(bce.v, 2) + " au " + shortD(bce.asof) : "") };
     DET.DXY[3] = "Valeur du dollar face à 6 grandes devises (euro surtout). Ici : clôture du vrai indice ICE relevée par le robot (Yahoo Finance) ; à défaut, recalculé avec les taux de la BCE (même formule officielle).";
   }
-  function renderAuto() { preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })

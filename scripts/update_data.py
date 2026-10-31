@@ -2227,6 +2227,9 @@ def do_daily(data):
             if len(rows) < 25:
                 raise ValueError("trop peu de clôtures")
             out[key] = {"n": name, "sym": sym, "c": rows[-130:], "live": (r.get("meta") or {}).get("regularMarketPrice")}
+            if key == "gold":  # bougies complètes de l'or (ouverture, plus haut, plus bas) pour les pivots quand Binance est injoignable
+                out[key]["ohlc"] = [[datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%d"), round(o, 2), round(h, 2), round(l, 2)]
+                                    for t_, o, h, l in zip(r.get("timestamp") or [], q.get("open") or [], q.get("high") or [], q.get("low") or []) if o and h and l][-130:]
         except Exception as e:
             bad.append(key)
             DIAG["daily_" + key] = fr_err(e)[:120]
