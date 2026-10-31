@@ -2860,7 +2860,7 @@ def geo_hist_load():
     try:
         with open(OUT_GEO, encoding="utf-8") as f:
             h = json.load(f)
-        if isinstance(h, dict) and "days" in h and h.get("v") == 2:
+        if isinstance(h, dict) and "days" in h and h.get("v") == 3:
             return h
     except Exception:
         pass
@@ -2891,7 +2891,7 @@ def do_geo(data):
             dd = (newest - timedelta(days=k)).strftime("%Y-%m-%d")
             if (old_days.get(dd) or {}).get("n", 0) < 8:
                 miss.append(dd)
-        for dd in miss[:3]:
+        for dd in miss[:30]:  # tout l'historique manquant d'un coup (~360 petits fichiers)
             for hh in range(0, 24, 2):
                 st = dd.replace("-", "") + "%02d0000" % hh
                 if st not in bf and st not in done:
@@ -2903,7 +2903,7 @@ def do_geo(data):
             except Exception as e:  # un fichier manquant n'arrête pas les autres
                 return st, e
         got = []
-        with ThreadPoolExecutor(8) as ex:
+        with ThreadPoolExecutor(12) as ex:
             for st, rows in ex.map(one, todo):
                 if isinstance(rows, Exception):
                     continue
@@ -2925,8 +2925,12 @@ def do_geo(data):
                     ment = int(f[31] or 0)
                 except ValueError:
                     ment = 0
-                c = D["c"].setdefault(cc, [0, 0, 0, 0])  # événements, conflits géopolitiques, manifestations, mentions des conflits
+                c = D["c"].setdefault(cc, [0, 0, 0, 0, 0.0])  # événements, conflits géopolitiques, manifestations, mentions des conflits, somme du ton
                 c[0] += 1
+                try:
+                    c[4] = round(c[4] + float(f[34] or 0), 2)
+                except ValueError:
+                    pass
                 # Conflit « géopolitique » : armée, rebelles, insurgés ou deux pays différents.
                 # Les faits divers (police contre criminel) sont écartés : ils gonflent les pays très couverts.
                 types = {f[12], f[13], f[22], f[23]}
@@ -2949,7 +2953,7 @@ def do_geo(data):
                 bf.add(st)
         keep = (newest - timedelta(days=45)).strftime("%Y-%m-%d")
         days = {k: v for k, v in days.items() if k >= keep}
-        h = {"v": 2, "done": sorted(s for s in done if s >= (newest - timedelta(hours=30)).strftime("%Y%m%d%H%M%S")),
+        h = {"v": 3, "done": sorted(s for s in done if s >= (newest - timedelta(hours=30)).strftime("%Y%m%d%H%M%S")),
              "bf": sorted(s for s in bf if s[:8] >= keep.replace("-", "")), "days": days, "hot": hot[-1500:]}
         with LOCK:
             try:
@@ -2972,9 +2976,9 @@ def do_geo(data):
                 continue
             curn += D["n"]
             for cc, v in D["c"].items():
-                a = cur.setdefault(cc, [0, 0, 0, 0])
-                for i in range(4):
-                    a[i] += v[i]
+                a = cur.setdefault(cc, [0, 0, 0, 0, 0.0])
+                for i in range(5):
+                    a[i] += v[i] if i < len(v) else 0
         past = [days[k] for k in sorted(days) if k < (newest - timedelta(days=1)).strftime("%Y-%m-%d") and days[k]["n"] >= 8][-30:]
         world_conf = sum(v[1] for v in cur.values()) or 1
         # Niveau : conflits géopolitiques corrigés du volume de presse (un pays très couvert ne ressort pas d'office)
@@ -2992,7 +2996,9 @@ def do_geo(data):
                 sd = (sum((x - mu) ** 2 for x in hist) / len(hist)) ** 0.5
                 z = round((rate - mu) / max(sd, 0.25 * mu, 0.02), 2)
             lvl = round(100 * (1 - rk[cc] / nct)) if cc in rk else 0
-            C[cc] = [lvl, z, v[0], v[1], v[2], round(v[1] / world_conf * 100, 2)]
+            tone = round(v[4] / v[0], 2) if v[0] else None
+            th = [p["c"][cc][4] / p["c"][cc][0] for p in past if cc in p["c"] and len(p["c"][cc]) > 4 and p["c"][cc][0]]
+            C[cc] = [lvl, z, v[0], v[1], v[2], round(v[1] / world_conf * 100, 2), tone, round(sum(th) / len(th), 2) if len(th) >= 5 else None]
         # Points chauds : regroupement par cellule de 1 degré, on garde la plus citée
         cells = {}
         for x in hot:
@@ -3006,6 +3012,15 @@ def do_geo(data):
             else:
                 c["nb"] += 1
         hotl = sorted(cells.values(), key=lambda x: -(x["m"] + 3 * x["nb"]))[:40]
+        dk = [k for k in sorted(days) if days[k]["n"] >= 8][-31:]
+        tot = {}
+        for k in dk:
+            for cc, v in days[k]["c"].items():
+                tot[cc] = tot.get(cc, 0) + v[1]
+        keep_c = [cc for cc, x in sorted(tot.items(), key=lambda kv: -kv[1])[:90]]
+        g["tsd"] = dk
+        g["ts"] = {cc: [round(days[k]["c"].get(cc, [0, 0])[1] / days[k]["n"] * 96, 1) for k in dk] for cc in keep_c}
+        g["world"] = [[k, round(sum(v[1] for v in days[k]["c"].values()) / days[k]["n"] * 96)] for k in dk]
         g.update({"asof": newest.strftime("%Y-%m-%dT%H:%MZ"), "n24": n24, "days": len(past), "c": C,
                   "hot": [[x["lat"], x["lon"], x["iso"], x["r"], x["m"], x["nb"], x["loc"], x["u"], x["t"]] for x in hotl],
                   "esc": [cc for cc, v in sorted(C.items(), key=lambda kv: -(kv[1][1] or -99)) if v[1] is not None and v[1] >= 1.5][:15]})
@@ -3069,6 +3084,18 @@ def do_geo(data):
             gp["month"] = month
         except Exception as e:
             DIAG["gpr_pays"] = fr_err(e)
+        try:  # estimation maison pour les jours pas encore publiés : rythme mondial des conflits GDELT étalonné sur l'indice
+            W = dict((k, v) for k, v in (g.get("world") or []))
+            pairs = [(x[1], W[x[0]]) for x in rows[-60:] if x[0] in W and W[x[0]] > 0]
+            if len(pairs) >= 5:
+                ratios = sorted(a / b for a, b in pairs)
+                k_ = ratios[len(ratios) // 2]
+                est = [[d_, round(w_ * k_, 1)] for d_, w_ in sorted(W.items()) if d_ > rows[-1][0]]
+                gp["now"] = est
+                gp["k"] = round(k_, 4)
+                gp["pairs"] = len(pairs)
+        except Exception as e:
+            DIAG["gpr_estimation"] = fr_err(e)
         g["gpr"] = gp
         note("geo.gpr", "Indice de risque géopolitique (Caldara et Iacoviello)", "daily", True, rows[-1][0], url="https://www.matteoiacoviello.com/gpr.htm")
     except Exception as e:
@@ -3146,7 +3173,133 @@ def do_geo(data):
         note("geo.news", "Titres géopolitiques du jour (Google Actualités)", "daily", True, TODAY, url="https://news.google.com/")
     except Exception as e:
         note("geo.news", "Titres géopolitiques (Google Actualités)", "daily", False, err=e, url="https://news.google.com/")
+    geo_extra(g)
     data["geo"] = g
+
+
+GEO_YH = [("BZ=F", "Pétrole Brent", "energie"), ("CL=F", "Pétrole WTI", "energie"), ("TTF=F", "Gaz européen (TTF)", "energie"),
+          ("GC=F", "Or (COMEX)", "reaction"), ("DX-Y.NYB", "Dollar (DXY)", "reaction"), ("^TNX", "Taux US 10 ans", "reaction"),
+          ("ITA", "Défense US (fonds ITA)", "defense"), ("LMT", "Lockheed Martin", "defense"), ("RHM.DE", "Rheinmetall", "defense"),
+          ("BA.L", "BAE Systems", "defense"), ("^GSPC", "S&P 500 (référence)", "defense")]
+# Calendrier géopolitique : dates officielles vérifiées le 31 oct. 2026 (sources en lien) ; les dates passées disparaissent seules.
+GEO_CAL = [("2026-11-01", "2026-11-01", "Réunion des 7 pays de l'OPEP+ (production de pétrole)", "énergie", "https://opec.org/pr-detail/1891616-4-october-2026.html"),
+           ("2026-11-03", "2026-11-03", "Élections de mi-mandat aux États-Unis", "dollar, politique budgétaire", "https://en.wikipedia.org/wiki/2026_United_States_elections"),
+           ("2026-11-09", "2026-11-20", "COP31 à Antalya (climat, énergie)", "énergie", "https://en.wikipedia.org/wiki/2026_United_Nations_Climate_Change_Conference"),
+           ("2026-11-12", "2026-11-12", "Sommet de la Communauté politique européenne (Irlande)", "Europe, Ukraine", "https://www.eunews.it/wp-content/uploads/2026/10/leaders-agenda_2026.pdf"),
+           ("2026-11-18", "2026-11-19", "Sommet de l'APEC à Shenzhen (Chine, États-Unis)", "commerce, Chine", "https://www.lg.gov.cn/english/news/latestnews/content/post_12588327.html"),
+           ("2026-11-26", "2026-11-27", "Conseil européen extraordinaire (à confirmer)", "euro", "https://www.eunews.it/wp-content/uploads/2026/10/leaders-agenda_2026.pdf"),
+           ("2026-12-14", "2026-12-15", "Sommet du G20 à Miami", "commerce, dollar", "https://en.wikipedia.org/wiki/2026_G20_Miami_summit"),
+           ("2026-12-17", "2026-12-18", "Conseil européen (budget, élargissement)", "euro", "https://www.eunews.it/wp-content/uploads/2026/10/leaders-agenda_2026.pdf")]
+
+
+def geo_extra(g):
+    # 1. Énergie, réaction du marché et défense (Yahoo, cours de clôture quotidiens)
+    mk, errs = {}, []
+    for sym, lab, grp in GEO_YH:
+        try:
+            j = None
+            for host in ("query1", "query2"):
+                try:
+                    j = json.loads(http("geo_yh_%s.json" % re.sub(r"\W", "", sym), "https://%s.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=6mo" % (host, urllib.parse.quote(sym)), tries=1, timeout=20))
+                    break
+                except Exception as e:
+                    errs.append("%s %s" % (sym, fr_err(e)[:40]))
+                    time.sleep(2)
+            r = j["chart"]["result"][0]
+            cl = [(datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), c) for t, c in zip(r["timestamp"], r["indicators"]["quote"][0]["close"]) if c is not None]
+            if len(cl) < 25:
+                raise ValueError("historique trop court")
+            last = cl[-1][1]
+            ch = lambda n: round((last / cl[-1 - n][1] - 1) * 100, 2) if len(cl) > n and cl[-1 - n][1] else None
+            if sym == "^TNX":  # rendement : variation en points de base
+                ch = lambda n: round((last - cl[-1 - n][1]) * 100) if len(cl) > n else None
+            mk[sym] = {"n": lab, "g": grp, "c": round(last, 3), "d": cl[-1][0], "c1": ch(1), "c5": ch(5), "c20": ch(20), "sp": [round(x[1], 2) for x in cl[-90:]]}
+        except Exception as e:
+            errs.append("%s %s" % (sym, fr_err(e)[:60]))
+        time.sleep(0.6)
+    if mk:
+        g["mkt"] = mk
+        newest = max(v["d"] for v in mk.values())
+        note("geo.mkt", "Géopolitique : pétrole, gaz, défense, or, dollar, taux (Yahoo, %d/%d cours)" % (len(mk), len(GEO_YH)), "daily", len(mk) >= 6, newest, err=None if len(mk) >= 6 else "; ".join(errs[:3]), url="https://finance.yahoo.com/")
+        # Code de réaction (étape 4 de la feuille) : or, dollar, taux US ensemble
+        def code(n):
+            gc, dx, tn = (mk.get("GC=F") or {}).get("c%d" % n), (mk.get("DX-Y.NYB") or {}).get("c%d" % n), (mk.get("^TNX") or {}).get("c%d" % n)
+            if None in (gc, dx, tn):
+                return None
+            th = 1 if n == 1 else 2.2  # seuils : ±0,3 % (or), ±0,15 % (dollar), ±2 pb (taux) sur 1 jour ; plus larges sur 5 jours
+            sg = 1 if gc > 0.3 * th else -1 if gc < -0.3 * th else 0
+            sd = 1 if dx > 0.15 * th else -1 if dx < -0.15 * th else 0
+            st_ = 1 if tn > 2 * th else -1 if tn < -2 * th else 0
+            cmap = {(1, 1, -1): ("R1", "refuge classique"), (1, -1, 1): ("R2", "défiance envers les actifs américains ou stagflation"),
+                    (-1, 1, 1): ("R3", "liquidation ou Fed ferme : le cadre des taux réels reprend la main"), (1, 1, 1): ("R4", "refuge avec choc d'inflation : lien avec les taux réels cassé")}
+            cd = cmap.get((sg, sd, st_))
+            return {"or": gc, "dollar": dx, "taux": tn, "code": cd[0] if cd else None, "lecture": cd[1] if cd else "pas de code : mouvement mixte ou faible", "s": [sg, sd, st_]}
+        g["react"] = {"d1": code(1), "d5": code(5), "asof": newest}
+    else:
+        note("geo.mkt", "Géopolitique : pétrole, gaz, défense (Yahoo)", "daily", False, err="; ".join(errs[:3]), url="https://finance.yahoo.com/")
+    # 2. Marchés de prédiction géopolitiques (Polymarket)
+    try:
+        pm = []
+        for tag in ("geopolitics", "world"):
+            url = "https://gamma-api.polymarket.com/events?" + urllib.parse.urlencode({"closed": "false", "limit": "60", "tag_slug": tag, "order": "volume", "ascending": "false"})
+            evs = json.loads(http("poly_geo_%s.json" % tag, url, tries=2, timeout=25))
+            for ev in evs if isinstance(evs, list) else []:
+                for m in ev.get("markets") or []:
+                    try:
+                        outs, prices = json.loads(m.get("outcomes") or "[]"), json.loads(m.get("outcomePrices") or "[]")
+                    except ValueError:
+                        continue
+                    if m.get("closed") or "Yes" not in outs or len(prices) != len(outs):
+                        continue
+                    py, vol = num(prices[outs.index("Yes")]), num(m.get("volume")) or 0
+                    if py is None or vol < 50000:
+                        continue
+                    pm.append({"ev": (ev.get("title") or "")[:120], "q": (m.get("groupItemTitle") or m.get("question") or "")[:140], "p": round(py, 3),
+                               "vol": round(vol), "end": (m.get("endDate") or "")[:10], "slug": ev.get("slug"), "id": m.get("id")})
+            if len(pm) >= 15:
+                break
+        seen, out = set(), []
+        for x in sorted(pm, key=lambda x: -x["vol"]):
+            if x["id"] in seen:
+                continue
+            seen.add(x["id"])
+            out.append(x)
+        if not out:
+            raise ValueError("aucun marché géopolitique ouvert")
+        prev = {x.get("id"): x.get("p") for x in ((PREVIOUS.get("geo") or {}).get("pm") or [])}
+        for x in out:
+            if prev.get(x["id"]) is not None:
+                x["dp"] = round(x["p"] - prev[x["id"]], 3)
+        g["pm"] = out[:40]
+        note("geo.pm", "Marchés de prédiction géopolitiques (Polymarket)", "daily", True, TODAY, url="https://polymarket.com/")
+    except Exception as e:
+        note("geo.pm", "Marchés de prédiction géopolitiques (Polymarket)", "daily", False, err=e, url="https://polymarket.com/")
+    # 3. Sanctions : actions récentes du Trésor américain (OFAC), sinon titres de presse
+    try:
+        txt = http("ofac_recent.html", "https://ofac.treasury.gov/recent-actions", timeout=30)
+        items = []
+        for m in re.finditer(r'href="(/recent-actions/(\d{8})[^"]*)"[^>]*>(.*?)</a>', txt, re.S):
+            t = strip_html(m.group(3))
+            d = m.group(2)
+            if t and len(t) > 8:
+                items.append({"t": t[:200], "l": "https://ofac.treasury.gov" + m.group(1), "d": d[:4] + "-" + d[4:6] + "-" + d[6:]})
+        if not items:
+            raise ValueError("page lue mais aucune action trouvée")
+        g["sanc"] = {"src": "OFAC (Trésor américain)", "it": items[:12]}
+        note("geo.sanc", "Sanctions : actions récentes du Trésor américain (OFAC)", "daily", True, items[0]["d"], url="https://ofac.treasury.gov/recent-actions")
+    except Exception as e:
+        DIAG["ofac"] = fr_err(e)
+        try:
+            qq = urllib.parse.quote('(sanctions OR "gel des avoirs" OR embargo) when:3d')
+            it = [x for x in parse_feed(http("geo_sanc.xml", "https://news.google.com/rss/search?q=%s&hl=fr&gl=FR&ceid=FR:fr" % qq, timeout=25)) if "sanction" in x["t"].lower() or "embargo" in x["t"].lower() or "avoirs" in x["t"].lower()]
+            if not it:
+                raise ValueError("aucun titre")
+            g["sanc"] = {"src": "titres de presse (Google Actualités) ; page OFAC indisponible", "it": it[:12]}
+            note("geo.sanc", "Sanctions : titres de presse (OFAC indisponible : %s)" % fr_err(e)[:40], "daily", True, TODAY, url="https://news.google.com/")
+        except Exception as e2:
+            note("geo.sanc", "Sanctions (OFAC, presse)", "daily", False, err=e2, url="https://ofac.treasury.gov/recent-actions")
+    # 4. Calendrier géopolitique (dates officielles ; les événements passés disparaissent)
+    g["cal"] = [list(x) for x in GEO_CAL if x[1] >= TODAY]
 
 
 def geo_note(data):
@@ -3190,6 +3343,37 @@ def geo_note(data):
     if not why:
         return
     g["note"] = {"v": val, "why": why, "asof": TODAY}
+    # Alertes du jour (affichées dans « Ce matin » et le moniteur)
+    al = []
+    C = g.get("c") or {}
+    for cc in (g.get("esc") or []):
+        t = C.get(cc)
+        if t and t[1] is not None and t[1] >= 2:
+            al.append(["esc", cc, "Escalade inhabituelle : %s (%.1f écarts-types)%s" % (cc, t[1], " · canal pour l'or : " + GEO_CANAL[cc] if cc in GEO_CANAL else "")])
+    for lab in drops:
+        al.append(["ship", lab, "Trafic en chute de 15 % ou plus sur 7 jours : " + lab])
+    pv = ((PREVIOUS.get("geo") or {}).get("note") or {}).get("v")
+    if pv is not None and pv != val:
+        al.append(["note", "", "La note proposée du pilier Risque passe de %+d à %+d" % (pv, val)])
+    mk = g.get("mkt") or {}
+    for sym in ("BZ=F", "TTF=F"):
+        x = mk.get(sym)
+        if x and x.get("c1") is not None and abs(x["c1"]) >= 4:
+            al.append(["nrj", sym, "%s : %+.1f %% en une séance" % (x["n"], x["c1"])])
+    for x in (g.get("pm") or []):
+        if x.get("dp") is not None and abs(x["dp"]) >= 0.10:
+            al.append(["pm", x.get("slug") or "", "Marché de prédiction : « %s » %+.0f points (%d %%)" % (x["q"] or x["ev"], x["dp"] * 100, round(x["p"] * 100))])
+    for cc, a in (g.get("adv") or {}).items():
+        if a[0] >= 4 and ageDaysPy(a[1]) <= 3:
+            al.append(["adv", cc, "Avis de voyage américain au niveau 4 (ne pas voyager), mis à jour le " + a[1]])
+    gpn = (gp.get("now") or [])
+    if gpn and d:
+        last_est = gpn[-1][1]
+        allv = sorted(x[1] for x in d[-1095:])
+        pe = round(sum(1 for x in allv if x < last_est) / len(allv) * 100) if allv else None
+        if pe is not None and pe >= 90:
+            al.append(["gpr", "", "Estimation du jour de l'indice GPR au %de percentile sur 3 ans" % pe])
+    g["alerts"] = al[:12]
     data["geo"] = g
 
 

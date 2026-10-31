@@ -311,6 +311,18 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .mapwrap svg { width: 100%; height: auto; display: block; background: #08080a; }
 .mapwrap path { stroke: #060607; stroke-width: .5; cursor: pointer; }
 .mapwrap path:hover, .mapwrap path.on { stroke: var(--amber); stroke-width: 1.4; }
+.geo-alerts { padding: 8px 12px 0; display: grid; gap: 4px; }
+.galert { font-size: 12px; padding: 6px 10px; border-left: 3px solid #ff5c4f; background: #1a0f0e; }
+.galert.ok { border-color: #3ddc97; background: #0e1a14; } .galert.note, .galert.pm { border-color: #f2b01e; background: #1a160b; } .galert.ship { border-color: #5fb4ff; background: #0d141c; }
+.geo-crises { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; padding: 0 12px 10px; }
+.gcrise { border: 1px solid var(--line2); background: #0d0d0f; padding: 8px 10px; font-size: 12px; }
+.gcrise.active { border-color: #ff5c4f; } .gcrise.tendue { border-color: #a8521f; }
+.gch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; } .gch b { color: var(--amber); font: 600 12px var(--font-mono); }
+.gst { font: 600 9px var(--font-mono); padding: 1px 5px; border: 1px solid currentColor; }
+.gcrise.active .gst { color: #ff5c4f; } .gcrise.tendue .gst { color: #e07a3a; } .gcrise.calme .gst { color: #3ddc97; }
+.gcrise .m { font: 10px var(--font-mono); color: var(--muted); margin: 6px 0 2px; text-transform: uppercase; }
+.gspark { width: 100%; height: 34px; display: block; }
+td .gspark { width: 120px; height: 24px; }
 .geo-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 12px; }
 .geo-card { border: 1px solid var(--line2); padding: 10px 12px; background: #0d0d0f; }
 .geo-card small { display: block; font: 10px var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
@@ -785,6 +797,17 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
 
     <section class="panel" id="geopol">
       <div class="ph"><h2>Géopolitique : moniteur de risque</h2><span class="meta" id="geoMeta">robot</span></div>
+      <div class="geo-alerts" id="geoAlerts"></div>
+      <div class="pair-name pad">Grandes crises : la situation en un coup d'œil</div>
+      <div class="geo-crises" id="geoCrises"></div>
+      <div class="geo-grid">
+        <div><div class="pair-name pad">Réaction du marché : or, dollar, taux US (code de ta feuille)</div><div id="geoReact" class="pad"></div></div>
+        <div><div class="pair-name pad">Calendrier géopolitique</div><div class="tbl"><table id="geoCal"></table></div></div>
+      </div>
+      <div class="pair-name pad">Énergie et défense : ce que le marché paie</div>
+      <div class="tbl"><table id="geoMkt"></table></div>
+      <div class="pair-name pad">Marchés de prédiction géopolitiques (probabilités payées par les parieurs)</div>
+      <div class="tbl"><table id="geoPm"></table></div>
       <div class="geo-top">
         <div class="geo-card" id="geoNote"><p class="hint">En attente du robot.</p></div>
         <div class="geo-card" id="geoGpr"></div>
@@ -798,6 +821,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div class="geo-grid">
         <div><div class="pair-name pad">Titres du jour</div><ul class="geo-news" id="geoNews"></ul></div>
         <div><div class="pair-name pad">Avis de voyage officiels modifiés (14 jours)</div><div class="tbl"><table id="geoAdv"></table></div>
+          <div class="pair-name pad">Sanctions récentes</div><ul class="geo-news" id="geoSanc"></ul>
           <div class="pair-name pad">Séismes de magnitude 5,5 et plus (7 jours)</div><div class="tbl"><table id="geoQuake"></table></div></div>
       </div>
       <p class="note">Comment c'est calculé. <b>Tension par pays</b> : nombre d'événements de conflit (manifestations, démonstrations de force, sanctions, attaques, combats) recensés par GDELT dans la presse mondiale sur 24 h. Le niveau est un <b>rang</b> entre pays (100 = le plus tendu). <b>Escalade</b> : écart du rythme des dernières 24 h avec les 30 jours précédents, en écarts-types (2 ou plus = inhabituel). C'est un <b>calcul maison</b> sur des articles codés automatiquement, pas une note d'agence : un pays très couvert par la presse ressort plus. <b>Indice GPR</b> : indice académique de Caldara et Iacoviello (Réserve fédérale), qui compte les articles sur les tensions géopolitiques dans 10 grands journaux, publié avec quelques jours de retard. <b>Note proposée</b> : application automatique de la grille de l'étape 4 de ta feuille, à valider toi-même. Sources : GDELT (gdeltproject.org), matteoiacoviello.com, Département d'État américain, USGS, Google Actualités.</p>
@@ -1015,6 +1039,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     <section class="panel" id="matin">
       <div class="ph"><h2 id="mtTitle">Ce matin</h2><span class="meta" id="mtMeta">robot</span></div>
       <div id="mtTop" class="mtop"></div>
+      <div class="pcard" id="mtGeo"></div>
       <div class="pgrid">
         <div class="pcard"><h3>Hier : ce qui a bougé</h3><div class="m" id="mtYmeta"></div><div class="tbl"><table id="mtYday"></table></div></div>
         <div class="pcard"><h3>Aujourd'hui (heure de Kinshasa)</h3><div class="m" id="mtTmeta"></div><div class="tbl"><table id="mtToday"></table></div></div>
@@ -2471,7 +2496,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function loadMap() {
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "world-map.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.c) throw new Error("format"); return j; }); }); });
-    return p.then(function (j) { WMAP = j; drawMap(); renderReserves(); renderGeo(); }).catch(function (e) { $("mapBox").innerHTML = '<p class="note">Carte non chargée (' + esc(e && e.message) + ").</p>"; $("mapMeta").textContent = "indisponible"; });
+    return p.then(function (j) { WMAP = j; drawMap(); renderReserves(); renderGeo(); renderGeo2(); }).catch(function (e) { $("mapBox").innerHTML = '<p class="note">Carte non chargée (' + esc(e && e.message) + ").</p>"; $("mapMeta").textContent = "indisponible"; });
   }
   function initMap() {
     $("mapInd").innerHTML = MAPIND.map(function (m, i) { return '<option value="' + i + '">' + m[1] + "</option>"; }).join("");
@@ -2651,7 +2676,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (t) h += "<span>Événements de conflit / tous événements</span><b>" + t[3] + " / " + t[2] + "</b><span>dont manifestations</span><b>" + t[4] + "</b><span>Part du total mondial</span><b>" + fmt(t[5], 1) + " %</b><span>Escalade contre 30 jours</span><b class=\"" + (t[1] !== null && t[1] >= 2 ? "down" : "") + "\">" + (t[1] === null ? "historique insuffisant" : fmt(t[1], 1) + " écart-type" + (Math.abs(t[1]) >= 2 ? "s : inhabituel" : "s")) + "</b>";
     if (GEO_CANAL[a3]) h += "<span>Canal pour l'or</span><b>" + esc(GEO_CANAL[a3]) + "</b>";
     h += "<span>Indice GPR du pays</span><b>" + (g ? fmt(g[0], 2) + " <small>(" + g[1] + "e percentile sur 10 ans, " + esc(G.gpr.month) + ")</small>" : "<small>pays non couvert</small>") + "</b>";
+    if (t && t[6] !== null && t[6] !== undefined) h += "<span>Ton de la presse (24 h / 30 j)</span><b class=\"" + (t[7] !== null && t[6] < t[7] - 0.5 ? "down" : "") + "\">" + fmt(t[6], 1) + " / " + (t[7] === null ? "–" : fmt(t[7], 1)) + (t[7] !== null && t[6] < t[7] - 0.5 ? " <small>dégradation</small>" : "") + "</b>";
     h += "<span>Avis de voyage US</span><b>" + (a ? ADV_LAB[a[0]] + " <small>(" + shortD(a[1]) + ")</small>" : "–") + "</b></div>";
+    var ts = G.ts && G.ts[a3];
+    if (ts) h += '<div class="pair-name" style="margin:8px 0 2px">Conflits par jour, 30 derniers jours</div>' + geoSpark(ts, 300, 44) + '<p class="hint">Du ' + shortD(G.tsd[0]) + " au " + shortD(G.tsd[G.tsd.length - 1]) + " · ton : de −10 (très négatif) à +10.</p>";
     if (a && a[2] && a[2].length) h += '<p class="hint">Raisons citées : ' + a[2].map(esc).join(", ") + (a[3] ? ' · <a href="' + esc(a[3]) + '" target="_blank" rel="noopener">avis officiel ↗</a>' : "") + "</p>";
     var hs = (G.hot || []).map(function (x, i) { return [x, i]; }).filter(function (q) { return q[0][2] === a3; }).slice(0, 6);
     if (hs.length) h += '<div class="pair-name" style="margin:8px 0 4px">Points chauds du jour</div><ul class="geo-news">' + hs.map(function (q) { var x = q[0]; return "<li>" + esc(CAMEO[x[3]] || "événement") + " · " + esc(x[6]) + " · " + x[4] + " mentions" + (x[7] ? ' · <a href="' + esc(x[7]) + '" target="_blank" rel="noopener">article ↗</a>' : "") + "</li>"; }).join("") + "</ul>";
@@ -2688,6 +2716,73 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     $("mapLeg").addEventListener("change", function (e) { var k = e.target.getAttribute && e.target.getAttribute("data-lay"); if (k) { geoLay[k] = e.target.checked; drawMap(); } });
   }
 
+  /* ---------- Géopolitique, partie 2 : crises, alertes, marchés, prédictions, sanctions, calendrier ---------- */
+  var CRISES = [
+    { t: "Iran, Israël, États-Unis", c: ["IRN", "ISR", "PSE", "LBN", "SYR"], st: ["Strait of Hormuz"], nrj: "BZ=F", canal: "énergie, détroit d'Ormuz", kw: ["iran", "israël", "israel", "gaza", "liban", "lebanon", "hezbollah", "téhéran", "tehran", "ormuz", "hormuz", "netanyahu"] },
+    { t: "Russie, Ukraine", c: ["RUS", "UKR", "BLR"], st: ["Kerch Strait", "Bosporus Strait"], nrj: "TTF=F", canal: "guerre en Europe, gaz", kw: ["ukraine", "russie", "russia", "kiev", "kyiv", "moscou", "moscow", "poutine", "putin", "zelensky"] },
+    { t: "Mer Rouge, Yémen", c: ["YEM", "SAU", "ERI", "DJI", "EGY", "SDN"], st: ["Bab el-Mandeb Strait", "Suez Canal"], nrj: "BZ=F", canal: "fret, pétrole, canal de Suez", kw: ["houthi", "yémen", "yemen", "mer rouge", "red sea", "bab el-mandeb", "suez"] },
+    { t: "Chine, Taïwan", c: ["CHN", "TWN", "PHL", "JPN"], st: ["Taiwan Strait", "Luzon Strait"], nrj: null, canal: "grande puissance, semi-conducteurs", kw: ["taïwan", "taiwan", "pékin", "beijing", "mer de chine", "south china sea", "xi jinping"] },
+    { t: "Venezuela", c: ["VEN", "COL", "GUY"], st: ["Windward Passage"], nrj: "CL=F", canal: "pétrole lourd, sanctions", kw: ["venezuela", "maduro", "caracas"] }
+  ];
+  function geoSpark(arr, w, h) {
+    if (!arr || arr.length < 3) return "";
+    var mx = Math.max.apply(null, arr) || 1, mn = Math.min.apply(null, arr);
+    var pts = arr.map(function (v, i) { return (i * (w - 2) / (arr.length - 1) + 1).toFixed(1) + "," + (h - 2 - (h - 4) * (v - mn) / ((mx - mn) || 1)).toFixed(1); }).join(" ");
+    return '<svg viewBox="0 0 ' + w + " " + h + '" class="gspark" preserveAspectRatio="none"><polyline fill="none" stroke="#f2b01e" stroke-width="1.4" points="' + pts + '"/></svg>';
+  }
+  function kwHit(txt, kw) { txt = String(txt || "").toLowerCase(); return kw.some(function (k) { return txt.indexOf(k) >= 0; }); }
+  function sgnP(v, d) { return v === null || v === undefined ? "–" : '<span class="' + (v >= 0 ? "up" : "down") + '">' + (v >= 0 ? "+" : "−") + fmt(Math.abs(v), d === undefined ? 1 : d) + "</span>"; }
+  function renderGeo2() {
+    var G = geoData(); if (!$("geoCrises")) return;
+    var C = G.c || {}, TS = G.ts || {}, mk = G.mkt || {};
+    /* Alertes */
+    var al = G.alerts || [];
+    var alHtml = al.length ? al.map(function (a) { var txt = a[2]; if (a[0] === "esc" || a[0] === "adv") txt = txt.replace(a[1], ctyName(a[1])); return '<div class="galert ' + a[0] + '">⚠ ' + esc(txt) + "</div>"; }).join("") : '<div class="galert ok">Aucune alerte géopolitique ce matin.</div>';
+    $("geoAlerts").innerHTML = alHtml;
+    if ($("mtGeo")) $("mtGeo").innerHTML = '<h3>Géopolitique</h3>' + (G.note ? '<div class="m">Note proposée du pilier Risque : <b class="' + (G.note.v > 0 ? "up" : G.note.v < 0 ? "down" : "") + '">' + (G.note.v > 0 ? "+" : G.note.v < 0 ? "−" : "") + Math.abs(G.note.v) + "</b>" + (G.react && G.react.d1 ? " · réaction d'hier : <b>" + esc(G.react.d1.code || "mixte") + "</b> (" + esc(G.react.d1.lecture) + ")" : "") + ' · <a href="#/monde">ouvrir le moniteur</a></div>' : "") + alHtml;
+    /* Grandes crises */
+    $("geoCrises").innerHTML = CRISES.map(function (k) {
+      var cs = k.c.filter(function (a) { return C[a]; }), lv = cs.map(function (a) { return C[a][0]; }), mxA = cs.slice().sort(function (a, b) { return C[b][0] - C[a][0]; })[0];
+      var zs = cs.map(function (a) { return C[a][1]; }).filter(function (z) { return z !== null; }), zmx = zs.length ? Math.max.apply(null, zs) : null;
+      var conf = cs.reduce(function (s, a) { return s + C[a][3]; }, 0);
+      var ser = null; k.c.forEach(function (a) { if (TS[a]) { if (!ser) ser = TS[a].slice(); else TS[a].forEach(function (v, i) { ser[i] += v; }); } });
+      var hot = (G.hot || []).filter(function (h) { return k.c.indexOf(h[2]) >= 0; }).length;
+      var ships = k.st.map(function (n) { var x = AUTO && AUTO.shipping ? straitStats(n) : null; return x && x.ch !== null ? shipName(n).fr + " " + pct(x.ch) : null; }).filter(Boolean);
+      var drop = k.st.some(function (n) { var x = AUTO && AUTO.shipping ? straitStats(n) : null; return x && x.ch !== null && x.ch <= -15; });
+      var e = k.nrj && mk[k.nrj];
+      var pms = (G.pm || []).filter(function (p) { return kwHit(p.ev + " " + p.q, k.kw); }).slice(0, 2);
+      var nws = (G.news || []).filter(function (n) { return kwHit(n.t, k.kw); }).slice(0, 2);
+      var hotState = (zmx !== null && zmx >= 2) || drop ? "active" : lv.some(function (l) { return l >= 90; }) ? "tendue" : "calme";
+      var lect = hotState === "active" ? "Crise qui s'aggrave : canal « " + k.canal + " ». Soutien possible pour l'or si le marché confirme (code R1 ou R4)." : hotState === "tendue" ? "Tension élevée mais stable : la prime de risque est en partie dans le prix." : "Pas de signal particulier aujourd'hui.";
+      return '<div class="gcrise ' + hotState + '"><div class="gch"><b>' + esc(k.t) + '</b><span class="gst">' + hotState.toUpperCase() + "</span></div>" +
+        '<div class="kv"><span>Pays le plus tendu</span><b>' + (mxA ? esc(ctyName(mxA)) + " " + C[mxA][0] + "/100" : "–") + "</b><span>Conflits recensés (24 h)</span><b>" + conf + "</b><span>Escalade maximale</span><b class=\"" + (zmx !== null && zmx >= 2 ? "down" : "") + "\">" + (zmx === null ? "–" : fmt(zmx, 1)) + "</b><span>Points chauds</span><b>" + hot + "</b>" +
+        (ships.length ? "<span>Détroits (7 j)</span><b>" + esc(ships.join(" · ")) + "</b>" : "") + (e ? "<span>" + esc(e.n) + " (5 j)</span><b>" + sgnP(e.c5) + " %</b>" : "") + "</div>" +
+        (ser ? '<div class="m">Conflits par jour, 30 jours</div>' + geoSpark(ser, 220, 34) : "") +
+        (pms.length ? '<div class="m">Marchés de prédiction</div><ul class="geo-news">' + pms.map(function (p) { return '<li><a href="https://polymarket.com/event/' + esc(p.slug) + '" target="_blank" rel="noopener">' + esc(p.q && p.q !== p.ev ? p.ev + " : " + p.q : p.ev) + "</a> <b>" + Math.round(p.p * 100) + " %</b>" + (p.dp ? " <small>(" + sgnP(p.dp * 100, 0) + " pts)</small>" : "") + "</li>"; }).join("") + "</ul>" : "") +
+        (nws.length ? '<div class="m">Titres</div><ul class="geo-news">' + nws.map(function (n) { return '<li><a href="' + esc(n.l) + '" target="_blank" rel="noopener">' + esc(n.t) + "</a></li>"; }).join("") + "</ul>" : "") +
+        '<p class="hint">' + esc(lect) + "</p></div>";
+    }).join("");
+    /* Réaction du marché */
+    var R = G.react, rr = function (x, lab) { if (!x) return "<p class=\"hint\">" + lab + " : données insuffisantes.</p>"; return '<div class="kv"><span>' + lab + "</span><b>" + (x.code ? '<span class="pill">' + x.code + "</span> " : "") + esc(x.lecture) + "</b><span>Or · dollar · taux 10 ans</span><b>" + sgnP(x.or, 2) + " % · " + sgnP(x.dollar, 2) + " % · " + sgnP(x.taux, 0) + " pb</b></div>"; };
+    $("geoReact").innerHTML = R ? rr(R.d1, "Dernière séance") + rr(R.d5, "5 dernières séances") + '<p class="hint">R1 refuge classique · R2 défiance envers les actifs US · R3 liquidation ou Fed ferme · R4 refuge avec choc d\'inflation. Cours de clôture Yahoo du ' + shortD(R.asof) + ".</p>" : '<p class="hint">En attente du robot.</p>';
+    /* Calendrier */
+    var cal = (G.cal || []).filter(function (x) { return x[1] >= new Date().toISOString().slice(0, 10); });
+    $("geoCal").innerHTML = cal.length ? '<thead><tr><th>Date</th><th>Événement</th><th>Canal</th></tr></thead><tbody>' + cal.map(function (x) { var dd = Math.ceil((Date.parse(x[0] + "T00:00:00Z") - Date.now()) / 864e5); return "<tr><td>" + shortD(x[0]) + (x[1] !== x[0] ? " → " + shortD(x[1]) : "") + ' <small class="hint">' + (dd > 0 ? "J−" + dd : "en cours") + '</small></td><td><a href="' + esc(x[4]) + '" target="_blank" rel="noopener">' + esc(x[2]) + "</a></td><td>" + esc(x[3]) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">Aucun événement à venir enregistré.</td></tr></tbody>';
+    /* Énergie et défense */
+    var order = ["BZ=F", "CL=F", "TTF=F", "ITA", "LMT", "RHM.DE", "BA.L", "^GSPC"], grpL = { energie: "Énergie", defense: "Défense" };
+    var rows = order.filter(function (s) { return mk[s]; });
+    $("geoMkt").innerHTML = rows.length ? '<thead><tr><th>Actif</th><th class="r">Dernier</th><th class="r">1 j</th><th class="r">5 j</th><th class="r">20 j</th><th>3 mois</th></tr></thead><tbody>' + rows.map(function (s) { var x = mk[s]; return "<tr><td>" + esc(x.n) + ' <small class="hint">' + grpL[x.g] + '</small></td><td class="r num">' + fmt(x.c, x.c > 100 ? 1 : 2) + '</td><td class="r num">' + sgnP(x.c1) + '</td><td class="r num">' + sgnP(x.c5) + '</td><td class="r num">' + sgnP(x.c20) + "</td><td>" + geoSpark(x.sp, 120, 24) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">En attente du robot.</td></tr></tbody>';
+    var def = ["ITA", "LMT", "RHM.DE", "BA.L"].filter(function (s) { return mk[s] && mk[s].c20 !== null; }), sp = mk["^GSPC"];
+    if (def.length && sp && sp.c20 !== null) { var avg = def.reduce(function (s, k) { return s + mk[k].c20; }, 0) / def.length, gap = avg - sp.c20; $("geoMkt").innerHTML += '<tbody><tr><td colspan="6" class="hint">Thermomètre défense : les valeurs de l\'armement font ' + sgnP(gap) + " point(s) " + (gap >= 0 ? "de mieux" : "de moins") + " que le S&P 500 sur 20 séances. " + (gap >= 5 ? "Le marché paie un risque de conflit durable." : gap <= -5 ? "Le marché parie sur une détente." : "Pas de pari net du marché.") + "</td></tr></tbody>"; }
+    /* Marchés de prédiction */
+    var pm = (G.pm || []).slice(0, 15);
+    $("geoPm").innerHTML = pm.length ? '<thead><tr><th>Question</th><th class="r">Oui</th><th class="r">Variation</th><th class="r">Volume</th><th>Échéance</th></tr></thead><tbody>' + pm.map(function (p) { return '<tr><td><a href="https://polymarket.com/event/' + esc(p.slug) + '" target="_blank" rel="noopener">' + esc(p.q && p.q !== p.ev ? p.ev + " : " + p.q : p.ev) + '</a></td><td class="r num"><b>' + Math.round(p.p * 100) + ' %</b></td><td class="r num">' + (p.dp === undefined ? "–" : sgnP(p.dp * 100, 0) + " pts") + '</td><td class="r num">' + (p.vol >= 1e6 ? fmt(p.vol / 1e6, 1) + " M$" : Math.round(p.vol / 1e3) + " k$") + "</td><td>" + (p.end ? shortD(p.end) : "–") + "</td></tr>"; }).join("") + '</tbody><tbody><tr><td colspan="5" class="hint">Polymarket (questions en anglais, probabilité = prix du « oui »). Variation depuis le passage précédent du robot. Ce sont des paris, pas des prévisions officielles.</td></tr></tbody>' : '<tbody><tr><td class="hint">En attente du robot.</td></tr></tbody>';
+    /* Sanctions */
+    if ($("geoSanc")) { var sc = G.sanc; $("geoSanc").innerHTML = sc && sc.it ? sc.it.slice(0, 8).map(function (n) { return '<li><a href="' + esc(n.l) + '" target="_blank" rel="noopener">' + esc(n.t) + "</a> <small>" + esc(String(n.d || "").slice(0, 10)) + "</small></li>"; }).join("") + '<li class="hint">Source : ' + esc(sc.src) + "</li>" : '<li class="hint">En attente du robot.</li>'; }
+    /* Estimation du jour de l'indice GPR */
+    var gp = G.gpr;
+    if (gp && gp.now && gp.now.length && $("geoGpr")) { var ln = gp.now[gp.now.length - 1]; $("geoGpr").insertAdjacentHTML("beforeend", '<div class="kv" style="margin-top:6px"><span>Estimation du jour <small>(GDELT étalonné sur l\'indice, ' + gp.pairs + " jours communs)</small></span><b>" + fmt(ln[1], 0) + " <small>au " + shortD(ln[0]) + '</small></b></div><p class="hint">L\'indice officiel est publié avec quelques jours de retard (dernier jour : ' + shortD(gp.asof) + "). L'estimation couvre les jours manquants et sera remplacée par le chiffre officiel dès sa parution.</p>"); }
+  }
   /* ---------- Consensus des banques (recherche du 30 oct. 2026, à vérifier) ---------- */
   var CONS = [
     { b: "Goldman Sachs", a: "Or", v: "4 650 $ fin 2026 · 5 400 $ fin 2027", d: "2026-09-23", u: "https://investinglive.com/commodities/icymi-goldman-trims-end-2026-gold-forecast-to-4-650-but-holds-5-400-target-for-2027/", s: "investingLive" },
@@ -4462,7 +4557,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     MEETINGS.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
     applyFomc.done = true; renderAgenda();
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
