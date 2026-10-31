@@ -2614,7 +2614,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function renderPiv() {
     var k = state.gold;
     if (!k || k.length < 2) { $("pivTbl").innerHTML = ""; $("pivNote").textContent = "Cours de l'or indisponible."; return; }
-    var y = k[k.length - 2];
+    var y = state.goldRobot ? k[k.length - 1] : k[k.length - 2]; /* robot : la dernière bougie est une journée terminée */
     if (state.goldRobot && !y.hl) { $("pivTbl").innerHTML = ""; $("pivNote").textContent = "Pivots indisponibles : Binance ne répond pas et le robot n'a pas encore le plus haut et le plus bas de la veille."; return; }
     var P = (y.h + y.l + y.c) / 3, rg = y.h - y.l;
     var L = [["R3", y.h + 2 * (P - y.l)], ["R2", P + rg], ["R1", 2 * P - y.l], ["Pivot", P], ["S1", 2 * P - y.h], ["S2", P - rg], ["S3", y.l - 2 * (y.h - P)]], px = k[k.length - 1].c;
