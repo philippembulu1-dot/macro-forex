@@ -1456,6 +1456,62 @@ def do_consensus_news(data):
          err=None if out else "aucun titre exploitable", url="https://news.google.com/")
 
 
+KEI_AREAS = {"USA": "USD", "EA20": "EUR", "GBR": "GBP", "JPN": "JPY", "CHE": "CHF", "AUS": "AUD", "CAN": "CAD", "NZL": "NZD"}
+
+
+def do_kei(data):
+    """Indicateurs économiques clés de l'OCDE (KEI) : PIB, chômage, ventes au détail, confiance… des 8 économies, sans clé."""
+    url = ("https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_KEI@DF_KEI,4.0/%s?startPeriod=%d-01&dimensionAtObservation=AllDimensions&format=csvfilewithlabels"
+           % ("+".join(KEI_AREAS) + "........", NOW.year - 1))
+    try:
+        txt = http("oecd_kei.csv", url, tries=2, timeout=90)
+        rows = list(csv.DictReader(io.StringIO(txt)))
+        if not rows:
+            raise ValueError("réponse vide")
+        cols = list(rows[0].keys())
+        DIAG["kei_cols"] = ",".join(cols)[:300]
+        dims = [c for c in cols if c not in ("TIME_PERIOD", "OBS_VALUE", "OBS_STATUS", "UNIT_MULT", "DECIMALS", "STRUCTURE", "STRUCTURE_ID", "STRUCTURE_NAME", "ACTION") and not c.startswith(("Time", "Observation", "Unit multiplier", "Decimals", "Structure", "Action"))]
+        out, labs = {}, set()
+        for r in rows:
+            area = r.get("REF_AREA")
+            cur = KEI_AREAS.get(area)
+            v = num(r.get("OBS_VALUE"))
+            if not cur or v is None:
+                continue
+            key = "|".join(r.get(d, "") for d in ("MEASURE", "UNIT_MEASURE", "ADJUSTMENT", "TRANSFORMATION", "FREQ", "ACTIVITY"))
+            lab = r.get("Measure") or r.get("MEASURE")
+            labs.add((r.get("MEASURE"), lab, r.get("TRANSFORMATION"), r.get("Transformation"), r.get("FREQ")))
+            e = out.setdefault(cur, {}).setdefault(key, {"m": r.get("MEASURE"), "lab": lab, "unit": r.get("Unit of measure") or r.get("UNIT_MEASURE"),
+                                                        "tr": r.get("TRANSFORMATION"), "trl": r.get("Transformation"), "f": r.get("FREQ"), "act": r.get("ACTIVITY"), "adj": r.get("ADJUSTMENT"), "obs": []})
+            e["obs"].append([r.get("TIME_PERIOD"), v])
+        for cur in out:
+            for k in out[cur]:
+                out[cur][k]["obs"] = sorted(out[cur][k]["obs"])[-3:]
+        DIAG["kei_mesures"] = sorted(set("%s:%s:%s:%s" % (a, (b or "")[:30], c, e) for a, b, c, d, e in labs))[:80]
+        data["kei"] = out
+        note("oecd.kei", "Indicateurs clés des 8 économies (OCDE)", "monthly", True, max((o["obs"][-1][0] for c in out.values() for o in c.values()), default=TODAY)[:10], url="https://data-explorer.oecd.org/")
+    except Exception as e:
+        note("oecd.kei", "Indicateurs clés des 8 économies (OCDE)", "monthly", False, err=e, url="https://data-explorer.oecd.org/")
+
+
+def do_ffmem(data):
+    """Mémoire du dernier chiffre publié de chaque indicateur du calendrier (champ « précédent » de Forex Factory), conservée d'une semaine à l'autre."""
+    mem = dict((PREVIOUS.get("ffmem") or {}))
+    n = 0
+    for e in ((data.get("calendar") or {}).get("events") or []):
+        if not e.get("p") or e.get("c") not in ("USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"):
+            continue
+        k = e["c"] + "|" + e["t"]
+        old = mem.get(k)
+        if not old or old.get("d", "") <= e["d"][:10]:
+            mem[k] = {"p": e["p"], "d": e["d"][:10], "f": e.get("f") or ""}
+            n += 1
+        if e.get("a"):
+            mem[k]["a"] = e["a"]
+    data["ffmem"] = mem
+    note("ff.mem", "Derniers chiffres publiés, mémorisés depuis le calendrier (%d indicateurs)" % len(mem), "weekly", bool(mem), TODAY if mem else None, url="https://www.forexfactory.com/calendar")
+
+
 def retail_public(data):
     """Sentiment des particuliers sans identifiants : page publique « Community Outlook » de Myfxbook."""
     url = "https://www.myfxbook.com/community/outlook"
@@ -2681,7 +2737,7 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news),
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("kei", do_kei),
              ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d)))]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
@@ -2712,6 +2768,10 @@ def main():
             do_surprises(data)
         except Exception as e:
             note("surp", "Surprises économiques", "weekly", False, err=e)
+    try:
+        do_ffmem(data)
+    except Exception as e:
+        note("ff.mem", "Derniers chiffres publiés (calendrier)", "weekly", False, err=e)
     try:
         do_core(data)  # après les autres blocs : utilise l'inflation sous-jacente américaine déjà lue
     except Exception as e:

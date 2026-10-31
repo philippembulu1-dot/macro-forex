@@ -634,7 +634,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         </section>
 
         <section class="panel o-banks" id="banques">
-          <div class="ph"><h2>Banques centrales</h2><span class="meta">taux et décisions : BRI et banques centrales (auto) · « hors énergie » : saisie du 24 oct. 2026</span></div>
+          <div class="ph"><h2>Banques centrales</h2><span class="meta">taux, décisions, inflation et inflation sous-jacente : automatiques (BRI, banques centrales, OCDE, Eurostat, BLS)</span></div>
           <div class="tbl">
             <table>
               <thead><tr><th>Banque</th><th class="r">Taux</th><th>Dernière décision</th><th class="r">Inflation</th><th class="r col-core">Hors énergie</th></tr></thead>
@@ -779,16 +779,16 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     </section>
 
     <section class="panel" id="consensus">
-      <div class="ph"><h2>Consensus des banques</h2><span class="meta">saisie sourcée · à vérifier</span></div>
+      <div class="ph"><h2>Consensus des banques</h2><span class="meta">relevé automatique de la presse · à vérifier</span></div>
       <div class="tbl"><table id="consTbl"></table></div>
       <div id="consMan"></div>
       <p class="note">Prévisions publiées dans la presse financière, avec la date et le lien de l'article. Les notes de recherche complètes sont réservées aux clients des banques : rien n'est simulé ici. Une prévision de banque se trompe souvent : c'est un repère d'opinion, pas un niveau à trader.</p>
     </section>
 
     <section class="panel" id="comite">
-      <div class="ph"><h2>Comités des banques centrales</h2><span class="meta">jugement qualitatif · à vérifier</span></div>
+      <div class="ph"><h2>Comités des banques centrales</h2><span class="meta">orientation calculée automatiquement</span></div>
       <div class="tbl"><table id="comTbl"></table></div>
-      <p class="note">Orientation déduite uniquement de la dernière décision saisie (hausse = restrictive, maintien = neutre, baisse = accommodante). Ce n'est pas l'analyse du discours des membres : lisez le dernier communiqué (lien) et notez votre propre lecture, elle est enregistrée sur cet appareil avec sa date.</p>
+      <p class="note">Orientation calculée à chaque passage du robot à partir de trois faits mesurés : la dernière décision de taux (BRI et banques centrales), l'inflation sous-jacente par rapport à la cible de 2 % (OCDE, Eurostat, BLS, banques centrales) et, pour la Fed, ce que les contrats à terme anticipent pour la prochaine réunion. Restrictive (« hawkish ») = penche vers des taux plus hauts ; accommodante (« dovish ») = vers des taux plus bas. La dernière colonne reste libre pour votre propre lecture du communiqué.</p>
     </section>
 
     <section class="panel" id="probas">
@@ -945,7 +945,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         <div class="pcard"><h3>Comparaison États-Unis / zone euro</h3><div class="tbl"><table id="bpCmp"></table></div><p class="hint" id="bpTxt"></p></div>
         <div class="pcard"><h3>Scénarios de risque de la BCE (conflit au Moyen-Orient)</h3><div class="tbl"><table id="bpScn"></table></div></div>
       </div>
-      <p class="note">Projections des services de la BCE publiées le 10 septembre 2026 (en % ; chômage en % de la population active). Chiffres repris d'un résumé de presse qui concorde avec la page officielle de la BCE : à vérifier sur le lien. Le robot surveille la page de la BCE et signale ici toute nouvelle publication (prochaine attendue en décembre).</p>
+      <p class="note">Projections des services de la BCE (en % ; chômage en % de la population active). Le robot repère chaque nouvelle publication sur le site de la BCE et lit son tableau automatiquement (croissance, inflation, inflation sous-jacente, chômage) ; prochaine publication attendue en décembre.</p>
     </section>
 
     <section class="panel" id="scenarios">
@@ -1442,7 +1442,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       }
       var ci = m.c === "USD" ? AUTO && AUTO.derived && AUTO.derived.us_cpi : AUTO && AUTO.national && AUTO.national["cpi_" + ({ EUR: "EZ", GBP: "GB", CAD: "CA", CHF: "CH", AUD: "AU", JPY: "JP", NZD: "NZ" })[m.c]], cpiCell = m.cpi + ck.cpi;
       if (ci && ageDays(ci.asof) <= 75) cpiCell = fmt(ci.v, 1) + ' %<br><small>auto · ' + MOIS[parseInt(String(ci.asof).slice(5, 7), 10) - 1] + "</small>";
-      return '<tr data-det="rate:' + m.c + '"><td><b>' + m.b + "</b> <small>" + m.c + '</small> <span class="more">›</span></td><td class="r num">' + rateCell + "</td><td>" + dec + '</td><td class="r num">' + cpiCell + '</td><td class="r num col-core">' + m.core + "</td></tr>";
+      var cr = AUTO && AUTO.core && AUTO.core[({ USD: "US", EUR: "EZ", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" })[m.c]], coreCell = m.core + (m.core !== "–" ? " <small>man.</small>" : "");
+      if (cr && ageDays(cr.asof) <= 150) coreCell = fmt(cr.v, 1) + ' %<br><small title="' + esc(cr.via) + '">auto · ' + MOIS[parseInt(String(cr.asof).slice(5, 7), 10) - 1] + "</small>";
+      return '<tr data-det="rate:' + m.c + '"><td><b>' + m.b + "</b> <small>" + m.c + '</small> <span class="more">›</span></td><td class="r num">' + rateCell + "</td><td>" + dec + '</td><td class="r num">' + cpiCell + '</td><td class="r num col-core">' + coreCell + "</td></tr>";
     }).join("");
   }
   var agendaAll = false;
@@ -2526,7 +2528,21 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { b: "Morgan Stanley", a: "Or", v: "au-dessus de 5 000 $ au S2 2027 · plancher vu vers 4 000 $", d: "2026-09-30", u: "https://www.kitco.com/news/article/2026-09-30/gold-price-will-break-5000oz-h2-2027-and-silvers-run-120-was-driven-more", s: "Kitco" },
     { b: "Citi", a: "Or", v: "4 800 $ à 0–3 mois · 5 000 $ à 6–12 mois", d: "2026-08-25", u: "https://investinglive.com/commodities/citi-lifts-near-term-gold-target-to-4-800-jpmorgan-flags-5k/", s: "investingLive" }
   ];
+  var CONS_ASSET = { gold: "Or (XAU/USD)", eurusd: "EUR/USD", fed: "Taux de la Fed" };
   function renderCons() {
+    var A = AUTO && AUTO.consensus_auto;
+    if (A && A.length) {
+      var latest = {}; A.forEach(function (c) { var k = c.bank + "|" + c.asset; if (!latest[k] || latest[k].d < c.d) latest[k] = c; });
+      var L = Object.keys(latest).map(function (k) { return latest[k]; }).sort(function (a, b) { return a.asset < b.asset ? -1 : a.asset > b.asset ? 1 : b.d < a.d ? -1 : 1; });
+      var g = L.filter(function (c) { return c.asset === "gold" && typeof c.v === "number" && ageDays(c.d) <= 75; }).map(function (c) { return c.v; }).sort(function (a, b) { return a - b; });
+      var med = g.length ? g[Math.floor(g.length / 2)] : null;
+      $("consTbl").innerHTML = '<thead><tr><th>Banque</th><th>Actif</th><th class="r">Chiffre</th><th>Titre de l\'article</th><th>Date</th></tr></thead><tbody>' + L.map(function (c) {
+        var a = ageDays(c.d), q = a <= 30 ? "ok" : a <= 75 ? "old" : "ko";
+        return "<tr><td><b>" + esc(c.bank) + "</b></td><td>" + (CONS_ASSET[c.asset] || c.asset) + '</td><td class="r num">' + (typeof c.v === "number" ? (c.asset === "gold" ? fmtN(c.v, 0) + " $" : fmt(c.v, c.v < 10 ? 4 : 2)) : esc(c.v)) + '</td><td style="white-space:normal"><a href="' + esc(c.l) + '" target="_blank" rel="noopener">' + esc(c.t) + "</a></td><td>" + shortD(c.d) + " " + badge(q, q === "ok" ? "récent" : "ancien") + "</td></tr>";
+      }).join("") + "</tbody>";
+      $("consMan").innerHTML = '<p class="hint" style="max-width:none;padding:8px 12px">' + (med ? "Médiane des derniers chiffres sur l'or (" + g.length + " banques, 75 derniers jours) : <b>" + fmtN(med, 0) + " $</b>. " : "") + 'Relevé <b>automatique</b> dans les titres de presse (Google Actualités), mis à jour à chaque passage du robot. Un titre peut citer un <b>support</b> ou une cible à court terme plutôt que la prévision de fin d\'année : ouvrez l\'article pour le contexte. <span class="pill warn">à vérifier</span></p>';
+      return;
+    }
     $("consTbl").innerHTML = '<thead><tr><th>Banque</th><th>Actif</th><th>Prévision publiée</th><th>Date</th><th>Source</th></tr></thead><tbody>' + CONS.map(function (c) {
       var a = ageDays(c.d), q = a <= 45 ? "ok" : a <= 120 ? "old" : "ko";
       return "<tr><td><b>" + c.b + "</b></td><td>" + c.a + '</td><td style="white-space:normal">' + c.v + "</td><td>" + shortD(c.d) + " " + badge(q, q === "ok" ? "récent" : q === "old" ? "ancien" : "périmé") + ' <span class="pill warn">à vérifier</span></td><td><a href="' + c.u + '" target="_blank" rel="noopener">' + c.s + "</a></td></tr>";
@@ -2539,9 +2555,15 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   var COMLINK = { Fed: "https://www.federalreserve.gov/monetarypolicy/fomc.htm", BCE: "https://www.ecb.europa.eu/press/pr/html/index.en.html", "Banque d'Angleterre": "https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/monetary-policy-summary-and-minutes",
     "Banque du Japon": "https://www.boj.or.jp/en/mopo/mpmdeci/index.htm", BNS: "https://www.snb.ch/en/", RBA: "https://www.rba.gov.au/monetary-policy/", "Banque du Canada": "https://www.bankofcanada.ca/core-functions/monetary-policy/", RBNZ: "https://www.rbnz.govt.nz/monetary-policy" };
   function renderCom() {
-    $("comTbl").innerHTML = '<thead><tr><th>Banque</th><th>Dernière décision</th><th>Orientation déduite</th><th>Ma lecture (datée)</th></tr></thead><tbody>' + MACRO.map(function (m) {
-      var o = /^\+/.test(m.last) ? ["restrictive", "down"] : /^[−-]/.test(m.last) ? ["accommodante", "up"] : ["neutre", ""], k = "com-" + m.c, me = MAN[k];
-      return "<tr><td><b>" + m.b + "</b> <small>" + m.c + '</small><br><a href="' + COMLINK[m.b] + '" target="_blank" rel="noopener"><small>communiqués officiels</small></a></td><td>' + m.last + " <small>" + m.when + "</small></td><td><span class=\"tag" + (o[0] === "restrictive" ? " hike" : "") + "\">" + o[0] + '</span> <span class="pill warn">à vérifier</span></td><td>' +
+    $("comTbl").innerHTML = '<thead><tr><th>Banque</th><th>Dernière décision</th><th>Orientation (automatique)</th><th>Ma lecture (datée)</th></tr></thead><tbody>' + MACRO.map(function (m) {
+      var k = "com-" + m.c, me = MAN[k], sc = 0, why = [], pr = AUTO ? policyRate(m) : null;
+      if (pr && pr.since && pr.prev !== null && ageDays(pr.since) <= 200) { var dd = pr.v - pr.prev; sc += dd > 0 ? 1 : -1; why.push((dd > 0 ? "dernière décision : hausse" : "dernière décision : baisse") + " (" + shortD(pr.since) + ")"); }
+      else why.push("pas de changement de taux récent");
+      var cc2 = { USD: "US", EUR: "EZ", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" }[m.c], co = AUTO && AUTO.core && AUTO.core[cc2];
+      if (co && ageDays(co.asof) < 150) { if (co.v > 2.6) { sc++; why.push("inflation sous-jacente " + fmt(co.v, 1) + " % (au-dessus de la cible)"); } else if (co.v < 1.6) { sc--; why.push("inflation sous-jacente " + fmt(co.v, 1) + " % (sous la cible)"); } else why.push("inflation sous-jacente " + fmt(co.v, 1) + " % (proche de la cible)"); }
+      if (m.c === "USD" && typeof fedWatchCalc === "function") { var FW = fedWatchCalc(); if (FW && FW.res[0]) { var e0 = 0; FW.res[0].single.forEach(function (x) { e0 += x.s * x.p; }); if (e0 > 0.4) { sc++; why.push("le marché attend une hausse (" + Math.round(e0 * 100) + " % d'un pas de 0,25)"); } else if (e0 < -0.4) { sc--; why.push("le marché attend une baisse"); } else why.push("le marché n'attend pas de changement"); } }
+      var o = sc >= 1 ? ["restrictive (hawkish)", "down"] : sc <= -1 ? ["accommodante (dovish)", "up"] : ["neutre", ""];
+      return "<tr><td><b>" + m.b + "</b> <small>" + m.c + '</small><br><a href="' + COMLINK[m.b] + '" target="_blank" rel="noopener"><small>communiqués officiels</small></a></td><td>' + (pr && pr.auto ? fmt(pr.v, 2) + " %" + (pr.since && pr.prev !== null ? " <small>(" + (pr.v - pr.prev > 0 ? "+" : "−") + fmt(Math.abs(pr.v - pr.prev), 2) + " le " + shortD(pr.since) + ")</small>" : "") : m.last + " <small>" + m.when + "</small>") + "</td><td><span class=\"tag" + (sc >= 1 ? " hike" : "") + "\">" + o[0] + "</span><br><small>" + why.join(" · ") + "</small></td><td>" +
         '<select data-com="' + m.c + '" aria-label="Ma lecture pour ' + m.b + '"><option value="">—</option>' + ["hawkish (restrictif)", "neutre", "dovish (accommodant)"].map(function (v) { return "<option" + (me && me.v === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select>" +
         (me ? " <small>" + esc(me.d) + "</small>" : "") + "</td></tr>";
     }).join("") + "</tbody>";
@@ -2790,14 +2812,14 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   var NATURE = {
     paires: ["QUOTIDIEN", "fixings de la BCE, 1 fois par jour ; graphique relu toutes les 15 min"], sessions: ["EN DIRECT", "horloges calculées dans votre navigateur"],
     or: ["EN DIRECT", "jeton PAXG (Binance), relu toutes les 30 s ; contrat à terme COMEX différé (robot)"], risque: ["QUOTIDIEN", "calculé à partir des fixings BCE"], rang: ["QUOTIDIEN", "fixings BCE"], force: ["QUOTIDIEN", "fixings BCE ; horizons 1 h et 4 h : cotations différées (robot)"],
-    banques: ["QUOTIDIEN", "taux officiels (BRI, banques centrales) relus par le robot ; colonne « hors énergie » : saisie manuelle datée"], selPanel: ["QUOTIDIEN", "fixings BCE"], agenda: ["MANUEL", "dates officielles recopiées des sites des banques centrales"],
+    banques: ["QUOTIDIEN", "taux, décisions et inflation relus par le robot (BRI, banques centrales, OCDE, Eurostat, BLS)"], selPanel: ["QUOTIDIEN", "fixings BCE"], agenda: ["MANUEL", "dates officielles recopiées des sites des banques centrales"],
     semaine: ["HEBDO", "calendrier Forex Factory relu par le robot"], indicateurs: ["MENSUEL", "chiffres officiels quand le robot les a, sinon saisie manuelle datée"], scorecard: ["CALCUL", "règles fixes sur les données du robot ; non validé statistiquement"],
     desk: ["QUOTIDIEN", "Trésor US, CBOE, BCE (robot)"], ecarts: ["QUOTIDIEN", "taux directeurs officiels"], saison: ["MENSUEL", "historique 20 ans, recalculé chaque semaine"], calendrier: ["HEBDO", "prévisions Forex Factory ; chiffres réels officiels quand disponibles"],
     heat: ["QUOTIDIEN", "fixings BCE"], correl: ["QUOTIDIEN", "fixings BCE"], vola: ["QUOTIDIEN", "fixings BCE"], monde: ["ANNUEL", "Banque mondiale, FMI"], maritime: ["HEBDO", "FMI PortWatch ; carte des navires en direct (VesselFinder)"],
-    consensus: ["MANUEL", "relevé de presse daté et sourcé"], comite: ["MANUEL", "jugement qualitatif daté"], probas: ["DIFFÉRÉ", "méthode CME FedWatch recalculée sur les contrats à terme fed funds (CBOT, différés) + marchés publics Kalshi et Polymarket"], sentiment: ["DIFFÉRÉ", "Myfxbook via le robot"],
+    consensus: ["DIFFÉRÉ", "relevé automatique des titres de presse (Google Actualités) à chaque passage du robot"], comite: ["CALCUL", "orientation calculée sur la dernière décision, l'inflation sous-jacente et les anticipations de marché"], probas: ["DIFFÉRÉ", "méthode CME FedWatch recalculée sur les contrats à terme fed funds (CBOT, différés) + marchés publics Kalshi et Polymarket"], sentiment: ["DIFFÉRÉ", "Myfxbook via le robot"],
     outils: ["CALCUL", "calculs dans votre navigateur"], pricing: ["DIFFÉRÉ", "Kalshi (robot) et courbes officielles quotidiennes"], analyses: ["DIFFÉRÉ", "flux RSS relus par le robot"], orvol: ["QUOTIDIEN", "GVZ (CBOE) et or"],
     courbe: ["QUOTIDIEN", "Trésor américain"], taylor: ["CALCUL", "chiffres officiels BLS et dot plot"], surprises: ["MENSUEL", "prévisions contre chiffres officiels"], reserves: ["ANNUEL", "Banque mondiale"], dotplot: ["TRIMESTRIEL", "projections officielles de la Fed"],
-    bceproj: ["MANUEL", "projections BCE recopiées (sept. 2026), le robot surveille les nouvelles"], regime: ["CALCUL", "règles fixes sur données officielles"], moteurs: ["CALCUL", "données quotidiennes du robot"], cycle: ["MENSUEL", "chiffres officiels BLS"],
+    bceproj: ["TRIMESTRIEL", "tableau lu automatiquement sur la page officielle de la BCE à chaque nouvelle publication"], regime: ["CALCUL", "règles fixes sur données officielles"], moteurs: ["CALCUL", "données quotidiennes du robot"], cycle: ["MENSUEL", "chiffres officiels BLS"],
     matin: ["DIFFÉRÉ", "clôtures de la veille et dernier passage du robot"], reactions: ["DIFFÉRÉ", "bougies 1 à 60 min (Yahoo) autour de chaque publication"], marches: ["EN DIRECT", "graphiques TradingView"], taux: ["QUOTIDIEN", "Trésor US, CBOE, BCE"],
     cot: ["HEBDO", "CFTC : positions du mardi, publiées le vendredi"], actus: ["DIFFÉRÉ", "communiqués RSS relus par le robot"], videos: ["DIFFÉRÉ", "flux YouTube relus par le robot"], robot: ["DIFFÉRÉ", "état du dernier passage du robot"],
     flux: ["QUOTIDIEN", "ETF GLD (émetteur), CFTC, Banque mondiale"], multi: ["QUOTIDIEN", "clôtures quotidiennes (Yahoo, Trésor)"], scenarios: ["CALCUL", "règles fixes sur les données du robot"], fstr: ["DIFFÉRÉ", "cotations heure par heure (robot) et fixings BCE"]
@@ -3389,6 +3411,12 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function renderBceProj() {
     if (!$("bpTbl")) return;
     var P = BCE_P, f = AUTO && AUTO.projections && AUTO.projections.fed, ecb = AUTO && AUTO.projections && AUTO.projections.ecb, off = ecb && ecb.url ? ecb.url : P.official;
+    var T = ecb && ecb.tbl, auto = false;
+    if (T && T.rows && (T.rows.gdp || T.rows.hicp)) { /* tableau lu automatiquement sur la page officielle de la BCE */
+      var same = ecb.latest === BCE_P.ym, base = [["Croissance du PIB", T.rows.gdp], ["Inflation (IPCH)", T.rows.hicp], ["Inflation hors énergie et alimentation", T.rows.core], ["Chômage", T.rows.unemp]].filter(function (r) { return r[1]; });
+      P = { years: T.years.map(Number), ym: ecb.latest, rows: base.concat(same ? BCE_P.rows.filter(function (r) { return !/^(Croissance|Inflation \(IPCH\)|Inflation hors|Chômage)/.test(r[0]); }) : []), scen: same ? BCE_P.scen : [], press: BCE_P.press, official: BCE_P.official };
+      auto = true;
+    }
     $("bpTbl").innerHTML = "<thead><tr><th></th>" + P.years.map(function (y) { return '<th class="r">' + y + "</th>"; }).join("") + "</tr></thead><tbody>" + P.rows.map(function (r) { return "<tr><td>" + r[0] + "</td>" + r[1].map(function (v) { return '<td class="r num">' + (v === null ? "–" : fmt(v, r[0].indexOf("EUR/USD") >= 0 ? 2 : 1)) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody>";
     $("bpScn").innerHTML = '<thead><tr><th>Scénario</th><th class="r">Inflation 2026</th><th class="r">2027</th><th class="r">2028</th><th class="r">PIB 2026</th><th class="r">2027</th><th class="r">2028</th></tr></thead><tbody>' + P.scen.map(function (s) { return "<tr><td><b>" + s[0] + "</b></td>" + s[1].concat(s[2]).map(function (v) { return '<td class="r num">' + fmt(v, 1) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody>";
     var getF = function (k, y) { if (!f) return null; var i = f.median.years.indexOf(String(y)); return i >= 0 && f.median.rows[k] ? f.median.rows[k].v[i] : null; };
@@ -3399,6 +3427,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var gU = getF("gdp", 2027), gE = ez("Croissance du PIB", 2027);
     $("bpTxt").innerHTML = "* PCE pour les États-Unis, IPCH pour la zone euro (mesures proches mais différentes). " + (gU !== null ? "En 2027, la Fed voit une croissance de " + fmt(gU, 1) + " % contre " + fmt(gE, 1) + " % pour la BCE : un écart de croissance en faveur des États-Unis soutient en général le dollar face à l'euro, sauf si l'écart de taux se réduit." : "");
     var newer = ecb && ecb.latest && ecb.latest > P.ym;
+    if (!P.scen.length) $("bpScn").innerHTML = '<tbody><tr><td>Scénarios de risque : voir la publication de la BCE (lien ci-dessus).</td></tr></tbody>';
+    if (auto) { $("bpWarn").innerHTML = ""; $("bpMeta").innerHTML = "projections de " + esc(ecb.latest) + " " + badge("ok", "lues automatiquement") + ' · <a href="' + esc(off) + '" target="_blank" rel="noopener">BCE</a>'; return; }
     $("bpWarn").innerHTML = newer ? '<p class="warn">Nouvelles projections de la BCE publiées (' + esc(ecb.latest) + ') : les chiffres ci-dessous datent de ' + P.ym + '. <a href="' + esc(off) + '" target="_blank" rel="noopener">Voir la publication</a>.</p>' : "";
     $("bpMeta").innerHTML = "10 sept. 2026 " + (newer ? badge("old", "à mettre à jour") : badge("ok", "dernière publication")) + ' <span class="pill warn">à vérifier</span> · <a href="' + esc(off) + '" target="_blank" rel="noopener">BCE</a> · <a href="' + P.press + '" target="_blank" rel="noopener">résumé</a>';
   }
@@ -4203,7 +4233,6 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { q: "T2 2026", pub: "2026-07-30", tot: 1269, totYoY: 0, jew: 278.2, bar: null, etf: -44.8, cb: 288.9, tech: null, src: "https://www.gold.org/goldhub/research/gold-demand-trends/gold-demand-trends-q2-2026", src2: "https://upstox.com/news/personal-finance/commodities/3-gold-demand-trends-in-q2-2026-jewellery-and-et-fs-fall-central-bank-buying-soars-411/article-198103/" },
     { q: "T1 2026", pub: "2026-04-30", tot: 1231, totYoY: 2, jew: null, bar: 474, etf: 62.4, cb: 244, tech: 82, src: "https://www.coinworld.com/news/precious-metals/world-gold-council-publishes-global-gold-demand-trends" }
   ];
-  var ETF_MONTH = { d: "2026-09-30", pub: "2026-10", us_sep: 3.7, us_q3: 11.7, us_q2: -5.6, china8m: 1141, src: "https://www.ssga.com/library-content/products/fund-docs/etfs/us/insights-investment-ideas/monthly-gold-monitor.pdf" };
   function etfFlows(tick) {
     var s = AUTO && AUTO.goldetf && AUTO.goldetf.snap && AUTO.goldetf.snap[tick + "_nq"]; if (!s || !s.length) return null;
     var fl = [];
@@ -4215,7 +4244,14 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   }
   function renderGoldDemand() {
     var box = $("gdBody"); if (!box) return;
-    var g = etfFlows("GLD"), ia = etfFlows("IAU"), W = WGC[0], wl = AUTO && AUTO.wgc;
+    var g = etfFlows("GLD"), ia = etfFlows("IAU"), wl = AUTO && AUTO.wgc;
+    var cols = WGC.slice(), autoQ = null;
+    if (wl && wl.fig && wl.latest) {
+      autoQ = wl.latest.replace(/^Q(\d) (\d{4})$/, "T$1 $2");
+      var F = wl.fig, v = function (k) { return F[k] ? F[k].v : null; };
+      cols = [{ q: autoQ, tot: v("tot"), jew: v("jew"), bar: v("bar"), etf: v("etf"), cb: v("cb"), tech: v("tech"), src: wl.url, auto: true }].concat(WGC.filter(function (w) { return w.q !== autoQ; }));
+    }
+    var W = cols[0];
     var n = function (v, d) { return v === null || v === undefined ? "–" : (v >= 0 && d ? "+" : "") + fmt(v, 1); };
     var etfRow = function (lab, e) {
       if (!e) return "<tr><td>" + lab + '</td><td colspan="3"><small>pas encore relevé</small></td></tr>';
@@ -4224,11 +4260,11 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     };
     box.innerHTML = '<div class="pgrid"><div class="pcard"><h3>Flux des ETF d\'or <span class="nat nat-diffr">AUTO</span></h3><div class="tbl"><table><thead><tr><th>ETF</th><th class="r">Taille</th><th class="r">Flux récents</th><th>Relevé</th></tr></thead><tbody>' + etfRow("GLD (SPDR)", g) + etfRow("IAU (iShares)", ia) + "</tbody></table></div>" +
       '<p class="hint" style="max-width:none">Flux = variation de la taille du fonds qui ne vient pas du prix (taille d\'aujourd\'hui − taille d\'hier × variation du cours) : de l\'argent qui entre (+) ou sort (−). Taille relevée chaque jour par le robot (Nasdaq) ; les flux apparaissent à partir du deuxième jour de bourse relevé.</p>' +
-      '<p class="hint" style="max-width:none"><b>Dernier chiffre mensuel publié</b> <span class="pill warn">à vérifier</span> : ETF d\'or cotés aux États-Unis <b class="up">+' + fmt(ETF_MONTH.us_sep, 1) + " Md $</b> en septembre 2026, <b class=\"up\">+" + fmt(ETF_MONTH.us_q3, 1) + ' Md $</b> sur le 3e trimestre (après −5,6 Md $ au 2e). Source : <a href="' + ETF_MONTH.src + '" target="_blank" rel="noopener">State Street, Monthly Gold Monitor (oct. 2026)</a>.</p></div>' +
-      '<div class="pcard"><h3>Demande physique (World Gold Council) <span class="nat nat-manuel">MANUEL</span></h3>' + (wl && wl.latest && wl.latest !== "Q2 2026" ? '<p class="warn">Nouvelle édition publiée (' + esc(wl.latest) + ') : <a href="' + esc(wl.url) + '" target="_blank" rel="noopener">voir le rapport</a>, les chiffres ci-dessous sont à mettre à jour.</p>' : "") +
-      '<div class="tbl"><table><thead><tr><th>Tonnes</th>' + WGC.map(function (w) { return '<th class="r">' + w.q + "</th>"; }).join("") + "</tr></thead><tbody>" +
-      [["Demande totale", "tot"], ["Bijouterie", "jew"], ["Lingots et pièces", "bar"], ["ETF", "etf"], ["Banques centrales", "cb"], ["Technologie", "tech"]].map(function (r) { return "<tr><td>" + r[0] + "</td>" + WGC.map(function (w) { return '<td class="r num">' + n(w[r[1]], r[1] === "etf") + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>" +
-      '<p class="hint" style="max-width:none">Chiffres trimestriels du rapport « Gold Demand Trends », recopiés des publications (tiret = non relevé). Sources : <a href="' + WGC[0].src + '" target="_blank" rel="noopener">WGC T2 2026</a>, <a href="' + WGC[0].src2 + '" target="_blank" rel="noopener">détail T2</a>, <a href="' + WGC[1].src + '" target="_blank" rel="noopener">T1 2026</a>. Importations d\'or de la Chine : ' + ETF_MONTH.china8m.toLocaleString("fr-FR") + " t sur les 8 premiers mois de 2026 (State Street). Le robot surveille le site du WGC et signale chaque nouvelle édition" + (wl && wl.latest ? " (dernière vue : " + esc(wl.latest) + ")" : "") + ".</p></div></div>";
+      (W && W.etf !== null && W.etf !== undefined ? '<p class="hint" style="max-width:none">ETF d\'or dans le monde au ' + W.q + " : <b class=\"" + cls(W.etf) + "\">" + (W.etf >= 0 ? "+" : "−") + fmt(Math.abs(W.etf), 0) + " t</b> (World Gold Council" + (W.auto ? ", lu automatiquement" : "") + ").</p>" : "") + "</div>" +
+      '<div class="pcard"><h3>Demande physique (World Gold Council) <span class="nat ' + (W && W.auto ? 'nat-diffr">AUTO' : 'nat-manuel">MANUEL') + '</span></h3>' +
+      '<div class="tbl"><table><thead><tr><th>Tonnes</th>' + cols.map(function (w) { return '<th class="r">' + w.q + (w.auto ? " <small>auto</small>" : "") + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      [["Demande totale", "tot"], ["Bijouterie", "jew"], ["Lingots et pièces", "bar"], ["ETF", "etf"], ["Banques centrales", "cb"], ["Technologie", "tech"]].map(function (r) { return "<tr><td>" + r[0] + "</td>" + cols.map(function (w) { return '<td class="r num">' + n(w[r[1]], r[1] === "etf") + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>" +
+      '<p class="hint" style="max-width:none">Chiffres trimestriels du rapport « Gold Demand Trends » : la dernière édition est <b>lue automatiquement</b> par le robot dans le résumé public du World Gold Council (colonne « auto ») dès sa parution ; les colonnes plus anciennes restent pour comparer. <a href="' + (W && W.src ? esc(W.src) : "https://www.gold.org/goldhub/research/gold-demand-trends") + '" target="_blank" rel="noopener">Rapport</a></p></div></div>';
   }
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
@@ -4252,7 +4288,14 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     F.DXY = { v: last[1], asof: last[0], hist: d.c, real: true, via: "ICE, clôture (Yahoo Finance, non officiel)" + (bce ? " · recalcul BCE : " + fmt(bce.v, 2) + " au " + shortD(bce.asof) : "") };
     DET.DXY[3] = "Valeur du dollar face à 6 grandes devises (euro surtout). Ici : clôture du vrai indice ICE relevée par le robot (Yahoo Finance) ; à défaut, recalculé avec les taux de la BCE (même formule officielle).";
   }
-  function renderAuto() { preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function applyFomc() {
+    var F = AUTO && AUTO.fomc; if (!F || F.length < 4 || applyFomc.done) return;
+    for (var i = MEETINGS.length - 1; i >= 0; i--) if (MEETINGS[i].c === "USD" && MEETINGS[i].d >= F[0]) MEETINGS.splice(i, 1);
+    F.forEach(function (d) { MEETINGS.push({ d: d, b: "Fed", c: "USD" }); });
+    MEETINGS.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+    applyFomc.done = true; renderAgenda();
+  }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
