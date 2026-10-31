@@ -640,8 +640,8 @@ def do_gld(data):
                 hi, head = i, [c.strip().lower() for c in r]
                 break
         if head is None:
-            DIAG["gld_head"] = txt[:200]
-            raise ValueError("colonne des tonnes absente")
+            DIAG["gld_head"] = txt[:40]
+            raise ValueError("le fichier historique de l'émetteur n'est plus un CSV (PDF) : pas de source gratuite automatisable")
         ct = next(i for i, c in enumerate(head) if "tonnes" in c)
         out = []
         for r in rows[hi + 1:]:
@@ -792,6 +792,65 @@ def do_national(data):
 
 # ---------------------------------------------------------------- COT (CFTC, « Legacy », futures seuls)
 COT_CODES = {"088691": "XAU", "099741": "EUR", "096742": "GBP", "097741": "JPY", "092741": "CHF", "232741": "AUD", "090741": "CAD", "112741": "NZD"}
+
+
+def cot_detail(dataset, codes, groups, key):
+    """Rapports COT détaillés : « Disaggregated » (or : gestionnaires de fonds, producteurs, banques de swap)
+    et « Traders in Financial Futures » (devises : gestionnaires d'actifs, fonds à levier, intermédiaires)."""
+    url = "https://publicreporting.cftc.gov/resource/%s.json" % dataset
+    since = (NOW - timedelta(days=400)).strftime("%Y-%m-%dT00:00:00")
+    where = "cftc_contract_market_code in(%s) AND report_date_as_yyyy_mm_dd >= '%s'" % (",".join("'%s'" % c for c in codes), since)
+    q = urllib.parse.urlencode({"$where": where, "$order": "report_date_as_yyyy_mm_dd DESC", "$limit": "1200"})
+    rows = json.loads(http("cot_%s.json" % key, url + "?" + q, timeout=40))
+    if isinstance(rows, dict):
+        raise ValueError(rows.get("message", "réponse inattendue"))
+    if not rows:
+        raise ValueError("aucune ligne")
+    keys = list(rows[0].keys())
+    def find(part, side):
+        cand = [k for k in keys if part in k and ("_" + side) in k and k.endswith("_all") and "pct" not in k and "change" not in k and "spread" not in k]
+        if not cand:
+            cand = [k for k in keys if part in k and ("_" + side) in k and "pct" not in k and "change" not in k and "spread" not in k]
+        return sorted(cand, key=len)[0] if cand else None
+    cols = {g: (find(part, "long"), find(part, "short")) for g, part in groups}
+    if not any(a and b for a, b in cols.values()):
+        DIAG["cot_" + key + "_keys"] = ",".join(keys)[:400]
+        raise ValueError("colonnes introuvables")
+    by = {}
+    for r in rows:
+        c = codes.get(str(r.get("cftc_contract_market_code", "")).strip())
+        if c:
+            by.setdefault(c, []).append(r)
+    out = {}
+    I = lambda r, f: int(float(r.get(f) or 0)) if f else 0
+    for c, lst in by.items():
+        lst.sort(key=lambda r: r.get("report_date_as_yyyy_mm_dd", ""), reverse=True)
+        o = {"date": lst[0]["report_date_as_yyyy_mm_dd"][:10], "oi": I(lst[0], "open_interest_all"), "g": {}}
+        for g, (lk, sk) in cols.items():
+            if lk and sk:
+                nets = [I(r, lk) - I(r, sk) for r in lst]
+                lo, hi = min(nets), max(nets)
+                o["g"][g] = {"long": I(lst[0], lk), "short": I(lst[0], sk), "net": nets[0], "prev": nets[1] if len(nets) > 1 else None,
+                             "hist": nets[:26][::-1], "idx1y": round((nets[0] - lo) / (hi - lo) * 100) if hi > lo else None}
+        out[c] = o
+    return out
+
+
+def do_cot_detail(data):
+    res = {}
+    for dataset, codes, groups, key, lab in (
+            ("72hh-3qpy", {"088691": "XAU", "084691": "XAG"}, [("mm", "m_money_positions"), ("prod", "prod_merc_positions"), ("swap", "swap_positions")], "disagg",
+             "COT détaillé or et argent (gestionnaires de fonds, producteurs, banques de swap)"),
+            ("gpe5-46if", {v: k for k, v in (("EUR", "099741"), ("GBP", "096742"), ("JPY", "097741"), ("CHF", "092741"), ("AUD", "232741"), ("CAD", "090741"), ("NZD", "112741"))},
+             [("am", "asset_mgr_positions"), ("lev", "lev_money_positions"), ("dealer", "dealer_positions")], "tff",
+             "COT détaillé devises (gestionnaires d'actifs, fonds à levier, intermédiaires)")):
+        try:
+            r = cot_detail(dataset, codes, groups, key)
+            res.update(r)
+            note("cftc." + key, lab, "weekly", True, max(v["date"] for v in r.values()), url="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm")
+        except Exception as e:
+            note("cftc." + key, lab, "weekly", False, err=e, url="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm")
+    data["cot2"] = res
 
 
 def do_cot(data):
@@ -1983,7 +2042,7 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("gld", do_gld)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("gld", do_gld), ("cot2", do_cot_detail)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
