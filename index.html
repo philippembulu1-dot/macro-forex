@@ -1550,12 +1550,12 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (k === "gdpq") return fresh_(kei("B1GQ_Q", "G1", ["Q"]), 200);
     if (k === "gdpy") return fresh_(kei("B1GQ_Q", "GY", ["Q"]), 200);
     if (k === "wage") return fresh_(kei("H_EARN", "GY", ["M", "Q"]), 200);
-    if (k === "retail") return ff(/^(Core )?Retail Sales [my]\/[my]$/) || fresh_(kei("TOVM", "G1", ["M"]), 120);
+    if (k === "retail") return ff(/^(Core )?Retail Sales [my]\/[my]$/) || fresh_(kei("TOVM", "G1", ["M"]), 120) || fresh_(kei("TOVM", "G1", ["Q"]), 220);
     if (k === "pmim") return ff(/(ISM |Flash |Final |)Manufacturing PMI$|Business NZ Manufacturing Index|^Manufacturing PMI$/);
     if (k === "pmis") return ff(/(ISM |Flash |Final |)Services PMI$|^Services PMI$|Ivey PMI|BusinessNZ Services Index/);
     if (k === "trade") return ff(/^(Goods )?Trade Balance$/);
-    if (k === "conf") return ff(/Consumer Confidence|GfK Consumer Climate|Consumer Sentiment|Westpac Consumer Sentiment/);
-    if (k === "unemp" && c !== "USD") { var ku = fresh_(kei("UNEMP", "_Z", ["M", "Q"]), 150); if (ku) return ku; }
+    if (k === "conf") { var fc = ff(/Consumer Confidence|GfK Consumer Climate|Consumer Sentiment|Westpac Consumer Sentiment/); if (fc) return fc; var kc = fresh_(kei("CCICP", "_Z", ["M", "Q"]), 150); if (kc) { kc.src += " (indice OCDE harmonisé, 100 = moyenne)"; return kc; } return null; }
+    if (k === "unemp" && c !== "USD") { var ku = fresh_(kei("UNEMP", "_Z", ["M"]), 120) || ff(/^Unemployment Rate$/) || fresh_(kei("UNEMP", "_Z", ["Q"]), 220); if (ku) return ku; }
     if (k === "core" && c !== "USD" && AUTO.core) { var co = AUTO.core[cc === "EA" ? "EZ" : cc]; if (co && ageDays(co.asof) <= 120) x = co; else if (c === "JPY") { var fj = ff(/^National Core CPI y\/y$/); if (fj) return fj; } }
     if (k === "cpi") x = c === "USD" ? D.us_cpi : N["cpi_" + cc];
     if (k === "core" && c === "USD") x = D.us_core;

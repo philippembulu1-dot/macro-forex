@@ -1510,7 +1510,7 @@ def do_ffmem(data):
     """Mémoire du dernier chiffre publié de chaque indicateur du calendrier (champ « précédent » de Forex Factory), conservée d'une semaine à l'autre."""
     mem = dict((PREVIOUS.get("ffmem") or {}))
     n = 0
-    for e in ((data.get("calendar") or {}).get("events") or []):
+    for e in ((data.get("calendar") or {}).get("events") or []) + (data.pop("calendar_extra", None) or []):
         if not e.get("p") or e.get("c") not in ("USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"):
             continue
         k = e["c"] + "|" + e["t"]
@@ -1684,6 +1684,17 @@ def do_calendar(data):
         except Exception as e:
             note("cal.ff." + key, "Calendrier économique (" + ("semaine en cours" if key == "this" else "semaine suivante") + ", Forex Factory)",
                  "calendar", False, err=e, url="https://www.forexfactory.com/calendar")
+    # Semaines voisines (si Forex Factory les publie) : seulement pour mémoriser les derniers chiffres connus, sans les afficher
+    extra = []
+    for key in ("nextweek", "lastweek"):
+        try:
+            rows = json.loads(http("ff_%s.json" % key, "https://nfs.faireconomy.media/ff_calendar_%s.json" % key, tries=1, timeout=20))
+            for r in rows if isinstance(rows, list) else []:
+                extra.append({"t": (r.get("title") or "")[:90], "c": r.get("country") or "", "d": r.get("date") or "", "p": r.get("previous") or "", "f": r.get("forecast") or "", "a": r.get("actual") or ""})
+            DIAG["ff_" + key] = "%d événements" % len(rows)
+        except Exception as e:
+            DIAG["ff_" + key] = fr_err(e)[:60]
+    data["calendar_extra"] = extra
     seen, out = set(), []
     for e in sorted(evs, key=lambda e: e["d"]):
         k = (e["d"], e["c"], e["t"])
