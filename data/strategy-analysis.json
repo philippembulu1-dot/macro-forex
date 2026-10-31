@@ -1,0 +1,19 @@
+{
+ "erreur": "SystemExit('or indisponible : analyse impossible')",
+ "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/macro-forex/macro-forex/scripts/strategy_analysis.py\", line 453, in <module>\n    main()\n  File \"/home/runner/work/macro-forex/macro-forex/scripts/strategy_analysis.py\", line 195, in main\n    raise SystemExit(\"or indisponible : analyse impossible\")\nSystemExit: or indisponible : analyse impossible\n",
+ "log": [
+  "ÉCHEC gold HTTP Error 429: Too Many Requests",
+  "ÉCHEC dxy HTTP Error 429: Too Many Requests",
+  "OK dfii10 2003-01-02 2026-10-29 5961",
+  "OK dgs2 2003-01-02 2026-10-29 5961",
+  "OK vix 2003-01-02 2026-10-29 6029",
+  "OK cot 2003-01-07 2026-10-27 1243",
+  "OK t10y2y 2003-01-02 2026-10-30 5962",
+  "OK nfci 2003-01-03 2026-10-23 1243",
+  "OK sahm 2003-01-01 2026-09-01 284",
+  "OK icsa 2003-01-04 2026-10-24 1243",
+  "OK pcecore 2002-01-01 2026-09-01 297",
+  "OK hy 2023-10-31 2026-10-29 786"
+ ],
+ "genere": "2026-10-31T08:49Z"
+}
