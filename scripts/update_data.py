@@ -472,7 +472,7 @@ def fallbacks(data):
 def do_oecd(data):
     if not fred_reachable():
         # FRED refuse les serveurs de GitHub : ces séries sont remplacées par les sources nationales (BoE, BoC, BNS, ONS, BCE, BRI…).
-        note("oecd.fred", "Séries OCDE via FRED (remplacées par les sources nationales)", "nofree", False, err="non disponible gratuitement depuis GitHub (FRED seulement) : remplacé par les sources nationales")
+        DIAG["oecd_fred"] = "FRED injoignable : remplacé par l'API de l'OCDE et les sources nationales"
         return
     start_m = (NOW - timedelta(days=900)).strftime("%Y-%m-%d")
     for cc, name in OECD_RATES:
@@ -738,7 +738,7 @@ def do_goldetf(data):
         note("etf.gld", "Or détenu par l'ETF GLD (SPDR, archive officielle, tonnes)", "daily", True, arc[-1][0], url="https://www.spdrgoldshares.com/usa/historical-data/")
         ok_any = True
     except Exception as e:
-        note("etf.gld", "Or détenu par l'ETF GLD (SPDR, archive officielle, tonnes)", "nofree", False, err="le site de l'émetteur refuse le robot (PDF ou 404) : remplacé par l'encours Nasdaq", url="https://www.spdrgoldshares.com/usa/historical-data/")
+        DIAG["etf_gld"] = "archive SPDR refusée (PDF ou 404) : remplacée par l'encours Nasdaq"
     try:
         sn = ishares_snapshot("239561", "ishares-gold-trust-fund", "IAU")
         lst = st["snap"].setdefault("IAU", [])
@@ -750,7 +750,7 @@ def do_goldetf(data):
         note("etf.iau", "ETF IAU (iShares) : parts et or détenu, mémorisés chaque jour", "daily", True, sn["d"], url="https://www.ishares.com/us/products/239561/ishares-gold-trust-fund")
         ok_any = True
     except Exception as e:
-        note("etf.iau", "ETF IAU (iShares) : parts et or détenu, mémorisés chaque jour", "nofree", False, err="le site d'iShares refuse le robot : remplacé par l'encours Nasdaq", url="https://www.ishares.com/us/products/239561/ishares-gold-trust-fund")
+        DIAG["etf_iau"] = "fiche iShares refusée : remplacée par l'encours Nasdaq"
     # Parts en circulation de GLD et IAU (Nasdaq) : mémorisées chaque jour ; flux = variation des parts × cours
     for tick in ("GLD", "IAU"):
         try:
@@ -1050,6 +1050,115 @@ def do_cot_detail(data):
         except Exception as e:
             note("cftc." + key, lab, "weekly", False, err=e, url="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm")
     data["cot2"] = res
+
+
+# ---------------------------------------------------------------- Remplaçants des séries FRED inaccessibles depuis GitHub
+def do_ofr(data):
+    """Indice de stress financier de l'OFR (Office of Financial Research, Trésor américain) : officiel, quotidien, avec ses 5 composantes."""
+    url = "https://www.financialresearch.gov/financial-stress-index/data/fsi.csv"
+    try:
+        rows = list(csv.reader(io.StringIO(http("ofr_fsi.csv", url, tries=2, timeout=40))))
+        h = [c.strip() for c in rows[0]]
+        lo = [c.lower() for c in h]
+        ci = next(i for i, c in enumerate(lo) if c.replace(" ", "") in ("ofrfsi", "fsi"))
+        comps = {k: next((i for i, c in enumerate(lo) if c.startswith(k)), None) for k in ("credit", "equity", "safe", "funding", "volatility")}
+        obs = []
+        for r in rows[1:]:
+            if len(r) > ci and r[0] and num(r[ci]) is not None:
+                obs.append([r[0][:10], num(r[ci])] + [num(r[comps[k]]) if comps[k] is not None and len(r) > comps[k] else None for k in ("credit", "equity", "safe", "funding", "volatility")])
+        obs.sort()
+        if len(obs) < 30:
+            raise ValueError("trop peu de lignes")
+        last = obs[-1]
+        data["fred"]["STLFSI4"] = {"v": last[1], "prev": obs[-6][1], "asof": last[0], "hist": [[o[0], o[1]] for o in obs[-260:]],
+                                  "via": "OFR (Office of Financial Research), remplace l'indice de St. Louis", "comp": dict(zip(("credit", "actions", "refuges", "financement", "volatilité"), last[2:]))}
+        note("ofr.fsi", "Indice de stress financier (OFR, Trésor américain) et ses composantes", "daily", True, last[0], url="https://www.financialresearch.gov/financial-stress-index/")
+    except Exception as e:
+        note("ofr.fsi", "Indice de stress financier (OFR, Trésor américain) et ses composantes", "daily", False, err=e, url="https://www.financialresearch.gov/financial-stress-index/")
+
+
+def do_bea(data):
+    """Inflation PCE (globale et hors alimentation et énergie) : fichier mensuel public du BEA, sans clé."""
+    url = "https://apps.bea.gov/national/Release/TXT/NipaDataM.txt"
+    try:
+        txt = http("bea_nipam.txt", url, tries=2, timeout=60)
+        want_ = {"DPCERG": [], "DPCCRG": []}
+        for line in txt.splitlines():
+            if line[:7] in ("DPCERG,", "DPCCRG,"):
+                parts = [x.strip().strip('"') for x in line.split(",", 2)]
+                if len(parts) == 3 and re.match(r"\d{4}M\d{2}", parts[1]):
+                    want_[parts[0]].append(("%s-%s-01" % (parts[1][:4], parts[1][5:7]), num(parts[2].replace(",", ""))))
+        out = {}
+        for code, key in (("DPCERG", "us_pce"), ("DPCCRG", "us_pce_core")):
+            ser = sorted(o for o in want_[code] if o[1])
+            by = dict(ser)
+            yo = []
+            for d, v in ser:
+                y0 = "%04d-%s" % (int(d[:4]) - 1, d[5:])
+                if y0 in by:
+                    yo.append([d, round((v / by[y0] - 1) * 100, 2)])
+            if len(yo) < 3:
+                raise ValueError("série %s absente" % code)
+            out[key] = yo
+        data["derived"]["us_pce"] = {"v": out["us_pce"][-1][1], "prev": out["us_pce"][-2][1], "asof": out["us_pce"][-1][0]}
+        data["derived"]["us_pce_core"] = {"v": out["us_pce_core"][-1][1], "prev": out["us_pce_core"][-2][1], "asof": out["us_pce_core"][-1][0]}
+        data["fred"]["PCEPILFE"] = {"v": out["us_pce_core"][-1][1], "prev": out["us_pce_core"][-2][1], "asof": out["us_pce_core"][-1][0], "hist": out["us_pce_core"][-36:],
+                                   "via": "BEA (Bureau of Economic Analysis), sur 1 an"}
+        note("bea.pce", "Inflation PCE et PCE sous-jacente (BEA)", "monthly", True, out["us_pce_core"][-1][0], url="https://www.bea.gov/data/personal-consumption-expenditures-price-index")
+    except Exception as e:
+        note("bea.pce", "Inflation PCE et PCE sous-jacente (BEA)", "monthly", False, err=e, url="https://www.bea.gov/data/personal-consumption-expenditures-price-index")
+
+
+OECD_CPI = {"JPN": "JP", "CHE": "CH", "AUS": "AU", "NZL": "NZ", "EA20": "EZ", "GBR": "GB", "CAN": "CA", "USA": "US"}
+
+
+def do_oecd_sdmx(data):
+    """Inflation des 8 économies : API publique de l'OCDE (SDMX), sans clé ; remplace les séries OCDE de FRED."""
+    url = ("https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_PRICES@DF_PRICES_ALL,1.0/%s.M+Q.N.CPI.PA._T.N.GY?startPeriod=%d-01&dimensionAtObservation=AllDimensions&format=csvfile"
+           % ("+".join(OECD_CPI), NOW.year - 2))
+    try:
+        rows = list(csv.DictReader(io.StringIO(http("oecd_cpi.csv", url, tries=2, timeout=60))))
+        if not rows:
+            raise ValueError("réponse vide")
+        by = {}
+        for r in rows:
+            a, f, t, v = r.get("REF_AREA"), r.get("FREQ"), r.get("TIME_PERIOD", ""), num(r.get("OBS_VALUE"))
+            if a in OECD_CPI and v is not None:
+                if f == "Q":
+                    q = re.match(r"(\d{4})-Q(\d)", t)
+                    if not q:
+                        continue
+                    t = "%s-%02d" % (q.group(1), int(q.group(2)) * 3)
+                by.setdefault(a, {}).setdefault(f, []).append((t[:7] + "-01", v))
+        got = []
+        for a, cc in OECD_CPI.items():
+            fr = by.get(a, {})
+            ser = sorted(fr.get("M") or fr.get("Q") or [])
+            if not ser:
+                continue
+            data["oecd"]["cpi_" + cc] = {"v": ser[-1][1], "prev": ser[-2][1] if len(ser) > 1 else None, "asof": ser[-1][0], "freq": "M" if fr.get("M") else "Q"}
+            nat_ = data["national"].get("cpi_" + cc)
+            if cc not in ("US",) and (not nat_ or nat_.get("asof", "") < ser[-1][0]):
+                data["national"]["cpi_" + cc] = {"v": ser[-1][1], "prev": ser[-2][1] if len(ser) > 1 else None, "asof": ser[-1][0], "src": "https://data-explorer.oecd.org/", "via": "OCDE"}
+            got.append(cc)
+        if not got:
+            DIAG["oecd_cols"] = ",".join(rows[0].keys())[:200]
+            raise ValueError("aucune série lue")
+        note("oecd.sdmx", "Inflation des 8 économies (OCDE, API publique) : %s" % ", ".join(got), "monthly", True, max(data["oecd"]["cpi_" + c]["asof"] for c in got), url="https://data-explorer.oecd.org/")
+    except Exception as e:
+        note("oecd.sdmx", "Inflation des 8 économies (OCDE, API publique)", "monthly", False, err=e, url="https://data-explorer.oecd.org/")
+
+
+def probe_credit(data):
+    """Écarts de crédit ICE (HY, IG) : n'existent gratuitement que chez la Fed de St. Louis ; on essaie ses autres adresses."""
+    for key, url in (("api", "https://api.stlouisfed.org/fred/series/observations?series_id=BAMLH0A0HYM2&file_type=json"),
+                     ("research", "https://research.stlouisfed.org/fred2/series/BAMLH0A0HYM2/downloaddata/BAMLH0A0HYM2.csv"),
+                     ("alfred", "https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=BAMLH0A0HYM2")):
+        try:
+            txt = http("probe_%s" % key, url, tries=1, timeout=12)
+            DIAG["credit_" + key] = "répond : " + txt[:80].replace("\n", " ")
+        except Exception as e:
+            DIAG["credit_" + key] = fr_err(e)[:90]
 
 
 def do_cot(data):
@@ -2244,7 +2353,7 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("wgc", do_wgc)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("wgc", do_wgc), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("probe", probe_credit)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
@@ -2280,6 +2389,9 @@ def main():
         except Exception as e:
             note("react", "Mémoire des réactions du marché", "daily", False, err=e)
 
+    # Séries FRED remplacées par une autre source officielle (OFR, BEA…) : plus affichées comme des pannes
+    with LOCK:
+        SOURCES[:] = [x for x in SOURCES if not (x["id"].startswith("fred.") and not x["ok"] and x["id"][5:] in data["fred"])]
     out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES, "diag": DIAG}
     out.update(data)
     ok = sum(1 for s in SOURCES if s["ok"])
