@@ -705,7 +705,22 @@ def gld_archive():
             return out
         except Exception as e:
             last = e
+            DIAG["gld_%d" % len(DIAG)] = url[-30:] + " : " + fr_err(e)[:80]
     raise last
+
+
+def nasdaq_shares(tick):
+    """Parts en circulation d'un ETF (API publique de Nasdaq.com, sans clé)."""
+    url = "https://api.nasdaq.com/api/quote/%s/summary?assetclass=etf" % tick
+    j = json.loads(http("nq_%s.json" % tick, url, tries=2, timeout=20, headers={"Accept": "application/json, text/plain, */*", "Origin": "https://www.nasdaq.com", "Referer": "https://www.nasdaq.com/"}))
+    sd = ((j.get("data") or {}).get("summaryData") or {})
+    DIAG["nq_" + tick] = ",".join(sd.keys())[:200]
+    for k, v in sd.items():
+        if "share" in k.lower() and "outstanding" in k.lower():
+            val = num(re.sub(r"[^\d.]", "", str((v or {}).get("value", ""))))
+            if val:
+                return val
+    raise ValueError("parts en circulation absentes")
 
 
 def do_goldetf(data):
@@ -737,6 +752,27 @@ def do_goldetf(data):
         ok_any = True
     except Exception as e:
         note("etf.iau", "ETF IAU (iShares) : parts et or détenu, mémorisés chaque jour", "daily", False, err=e, url="https://www.ishares.com/us/products/239561/ishares-gold-trust-fund")
+    # Parts en circulation de GLD et IAU (Nasdaq) : mémorisées chaque jour ; flux = variation des parts × cours
+    for tick in ("GLD", "IAU"):
+        try:
+            sh = nasdaq_shares(tick)
+            px = None
+            try:
+                rj = json.loads(http("yq_%s.json" % tick, "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=5d" % tick, tries=1, timeout=15))
+                px = (rj["chart"]["result"][0].get("meta") or {}).get("regularMarketPrice")
+            except Exception:
+                pass
+            lst = st["snap"].setdefault(tick + "_nq", [])
+            row = {"d": TODAY, "shares": sh, "px": px}
+            if lst and lst[-1]["d"] == TODAY:
+                lst[-1] = row
+            else:
+                lst.append(row)
+            st["snap"][tick + "_nq"] = lst[-500:]
+            note("etf.nq." + tick, "ETF %s : parts en circulation (Nasdaq), mémorisées chaque jour" % tick, "daily", True, TODAY, url="https://www.nasdaq.com/market-activity/etf/%s" % tick.lower())
+            ok_any = True
+        except Exception as e:
+            note("etf.nq." + tick, "ETF %s : parts en circulation (Nasdaq), mémorisées chaque jour" % tick, "daily", False, err=e, url="https://www.nasdaq.com/market-activity/etf/%s" % tick.lower())
     st["generated"] = NOW.strftime("%Y-%m-%dT%H:%M:%SZ")
     with open(OUT_ETF, "w", encoding="utf-8") as f:
         json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
