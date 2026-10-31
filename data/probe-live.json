@@ -1,0 +1,123 @@
+{
+ "cnbc_q": {
+  "ok": 200,
+  "acao": "*",
+  "len": 9410,
+  "head": "{\"FormattedQuoteResult\":{\"FormattedQuote\":[{\"symbol\":\"US10Y\",\"symbolType\":\"symbol\",\"code\":0,\"name\":\"U.S. 10 Year Treasury\",\"shortName\":\"US 10-YR\",\"onAirName\":\"U.S. 10 Year Treasury\",\"altName\":\"\",\"last\":\"4.933%\",\"last_timedate\":\"5:05 PM EDT\",\"last_time\":\"2026-10-30T17:05:00.000-0400\",\"changetype\":\"DOWN\",\"type\":\"BOND\",\"subType\":\"Government Bond\",\"exchange\":\"Tradeweb\",\"source\":\"Exchange\",\"open\":\"4.937%\",\"high\":\"4.958%\",\"low\":\"4.892%\",\"change\":\"-0.056\",\"change_pct\":\"-1.1225%\",\"provider\":\"CNBC Quote Cache\",\"previous_day_closing\":\"4.989%\",\"altSymbol\":\"US10YT=XX\",\"realTime\":\"true\",\"curmktstatus\":\"REG_MKT\",\"yrhiprice\":\"5.37\",\"yrhidate\":\"10/07/26\",\"yrloprice\":\"3.93\",\"yrlodate\":\"03/02/26\",\"streamable\":\"1\",\"bond_last_price\":\"97.625\",\"bond_change_price\":\"+0.4219\",\"bond_change_pct_price\":\"+0.434%\",\"bond_open_price\":\"97.5938\",\"bond_high_price\":\"97.9375\",\"bond_low_price\":\"97.4375\",\"bond_prev_day_closing_price\":\"97.2031\",\"bond_changetype\":\"UP\",\"maturity_date\":\"2036-08-15\",\"coupon\":\"4.625%\",\"issue_id\":\"5093160\",\"countryCode\":\"US\",\"timeZone\":\"EDT\",\"feedSymbol\":\"US10YT=TWEB\",\"portfolioindicator\":\"N\"},{\"symbol\":\"US2Y\",\"symbolType\":\"symbol\",\"code\":0,\"name\":\"U.S. 2 Year Treasury\",\"shortName\":\"US 2-YR\",\"onAirName\":\"U.S. 2 Year Treasury\",\"altName\":\"\",\"last\":\"4.592%\",\"last_timedate\":\"5:05 PM EDT\",\"last_time\":\"2026-10-30T17:05:00.000-0400\",\"changetype\":\"DOWN\",\"type\":\"BOND\",\"subType\":\"Government Bond\",\"exchange\":\"Tradeweb\",\"source\":\"Exchange\",\"open\":\"4.606%\",\"high\":\"4.629%\",\"low\":\"4.554%\",\"change\":\"-0.",
+  "s": 0.2,
+  "preflight": "<HTTPError 403: 'Forbidden'>"
+ },
+ "cnbc_h": {
+  "ok": 200,
+  "acao": "*",
+  "len": 174798,
+  "head": "{\"barData\":{\"priceBars\":[{\"open\":\"4.9370\",\"high\":\"4.9370\",\"low\":\"4.9330\",\"close\":\"4.9330\",\"volume\":0,\"tradeTime\":\"20261029193000\",\"tradeTimeinMills\":1793316600000},{\"open\":\"4.9330\",\"high\":\"4.9350\",\"low\":\"4.9330\",\"close\":\"4.9330\",\"volume\":0,\"tradeTime\":\"20261029193100\",\"tradeTimeinMills\":1793316660000},{\"open\":\"4.9310\",\"high\":\"4.9330\",\"low\":\"4.9310\",\"close\":\"4.9330\",\"volume\":0,\"tradeTime\":\"20261029193200\",\"tradeTimeinMills\":1793316720000},{\"open\":\"4.9330\",\"high\":\"4.9330\",\"low\":\"4.9330\",\"close\":\"4.9330\",\"volume\":0,\"tradeTime\":\"20261029193300\",\"tradeTimeinMills\":1793316780000},{\"open\":\"4.9330\",\"high\":\"4.9350\",\"low\":\"4.9330\",\"close\":\"4.9350\",\"volume\":0,\"tradeTime\":\"20261029193600\",\"tradeTimeinMills\":1793316960000},{\"open\":\"4.9330\",\"high\":\"4.9330\",\"low\":\"4.9310\",\"close\":\"4.9310\",\"volume\":0,\"tradeTime\":\"20261029193700\",\"tradeTimeinMills\":1793317020000},{\"open\":\"4.9330\",\"high\":\"4.9330\",\"low\":\"4.9310\",\"close\":\"4.9310\",\"volume\":0,\"tradeTime\":\"20261029193800\",\"tradeTimeinMills\":1793317080000},{\"open\":\"4.9290\",\"high\":\"4.9290\",\"low\":\"4.9290\",\"close\":\"4.9290\",\"volume\":0,\"tradeTime\":\"20261029193900\",\"tradeTimeinMills\":1793317140000},{\"open\":\"4.9310\",\"high\":\"4.9330\",\"low\":\"4.9290\",\"close\":\"4.9330\",\"volume\":0,\"tradeTime\":\"20261029194000\",\"tradeTimeinMills\":1793317200000},{\"open\":\"4.9330\",\"high\":\"4.9330\",\"low\":\"4.9330\",\"close\":\"4.9330\",\"volume\":0,\"tradeTime\":\"20261029194100\",\"tradeTimeinMills\":1793317260000},{\"open\":\"4.9330\",\"high\":\"4.9330\",\"low\":\"4.9330\",\"close\":\"4.9330\",\"volume\":0,\"tradeTim",
+  "s": 0.9,
+  "preflight": "<HTTPError 403: 'Forbidden'>"
+ },
+ "tv_cal": {
+  "ok": 200,
+  "acao": "*",
+  "len": 304249,
+  "head": "{\n    \"status\": \"ok\",\n    \"result\": [\n        {\n            \"id\": \"401564\",\n            \"title\": \"NBS Non Manufacturing PMI\",\n            \"country\": \"CN\",\n            \"indicator\": \"Non Manufacturing PMI\",\n            \"ticker\": \"ECONOMICS:CNNMPMI\",\n            \"comment\": \"In China, the Non-Manufacturing purchasing managers index survey is based on data collected from a representative panel of 1200 enterprises from the non-manufacturing sector. The survey includes ten questions on business activity, new orders, new export orders, in hand orders index, stock, intermediate input price, subscription price, employment, supplier delivery time, and business activities expectation. For each question, the diffusion index is calculated. As there’s no integrated PMI, the business activity index is usually used to reflect the overall changes in non-manufacturing sector. A PMI reading above 50 percent indicates expansion from the previous month, while below 50 indicates contraction.\",\n            \"category\": \"bsnss\",\n            \"period\": \"Oct\",\n            \"referenceDate\": \"2026-10-31T00:00:00Z\",\n            \"source\": \"National Bureau of Statistics\",\n            \"source_url\": \"http://www.stats.gov.cn/\",\n            \"actual\": 49.7,\n            \"previous\": 50.2,\n            \"forecast\": 50.5,\n            \"actualRaw\": 49.7,\n            \"previousRaw\": 50.2,\n            \"forecastRaw\": 50.5,\n            \"currency\": \"CNY\",\n            \"importance\": 0,\n            \"date\": \"2026-10-31T01:30:00.000Z",
+  "s": 0.3,
+  "preflight": "<HTTPError 403: 'Forbidden'>"
+ },
+ "tv_cal_noorigin": {
+  "err": "<HTTPError 403: 'Forbidden'>",
+  "acao": "*",
+  "s": 0.1,
+  "preflight": "<HTTPError 403: 'Forbidden'>"
+ },
+ "ff_this": {
+  "ok": 200,
+  "acao": null,
+  "len": 13259,
+  "head": "[{\"title\":\"Bank Holiday\",\"country\":\"NZD\",\"date\":\"2026-10-25T15:00:00-04:00\",\"impact\":\"Holiday\",\"forecast\":\"\",\"previous\":\"\"},{\"title\":\"RBA Assist Gov Jones Speaks\",\"country\":\"AUD\",\"date\":\"2026-10-25T17:10:00-04:00\",\"impact\":\"Low\",\"forecast\":\"\",\"previous\":\"\"},{\"title\":\"German ifo Business Climate\",\"country\":\"EUR\",\"date\":\"2026-10-26T05:00:00-04:00\",\"impact\":\"Low\",\"forecast\":\"90.0\",\"previous\":\"89.9\"},{\"title\":\"CBI Realized Sales\",\"country\":\"GBP\",\"date\":\"2026-10-26T07:00:00-04:00\",\"impact\":\"Low\",\"forecast\":\"-47\",\"previous\":\"-55\"},{\"title\":\"SPPI y\\/y\",\"country\":\"JPY\",\"date\":\"2026-10-26T19:50:00-04:00\",\"impact\":\"Low\",\"forecast\":\"3.7%\",\"previous\":\"3.7%\"},{\"title\":\"BRC Shop Price Index y\\/y\",\"country\":\"GBP\",\"date\":\"2026-10-26T20:01:00-04:00\",\"impact\":\"Low\",\"forecast\":\"1.6%\",\"previous\":\"1.4%\"},{\"title\":\"BOJ Core CPI y\\/y\",\"country\":\"JPY\",\"date\":\"2026-10-27T01:00:00-04:00\",\"impact\":\"Low\",\"forecast\":\"1.9%\",\"previous\":\"1.8%\"},{\"title\":\"Spanish Unemployment Rate\",\"country\":\"EUR\",\"date\":\"2026-10-27T04:00:00-04:00\",\"impact\":\"Low\",\"forecast\":\"9.9%\",\"previous\":\"9.9%\"},{\"title\":\"M3 Money Supply y\\/y\",\"country\":\"EUR\",\"date\":\"2026-10-27T05:00:00-04:00\",\"impact\":\"Low\",\"forecast\":\"3.5%\",\"previous\":\"3.5%\"},{\"title\":\"Private Loans y\\/y\",\"country\":\"EUR\",\"date\":\"2026-10-27T05:00:00-04:00\",\"impact\":\"Low\",\"forecast\":\"3.1%\",\"previous\":\"3.1%\"},{\"title\":\"ADP Weekly Employment Change\",\"country\":\"USD\",\"date\":\"2026-10-27T08:15:00-04:00\",\"impact\":\"Low\",\"forecast\":\"\",\"previous\":\"18.5K\"},{\"title\":\"Core Durable Go",
+  "s": 0.3,
+  "preflight": "<HTTPError 405: 'Method Not Allowed'>"
+ },
+ "ff_next": {
+  "err": "<HTTPError 404: 'Not Found'>",
+  "acao": null,
+  "s": 0.2,
+  "preflight": "<HTTPError 405: 'Method Not Allowed'>"
+ },
+ "binance": {
+  "ok": 200,
+  "acao": "*",
+  "len": 45,
+  "head": "{\"symbol\":\"PAXGUSDT\",\"price\":\"3898.52000000\"}",
+  "s": 1.0,
+  "preflight": "<HTTPError 403: 'Forbidden'>"
+ },
+ "frankfurter": {
+  "ok": 200,
+  "acao": "*",
+  "len": 70,
+  "head": "{\"amount\":1.0,\"base\":\"EUR\",\"date\":\"2026-10-30\",\"rates\":{\"USD\":1.1172}}",
+  "s": 0.4,
+  "preflight": [
+   200,
+   "*"
+  ]
+ },
+ "ecb": {
+  "ok": 200,
+  "acao": "*",
+  "len": 3906,
+  "head": "{\"header\":{\"id\":\"c6d17e3f-7cdf-4f67-bf6d-d181a0f3a654\",\"test\":false,\"prepared\":\"2026-10-31T22:25:43.043+01:00\",\"sender\":{\"id\":\"ECB\"}},\"dataSets\":[{\"action\":\"Replace\",\"validFrom\":\"2026-10-31T22:25:43.043+01:00\",\"series\":{\"0:0:0:0:0:0:0\":{\"attributes\":[0,null,0,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,0,0,null,0,0,0,0],\"observations\":{\"0\":[0.029934545901425365,0,0,null,null]}}}}],\"structure\":{\"links\":[{\"title\":\"Composite Indicator of Systemic Stress\",\"rel\":\"dataflow\",\"href\":\"https://data-api.ecb.europa.eu:443/service/dataflow/ECB/CISS/1.0\"}],\"name\":\"Composite Indicator of Systemic Stress\",\"dimensions\":{\"series\":[{\"id\":\"FREQ\",\"name\":\"Frequency\",\"values\":[{\"id\":\"D\",\"name\":\"Daily\"}]},{\"id\":\"REF_AREA\",\"name\":\"Reference area\",\"values\":[{\"id\":\"U2\",\"name\":\"Euro area (changing composition)\"}]},{\"id\":\"CURRENCY\",\"name\":\"Currency\",\"values\":[{\"id\":\"Z0Z\",\"name\":\"Not applicable\"}]},{\"id\":\"PROVIDER_FM\",\"name\":\"Financial market provider\",\"values\":[{\"id\":\"4F\",\"name\":\"ECB\"}]},{\"id\":\"INSTRUMENT_FM\",\"name\":\"Financial market instrument\",\"values\":[{\"id\":\"EC\",\"name\":\"Economic indicator\"}]},{\"id\":\"PROVIDER_FM_ID\",\"name\":\"Financial market provider identifier\",\"values\":[{\"id\":\"SOV_GDPWN\",\"name\":\"Correlation and real GDP-country weights average\"}]},{\"id\":\"DATA_TYPE_FM\",\"name\":\"Financial market data type\",\"values\":[{\"id\":\"IDX\",\"name\":\"Index\"}]}],\"observation\":[{\"id\":\"TIME_PERIOD\",\"name\":\"Time period or range\",\"role\":\"time\",\"values\":[{\"id\":\"2026-10-29\",\"name\":\"2026-10",
+  "s": 1.7,
+  "preflight": [
+   200,
+   "*"
+  ]
+ },
+ "kalshi": {
+  "err": "<HTTPError 403: 'Forbidden'>",
+  "acao": null,
+  "s": 0.1,
+  "preflight": "<HTTPError 403: 'Forbidden'>"
+ },
+ "poly": {
+  "ok": 200,
+  "acao": "*",
+  "len": 6002,
+  "head": "[{\"id\":\"2890\",\"ticker\":\"nba-will-the-mavericks-beat-the-grizzlies-by-more-than-5pt5-points-in-their-december-4-matchup\",\"slug\":\"nba-will-the-mavericks-beat-the-grizzlies-by-more-than-5pt5-points-in-their-december-4-matchup\",\"title\":\"NBA: Will the Mavericks beat the Grizzlies by more than 5.5 points in their December 4 matchup?\",\"description\":\"In the upcoming NBA game, scheduled for December 4:\\n\\nIf the Dallas Mavericks win by over 5.5 points, the market will resolve to “Yes”.\\n\\nIf the Memphis Grizzlies lose by less than 5.5 points or win, the market will resolve “No.” \\n\\nIf the game is not completed by December 11, 2021, the market will resolve 50-50.\",\"resolutionSource\":\"https://www.nba.com/games\",\"startDate\":\"2021-12-04T00:00:00Z\",\"creationDate\":\"2021-12-04T00:00:00Z\",\"endDate\":\"2021-12-04T00:00:00Z\",\"image\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/nba-will-the-mavericks-beat-the-grizzlies-by-more-than-55-points-in-their-december-4-matchup-543e7263-67da-4905-8732-cd3f220ae751.png\",\"icon\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/nba-will-the-mavericks-beat-the-grizzlies-by-more-than-55-points-in-their-december-4-matchup-543e7263-67da-4905-8732-cd3f220ae751.png\",\"active\":true,\"closed\":true,\"archived\":false,\"new\":false,\"featured\":false,\"restricted\":false,\"liquidity\":0,\"volume\":1335.05,\"openInterest\":0,\"sortBy\":\"ascending\",\"category\":\"Sports\",\"published_at\":\"2022-07-27 14:40:02.064+00\",\"createdAt\":\"2022-07-27T14:40:02.074Z\",\"updatedAt\":\"2026-07-02T0",
+  "s": 0.2,
+  "preflight": [
+   200,
+   "*"
+  ]
+ },
+ "treasury": {
+  "ok": 200,
+  "acao": "*",
+  "len": 3025,
+  "head": "{\"data\":[{\"record_date\":\"2015-03-31\",\"parent_id\":\"null\",\"classification_id\":\"12662418\",\"classification_desc\":\"FY 2014\",\"current_month_gross_rcpt_amt\":\"null\",\"current_month_gross_outly_amt\":\"null\",\"current_month_dfct_sur_amt\":\"null\",\"table_nbr\":\"1\",\"src_line_nbr\":\"1\",\"print_order_nbr\":\"1\",\"line_code_nbr\":\"10\",\"data_type_cd\":\"S\",\"record_type_cd\":\"SL\",\"sequence_level_nbr\":\"1\",\"sequence_number_cd\":\"1\",\"record_fiscal_year\":\"2015\",\"record_fiscal_quarter\":\"2\",\"record_calendar_year\":\"2015\",\"record_calendar_quarter\":\"1\",\"record_calendar_month\":\"03\",\"record_calendar_day\":\"31\"}],\"meta\":{\"count\":1,\"labels\":{\"record_date\":\"Record Date\",\"parent_id\":\"Parent ID\",\"classification_id\":\"Classification ID\",\"classification_desc\":\"Classification Description\",\"current_month_gross_rcpt_amt\":\"Current Month Gross Receipts Amount\",\"current_month_gross_outly_amt\":\"Current Month Gross Outlay Amount\",\"current_month_dfct_sur_amt\":\"Current Month Deficit Surplus Amount\",\"table_nbr\":\"Table Number\",\"src_line_nbr\":\"Source Line Number\",\"print_order_nbr\":\"Print Order Sequence Number\",\"line_code_nbr\":\"Line Code Number\",\"data_type_cd\":\"Data Type Code\",\"record_type_cd\":\"Record Type Code\",\"sequence_level_nbr\":\"Sequence Level Number\",\"sequence_number_cd\":\"Sequence Number Code\",\"record_fiscal_year\":\"Fiscal Year\",\"record_fiscal_quarter\":\"Fiscal Quarter Number\",\"record_calendar_year\":\"Calendar Year\",\"record_calendar_quarter\":\"Calendar Quarter Number\",\"record_calendar_month\":\"Calendar Month Number\",\"record_calendar_day\":\"C",
+  "s": 0.4,
+  "preflight": [
+   204,
+   "*"
+  ]
+ },
+ "yahoo": {
+  "ok": 200,
+  "acao": null,
+  "len": 1729,
+  "head": "{\"chart\":{\"result\":[{\"meta\":{\"currency\":\"USD\",\"symbol\":\"^MOVE\",\"exchangeName\":\"NYS\",\"fullExchangeName\":\"NYSE\",\"instrumentType\":\"INDEX\",\"firstTradeDate\":1037111400,\"regularMarketTime\":1793391450,\"hasPrePostMarketData\":false,\"gmtoffset\":-14400,\"timezone\":\"EDT\",\"exchangeTimezoneName\":\"America/New_York\",\"regularMarketPrice\":100.1976,\"regularMarketChangePercent\":7.1191,\"fulldayPrice\":100.1976,\"fulldayChange\":6.6591,\"fulldayChangePercent\":7.1191,\"fiftyTwoWeekHigh\":115.02,\"fiftyTwoWeekLow\":55.77,\"regularMarketDayHigh\":100.2131,\"regularMarketDayLow\":97.0271,\"longName\":\"Northern Trust iBoxx 5-Year Tar\",\"shortName\":\"Northern Trust iBoxx 5-Year Tar\",\"chartPreviousClose\":103.31,\"priceHint\":2,\"currentTradingPeriod\":{\"pre\":{\"timezone\":\"EDT\",\"start\":1793347200,\"end\":1793367000,\"gmtoffset\":-14400},\"regular\":{\"timezone\":\"EDT\",\"start\":1793367000,\"end\":1793390400,\"gmtoffset\":-14400},\"post\":{\"timezone\":\"EDT\",\"start\":1793390400,\"end\":1793404800,\"gmtoffset\":-14400}},\"dataGranularity\":\"1d\",\"range\":\"5d\",\"validRanges\":[\"1d\",\"5d\",\"1mo\",\"3mo\",\"6mo\",\"1y\",\"2y\",\"5y\",\"10y\",\"ytd\",\"max\"]},\"timestamp\":[1793021400,1793107800,1793194200,1793280600,1793367000],\"indicators\":{\"quote\":[{\"low\":[102.18000030517578,97.87000274658203,92.87999725341797,92.5199966430664,93.54000091552734],\"open\":[103.30999755859375,102.19000244140625,97.87000274658203,94.55000305175781,93.54000091552734],\"high\":[104.41999816894531,102.19000244140625,97.87000274658203,94.55000305175781,100.20999908447266],\"volume\":[0,0,0,0,0],\"close\":[102",
+  "s": 0.2,
+  "preflight": [
+   200,
+   null
+  ]
+ },
+ "cboe": {
+  "ok": 200,
+  "acao": null,
+  "len": 492,
+  "head": "{\"timestamp\": \"2026-10-31 21:24:45\", \"data\": {\"symbol\": \"^VIX\", \"security_type\": \"index\", \"exchange_id\": 5, \"current_price\": 19.42, \"price_change\": 2.22, \"price_change_percent\": 11.4315, \"bid\": 0.0, \"ask\": 0.0, \"bid_size\": 0, \"ask_size\": 0, \"open\": 18.93, \"high\": 23.93, \"low\": 18.54, \"close\": 19.42, \"prev_day_close\": 19.42, \"volume\": 0, \"iv30\": 125.976, \"iv30_change\": 0.0, \"iv30_change_percent\": 0.0, \"seqno\": 0, \"last_trade_time\": \"2026-10-30T16:15:01\", \"tick\": \"down\"}, \"symbol\": \"_VIX\"}",
+  "s": 0.5,
+  "preflight": "<HTTPError 307: 'Temporary Redirect'>"
+ }
+}
