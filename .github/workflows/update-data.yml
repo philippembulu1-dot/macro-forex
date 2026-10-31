@@ -1,7 +1,7 @@
 name: Mise à jour des données
 on:
   schedule:
-    - cron: "7 */2 * * *"
+    - cron: "17,47 * * * *"  # toutes les 30 min : GitHub retarde ou saute parfois des passages
   workflow_dispatch:
   push:
     branches: [main]
@@ -32,12 +32,12 @@ jobs:
         run: |
           git config user.name "macro-forex-robot"
           git config user.email "actions@users.noreply.github.com"
-          mkdir -p /tmp/out && cp data/macro.json data/seasonal.json /tmp/out/ && for f in macro-history surprises; do cp data/$f.json /tmp/out/ 2>/dev/null || true; done
+          mkdir -p /tmp/out && cp data/macro.json data/seasonal.json /tmp/out/ && for f in macro-history surprises reactions; do cp data/$f.json /tmp/out/ 2>/dev/null || true; done
           for i in 1 2 3; do
             # On repart de la dernière version du dépôt et on y pose les nouvelles données (évite les conflits entre deux passages du robot)
             git fetch -q origin main && git reset -q --hard origin/main
             cp /tmp/out/*.json data/
-            git add data/macro.json data/seasonal.json $( [ -f data/macro-history.json ] && echo data/macro-history.json ) $( [ -f data/surprises.json ] && echo data/surprises.json )
+            git add data/macro.json data/seasonal.json $( [ -f data/macro-history.json ] && echo data/macro-history.json ) $( [ -f data/surprises.json ] && echo data/surprises.json ) $( [ -f data/reactions.json ] && echo data/reactions.json )
             if git diff --staged --quiet; then echo "Rien de nouveau"; exit 0; fi
             git commit -q -m "Données mises à jour"
             if git push -q origin HEAD:main; then echo "Publié"; exit 0; fi

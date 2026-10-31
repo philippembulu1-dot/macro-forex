@@ -1,11 +1,11 @@
 # Macro Forex — terminal macro personnel
 
-Site gratuit (GitHub Pages) pour suivre l'or, le dollar et les devises majeures. Un robot (GitHub Actions) récupère des données publiques toutes les 2 heures et les écrit dans `data/macro.json`.
+Site gratuit (GitHub Pages) pour suivre l'or, le dollar et les devises majeures. Un robot (GitHub Actions) récupère des données publiques toutes les 30 minutes et les écrit dans `data/macro.json`.
 
 ## Fichiers
 - `index.html` : le site complet.
 - `scripts/update_data.py` : le robot (Python, sans clé API).
-- `.github/workflows/update-data.yml` : lance le robot toutes les 2 h et sur demande.
+- `.github/workflows/update-data.yml` : lance le robot toutes les 30 min et sur demande.
 - `data/seasonal.json` : saisonnalité 20 ans (recalculée par le robot une fois par semaine).
 - `data/world-map.json` : contours des pays (Natural Earth, domaine public).
 - `CLAUDE.md` : consignes de travail.

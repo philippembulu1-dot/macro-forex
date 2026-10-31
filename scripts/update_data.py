@@ -1605,6 +1605,198 @@ def do_history(force=False):
 
 
 # ---------------------------------------------------------------- Programme principal
+# ---------------------------------------------------------------- Mémoire des réactions du marché autour des publications
+# Pour chaque publication importante : variation de l'or, du dollar (DXY), de l'EUR/USD, du Nasdaq 100 et du taux US à 10 ans
+# 15 min, 1 h et 4 h après l'heure de sortie. Bougies Yahoo Finance (non officiel, gratuit) ; secours : Binance (or via PAXG, EUR/USDT).
+OUT_REACT = os.environ.get("MF_OUT_REACT", os.path.join(ROOT, "data", "reactions.json"))
+REACT_ASSETS = [("gold", "GC=F", "PAXGUSDT"), ("dxy", "DX-Y.NYB", None), ("eur", "EURUSD=X", "EURUSDT"), ("nq", "NQ=F", None), ("us10", "^TNX", None)]
+REACT_TYPES = [("pce", r"PCE"), ("cpi", r"CPI|HICP|Consumer Price"), ("ppi", r"PPI|Producer Price"), ("nfp", r"Non-Farm|Employment Situation|Employment Change"),
+               ("unemp", r"Unemployment Rate"), ("claims", r"Unemployment Claims|Jobless"), ("gdp", r"GDP"), ("retail", r"Retail Sales"),
+               ("ism", r"ISM|PMI"), ("rate", r"Rate Statement|Interest Rate|Cash Rate|Bank Rate|Policy Rate|Overnight Rate|Federal Funds|Main Refinancing|Monetary Policy"),
+               ("presser", r"Press Conference"), ("conf", r"Confidence|Sentiment"), ("jolts", r"JOLTS"), ("wages", r"Earnings|Wage")]
+
+
+def react_type(title):
+    for k, rx in REACT_TYPES:
+        if re.search(rx, title or "", re.I):
+            return k
+    return "autre"
+
+
+def yahoo_bars(sym, interval, rng):
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=%s&range=%s&includePrePost=true" % (urllib.parse.quote(sym), interval, rng)
+    j = json.loads(http("yh_%s_%s.json" % (re.sub(r"\W", "", sym), interval), url, tries=2, timeout=25))
+    r = j["chart"]["result"][0]
+    q = r["indicators"]["quote"][0]
+    out = [(t, o, c) for t, o, c in zip(r.get("timestamp") or [], q.get("open") or [], q.get("close") or []) if o is not None and c is not None]
+    if len(out) < 50:
+        raise ValueError("trop peu de bougies")
+    return out
+
+
+def binance_bars(sym, start):
+    out, t = [], start
+    while t < time.time() * 1000 - 9e5 and len(out) < 6000:
+        url = "https://data-api.binance.vision/api/v3/klines?symbol=%s&interval=15m&startTime=%d&limit=1000" % (sym, t)
+        rows = json.loads(http("bn_%s_%d.json" % (sym, t), url, tries=2))
+        if not rows:
+            break
+        out += [(int(k[0]) // 1000, float(k[1]), float(k[4])) for k in rows]
+        t = int(rows[-1][0]) + 900000
+        if len(rows) < 1000:
+            break
+    if len(out) < 50:
+        raise ValueError("trop peu de bougies")
+    return out
+
+
+def move_after(bars, step, t, mins, rate=False):
+    """Variation entre l'heure t (secondes) et t + mins : % (ou points de base pour un taux)."""
+    base = None
+    for st, o, c in bars:
+        if st + step <= t:
+            if t - (st + step) <= step:
+                base = c
+        elif st <= t < st + step:
+            base = base if base is not None else o
+            break
+        else:
+            break
+    if base is None:
+        return None
+    for st, o, c in bars:
+        if st + step >= t + mins * 60:
+            if st > t + mins * 60:
+                return None  # trou dans les données (week-end, fermeture)
+            return round((c - base) * 100, 1) if rate else round((c / base - 1) * 100, 3)
+    return None
+
+
+def bls_schedule():
+    """Dates et heures officielles des publications IPC et emploi (calendrier BLS, ~2 ans)."""
+    txt = http("bls.ics", "https://www.bls.gov/schedule/news_release/bls.ics", tries=2, timeout=25)
+    evs = []
+    for blk in txt.split("BEGIN:VEVENT")[1:]:
+        summ = re.search(r"SUMMARY:(.*)", blk)
+        dt = re.search(r"DTSTART(?:;TZID=([^:]+))?:(\d{8}T\d{6})(Z?)", blk)
+        if not summ or not dt:
+            continue
+        s_ = summ.group(1).strip()
+        typ = "cpi" if re.match(r"Consumer Price Index", s_) else "nfp" if re.match(r"Employment Situation", s_) else None
+        if not typ:
+            continue
+        d = datetime.strptime(dt.group(2), "%Y%m%dT%H%M%S")
+        if dt.group(3) == "Z":
+            d = d.replace(tzinfo=timezone.utc)
+        else:
+            try:
+                from zoneinfo import ZoneInfo
+                d = d.replace(tzinfo=ZoneInfo(dt.group(1) or "America/New_York")).astimezone(timezone.utc)
+            except Exception:
+                continue
+        evs.append({"d": d.strftime("%Y-%m-%dT%H:%M:%SZ"), "c": "USD", "t": "CPI m/m" if typ == "cpi" else "Non-Farm Employment Change", "type": typ, "i": "High", "src": "BLS"})
+    if not evs:
+        raise ValueError("aucune publication lue")
+    return evs
+
+
+def do_reactions(data):
+    st = {"events": []}
+    try:
+        with open(OUT_REACT, encoding="utf-8") as f:
+            st = json.load(f)
+    except Exception:
+        pass
+    have = {e["id"]: e for e in st.get("events", [])}
+    now = time.time()
+    cands = []
+    for e in ((data.get("calendar") or {}).get("events") or []):
+        if e.get("i") != "High" or e.get("c") not in ("USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD"):
+            continue
+        try:
+            t = datetime.fromisoformat(e["d"]).astimezone(timezone.utc)
+        except Exception:
+            continue
+        cands.append({"d": t.strftime("%Y-%m-%dT%H:%M:%SZ"), "c": e["c"], "t": e["t"], "type": react_type(e["t"]), "i": "High", "f": e.get("f") or "", "p": e.get("p") or "", "a": e.get("a") or "", "src": "FF"})
+    try:
+        bls = bls_schedule()
+        cands += [x for x in bls if x["d"] >= (NOW - timedelta(days=720)).strftime("%Y-%m-%d")]
+        note("react.bls", "Calendrier officiel des publications IPC et emploi (BLS)", "monthly", True, TODAY, url="https://www.bls.gov/schedule/")
+    except Exception as e:
+        note("react.bls", "Calendrier officiel des publications IPC et emploi (BLS)", "monthly", False, err=e, url="https://www.bls.gov/schedule/")
+    todo = []
+    for c in cands:
+        ts = datetime.strptime(c["d"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+        if ts > now - 4.5 * 3600:
+            continue  # pas encore 4 h de recul
+        c["id"] = c["d"][:16] + "|" + c["c"] + "|" + c["type"]
+        old = have.get(c["id"])
+        if old and old.get("r") and all(v and v[2] is not None for v in old["r"].values()):
+            for k in ("f", "p", "a"):  # complète la prévision si l'ancienne entrée n'en avait pas
+                if c.get(k) and not old.get(k):
+                    old[k] = c[k]
+            continue
+        c["ts"] = ts
+        todo.append(c)
+    bars, src = {}, {}
+    if todo:
+        first = min(c["ts"] for c in todo)
+        for key, ysym, bsym in REACT_ASSETS:
+            got = []
+            for interval, rng, step in (("15m", "60d", 900), ("60m", "730d", 3600)):
+                if interval == "60m" and first > now - 55 * 86400:
+                    continue
+                try:
+                    got.append((step, yahoo_bars(ysym, interval, rng)))
+                    src[key] = "Yahoo Finance"
+                except Exception as e:
+                    DIAG["react_" + key + "_" + interval] = fr_err(e)[:120]
+            if not got and bsym:
+                try:
+                    got.append((900, binance_bars(bsym, int((max(first, now - 59 * 86400) - 3600) * 1000))))
+                    src[key] = "Binance (" + bsym + ")"
+                except Exception as e:
+                    DIAG["react_" + key + "_bn"] = fr_err(e)[:120]
+            bars[key] = got
+        n_ok = sum(1 for k in bars if bars[k])
+        note("react.prices", "Prix autour des publications (%d actifs sur %d : %s)" % (n_ok, len(REACT_ASSETS), ", ".join(sorted(set(src.values()))) or "aucun"),
+             "daily", n_ok > 0, TODAY if n_ok else None, err=None if n_ok else "aucune source de prix", url="https://finance.yahoo.com/")
+    for c in todo:
+        r, gran = {}, None
+        for key, _y, _b in REACT_ASSETS:
+            for step, b in bars.get(key) or []:
+                if b and b[0][0] <= c["ts"] - step:
+                    v = [move_after(b, step, c["ts"], m, rate=(key == "us10")) for m in (15, 60, 240)]
+                    if step == 3600:
+                        v[0] = None  # bougies d'une heure : pas de mesure à 15 min
+                    if any(x is not None for x in v):
+                        r[key] = v
+                        gran = min(gran or step, step)
+                        break
+        if r:
+            ts = c.pop("ts")
+            c["r"], c["g"] = r, ("15 min" if gran == 900 else "1 h")
+            have[c["id"]] = c
+        else:
+            c.pop("ts", None)
+    # rattache la surprise (chiffre officiel contre prévision) quand le registre l'a calculée
+    try:
+        with open(OUT_SURP, encoding="utf-8") as f:
+            sp = json.load(f).get("results", [])
+    except Exception:
+        sp = []
+    for e in have.values():
+        for x in sp:
+            if x["c"] == e["c"] and x["d"] == e["d"][:10] and x["k"].split("|")[1] == e["type"] and "s" not in e:
+                e["s"], e["fv"], e["av"], e["u"] = x["s"], x["f"], x["a"], x["u"]
+    evs = sorted(have.values(), key=lambda e: e["d"])[-1500:]
+    out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "src": src or st.get("src", {}), "events": evs}
+    with open(OUT_REACT, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+    note("react", "Mémoire des réactions du marché (%d publications enregistrées, %d nouvelles)" % (len(evs), sum(1 for c in todo if c.get("r"))), "daily",
+         True, TODAY, url="https://finance.yahoo.com/")
+
+
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
@@ -1638,6 +1830,11 @@ def main():
             do_surprises(data)
         except Exception as e:
             note("surp", "Surprises économiques", "weekly", False, err=e)
+    if want("reactions") or want("calendar"):
+        try:
+            do_reactions(data)
+        except Exception as e:
+            note("react", "Mémoire des réactions du marché", "daily", False, err=e)
 
     out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES, "diag": DIAG}
     out.update(data)
