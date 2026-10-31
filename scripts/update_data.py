@@ -1252,6 +1252,28 @@ def do_core(data):
             break
         except Exception:
             pass
+    for ser in ("CPIX", "CPI_TRIM"):
+        try:
+            r = valet(ser, "valet_%s.json" % ser)
+            if r and (not core.get("CA") or core["CA"]["asof"] < r["asof"]):
+                core["CA"] = {"v": r["v"], "prev": r["prev"], "asof": r["asof"], "via": "Banque du Canada (%s)" % ser}
+                break
+        except Exception as e:
+            DIAG["core_ca_" + ser] = fr_err(e)[:60]
+    try:
+        obs, cols = [], None
+        for r in csv.reader(io.StringIO(http("snb_infl.csv", "https://data.snb.ch/api/cube/plkoprinfla/data/csv/en", tries=1, timeout=30)), delimiter=";"):
+            if len(r) >= 3 and re.match(r"\d{4}-\d{2}", r[0]):
+                cols = cols or set()
+                cols.add(r[1].strip())
+                if r[1].strip() in ("SNB1", "KI1", "K1"):
+                    obs.append((r[0][:7] + "-01", num(r[2])))
+        DIAG["snb_infl_cols"] = ",".join(sorted(cols or []))[:120]
+        r = last2(obs)
+        if r and (not core.get("CH") or core["CH"]["asof"] < r["asof"]):
+            core["CH"] = {"v": r["v"], "prev": r["prev"], "asof": r["asof"], "via": "BNS (inflation sous-jacente 1)"}
+    except Exception as e:
+        DIAG["core_ch"] = fr_err(e)[:60]
     D = data["derived"].get("us_core")
     if D:
         core["US"] = {"v": D["v"], "prev": D.get("prev"), "asof": D["asof"], "via": "BLS"}
@@ -1316,13 +1338,13 @@ def do_wgc_figures(data):
     try:
         txt = strip_html(http("wgc_ed.html", w["url"], tries=2, timeout=30))
         pats = {"tot": r"[Tt]otal gold demand[^.]{0,160}?([\d,]+(?:\.\d+)?)\s?t\b", "cb": r"[Cc]entral bank[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b",
-                "etf": r"ETF[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b", "jew": r"[Jj]ewel(?:le)?ry[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b",
+                "etf": r"ETF[^.]{0,200}?([\-−+]?[\d,]+(?:\.\d+)?)\s?t\b", "jew": r"[Jj]ewel(?:le)?ry[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b",
                 "bar": r"[Bb]ar and coin[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b", "tech": r"[Tt]echnology[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b"}
         fig = {}
         for k, pt in pats.items():
             m = re.search(pt, txt)
             if m:
-                v = num(m.group(1).replace(",", ""))
+                v = num(m.group(1).replace(",", "").replace("−", "-"))
                 ctx = txt[max(0, m.start() - 20): m.end() + 10]
                 if k == "etf" and re.search(r"outflow|fell|declin|sold|redemption", ctx, re.I):
                     v = -abs(v)
@@ -1344,28 +1366,31 @@ def do_ecb_proj_table(data):
     try:
         tp = Tables()
         tp.feed(http("ecb_proj_page.html", P["url"], tries=2, timeout=40))
-        want_ = {"gdp": r"^real gdp", "hicp": r"^hicp$|^hicp\b(?!.*excl)", "core": r"hicp excl.*(energy|food)", "unemp": r"unemployment"}
-        best = None
+        want_ = {"gdp": r"^real gdp", "hicp": r"^hicp(\s|$)(?!.*excl)", "core": r"hicp excl.*(energy|food)", "unemp": r"unemployment"}
+        best, found, main = None, {}, None
         for head, rows in tp.tables:
             years = None
             for r in rows[:4]:
-                ys = [c for c in r if re.fullmatch(r"20\d\d", c.strip())]
+                ys = [c.strip() for c in r if re.fullmatch(r"20\d\d", c.strip())]
                 if len(ys) >= 3:
                     years = ys
                     break
             if not years:
                 continue
-            found = {}
+            n = 1
+            while n < len(years) and int(years[n]) == int(years[n - 1]) + 1:
+                n += 1  # premières années croissantes = niveaux ; la suite = révisions
+            if main is None:
+                main = years[:n]
             for r in rows:
-                lab = (r[0] if r else "").strip().lower()
-                vals = [num(c.replace("−", "-")) for c in r[1:]]
+                lab = re.sub(r"\s*\d\)$", "", (r[0] if r else "").strip().lower())
+                vals = [num(c.replace("−", "-").replace(",", ".")) for c in r[1:]]
                 vals = [v for v in vals if v is not None]
                 for k, rx in want_.items():
-                    if k not in found and re.search(rx, lab) and len(vals) >= len(years):
-                        found[k] = vals[-len(years):]
-            if len(found) >= 2:
-                best = {"years": years, "rows": found}
-                break
+                    if k not in found and re.search(rx, lab) and len(vals) >= n and years[:n] == main:
+                        found[k] = vals[:n]
+        if main and len(found) >= 2:
+            best = {"years": main, "rows": found}
         if not best:
             DIAG["ecb_proj_tables"] = [(h[:40], (rows[0] if rows else [])[:5]) for h, rows in tp.tables[:6]]
             raise ValueError("tableau des projections introuvable")
@@ -1373,6 +1398,62 @@ def do_ecb_proj_table(data):
         note("proj.ecb.tbl", "Projections de la BCE (%s), tableau lu automatiquement" % P.get("latest"), "quarterly", True, (P.get("latest") or TODAY[:7]) + "-01", url=P["url"])
     except Exception as e:
         note("proj.ecb.tbl", "Projections de la BCE, tableau lu automatiquement", "quarterly", False, err=e, url=P["url"])
+
+
+BANKS = ["Goldman Sachs", "JPMorgan", "J.P. Morgan", "Morgan Stanley", "Citi", "UBS", "Bank of America", "BofA", "HSBC", "Deutsche Bank", "Commerzbank", "ING", "Wells Fargo", "Macquarie", "BNP Paribas", "Société Générale", "Barclays"]
+
+
+def do_consensus_news(data):
+    """Prévisions publiées par les banques, relevées automatiquement dans les titres de presse (Google Actualités, RSS public)."""
+    out, seen, nfeed = [], set(), 0
+    for asset, q in (("gold", "bank raises OR cuts gold price forecast"), ("gold", "gold price forecast Goldman OR JPMorgan OR UBS OR Citi"),
+                     ("eurusd", "EUR/USD forecast bank Goldman OR ING OR Citi OR UBS"), ("fed", "Fed rate cut forecast Goldman OR JPMorgan OR Morgan Stanley")):
+        url = "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q + " when:60d", "hl": "en-US", "gl": "US", "ceid": "US:en"})
+        try:
+            root = ET.fromstring(http("gnews_%d.xml" % nfeed, url, tries=2, timeout=25).encode("utf-8"))
+            nfeed += 1
+        except Exception as e:
+            DIAG["gnews_" + asset] = fr_err(e)[:80]
+            continue
+        for it in root.iter("item"):
+            t = (it.findtext("title") or "").strip()
+            link, pub = it.findtext("link") or "", it.findtext("pubDate") or ""
+            bank = next((b for b in BANKS if re.search(r"\b" + re.escape(b) + r"\b", t)), None)
+            if not bank:
+                continue
+            val = None
+            if asset == "gold" and re.search(r"gold", t, re.I):
+                m = re.search(r"\$\s?(\d{1,2},?\d{3})(?!\d)", t)
+                if m:
+                    v = num(m.group(1).replace(",", ""))
+                    if v and 1500 < v < 15000:
+                        val = v
+            elif asset == "eurusd" and re.search(r"EUR/?USD|euro", t, re.I):
+                m = re.search(r"\b(1\.\d{2,4})\b", t)
+                if m:
+                    val = num(m.group(1))
+            elif asset == "fed":
+                m = re.search(r"\b(one|two|three|four|no|\d)\s+(?:more\s+)?(?:rate\s+)?(cuts?|hikes?)\b", t, re.I)
+                if m:
+                    val = m.group(0)
+            if val is None:
+                continue
+            try:
+                d = datetime.strptime(pub[:25], "%a, %d %b %Y %H:%M:%S").strftime("%Y-%m-%d")
+            except Exception:
+                d = TODAY
+            key = (bank.replace("J.P. Morgan", "JPMorgan").replace("BofA", "Bank of America"), asset, str(val))
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append({"bank": key[0], "asset": asset, "v": val, "t": t[:160], "l": link, "d": d})
+    out.sort(key=lambda x: x["d"], reverse=True)
+    if out:
+        data["consensus_auto"] = out[:40]
+    elif (PREVIOUS.get("consensus_auto")):
+        data["consensus_auto"] = PREVIOUS["consensus_auto"]
+    note("news.consensus", "Prévisions des banques relevées dans la presse (%d)" % len(out), "daily", bool(out), TODAY if out else None,
+         err=None if out else "aucun titre exploitable", url="https://news.google.com/")
 
 
 def retail_public(data):
@@ -2600,7 +2681,7 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates),
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news),
              ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d)))]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
