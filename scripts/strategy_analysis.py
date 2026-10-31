@@ -449,4 +449,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except BaseException as e:  # noqa : on publie l'erreur pour pouvoir la lire depuis le dépôt
+        import traceback
+        os.makedirs(os.path.dirname(OUT), exist_ok=True)
+        with open(OUT, "w", encoding="utf-8") as f:
+            json.dump({"erreur": repr(e), "trace": traceback.format_exc()[-3000:], "log": LOG[-60:],
+                       "genere": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}, f, ensure_ascii=False, indent=1)
+        print(traceback.format_exc())
