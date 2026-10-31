@@ -3298,8 +3298,93 @@ def geo_extra(g):
             note("geo.sanc", "Sanctions : titres de presse (OFAC indisponible : %s)" % fr_err(e)[:40], "daily", True, TODAY, url="https://news.google.com/")
         except Exception as e2:
             note("geo.sanc", "Sanctions (OFAC, presse)", "daily", False, err=e2, url="https://ofac.treasury.gov/recent-actions")
-    # 4. Calendrier géopolitique (dates officielles ; les événements passés disparaissent)
-    g["cal"] = [list(x) for x in GEO_CAL if x[1] >= TODAY]
+    # 4. Calendrier géopolitique : liste vérifiée + dates trouvées seules par le robot (Wikidata, presse)
+    cal = [list(x) + ["vérifié"] for x in GEO_CAL if x[1] >= TODAY]
+    auto = geo_cal_auto()
+    for a in auto:
+        if a[1] >= TODAY and not any(c[0] == a[0] and c[2][:12].lower() == a[2][:12].lower() for c in cal):
+            cal.append(a)
+    cal.sort(key=lambda x: x[0])
+    g["cal"] = cal[:30]
+    g["cal_auto"] = {"asof": TODAY, "n": len(auto)}
+    g["cal_auto_items"] = auto
+
+
+def ordinal_en(n):
+    return "%d%s" % (n, "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th"))
+
+
+GEO_CAL_CANAL = [("election", "politique, devise"), ("élection", "politique, devise"), ("g20", "commerce, dollar"), ("g7", "commerce, dollar"),
+                 ("nato", "défense, Europe"), ("otan", "défense, Europe"), ("climate", "énergie"), ("climat", "énergie"), ("cop", "énergie"),
+                 ("brics", "dédollarisation, or"), ("apec", "commerce, Chine"), ("congress", "Chine"), ("congrès", "Chine"), ("opec", "énergie"), ("opep", "énergie")]
+
+
+def geo_cal_auto():
+    """Dates futures trouvées seules : Wikidata (une fois par jour) et presse (réunions de l'OPEP+)."""
+    prev = (PREVIOUS.get("geo") or {}).get("cal_auto_items")
+    prev_d = ((PREVIOUS.get("geo") or {}).get("cal_auto") or {}).get("asof")
+    if prev is not None and prev_d == TODAY:
+        return prev
+    out, n_ok = [], 0
+    hd = {"User-Agent": "macro-forex-robot/1.0 (https://github.com/philippembulu1-dot/macro-forex)"}
+    y0 = NOW.year
+    terms = []
+    for Y in (y0, y0 + 1):
+        terms += ["%d G20 summit" % Y, "%s G7 summit" % ordinal_en(Y - 1974), "%d NATO summit" % Y, "%d United Nations Climate Change Conference" % Y,
+                  "APEC %d" % Y, "%s BRICS summit" % ordinal_en(Y - 2008), "%d French presidential election" % Y, "%d German federal election" % Y,
+                  "%d United Kingdom general election" % Y, "%d Japanese general election" % Y, "%d Brazilian general election" % Y,
+                  "%d Taiwanese presidential election" % Y, "%d Israeli legislative election" % Y, "%d Indian general election" % Y,
+                  "%d Russian presidential election" % Y, "%d United States elections" % Y]
+    terms.append("%s National Congress of the Chinese Communist Party" % ordinal_en(21 + (y0 + 1 - 2027) // 5))
+    for term in terms:
+        try:
+            j = json.loads(http("wd_s.json", "https://www.wikidata.org/w/api.php?" + urllib.parse.urlencode({"action": "wbsearchentities", "search": term, "language": "en", "format": "json", "limit": 2}), headers=hd, tries=1, timeout=20))
+            n_ok += 1
+            for x in (j.get("search") or [])[:1]:
+                e = json.loads(http("wd_e.json", "https://www.wikidata.org/wiki/Special:EntityData/%s.json" % x["id"], headers=hd, tries=1, timeout=20))["entities"][x["id"]]
+                cl = e.get("claims") or {}
+
+                def day(pid):
+                    for c in cl.get(pid, []):
+                        dv = ((c.get("mainsnak") or {}).get("datavalue") or {}).get("value") or {}
+                        t = dv.get("time") or ""
+                        if dv.get("precision", 0) >= 11 and re.match(r"\+\d{4}-\d\d-\d\d", t) and "-00" not in t[:11]:
+                            return t[1:11]
+                    return None
+                d1 = day("P585") or day("P580")
+                d2 = day("P582") or d1
+                if not d1 or d1 < TODAY or d1 > (NOW + timedelta(days=450)).strftime("%Y-%m-%d"):
+                    continue
+                lab = ((e.get("labels") or {}).get("fr") or {}).get("value") or ((e.get("labels") or {}).get("en") or {}).get("value") or x.get("label") or term
+                low = (lab + " " + term).lower()
+                canal = next((c for k, c in GEO_CAL_CANAL if k in low), "géopolitique")
+                out.append([d1, d2, lab[:110], canal, "https://www.wikidata.org/wiki/" + x["id"], "Wikidata (automatique)"])
+            time.sleep(1.2)
+        except Exception as e:
+            DIAG.setdefault("cal_auto_err", []).append("%s : %s" % (term, fr_err(e)[:50]))
+            time.sleep(3)
+    # Réunions de l'OPEP+ annoncées dans la presse (« next meeting on November 30 »…)
+    MOIS = {m: i + 1 for i, m in enumerate(["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"])}
+    try:
+        it = parse_feed(http("opec_news.xml", "https://news.google.com/rss/search?q=%s&hl=en-US&gl=US&ceid=US:en" % urllib.parse.quote('"OPEC+" meeting when:21d'), timeout=25))
+        n_ok += 1
+        for x in it:
+            m = re.search(r"(?:meet|meeting|talks)\D{0,30}?\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})\b", x["t"].lower())
+            if not m:
+                continue
+            mo, dd = MOIS[m.group(1)], int(m.group(2))
+            yy = y0 if mo >= NOW.month else y0 + 1
+            try:
+                dt = date(yy, mo, dd).strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+            if dt >= TODAY and not any(o[0] == dt and "OPEP" in o[2] for o in out):
+                out.append([dt, dt, "Réunion de l'OPEP+ (annoncée dans la presse)", "énergie", x["l"], "presse (automatique)"])
+    except Exception as e:
+        DIAG["cal_opec"] = fr_err(e)
+    DIAG["cal_auto"] = {"requetes_ok": n_ok, "dates_trouvees": len(out)}
+    note("geo.cal", "Calendrier géopolitique : dates trouvées automatiquement (Wikidata, presse)", "daily", n_ok > 0, TODAY if n_ok else None, err=None if n_ok else "aucune réponse", url="https://www.wikidata.org/")
+    return out
 
 
 def geo_note(data):

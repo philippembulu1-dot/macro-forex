@@ -312,6 +312,7 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .mapwrap path { stroke: #060607; stroke-width: .5; cursor: pointer; }
 .mapwrap path:hover, .mapwrap path.on { stroke: var(--amber); stroke-width: 1.4; }
 .mapouter { position: relative; }
+.caltabs .btn.on { background: var(--amber); color: #000; border-color: var(--amber); }
 .mappop { position: absolute; z-index: 30; max-height: 74%; overflow-y: auto; background: #0e0e11; border: 1px solid var(--amber); box-shadow: 0 10px 34px rgba(0,0,0,.65); padding: 12px 14px 10px; font-size: 12px; animation: popin .14s ease-out; }
 .mappop.sheet { position: relative; left: auto !important; top: auto !important; width: auto !important; max-height: 70vh; margin: 6px 8px 0; }
 @keyframes popin { from { opacity: 0; transform: translateY(4px) scale(.98); } to { opacity: 1; transform: none; } }
@@ -762,6 +763,13 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
 
     <section class="panel" id="calendrier">
       <div class="ph"><h2>Calendrier économique</h2><span class="meta" id="calMeta">robot</span></div>
+      <div class="toolbar caltabs" id="calTabs">
+        <button type="button" class="btn" data-calv="pro">Pro en direct (Myfxbook)</button>
+        <button type="button" class="btn" data-calv="term">Terminal : analyse et chiffres officiels</button>
+        <button type="button" class="btn" data-calv="inv">Investing.com</button>
+      </div>
+      <div id="calPro" hidden></div>
+      <div id="calTerm">
       <div class="toolbar" id="calTools">
         <label class="chk" for="calImp">Impact <select id="calImp"><option value="High">Fort</option><option value="Medium" selected>Moyen et +</option><option value="all">Tous</option></select></label>
         <label class="chk" for="calType">Type <select id="calType"></select></label>
@@ -771,8 +779,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       </div>
       <div class="tbl"><table id="calTbl"></table></div>
       <div id="calSurp"></div>
-      <div class="toolbar"><button type="button" class="btn" id="calTV">Afficher aussi le calendrier TradingView</button></div>
-      <div id="calTVBox"></div>
+      <div class="toolbar" hidden><button type="button" class="btn" id="calTV">Afficher aussi le calendrier TradingView</button></div>
+      <div id="calTVBox" hidden></div>
+      </div>
       <p class="note">Source : export hebdomadaire gratuit de Forex Factory (semaine en cours et suivante), relevé par le robot. Heures affichées dans le fuseau de votre appareil. Prévision = consensus des économistes publié par Forex Factory. Cet export gratuit ne contient pas les chiffres réellement publiés : le robot ajoute le chiffre officiel (marqué « off. ») pour l'inflation, l'emploi et le chômage américains et l'inflation britannique, canadienne et de la zone euro ; pour le reste, consultez Forex Factory juste après l'annonce. Titres traduits automatiquement (titre original au survol).</p>
     </section>
 
@@ -2786,7 +2795,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     $("geoReact").innerHTML = R ? rr(R.d1, "Dernière séance") + rr(R.d5, "5 dernières séances") + '<p class="hint">R1 refuge classique · R2 défiance envers les actifs US · R3 liquidation ou Fed ferme · R4 refuge avec choc d\'inflation. Cours de clôture Yahoo du ' + shortD(R.asof) + ".</p>" : '<p class="hint">En attente du robot.</p>';
     /* Calendrier */
     var cal = (G.cal || []).filter(function (x) { return x[1] >= new Date().toISOString().slice(0, 10); });
-    $("geoCal").innerHTML = cal.length ? '<thead><tr><th>Date</th><th>Événement</th><th>Canal</th></tr></thead><tbody>' + cal.map(function (x) { var dd = Math.ceil((Date.parse(x[0] + "T00:00:00Z") - Date.now()) / 864e5); return "<tr><td>" + shortD(x[0]) + (x[1] !== x[0] ? " → " + shortD(x[1]) : "") + ' <small class="hint">' + (dd > 0 ? "J−" + dd : "en cours") + '</small></td><td><a href="' + esc(x[4]) + '" target="_blank" rel="noopener">' + esc(x[2]) + "</a></td><td>" + esc(x[3]) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">Aucun événement à venir enregistré.</td></tr></tbody>';
+    $("geoCal").innerHTML = cal.length ? '<thead><tr><th>Date</th><th>Événement</th><th>Canal</th></tr></thead><tbody>' + cal.map(function (x) { var dd = Math.ceil((Date.parse(x[0] + "T00:00:00Z") - Date.now()) / 864e5); return "<tr><td>" + shortD(x[0]) + (x[1] !== x[0] ? " → " + shortD(x[1]) : "") + ' <small class="hint">' + (dd > 0 ? "J−" + dd : "en cours") + '</small></td><td><a href="' + esc(x[4]) + '" target="_blank" rel="noopener">' + esc(x[2]) + "</a>" + (x[5] && x[5] !== "vérifié" ? ' <small class="hint">· ' + esc(x[5]) + "</small>" : "") + "</td><td>" + esc(x[3]) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">Aucun événement à venir enregistré.</td></tr></tbody>';
     /* Énergie et défense */
     var order = ["BZ=F", "CL=F", "TTF=F", "ITA", "LMT", "RHM.DE", "BA.L", "^GSPC"], grpL = { energie: "Énergie", defense: "Défense" };
     var rows = order.filter(function (s) { return mk[s]; });
@@ -2891,6 +2900,27 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       var lv = e.target.closest("[data-live]"); if (lv) { var q = lv.getAttribute("data-live").split(","); popClose(); vesselMap($("mapLive"), +q[0], +q[1], +q[2], lv.getAttribute("data-name")); }
     });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") popClose(); });
+  }
+
+  /* ---------- Calendrier économique : vues pro (Myfxbook, Investing.com) et terminal ---------- */
+  var CALV = { pro: { src: "https://widgets.myfxbook.com/widgets/calendar.html?lang=fr&impacts=0,1,2,3&symbols=AUD,CAD,CHF,CNY,EUR,GBP,JPY,NZD,USD", t: "Myfxbook", note: "Calendrier Myfxbook en direct : impact (faible, moyen, fort), chiffres réel, prévu et précédent mis à jour à la seconde de la publication, compte à rebours, filtres par devise et par impact, heures dans le fuseau de ton appareil. Vérifié depuis nos serveurs le 31 oct. 2026." },
+    inv: { src: "https://sslecal2.investing.com/?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone,timeselector,filters&countries=5,72,4,35,12,6,25,43,37&calType=week&lang=5", t: "Investing.com", note: "Calendrier Investing.com : filtres par pays et importance, sélecteur de date et de fuseau horaire (choisis GMT+1 pour Kinshasa). Ce widget refuse nos serveurs de test : nous n'avons pas pu vérifier son affichage. S'il reste vide chez toi, utilise la vue Myfxbook." } };
+  function showCalView(v) {
+    if (!CALV[v] && v !== "term") v = "pro";
+    try { localStorage.setItem("mf_calv", v); } catch (e) { }
+    Array.prototype.forEach.call(document.querySelectorAll("#calTabs [data-calv]"), function (b) { b.classList.toggle("on", b.getAttribute("data-calv") === v); });
+    $("calTerm").hidden = v !== "term"; $("calPro").hidden = v === "term";
+    if (v === "term") return;
+    var c = CALV[v], box = $("calPro");
+    if (box.getAttribute("data-v") === v) return;
+    box.setAttribute("data-v", v);
+    box.innerHTML = '<iframe title="Calendrier économique ' + c.t + '" src="' + c.src + '" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:' + (window.innerWidth < 760 ? 620 : 780) + 'px;border:0;display:block;background:#fff"></iframe><p class="note">' + esc(c.note) + ' Le calendrier « Terminal » garde l\'analyse de chaque publication, les seuils de surprise et la mémoire des réactions, utilisés par « Ce matin ».</p>';
+  }
+  function initCalViews() {
+    var t = $("calTabs"); if (!t) return;
+    t.addEventListener("click", function (e) { var b = e.target.closest("[data-calv]"); if (b) showCalView(b.getAttribute("data-calv")); });
+    var v = "pro"; try { v = localStorage.getItem("mf_calv") || "pro"; } catch (e) { }
+    showCalView(v);
   }
   /* ---------- Consensus des banques (recherche du 30 oct. 2026, à vérifier) ---------- */
   var CONS = [
@@ -4687,7 +4717,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
   buildBranches(); tagNature(); initMotion();
-  initCmd(); initCal(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
+  initCmd(); initCal(); initCalViews(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
   initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });
