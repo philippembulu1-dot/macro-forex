@@ -816,6 +816,36 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <p class="note">Réserves officielles en milliards de dollars (dernière année publiée par la Banque mondiale). Or = réserves totales − réserves hors or, valorisé au prix du marché : sa part monte quand les banques centrales achètent de l'or ou quand son prix grimpe. Données annuelles. Voir aussi la carte du monde, modes « Réserves ».</p>
     </section>
 
+    <section class="panel" id="dotplot">
+      <div class="ph"><h2>Dot plot de la Fed</h2><span class="meta" id="dpMeta">robot · Fed</span></div>
+      <div class="pgrid">
+        <div class="pcard"><h3>Où chaque membre de la Fed voit le taux</h3><div class="m" id="dpSub"></div><svg id="dpSvg" class="chart" viewBox="0 0 440 260" role="img" aria-label="Dot plot de la Fed"></svg><div class="lg"><span><i style="background:#ece8dc"></i>un point = un membre</span><span><i style="background:#f2b01e"></i>médiane de la Fed</span><span><i style="background:#c77dff"></i>médiane du marché (Kalshi)</span></div></div>
+        <div class="pcard"><h3>Projections économiques de la Fed (médianes)</h3><div class="tbl"><table id="sepTbl"></table></div><p class="hint" id="dpTxt"></p></div>
+      </div>
+      <p class="note">Quatre fois par an, chaque membre du comité de la Fed indique où il voit le taux directeur en fin d'année. Lu automatiquement par le robot sur la page officielle de la Fed (entre parenthèses : la projection précédente). En violet : ce que le marché anticipe pour la dernière réunion de chaque année (Kalshi), pour comparer.</p>
+    </section>
+
+    <section class="panel" id="bceproj">
+      <div class="ph"><h2>Projections de la zone euro (BCE)</h2><span class="meta" id="bpMeta">saisie sourcée</span></div>
+      <div id="bpWarn"></div>
+      <div class="pgrid">
+        <div class="pcard"><h3>Scénario central de la BCE</h3><div class="tbl"><table id="bpTbl"></table></div></div>
+        <div class="pcard"><h3>Comparaison États-Unis / zone euro</h3><div class="tbl"><table id="bpCmp"></table></div><p class="hint" id="bpTxt"></p></div>
+        <div class="pcard"><h3>Scénarios de risque de la BCE (conflit au Moyen-Orient)</h3><div class="tbl"><table id="bpScn"></table></div></div>
+      </div>
+      <p class="note">Projections des services de la BCE publiées le 10 septembre 2026 (en % ; chômage en % de la population active). Chiffres repris d'un résumé de presse qui concorde avec la page officielle de la BCE : à vérifier sur le lien. Le robot surveille la page de la BCE et signale ici toute nouvelle publication (prochaine attendue en décembre).</p>
+    </section>
+
+    <section class="panel" id="cycle">
+      <div class="ph"><h2>Cycle économique américain : où en sommes-nous ?</h2><span class="meta" id="cyMeta">calcul maison · BLS</span></div>
+      <div class="pgrid">
+        <div class="pcard"><h3>Horloge du cycle</h3><svg id="cyClock" class="chart" style="max-width:360px;display:block;margin:0 auto" viewBox="0 0 320 320" role="img" aria-label="Horloge du cycle économique"></svg></div>
+        <div class="pcard"><h3>Diagnostic</h3><div id="cyDiag"></div></div>
+      </div>
+      <div class="tbl"><table id="cyTbl"></table></div>
+      <p class="note">Méthode transparente : croissance = créations d'emplois (moyenne 3 mois contre 12 mois) et tendance du chômage ; inflation = inflation sous-jacente actuelle contre il y a 6 mois. Règle de Sahm : signal de récession quand le chômage moyen sur 3 mois dépasse de 0,5 point son plus bas des 12 mois précédents. Inspiré de « l'horloge d'investissement » utilisée par les gérants. Repère éducatif, pas une prévision.</p>
+    </section>
+
     <section class="panel" id="marches">
       <div class="ph"><h2>Marchés en direct</h2><span class="meta">TradingView · peur et avidité</span></div>
       <div class="fgwrap"><svg id="fgSvg" viewBox="0 0 200 128" role="img" aria-label="Indice Fear and Greed"></svg><div id="fgInfo"></div></div>
@@ -1877,6 +1907,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
      saisie datée et sourcée, marquée « à vérifier ».
      ===================================================================== */
   var CMDS = [
+    ["DOTS", "Dot plot de la Fed", "dotplot"], ["BCEP", "Projections BCE zone euro", "bceproj"], ["CYC", "Cycle économique", "cycle"],
     ["OR", "Or XAU/USD", "or"], ["GOLD", "Tableau de bord or (6 piliers)", "scorecard"], ["FX", "Paires", "paires"], ["FORCE", "Force des devises", "force"],
     ["CB", "Banques centrales", "banques"], ["ECO", "Indicateurs macro", "indicateurs"], ["CAL", "Calendrier économique", "calendrier"],
     ["AG", "Prochaines réunions", "agenda"], ["DESK", "Indicateurs des desks", "desk"], ["TX", "Taux, VIX, dollar", "taux"], ["DIFF", "Écarts de taux", "ecarts"],
@@ -2097,7 +2128,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (dk !== day) { day = dk; h += '<tr class="grp"><td colspan="' + ncol + '" style="background:var(--panel2);color:var(--amber);font:600 11px var(--font-mono)">' + dk + "</td></tr>"; }
       var a = numOf(e.a), f = numOf(e.f), sc = a !== null && f !== null && a !== f ? (a > f ? "up" : "down") : "";
       var dec = function (s) { return esc(String(s || "").replace(/(\d)\.(\d)/g, "$1,$2")); };
-      return h + '<tr class="calrow' + (Date.parse(e.d) < now ? " past" : "") + '"><td class="num">' + (isNaN(t) ? "–" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })) + '</td><td><span class="imp ' + esc(e.i) + '" title="Impact ' + esc(e.i) + '"></span>' + esc(e.c) + "</td><td style=\"white-space:normal\" title=\"" + esc(e.t) + "\">" + esc(frEvent(e.t).t) + (hasA ? '</td><td class="r num ' + sc + '">' + dec(e.a) : "") + '</td><td class="r num">' + dec(e.f) + '</td><td class="r num col-core">' + dec(e.p) + "</td></tr>";
+      return h + '<tr data-det="ev:' + c.events.indexOf(e) + '" class="calrow' + (Date.parse(e.d) < now ? " past" : "") + '"><td class="num">' + (isNaN(t) ? "–" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })) + '</td><td><span class="imp ' + esc(e.i) + '" title="Impact ' + esc(e.i) + '"></span>' + esc(e.c) + "</td><td style=\"white-space:normal\" title=\"" + esc(e.t) + "\">" + esc(frEvent(e.t).t) + (hasA ? '</td><td class="r num ' + sc + '">' + dec(e.a) : "") + '</td><td class="r num">' + dec(e.f) + '</td><td class="r num col-core">' + dec(e.p) + "</td></tr>";
     }).join("") : '<tr><td colspan="' + ncol + '">Aucun événement avec ces filtres.</td></tr>') + "</tbody>";
     var fa = ageDays(c.fetched.slice(0, 10)), st = fa <= 1 ? "ok" : fa <= 8 ? "old" : "ko";
     $("calMeta").innerHTML = "relevé " + shortD(c.fetched.slice(0, 10)) + " " + badge(st);
@@ -2543,9 +2574,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   var BR = [
     { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, saisonnalité 20 ans", p: ["or", "orvol", "scorecard", "saison"] },
     { id: "devises", t: "Devises", ic: "⇄", d: "Paires, graphique, force des devises, appétit pour le risque, corrélations", p: ["selPanel", "paires", "force", "~duo", "heat", "correl", "vola"] },
-    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts de taux", p: ["pricing", "taylor", "ecarts", "taux", "desk"] },
+    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, dot plot, courbes US et zone euro, écarts de taux", p: ["pricing", "dotplot", "taylor", "ecarts", "taux", "desk"] },
     { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités, réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"] },
-    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier filtrable, publications de la semaine, indicateurs", p: ["calendrier", "surprises", "semaine", "indicateurs", "lecture"] },
+    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Cycle économique, calendrier avec analyse de chaque publication, projections BCE, de la semaine, indicateurs", p: ["cycle", "calendrier", "surprises", "bceproj", "semaine", "indicateurs", "lecture"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Notes et articles sur le dollar, l'euro et les taux, consensus, vidéos", p: ["analyses", "consensus", "videos"] },
     { id: "monde", t: "Monde & maritime", ic: "◍", d: "Carte macro des pays, détroits, navires en temps réel", p: ["monde", "maritime", "reserves"] },
     { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, peur et avidité, sessions", p: ["marches", "sessions"] },
@@ -2553,7 +2584,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, pivots, convertisseur, checklist, notes", p: ["calc", "outils", "check", "conseils", "notes", "liens"] },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source et liens", p: ["robot"] }
   ];
-  var WIDE = { orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   function buildBranches() {
     var main = document.querySelector(".main"), anchor = document.querySelector(".main > .grid"); /* après le bandeau et sa note */
@@ -2748,7 +2779,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* ---------- Recherche globale ---------- */
   var CUR_AL = { USD: "dollar américain états-unis usa us fed", EUR: "euro zone euro eurozone bce europe", GBP: "livre sterling royaume-uni angleterre boe", JPY: "yen japon boj", CHF: "franc suisse suisse bns",
     AUD: "dollar australien australie rba", CAD: "dollar canadien canada boc", NZD: "dollar néo-zélandais nouvelle-zélande rbnz" };
-  var KW = { orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
+  var KW = { dotplot: "dot plot fed projections sep membres fomc taux médiane", bceproj: "bce projections zone euro europe croissance inflation scénarios ecb", cycle: "cycle économique récession sahm horloge expansion ralentissement stagflation reprise", orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
     ecarts: "écart différentiel taux carry", taux: "rendement 10 ans vix dollar treasury", desk: "breakeven inflation anticipée gvz conditions financières", banques: "taux directeur décision",
     probas: "probabilité fedwatch kalshi polymarket", agenda: "réunion prochaine décision", comite: "comité hawkish dovish", actus: "communiqué actualité news", calendrier: "calendrier cpi nfp pib pmi publication",
     indicateurs: "inflation chômage pib salaires pmi indicateurs", analyses: "analyse banque note article ing goldman", consensus: "consensus prévision banques", videos: "vidéo youtube",
@@ -2887,6 +2918,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         now: "Lecture : <b>" + rd[0] + "</b>." + (px && rr.alp ? (px < rr.alp ? " Les acheteurs sont en moyenne <b>en perte</b> : leurs stops peuvent accélérer une baisse." : " Les acheteurs sont en moyenne <b>en gain</b>.") : "") + (px && rr.asp ? (px > rr.asp ? " Les vendeurs sont en moyenne <b>en perte</b> : un rachat forcé peut accélérer une hausse." : " Les vendeurs sont en moyenne <b>en gain</b>.") : ""),
         what: "Part des comptes de particuliers (reliés à Myfxbook) qui sont acheteurs ou vendeurs sur cette paire.", how: "Les particuliers ont souvent tort aux extrêmes : au-delà de 70 % d'un côté, le marché a tendance à aller dans l'autre sens. À combiner avec la tendance et le COT des fonds.", src: "https://www.myfxbook.com/community/outlook", srcTxt: "API officielle, compte gratuit" });
     }
+    if (type === "ev") { var ev_ = AUTO && AUTO.calendar && AUTO.calendar.events[+id]; if (ev_) evAnalysis(ev_); return; }
     if (type === "ind") {
       var row = IND[+id]; if (!row || row.g) return;
       var how = (HOW.filter(function (x) { return row.l.toLowerCase().indexOf(x[0].toLowerCase().split(" ")[0]) >= 0; })[0] || ["", ""])[1];
@@ -3031,6 +3063,174 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     Object.keys(R).forEach(function (k) { var o = resOf(R[k]); if (!o) return; W[k] = W[k] || {}; W[k].res = [o.tot, String(o.y)]; if (o.gp !== null) W[k].resg = [o.gp, String(o.y)]; });
   }
 
+
+  /* =====================================================================
+     DOT PLOT, PROJECTIONS BCE, CYCLE ÉCONOMIQUE, ANALYSE DES PUBLICATIONS (31 oct. 2026)
+     ===================================================================== */
+  function renderDotPlot() {
+    var f = AUTO && AUTO.projections && AUTO.projections.fed; if (!$("dpSvg")) return;
+    if (!f || !f.dots) { $("dpSvg").innerHTML = ""; $("dpSub").textContent = "Pas encore lu par le robot."; return; }
+    var yrs = f.dots.years, lv = f.dots.levels.filter(function (r) { return r.slice(1).some(function (n) { return n > 0; }); });
+    var vals = lv.map(function (r) { return r[0]; }), lo = Math.min.apply(null, vals) - 0.25, hi = Math.max.apply(null, vals) + 0.25;
+    var W = 440, H = 260, L = 42, R = 10, T = 12, B = 26, cw = (W - L - R) / yrs.length;
+    var sy = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); }, h = "";
+    for (var g = Math.ceil(lo * 4) / 4; g <= hi; g += 0.25) { var y = sy(g); h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#1c1a12"/>' + (Math.abs(g * 2 - Math.round(g * 2)) < 1e-6 ? '<text x="' + (L - 4) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end">' + fmt(g, 2) + "</text>" : ""); }
+    yrs.forEach(function (yr, i) {
+      var cx = L + cw * (i + 0.5);
+      h += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + (yr === "Longer run" ? "Long terme" : yr) + "</text>";
+      lv.forEach(function (r) { var n = r[i + 1]; for (var k = 0; k < n; k++) h += '<circle cx="' + (cx + (k - (n - 1) / 2) * 7).toFixed(1) + '" cy="' + sy(r[0]).toFixed(1) + '" r="3" fill="#ece8dc"><title>' + n + " membre(s) à " + fmt(r[0], 3) + " %</title></circle>"; });
+      var md = f.median.rows.ffr && f.median.rows.ffr.v[i];
+      if (md !== null && md !== undefined) h += '<line x1="' + (cx - cw * 0.42).toFixed(1) + '" x2="' + (cx + cw * 0.42).toFixed(1) + '" y1="' + sy(md).toFixed(1) + '" y2="' + sy(md).toFixed(1) + '" stroke="#f2b01e" stroke-width="2"><title>Médiane ' + fmt(md, 2) + " %</title></line>";
+    });
+    /* Marché : médiane Kalshi de la dernière réunion de chaque année (borne haute − 0,125 = milieu de fourchette) */
+    var fp = typeof fedPath === "function" ? fedPath() : [], mk = {};
+    fp.forEach(function (p) { var yr = "20" + p.label.slice(-2); if (!mk[yr] || p.close > mk[yr].close) mk[yr] = p; });
+    yrs.forEach(function (yr, i) { var p = mk[yr]; if (!p) return; var cx = L + cw * (i + 0.5), y = sy(p.exp - 0.125); h += '<path d="M' + (cx + cw * 0.42 - 6) + " " + y.toFixed(1) + " l6 -6 l6 6 l-6 6 z\" fill=\"#c77dff\"><title>Marché (Kalshi, " + esc(p.label) + ") : " + fmt(p.exp - 0.125, 3) + " %</title></path>"; });
+    $("dpSvg").innerHTML = h;
+    $("dpSub").innerHTML = "projections du " + shortD(f.date) + " " + badge(ageDays(f.date) <= 100 ? "ok" : "old");
+    var M = f.median, lab = { gdp: "Croissance du PIB", unemp: "Chômage", pce: "Inflation PCE", core: "Inflation PCE sous-jacente", ffr: "Taux de la Fed" };
+    $("sepTbl").innerHTML = "<thead><tr><th></th>" + M.years.map(function (y) { return '<th class="r">' + (y === "Longer run" ? "Long terme" : y) + "</th>"; }).join("") + "</tr></thead><tbody>" + ["gdp", "unemp", "pce", "core", "ffr"].map(function (k) {
+      var r = M.rows[k]; if (!r) return "";
+      return "<tr><td><b>" + lab[k] + "</b></td>" + r.v.map(function (v, i) { var p = r.prev && r.prev[i]; return '<td class="r num">' + (v === null ? "–" : fmt(v, 1)) + (p !== null && p !== undefined && v !== null && p !== v ? ' <small class="' + (v > p ? "up" : "down") + '">(' + fmt(p, 1) + ")</small>" : "") + "</td>"; }).join("") + "</tr>";
+    }).join("") + "</tbody>";
+    var cur = fred("DFEDTARU"), mid = cur ? cur.v - 0.125 : null, y0 = M.rows.ffr.v[0], mkt = mk[M.years[0]];
+    $("dpTxt").innerHTML = (mid !== null ? "Taux actuel (milieu de fourchette) : <b>" + fmt(mid, 3) + " %</b>. " : "") + "La Fed voit <b>" + fmt(y0, 2) + " %</b> fin " + M.years[0] + (mid !== null ? (y0 > mid + 0.1 ? ", soit encore environ " + Math.round((y0 - mid) / 0.25) + " hausse(s) de 0,25 pt" : y0 < mid - 0.1 ? ", soit environ " + Math.round((mid - y0) / 0.25) + " baisse(s)" : ", soit un statu quo") : "") + "." + (mkt ? " Le marché anticipe <b>" + fmt(mkt.exp - 0.125, 3) + " %</b> : " + (Math.abs(mkt.exp - 0.125 - y0) < 0.1 ? "en ligne avec la Fed." : mkt.exp - 0.125 > y0 ? "plus ferme que la Fed." : "plus accommodant que la Fed : un écart que la Fed peut corriger par son discours.") : "");
+    $("dpMeta").innerHTML = '<a href="' + esc(f.url) + '" target="_blank" rel="noopener">Fed</a> · ' + shortD(f.date);
+  }
+
+  /* Projections BCE : saisie sourcée (10 sept. 2026) */
+  var BCE_P = { date: "2026-09-10", ym: "2026-09", press: "https://lovguiden.dk/en/det-offentlige/den-europaeiske-centralbank/2026-09-11-ecb-projektering-eurozonen-vokser-09-pct-med-3-pct-inflation-i-2026",
+    official: "https://www.ecb.europa.eu/press/projections/html/index.en.html", years: [2025, 2026, 2027, 2028],
+    rows: [["Croissance du PIB", [1.3, 0.9, 1.4, 1.5]], ["Inflation (IPCH)", [2.1, 3.0, 2.5, 2.1]], ["Inflation hors énergie", [2.5, 2.3, 2.6, 2.3]],
+      ["Inflation de l'énergie", [-1.4, 9.3, 1.0, -0.6]], ["Inflation alimentaire", [2.8, 1.9, 2.8, 2.5]], ["Chômage", [6.3, 6.2, 6.1, 5.9]], ["Hypothèse : pétrole ($/baril)", [69.1, 89.5, 78.0, 73.6]], ["Hypothèse : EUR/USD", [1.13, 1.16, 1.16, 1.16]],
+      ["Hypothèse : taux à 3 mois", [2.2, 2.4, 3.0, 3.0]], ["Hypothèse : taux à 10 ans", [3.1, 3.5, 3.8, 4.0]]],
+    scen: [["Central", [3.0, 2.5, 2.1], [0.9, 1.4, 1.5]], ["Plus favorable", [2.9, 1.9, 1.8], [0.9, 1.5, 1.6]], ["Défavorable", [3.1, 3.2, 2.3], [0.9, 1.1, 1.4]], ["Sévère", [3.3, 5.4, 3.2], [0.8, 0.4, 1.4]], ["Sévère + pénurie de kérosène", [3.4, 5.6, 3.4], [0.8, 0.3, 1.4]]] };
+  function renderBceProj() {
+    if (!$("bpTbl")) return;
+    var P = BCE_P, f = AUTO && AUTO.projections && AUTO.projections.fed, ecb = AUTO && AUTO.projections && AUTO.projections.ecb, off = ecb && ecb.url ? ecb.url : P.official;
+    $("bpTbl").innerHTML = "<thead><tr><th></th>" + P.years.map(function (y) { return '<th class="r">' + y + "</th>"; }).join("") + "</tr></thead><tbody>" + P.rows.map(function (r) { return "<tr><td>" + r[0] + "</td>" + r[1].map(function (v) { return '<td class="r num">' + (v === null ? "–" : fmt(v, r[0].indexOf("EUR/USD") >= 0 ? 2 : 1)) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody>";
+    $("bpScn").innerHTML = '<thead><tr><th>Scénario</th><th class="r">Inflation 2026</th><th class="r">2027</th><th class="r">2028</th><th class="r">PIB 2026</th><th class="r">2027</th><th class="r">2028</th></tr></thead><tbody>' + P.scen.map(function (s) { return "<tr><td><b>" + s[0] + "</b></td>" + s[1].concat(s[2]).map(function (v) { return '<td class="r num">' + fmt(v, 1) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody>";
+    var getF = function (k, y) { if (!f) return null; var i = f.median.years.indexOf(String(y)); return i >= 0 && f.median.rows[k] ? f.median.rows[k].v[i] : null; };
+    var ez = function (lab, y) { var r = P.rows.filter(function (x) { return x[0] === lab; })[0]; return r ? r[1][P.years.indexOf(y)] : null; };
+    var c = function (v) { return v === null || v === undefined ? "–" : fmt(v, 1); };
+    $("bpCmp").innerHTML = '<thead><tr><th></th><th class="r">2026 US</th><th class="r">2026 €</th><th class="r">2027 US</th><th class="r">2027 €</th><th class="r">2028 US</th><th class="r">2028 €</th></tr></thead><tbody>' +
+      [["Croissance", "gdp", "Croissance du PIB"], ["Inflation*", "pce", "Inflation (IPCH)"], ["Chômage", "unemp", "Chômage"]].map(function (r) { return "<tr><td>" + r[0] + "</td>" + [2026, 2027, 2028].map(function (y) { return '<td class="r num">' + c(getF(r[1], y)) + '</td><td class="r num">' + c(ez(r[2], y)) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody>";
+    var gU = getF("gdp", 2027), gE = ez("Croissance du PIB", 2027);
+    $("bpTxt").innerHTML = "* PCE pour les États-Unis, IPCH pour la zone euro (mesures proches mais différentes). " + (gU !== null ? "En 2027, la Fed voit une croissance de " + fmt(gU, 1) + " % contre " + fmt(gE, 1) + " % pour la BCE : un écart de croissance en faveur des États-Unis soutient en général le dollar face à l'euro, sauf si l'écart de taux se réduit." : "");
+    var newer = ecb && ecb.latest && ecb.latest > P.ym;
+    $("bpWarn").innerHTML = newer ? '<p class="warn">Nouvelles projections de la BCE publiées (' + esc(ecb.latest) + ') : les chiffres ci-dessous datent de ' + P.ym + '. <a href="' + esc(off) + '" target="_blank" rel="noopener">Voir la publication</a>.</p>' : "";
+    $("bpMeta").innerHTML = "10 sept. 2026 " + (newer ? badge("old", "à mettre à jour") : badge("ok", "dernière publication")) + ' <span class="pill warn">à vérifier</span> · <a href="' + esc(off) + '" target="_blank" rel="noopener">BCE</a> · <a href="' + P.press + '" target="_blank" rel="noopener">résumé</a>';
+  }
+
+  /* Cycle économique américain */
+  function cycleCalc() {
+    var c = AUTO && AUTO.cycle_src; if (!c || !c.nfp || c.nfp.length < 16 || !c.unemp || c.unemp.length < 18) return null;
+    var nfpCh = []; for (var i = 1; i < c.nfp.length; i++) nfpCh.push([c.nfp[i][0], c.nfp[i][1] - c.nfp[i - 1][1]]);
+    var last = function (a, n) { return a.slice(-n).map(function (p) { return p[1]; }); };
+    var a3 = mean(last(nfpCh, 3)), a12 = mean(last(nfpCh, 12));
+    var u = c.unemp.map(function (p) { return p[1]; }), u3 = function (end) { return mean(u.slice(end - 3, end)); }, n = u.length;
+    var u3now = u3(n), mins = []; for (var k = n - 15; k <= n - 3; k++) if (k >= 3) mins.push(u3(k));
+    var sahm = u3now - Math.min.apply(null, mins), u3_6 = u3(n - 6);
+    var yoy = function (s) { var out = []; for (var j = 12; j < s.length; j++) out.push([s[j][0], (s[j][1] / s[j - 12][1] - 1) * 100]); return out; };
+    var core = yoy(c.core || []), head = yoy(c.cpi || []);
+    if (core.length < 7) return null;
+    var cNow = core[core.length - 1][1], c6 = core[core.length - 7][1];
+    var clamp = function (x) { return Math.max(-1, Math.min(1, x)); };
+    var g = clamp((a3 - a12) / 100) * 0.6 + clamp(-(u3now - u3_6) / 0.5) * 0.4, inf = clamp((cNow - c6) / 0.5);
+    return { a3: a3, a12: a12, u3: u3now, u3_6: u3_6, sahm: sahm, cNow: cNow, c6: c6, hNow: head.length ? head[head.length - 1][1] : null, g: g, i: inf, asof: c.nfp[c.nfp.length - 1][0], nfpCh: nfpCh, core: core };
+  }
+  var QUAD = {
+    rep: ["Reprise", "croissance qui accélère, inflation qui ralentit", "Phase souvent favorable aux actions ; banques centrales encore souples ; dollar mitigé ; or neutre."],
+    sur: ["Expansion / surchauffe", "croissance et inflation qui accélèrent", "Banques centrales qui durcissent (taux en hausse) ; dollar soutenu si la Fed est plus ferme que les autres ; matières premières fortes ; l'or résiste si l'inflation inquiète."],
+    sta: ["Ralentissement avec inflation (stagflation)", "croissance qui ralentit, inflation qui accélère", "Phase la plus difficile : actions sous pression ; or souvent recherché comme refuge ; banques centrales coincées entre inflation et croissance."],
+    rec: ["Désinflation / ralentissement", "croissance et inflation qui ralentissent", "Baisses de taux attendues : obligations en hausse (taux en baisse) ; or soutenu par la baisse des taux réels ; yen et franc suisse recherchés ; dollar souvent en baisse si la Fed coupe plus que les autres."] };
+  function renderCycle() {
+    if (!$("cyClock")) return;
+    var x = cycleCalc();
+    if (!x) { $("cyDiag").innerHTML = '<p class="hint">Historique officiel pas encore disponible (robot).</p>'; $("cyClock").innerHTML = ""; return; }
+    var q = x.g >= 0 ? (x.i < 0 ? "rep" : "sur") : (x.i >= 0 ? "sta" : "rec"), Q = QUAD[q];
+    var S = 320, c = S / 2, r = 130, px = c + x.i * r * 0.9, py = c - x.g * r * 0.9, h = "";
+    [["rep", -1, -1], ["sur", 1, -1], ["sta", 1, 1], ["rec", -1, 1]].forEach(function (z) {
+      var on = z[0] === q;
+      h += '<rect x="' + (z[1] < 0 ? c - r : c) + '" y="' + (z[2] < 0 ? c - r : c) + '" width="' + r + '" height="' + r + '" fill="' + (on ? "rgba(242,176,30,.16)" : "transparent") + '" stroke="#2a2618"/>';
+      h += '<text x="' + (c + z[1] * r / 2) + '" y="' + (c + z[2] * r / 2 + 4) + '" text-anchor="middle" style="fill:' + (on ? "#f2b01e" : "#8d8878") + ';font-weight:' + (on ? 600 : 400) + '">' + { rep: "Reprise", sur: "Expansion", sta: "Stagflation", rec: "Désinflation" }[z[0]] + "</text>";
+    });
+    h += '<line x1="' + (c - r) + '" x2="' + (c + r) + '" y1="' + c + '" y2="' + c + '" stroke="#4a4430"/><line y1="' + (c - r) + '" y2="' + (c + r) + '" x1="' + c + '" x2="' + c + '" stroke="#4a4430"/>';
+    h += '<text x="' + c + '" y="' + (c - r - 8) + '" text-anchor="middle">croissance ↑</text><text x="' + c + '" y="' + (c + r + 16) + '" text-anchor="middle">croissance ↓</text><text x="' + (c + r - 4) + '" y="' + (c + 14) + '" text-anchor="end" style="font-size:9px">inflation ↑</text><text x="' + (c - r + 4) + '" y="' + (c + 14) + '" style="font-size:9px">inflation ↓</text>';
+    h += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="8" fill="#f2b01e" stroke="#0d0d0f" stroke-width="2"><title>Position actuelle</title></circle>';
+    $("cyClock").innerHTML = h;
+    var curve = fred("T10Y2Y");
+    $("cyDiag").innerHTML = '<div class="now"><b style="color:var(--amber);font-family:var(--font-mono)">' + Q[0].toUpperCase() + "</b><br>" + Q[1] + ".</div><h3 style=\"margin:12px 0 4px;font:600 11px var(--font-mono);letter-spacing:.12em\">CE QUE ÇA IMPLIQUE D'HABITUDE</h3><p class=\"hint\" style=\"max-width:none\">" + Q[2] + "</p>" +
+      '<p class="hint" style="max-width:none">' + (x.sahm >= 0.5 ? "<b class=\"down\">Règle de Sahm déclenchée (" + fmt(x.sahm, 2) + " pt)</b> : historiquement, un signal de récession." : "Règle de Sahm : " + fmt(x.sahm, 2) + " pt (seuil de récession 0,50) : pas de signal.") + (curve ? " Courbe des taux " + (curve.v < 0 ? "<b>inversée</b>" : "positive") + " (" + fmt(curve.v, 2) + " pt)." : "") + "</p>";
+    var row = function (l, v, t) { return "<tr><td>" + l + '</td><td class="r num">' + v + "</td><td><small>" + t + "</small></td></tr>"; };
+    $("cyTbl").innerHTML = '<thead><tr><th>Indicateur</th><th class="r">Valeur</th><th>Lecture</th></tr></thead><tbody>' +
+      row("Emplois créés, moyenne 3 mois", Math.round(x.a3).toLocaleString("fr-FR") + " k", x.a3 > x.a12 ? "au-dessus de la moyenne 12 mois (" + Math.round(x.a12) + " k) : l'emploi accélère" : "sous la moyenne 12 mois (" + Math.round(x.a12) + " k) : l'emploi ralentit") +
+      row("Chômage, moyenne 3 mois", fmt(x.u3, 2) + " %", x.u3 > x.u3_6 + 0.05 ? "en hausse sur 6 mois (" + fmt(x.u3_6, 2) + " %)" : x.u3 < x.u3_6 - 0.05 ? "en baisse sur 6 mois (" + fmt(x.u3_6, 2) + " %)" : "stable sur 6 mois") +
+      row("Règle de Sahm", fmt(x.sahm, 2) + " pt", x.sahm >= 0.5 ? "signal de récession" : "pas de signal (seuil 0,50)") +
+      row("Inflation sous-jacente (IPC)", fmt(x.cNow, 2) + " %", x.cNow > x.c6 ? "en hausse depuis 6 mois (" + fmt(x.c6, 2) + " %)" : "en baisse depuis 6 mois (" + fmt(x.c6, 2) + " %)") +
+      (x.hNow !== null ? row("Inflation globale (IPC)", fmt(x.hNow, 2) + " %", "y compris énergie et alimentation") : "") +
+      (curve ? row("Pente de la courbe (10 ans − 2 ans)", fmt(curve.v, 2) + " pt", curve.v < 0 ? "inversée : annonce souvent un ralentissement" : "positive") : "") + "</tbody>";
+    $("cyMeta").innerHTML = "données jusqu'à " + MOIS[parseInt(x.asof.slice(5, 7), 10) - 1] + " " + x.asof.slice(0, 4) + " " + badge(ageDays(x.asof) <= 70 ? "ok" : "old");
+  }
+
+  /* Analyse détaillée d'une publication (clic dans le calendrier) */
+  var PB = [
+    [/Core PCE|PCE Price/i, "Inflation PCE", "Mesure d'inflation préférée de la Fed. Regardez la version sous-jacente en variation mensuelle : 0,2 % par mois correspond à environ 2,4 % par an.", 1],
+    [/CPI|HICP|Inflation|Price Index/i, "Inflation", "Regardez d'abord l'inflation sous-jacente (hors énergie et alimentation) et la variation mensuelle, plus parlante que l'annuelle. Aux États-Unis, les desks scrutent les services hors logement (« supercore ») et la part des prix qui accélèrent.", 1],
+    [/Non-Farm|Employment Change|Payroll/i, "Emploi", "Au-delà du chiffre, regardez les révisions des deux mois précédents, le salaire horaire (inflation salariale), le taux de chômage et les heures travaillées. Un bon chiffre avec de fortes révisions à la baisse n'est pas un bon rapport.", 1],
+    [/Unemployment Claims|Jobless/i, "Inscriptions au chômage", "Chiffre hebdomadaire : suivez la moyenne sur 4 semaines. Une hausse durable annonce un marché du travail qui se dégrade.", -1],
+    [/Unemployment Rate/i, "Chômage", "Comparez avec la tendance sur 3 et 12 mois (règle de Sahm : +0,5 point = signal de récession).", -1],
+    [/GDP/i, "Croissance (PIB)", "Regardez la composition : consommation, investissement, stocks et commerce extérieur. Une croissance tirée par les stocks est fragile. Les premières estimations sont souvent révisées.", 1],
+    [/ISM|PMI/i, "Activité (PMI)", "Le seuil de 50 sépare expansion et contraction. Les desks regardent les sous-indices : nouvelles commandes (activité future), prix payés (inflation) et emploi.", 1],
+    [/Retail Sales/i, "Consommation", "Regardez le « groupe de contrôle » (hors autos, essence, matériaux), qui entre dans le PIB. Les chiffres sont volatils : comparez aux deux mois précédents.", 1],
+    [/Rate|Statement|Monetary|Press Conference|Minutes|Policy|FOMC/i, "Banque centrale", "Le niveau du taux est souvent attendu : ce qui fait bouger, c'est le ton (communiqué, votes, conférence de presse) et les projections. Plus ferme que prévu = devise en hausse.", 1],
+    [/Confidence|Sentiment/i, "Confiance", "Regardez surtout les anticipations d'inflation des ménages et la composante « avenir ».", 1],
+    [/Trade Balance|Current Account/i, "Commerce extérieur", "Effet de marché souvent limité, sauf surprise forte ; l'or et le pétrole pèsent sur ces chiffres.", 1]
+  ];
+  function evAnalysis(e) {
+    var pb = PB.filter(function (p) { return p[0].test(e.t); })[0] || [null, "Publication", "Comparez le chiffre publié à la prévision : c'est l'écart (la surprise) qui fait bouger le marché, pas le niveau.", 1];
+    var t = new Date(e.d), past = t.getTime() < Date.now(), fv = numOf(e.f), pv = numOf(e.p), av = numOf(e.a), dir = pb[3];
+    var cur = e.c, isUSD = cur === "USD";
+    var up = cur + (dir > 0 ? " plutôt en hausse" : " plutôt en baisse"), dn = cur + (dir > 0 ? " plutôt en baisse" : " plutôt en hausse");
+    var gold = isUSD ? [dir > 0 ? "or plutôt en baisse (taux et dollar plus hauts)" : "or plutôt en hausse", dir > 0 ? "or plutôt en hausse" : "or plutôt en baisse"] : ["", ""];
+    var dec = function (x) { return esc(String(x || "").replace(/(\d)\.(\d)/g, "$1,$2")); };
+    var extra = '<h3>Chiffres</h3><div class="stats"><div class="stat"><small>Prévu</small><b>' + (dec(e.f) || "–") + '</b></div><div class="stat"><small>Précédent</small><b>' + (dec(e.p) || "–") + '</b></div><div class="stat"><small>Réel</small><b>' + (dec(e.a) || (past ? "voir la source" : "à venir")) + '</b></div><div class="stat"><small>Impact attendu</small><b>' + ({ High: "fort", Medium: "moyen", Low: "faible", Holiday: "férié" }[e.i] || esc(e.i)) + "</b></div></div>";
+    if (fv !== null && pv !== null) extra += '<p class="hint" style="max-width:none;margin-top:8px">Le consensus attend ' + (fv > pv ? "une <b>hausse</b>" : fv < pv ? "une <b>baisse</b>" : "un chiffre <b>stable</b>") + " par rapport au précédent (" + dec(e.p) + " → " + dec(e.f) + ").</p>";
+    /* Historique officiel et taille d'une vraie surprise */
+    var C = AUTO && AUTO.cycle_src, hist = null, unit = "", note_ = "";
+    if (isUSD && C) {
+      if (/Non-Farm|Employment Change/i.test(e.t) && C.nfp) { hist = []; for (var i = 1; i < C.nfp.length; i++) hist.push([C.nfp[i][0], C.nfp[i][1] - C.nfp[i - 1][1]]); unit = " k"; }
+      else if (/Unemployment Rate/i.test(e.t) && C.unemp) { hist = C.unemp; unit = " %"; }
+      else if (/CPI/i.test(e.t) && C.cpi) { var src = /Core/i.test(e.t) ? C.core : C.cpi; hist = []; if (/y\/y/i.test(e.t)) { for (var j = 12; j < src.length; j++) hist.push([src[j][0], (src[j][1] / src[j - 12][1] - 1) * 100]); } else { for (var k = 1; k < src.length; k++) hist.push([src[k][0], (src[k][1] / src[k - 1][1] - 1) * 100]); } unit = " %"; }
+      if (hist && hist.length > 6) {
+        var ch = []; for (var q = 1; q < hist.length; q++) ch.push(hist[q][1] - hist[q - 1][1]);
+        var m = mean(ch), sd = Math.sqrt(ch.reduce(function (a, x) { return a + Math.pow(x - m, 2); }, 0) / (ch.length - 1));
+        note_ = "Sur " + ch.length + " mois, ce chiffre varie d'un mois sur l'autre d'environ <b>± " + fmt(sd, unit === " k" ? 0 : 2) + unit + "</b> (écart-type) : un écart à la prévision plus grand que cela est une <b>vraie surprise</b>, qui fait bouger le marché.";
+      }
+    }
+    /* Réaction du marché le jour J (fixings BCE et bougie de l'or) */
+    var react = "";
+    if (past) {
+      var day = iso(t), ds = dates(), idxD = ds.indexOf(day);
+      var pair = isUSD ? pairOf("EURUSD") : (pairOf(cur + "USD") || pairOf("USD" + cur));
+      if (pair && idxD > 0) {
+        var s = series(pair), r1 = (s[idxD].v / s[idxD - 1].v - 1) * 100, rs = []; for (var z = Math.max(1, idxD - 21); z < idxD; z++) rs.push(Math.abs(s[z].v / s[z - 1].v - 1) * 100);
+        react += "<li>" + pair.n + " : <b class=\"" + cls(r1) + "\">" + pct(r1) + "</b> ce jour-là (mouvement moyen : " + fmt(mean(rs), 2) + " %, soit " + fmt(Math.abs(r1) / (mean(rs) || 1), 1) + " fois la normale).</li>";
+      }
+      if (isUSD && state.gold) {
+        var gk = state.gold.filter(function (k) { return new Date(k.t).toISOString().slice(0, 10) === t.toISOString().slice(0, 10); })[0];
+        if (gk) react += "<li>Or (PAXG) : <b class=\"" + cls(gk.c - gk.o) + "\">" + pct((gk.c / gk.o - 1) * 100) + "</b> sur la journée.</li>";
+      }
+      react = react ? '<h3>Réaction du marché ce jour-là</h3><ul class="advice" style="padding-top:0">' + react + '</ul><p class="hint" style="max-width:none">Cours de clôture quotidiens : d\'autres nouvelles du même jour peuvent aussi jouer.</p>' : "";
+    }
+    var rr = SURP && SURP.results ? SURP.results.filter(function (x) { return x.c === cur && x.d === iso(t); })[0] : null;
+    if (rr) extra += '<p class="hint" style="max-width:none">Registre des surprises : réel ' + fmt(rr.a, 2) + rr.u + " contre " + fmt(rr.f, 2) + rr.u + ' prévu, <b class="' + (rr.good ? "up" : "down") + '">surprise ' + (rr.s >= 0 ? "+" : "−") + fmt(Math.abs(rr.s), 2) + rr.u + "</b>.</p>";
+    return openDetail({ t: frEvent(e.t).t + " · " + cur, val: t.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) + " " + t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }), sub: pb[1] + " · titre original : " + esc(e.t),
+      chart: hist && hist.length > 3 ? hist.slice(-24).map(function (p) { return [MOIS[parseInt(String(p[0]).slice(5, 7), 10) - 1] + " " + String(p[0]).slice(2, 4), p[1]]; }) : null, zero: hist && /Non-Farm|Employment Change/i.test(e.t), extra: extra + (note_ ? '<h3>Taille d\'une vraie surprise</h3><p>' + note_ + "</p>" : "") + react +
+        '<h3>Scénarios</h3><div class="tbl"><table><thead><tr><th>Si le chiffre est…</th><th>Réaction habituelle</th></tr></thead><tbody><tr><td><b>au-dessus</b> de la prévision</td><td>' + up + (gold[0] ? " ; " + gold[0] : "") + (isUSD && dir > 0 ? " ; taux à 2 ans en hausse" : "") + "</td></tr><tr><td><b>en dessous</b> de la prévision</td><td>" + dn + (gold[1] ? " ; " + gold[1] : "") + (isUSD && dir > 0 ? " ; taux à 2 ans en baisse" : "") + "</td></tr><tr><td><b>proche</b> de la prévision</td><td>réaction limitée ; le marché regarde les détails et les révisions</td></tr></tbody></table></div>",
+      now: pb[2], how: "Méthode des desks : 1) connaître la prévision et la fourchette des économistes avant ; 2) mesurer l'écart au moment de la publication ; 3) lire les détails (sous-jacent, révisions) ; 4) vérifier si le marché confirme (taux à 2 ans, dollar) avant d'agir. Réduisez la taille des positions juste avant les publications à fort impact.", src: "https://www.forexfactory.com/calendar", srcTxt: "calendrier Forex Factory, chiffres officiels BLS" });
+  }
+
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
   function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
@@ -3044,7 +3244,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
