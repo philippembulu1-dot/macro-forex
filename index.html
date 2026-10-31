@@ -1961,10 +1961,11 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var sp = fred("T10Y2Y"), h = '<div class="tiles">' +
       tile("US 10 ans", "DGS10", 2, " %") + tile("US 2 ans", "DGS2", 2, " %") +
       tile("Écart 10a − 2a", "T10Y2Y", 2, " pt") + tile("Réel 10 ans (TIPS)", "DFII10", 2, " %") +
-      tile("VIX", "VIXCLS", 1, "") + (fred("DTWEXBGS") || !fred("DXY") ? tile("Dollar large", "DTWEXBGS", 1, "") : tile("Dollar DXY", "DXY", 2, "")) + tile("Spread crédit HY", "BAMLH0A0HYM2", 2, " %") + "</div>";
+      tile("VIX", "VIXCLS", 1, "") + (fred("DTWEXBGS") || !fred("DXY") ? tile("Dollar large", "DTWEXBGS", 1, "") : tile("Dollar DXY", "DXY", 2, "")) + (fred("BAMLH0A0HYM2") || !fred("OFRCREDIT") ? tile("Spread crédit HY", "BAMLH0A0HYM2", 2, " %") : tile("Stress du crédit (OFR)", "OFRCREDIT", 2, "")) + "</div>";
     var l = [], dr = chg5("DFII10"), v = fred("VIXCLS");
     if (dr !== null) l.push(dr > 0.1 ? "Rendement réel en hausse de " + fmt(dr, 2) + " pt sur 5 séances : plutôt <b>défavorable à l'or</b>." : dr < -0.1 ? "Rendement réel en baisse de " + fmt(-dr, 2) + " pt sur 5 séances : plutôt <b>favorable à l'or</b>." : "Rendement réel stable sur 5 séances : pas de signal pour l'or.");
     if (sp) l.push(sp.v < 0 ? "Courbe <b>inversée</b> (10a sous 2a) : le marché anticipe un ralentissement ou des baisses de taux." : "Courbe <b>positive</b> (10a au-dessus de 2a).");
+    var oc = fred("OFRCREDIT"); if (!fred("BAMLH0A0HYM2") && oc) l.push("Stress du crédit (OFR) à " + fmt(oc.v, 2) + " : " + (oc.v < 0 ? "crédit détendu." : oc.v < 1 ? "légère tension." : "<b>crédit sous tension</b>, plutôt risk-off."));
     var hy = fred("BAMLH0A0HYM2"); if (hy) l.push("Spread de crédit à " + fmt(hy.v, 2) + " % : " + (hy.v < 3.5 ? "crédit détendu." : hy.v < 5 ? "prudence modérée." : "<b>stress de crédit</b>, plutôt risk-off."));
     if (v) l.push("VIX à " + fmt(v.v, 1) + " : " + (v.v < 15 ? "marché calme." : v.v < 20 ? "volatilité normale." : v.v < 30 ? "<b>tension</b>, prudence sur les tailles de position." : "<b>stress élevé</b>, réduire le risque."));
     h += '<div class="pad idea" style="margin:10px 12px">' + l.join(" ") + ' C\'est une piste de lecture, pas un signal.</div>';
@@ -2169,8 +2170,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       var h = g.hist, c4 = h[h.length - 1] - h[h.length - 5], th = Math.abs(h[h.length - 1]) * 0.05;
       add("Flux (proxy COT)", c4 > th ? 1 : c4 < -th ? -1 : 0, (c4 >= 0 ? "+" : "−") + Math.abs(c4).toLocaleString("fr-FR") + " contrats / 4 sem.", "Achats nets des fonds sur 4 semaines", g.date, "weekly");
     } else add("Flux (proxy COT)", null, "indisponible", "CFTC", null);
-    var v = fred("VIXCLS"), hy = chgN("BAMLH0A0HYM2", 20);
-    if (v) { var rs = v.v > 22 || (hy && hy.d > 0.3) ? 1 : (v.v < 15 && hy && hy.d < 0) ? -1 : 0; add("Risque / refuge", rs, "VIX " + fmt(v.v, 1) + (hy ? " · HY " + (hy.d >= 0 ? "+" : "−") + fmt(Math.abs(hy.d), 2) + " pt" : ""), "Stress élevé = demande de valeur refuge", v.asof, "daily"); }
+    var v = fred("VIXCLS"), hy = chgN("BAMLH0A0HYM2", 20), hyLab = "HY";
+    if (!hy && fred("OFRCREDIT")) { hy = chgN("OFRCREDIT", 20); hyLab = "stress crédit OFR"; }
+    if (v) { var rs = v.v > 22 || (hy && hy.d > 0.3) ? 1 : (v.v < 15 && hy && hy.d < 0) ? -1 : 0; add("Risque / refuge", rs, "VIX " + fmt(v.v, 1) + (hy ? " · " + hyLab + " " + (hy.d >= 0 ? "+" : "−") + fmt(Math.abs(hy.d), 2) + " pt" : ""), "Stress élevé = demande de valeur refuge", v.asof, "daily"); }
     else add("Risque / refuge", null, "indisponible", "FRED VIX", null);
     if (g && typeof g.idx3y === "number") add("Positionnement", g.idx3y > 85 ? -1 : g.idx3y < 15 ? 1 : 0, "indice COT 3 ans : " + g.idx3y + " / 100", "Au-dessus de 85 : marché déjà très acheteur (risque de reflux)", g.date, "weekly");
     else add("Positionnement", null, "indisponible", "CFTC", null);
@@ -2193,7 +2195,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     ["T5YIFR", "Inflation 5 ans dans 5 ans", 2, " %", "Mesure favorite de la Fed pour la crédibilité de sa cible de 2 %."],
     ["GVZCLS", "Volatilité implicite or (GVZ)", 1, "", "Le « VIX de l'or » : au-dessus de 25, mouvements violents à prévoir."],
     ["NFCI", "Conditions financières", 2, "", "Fed de Chicago : négatif = conditions plus souples que la moyenne, positif = plus tendues."],
-    ["STLFSI4", "Stress financier", 2, "", "Fed de St. Louis : 0 = normal, au-dessus de 0 = stress."],
+    ["STLFSI4", "Stress financier", 2, "", "OFR (Trésor US) : 0 = normal, au-dessus de 0 = stress."], ["OFRCREDIT", "Stress du crédit", 2, "", "Composante crédit de l'indice OFR : au-dessus de 0 = crédit tendu."],
     ["BAMLC0A0CM", "Spread de crédit qualité", 2, " %", "Prime des entreprises bien notées. En hausse = aversion au risque."],
     ["BAMLH0A0HYM2", "Spread de crédit HY", 2, " %", "Prime des entreprises risquées : le thermomètre du risque."],
     ["WALCL", "Bilan de la Fed (Md $)", 0, "", "Liquidité injectée par la Fed. En baisse = resserrement quantitatif."]
@@ -2965,12 +2967,16 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (!$("fedPath")) return;
     var cur = fred("DFEDTARU"), fp = fedPath(), ks = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return s.id === "pm.kalshi.KXFED"; })[0] : null;
     if (fp.length) {
-      lineChart($("fedPath"), 400, 190, [{ pts: fp.map(function (p, i) { return [i, p.exp]; }), c: "#f2b01e", dots: 1 }], { n: fp.length, ref: cur ? cur.v : undefined, xl: fp.map(function (p) { return p.label; }) });
-      $("fedTbl").innerHTML = '<thead><tr><th>Réunion</th><th class="r" title="Niveau médian de la borne haute">Médian</th><th class="r" title="Probabilité d\'être au-dessus du taux actuel">Hausse</th><th class="r" title="Probabilité d\'être en dessous du taux actuel">Baisse</th></tr></thead><tbody>' + fp.map(function (p) {
+      var FW = typeof fedWatchCalc === "function" ? fedWatchCalc() : null, fwAt = function (p) { if (!FW || !p.close) return null; var r = FW.res.filter(function (x) { return x.d.slice(0, 7) === p.close.slice(0, 7); })[0]; if (!r) return null; var e = 0; r.cumul.forEach(function (c) { e += c.s * c.p; }); return FW.up + e * 0.25; };
+      var ser = [{ pts: fp.map(function (p, i) { return [i, p.exp]; }), c: "#f2b01e", dots: 1 }], fwPts = fp.map(function (p, i) { return [i, fwAt(p)]; });
+      if (fwPts.some(function (q) { return q[1] !== null; })) ser.push({ pts: fwPts, c: "#4da3ff", dots: 1 });
+      lineChart($("fedPath"), 400, 190, ser, { n: fp.length, ref: cur ? cur.v : undefined, xl: fp.map(function (p) { return p.label; }) });
+      $("fedTbl").innerHTML = '<thead><tr><th>Réunion</th><th class="r" title="Niveau médian de la borne haute">Kalshi</th><th class="r" title="Borne haute moyenne attendue, méthode CME FedWatch (contrats à terme fed funds)">Méthode CME</th><th class="r" title="Probabilité d\'être au-dessus du taux actuel">Hausse</th><th class="r" title="Probabilité d\'être en dessous du taux actuel">Baisse</th></tr></thead><tbody>' + fp.map(function (p) {
         var P = function (v) { return v === null || v === undefined ? "–" : Math.round(v * 100) + " %"; };
-        return "<tr><td>" + esc(p.label) + '</td><td class="r num">' + fmt(p.exp, 2) + ' %</td><td class="r num up">' + P(p.up) + '</td><td class="r num down">' + P(p.dn) + "</td></tr>";
+        var fv = fwAt(p);
+        return "<tr><td>" + esc(p.label) + '</td><td class="r num">' + fmt(p.exp, 2) + ' %</td><td class="r num" style="color:#4da3ff">' + (fv === null ? "–" : fmt(fv, 2) + " %") + '</td><td class="r num up">' + P(p.up) + '</td><td class="r num down">' + P(p.dn) + "</td></tr>";
       }).join("") + "</tbody>";
-      $("fedMeta").innerHTML = "ligne pointillée = taux actuel " + (cur ? fmt(cur.v, 2) + " %" : "") + " · Kalshi " + (ks && ks.asof ? shortD(ks.asof) + " " + badge(fresh(ks.asof, "daily")) : "");
+      $("fedMeta").innerHTML = "ligne pointillée = taux actuel " + (cur ? fmt(cur.v, 2) + " %" : "") + ' · <span style="color:#f2b01e">●</span> Kalshi (médiane) ' + (ks && ks.asof ? shortD(ks.asof) + " " + badge(fresh(ks.asof, "daily")) : "") + (FW ? ' · <span style="color:#4da3ff">●</span> méthode CME (moyenne, contrats à terme) ' + (FW.asof ? shortD(FW.asof.slice(0, 10)) + " " + badge(Date.now() - Date.parse(FW.asof) < 4 * 864e5 ? "ok" : "old") : "") : "");
     } else { $("fedPath").innerHTML = ""; $("fedTbl").innerHTML = ""; $("fedMeta").textContent = "Pas encore de contrats Kalshi exploitables (robot)."; }
     var C = (AUTO && AUTO.curves) || {}, us = C.us, eu = C.eu, ser = [], lg = [];
     if (us && us.now) { ser.push({ pts: us.now.v.map(function (v, i) { return [i, v]; }), c: "#f2b01e" }); lg.push('<span><i style="background:#f2b01e"></i>États-Unis ' + shortD(us.now.d) + "</span>"); if (us[cvCmp]) { ser.push({ pts: us[cvCmp].v.map(function (v, i) { return [i, v]; }), c: "#f2b01e", dash: 1, w: 1.2 }); lg.push('<span><i class="d" style="border-color:#f2b01e"></i>États-Unis ' + shortD(us[cvCmp].d) + "</span>"); } }
@@ -3088,8 +3094,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     DFEDTARU: ["Taux de la Fed (borne haute)", " %", 2, "Taux directeur des États-Unis, fixé par la Fed toutes les 6 à 8 semaines.", "C'est la référence de tous les taux en dollar. Les marchés réagissent surtout à l'écart entre la décision et ce qui était attendu (voir la branche Taux & pricing).", "https://www.newyorkfed.org/markets/reference-rates/effr"],
     ECBDFR: ["Taux de dépôt de la BCE", " %", 2, "Taux directeur de la zone euro.", "L'écart avec le taux de la Fed influence EUR/USD : quand il se réduit en faveur de l'euro, l'euro est souvent soutenu.", "https://data.ecb.europa.eu/"],
     NFCI: ["Conditions financières (Fed de Chicago)", "", 2, "Synthèse de 105 indicateurs financiers (crédit, marchés, banques).", "Négatif : conditions plus souples que la moyenne (favorable au risque). Positif : conditions plus tendues (prudence).", "https://www.chicagofed.org/nfci"],
-    STLFSI4: ["Stress financier (Fed de St. Louis)", "", 2, "Indice de stress des marchés financiers.", "0 = normal. Au-dessus de 0 : stress, souvent favorable aux refuges (or, yen, franc suisse).", "https://fred.stlouisfed.org/series/STLFSI4"],
+    STLFSI4: ["Stress financier", "", 2, "Indice de stress des marchés financiers (OFR, Office of Financial Research du Trésor américain ; remplace l'indice de la Fed de St. Louis, inaccessible depuis le robot). Composantes : crédit, actions, refuges, financement, volatilité.", "0 = normal. Au-dessus de 0 : stress, souvent favorable aux refuges (or, yen, franc suisse).", "https://fred.stlouisfed.org/series/STLFSI4"],
     BAMLH0A0HYM2: ["Spread de crédit haut rendement", " %", 2, "Prime payée par les entreprises les plus risquées par rapport à l'État américain.", "Sous 3,5 % : crédit détendu. Au-dessus de 5 % : stress de crédit, plutôt risk-off.", "https://fred.stlouisfed.org/series/BAMLH0A0HYM2"],
+    OFRCREDIT: ["Stress du crédit (OFR)", "", 2, "Composante « crédit » de l'indice de stress financier de l'OFR (Trésor américain) : écarts de taux des obligations d'entreprises, mesurés par rapport à leur histoire.", "0 = normal. Au-dessus de 0 : crédit sous tension, souvent risk-off. En dessous : crédit détendu.", "https://www.financialresearch.gov/financial-stress-index/"],
     BAMLC0A0CM: ["Spread de crédit qualité", " %", 2, "Prime payée par les entreprises bien notées.", "Une hausse rapide signale une aversion au risque qui monte.", "https://fred.stlouisfed.org/series/BAMLC0A0CM"],
     WALCL: ["Bilan de la Fed", " Md $", 0, "Total des actifs détenus par la Fed (obligations achetées, prêts).", "En baisse : la Fed retire des liquidités (resserrement quantitatif), plutôt défavorable aux actifs risqués. En hausse : elle en injecte.", "https://www.federalreserve.gov/releases/h41/current/"],
     PCEPILFE: ["Inflation PCE sous-jacente", " %", 2, "Mesure d'inflation préférée de la Fed (hors énergie et alimentation).", "La Fed vise 2 %. Au-dessus, elle reste ferme.", "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy"]

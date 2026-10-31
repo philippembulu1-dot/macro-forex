@@ -456,8 +456,9 @@ def fallbacks(data):
     with LOCK:
         for x in SOURCES:
             if x["id"] in ("fred.STLFSI4", "fred.BAMLH0A0HYM2", "fred.BAMLC0A0CM", "fred.PCEPILFE") and not x["ok"]:
-                x["kind"] = "nofree"
-                x["err"] = "non disponible gratuitement depuis GitHub (FRED seulement) : à consulter sur le site"
+                x["kind"] = "config" if x["id"] in ("fred.BAMLH0A0HYM2", "fred.BAMLC0A0CM") else "nofree"
+                x["err"] = ("à configurer : clé gratuite FRED dans les secrets GitHub (FRED_API_KEY) ; en attendant, composante crédit de l'indice OFR"
+                            if x["kind"] == "config" else "non disponible gratuitement depuis GitHub (FRED seulement) : à consulter sur le site")
     # Une série FRED remplacée par une source de secours n'est plus affichée comme une panne
     with LOCK:
         SOURCES[:] = [x for x in SOURCES if not (x["id"].startswith("fred.") and not x["ok"] and x["id"][5:] in F)]
@@ -1070,6 +1071,10 @@ def do_ofr(data):
         if len(obs) < 30:
             raise ValueError("trop peu de lignes")
         last = obs[-1]
+        ci_ = 2  # composante « crédit » : thermomètre officiel du crédit, utilisé si les écarts ICE ne sont pas disponibles
+        if obs[-1][ci_] is not None:
+            data["fred"]["OFRCREDIT"] = {"v": obs[-1][ci_], "prev": obs[-6][ci_], "asof": last[0], "hist": [[o[0], o[ci_]] for o in obs[-260:] if o[ci_] is not None],
+                                        "via": "OFR, composante crédit de l'indice de stress"}
         data["fred"]["STLFSI4"] = {"v": last[1], "prev": obs[-6][1], "asof": last[0], "hist": [[o[0], o[1]] for o in obs[-260:]],
                                   "via": "OFR (Office of Financial Research), remplace l'indice de St. Louis", "comp": dict(zip(("credit", "actions", "refuges", "financement", "volatilité"), last[2:]))}
         note("ofr.fsi", "Indice de stress financier (OFR, Trésor américain) et ses composantes", "daily", True, last[0], url="https://www.financialresearch.gov/financial-stress-index/")
@@ -1147,6 +1152,27 @@ def do_oecd_sdmx(data):
         note("oecd.sdmx", "Inflation des 8 économies (OCDE, API publique) : %s" % ", ".join(got), "monthly", True, max(data["oecd"]["cpi_" + c]["asof"] for c in got), url="https://data-explorer.oecd.org/")
     except Exception as e:
         note("oecd.sdmx", "Inflation des 8 économies (OCDE, API publique)", "monthly", False, err=e, url="https://data-explorer.oecd.org/")
+
+
+def do_fred_api(data):
+    """Écarts de crédit ICE (haut rendement, qualité) : API officielle de la Fed de St. Louis avec une clé gratuite (secret GitHub FRED_API_KEY)."""
+    key = os.environ.get("FRED_API_KEY", "").strip()
+    DIAG["fred_api_key"] = "présente" if key else "absente"
+    if not key:
+        return
+    start = (NOW - timedelta(days=400)).strftime("%Y-%m-%d")
+    for sid, lab in (("BAMLH0A0HYM2", "Écart de crédit haut rendement (ICE, via l'API FRED)"), ("BAMLC0A0CM", "Écart de crédit qualité (ICE, via l'API FRED)")):
+        url = "https://api.stlouisfed.org/fred/series/observations?" + urllib.parse.urlencode({"series_id": sid, "api_key": key, "file_type": "json", "observation_start": start})
+        try:
+            j = json.loads(http("fredapi_%s.json" % sid, url, tries=2, timeout=30))
+            obs = [[o["date"], num(o["value"])] for o in j.get("observations", []) if num(o.get("value")) is not None]
+            if len(obs) < 10:
+                raise ValueError("série vide")
+            data["fred"][sid] = {"v": obs[-1][1], "prev": obs[-6][1], "asof": obs[-1][0], "hist": obs[-260:], "via": "FRED (API officielle)"}
+            note("fredapi." + sid, lab, "daily", True, obs[-1][0], url="https://fred.stlouisfed.org/series/" + sid)
+        except Exception as e:
+            msg = fr_err(e).replace(key, "***")
+            note("fredapi." + sid, lab, "daily", False, err=msg, url="https://fred.stlouisfed.org/series/" + sid)
 
 
 def probe_credit(data):
@@ -2353,7 +2379,7 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("wgc", do_wgc), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("probe", probe_credit)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("wgc", do_wgc), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
