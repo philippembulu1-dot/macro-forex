@@ -2824,6 +2824,10 @@ GEO_CANAL = {"IRN": "énergie, Ormuz", "ISR": "Moyen-Orient", "PSE": "Moyen-Orie
              "UKR": "guerre en Europe", "CHN": "grande puissance", "TWN": "Taïwan, semi-conducteurs", "PRK": "nucléaire",
              "KOR": "péninsule coréenne", "IND": "puissance nucléaire", "PAK": "puissance nucléaire", "EGY": "canal de Suez",
              "USA": "grande puissance", "TUR": "Bosphore", "PAN": "canal de Panama", "SDN": "mer Rouge", "ERI": "mer Rouge", "DJI": "Bab el-Mandeb"}
+GEO_TYPES = {"MIL", "REB", "INS", "SEP", "UAF", "SPY"}
+GEO_WORDS = ("guerre", "frappe", "missile", "sanction", "cessez", "attaque", "blocus", "ormuz", "taïwan", "taiwan", "armée", "militaire",
+             "nucléaire", "drone", "conflit", "otan", "iran", "israël", "israel", "russie", "ukraine", "chine", "gaza", "liban", "houthi",
+             "mer rouge", "corée", "pétrole", "riposte", "offensive", "bombard", "troupes", "géopolit", "tension", "terror", "coup d'état", "venezuela")
 ADV_FR = {"terrorism": "terrorisme", "unrest": "troubles civils", "civil unrest": "troubles civils", "crime": "criminalité",
           "kidnapping": "enlèvements", "armed conflict": "conflit armé", "wrongful detention": "détentions arbitraires",
           "health": "santé", "natural disasters": "catastrophes naturelles", "hostage taking": "prises d'otages",
@@ -2855,7 +2859,7 @@ def geo_hist_load():
     try:
         with open(OUT_GEO, encoding="utf-8") as f:
             h = json.load(f)
-        if isinstance(h, dict) and "days" in h:
+        if isinstance(h, dict) and "days" in h and h.get("v") == 2:
             return h
     except Exception:
         pass
@@ -2915,19 +2919,24 @@ def do_geo(data):
                 cc = FIPS3.get(f[53])
                 if not cc:
                     continue
-                root, quad = f[28][:2], f[29]
+                root = f[28][:2]
                 try:
                     ment = int(f[31] or 0)
                 except ValueError:
                     ment = 0
-                c = D["c"].setdefault(cc, [0, 0, 0, 0])  # événements, conflit matériel, manifestations, mentions des conflits
+                c = D["c"].setdefault(cc, [0, 0, 0, 0])  # événements, conflits géopolitiques, manifestations, mentions des conflits
                 c[0] += 1
-                if quad == "4":
+                # Conflit « géopolitique » : armée, rebelles, insurgés ou deux pays différents.
+                # Les faits divers (police contre criminel) sont écartés : ils gonflent les pays très couverts.
+                types = {f[12], f[13], f[22], f[23]}
+                a1, a2 = f[7], f[17]
+                geo_ev = root in ("15", "16", "17", "18", "19", "20") and (types & GEO_TYPES or (a1 and a2 and a1 != a2))
+                if geo_ev:
                     c[1] += 1
                     c[3] += ment
                 if root == "14":
                     c[2] += 1
-                if root in ("15", "16", "17", "18", "19", "20") and ment >= 4 and st >= (newest - timedelta(hours=24)).strftime("%Y%m%d%H%M%S"):
+                if geo_ev and ment >= 4 and st >= (newest - timedelta(hours=24)).strftime("%Y%m%d%H%M%S"):
                     try:
                         lat, lon = round(float(f[56]), 2), round(float(f[57]), 2)
                     except ValueError:
@@ -2939,7 +2948,7 @@ def do_geo(data):
                 bf.add(st)
         keep = (newest - timedelta(days=45)).strftime("%Y-%m-%d")
         days = {k: v for k, v in days.items() if k >= keep}
-        h = {"done": sorted(s for s in done if s >= (newest - timedelta(hours=30)).strftime("%Y%m%d%H%M%S")),
+        h = {"v": 2, "done": sorted(s for s in done if s >= (newest - timedelta(hours=30)).strftime("%Y%m%d%H%M%S")),
              "bf": sorted(s for s in bf if s[:8] >= keep.replace("-", "")), "days": days, "hot": hot[-1500:]}
         with LOCK:
             try:
@@ -2967,8 +2976,10 @@ def do_geo(data):
                     a[i] += v[i]
         past = [days[k] for k in sorted(days) if k < (newest - timedelta(days=1)).strftime("%Y-%m-%d") and days[k]["n"] >= 8][-30:]
         world_conf = sum(v[1] for v in cur.values()) or 1
-        ranked = sorted(cur.items(), key=lambda kv: -kv[1][1])
-        rk = {cc: i for i, (cc, v) in enumerate(ranked)}
+        # Niveau : conflits géopolitiques corrigés du volume de presse (un pays très couvert ne ressort pas d'office)
+        inten = {cc: v[1] / max(1.0, v[0]) ** 0.5 for cc, v in cur.items() if v[1] >= 5}
+        ranked = sorted(inten.items(), key=lambda kv: -kv[1])
+        rk = {cc: i for i, (cc, x) in enumerate(ranked)}
         nct = max(1, len(ranked))
         C = {}
         for cc, v in cur.items():
@@ -2979,7 +2990,7 @@ def do_geo(data):
                 mu = sum(hist) / len(hist)
                 sd = (sum((x - mu) ** 2 for x in hist) / len(hist)) ** 0.5
                 z = round((rate - mu) / max(sd, 0.25 * mu, 0.02), 2)
-            lvl = round(100 * (1 - rk[cc] / nct)) if v[1] >= 3 else 0
+            lvl = round(100 * (1 - rk[cc] / nct)) if cc in rk else 0
             C[cc] = [lvl, z, v[0], v[1], v[2], round(v[1] / world_conf * 100, 2)]
         # Points chauds : regroupement par cellule de 1 degré, on garde la plus citée
         cells = {}
@@ -3123,7 +3134,7 @@ def do_geo(data):
         seen, out = set(), []
         for it in items:
             key = it["t"][:60].lower()
-            if key in seen:
+            if key in seen or not any(w in it["t"].lower() for w in GEO_WORDS):
                 continue
             seen.add(key)
             out.append(it)

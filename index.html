@@ -311,6 +311,19 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .mapwrap svg { width: 100%; height: auto; display: block; background: #08080a; }
 .mapwrap path { stroke: #060607; stroke-width: .5; cursor: pointer; }
 .mapwrap path:hover, .mapwrap path.on { stroke: var(--amber); stroke-width: 1.4; }
+.geo-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 12px; }
+.geo-card { border: 1px solid var(--line2); padding: 10px 12px; background: #0d0d0f; }
+.geo-card small { display: block; font: 10px var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.geo-big { display: block; font: 600 30px var(--font-mono); margin: 2px 0 6px; color: var(--amber); }
+.geo-big.up { color: var(--up, #3ddc97); } .geo-big.down { color: var(--down, #ff5c4f); }
+.geo-why { margin: 0 0 6px; padding-left: 16px; font-size: 12px; }
+.geo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.geo-news { margin: 0; padding: 4px 12px 8px 26px; font-size: 12px; } .geo-news li { margin: 3px 0; }
+.mapwrap path.gesc { stroke: #ff5c4f; stroke-width: 1.4; }
+.geolay { display: flex; flex-wrap: wrap; gap: 6px 14px; flex-basis: 100%; }
+.geolay label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; font: 11px var(--font-mono); color: var(--fg, #ece8dc); }
+.geolay input { width: 13px; height: 13px; margin: 0; flex: none; }
+@media (max-width: 760px) { .geo-top, .geo-grid { grid-template-columns: 1fr; } }
 .legend { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 12px; font: 10px var(--font-mono); color: var(--muted); }
 .legend i { display: inline-block; width: 18px; height: 10px; }
 .cinfo { padding: 10px 12px; border-top: 1px solid var(--line2); }
@@ -516,6 +529,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     <a href="#calendrier">Calendrier économique</a>
     <a href="#ecarts">Écarts de taux</a>
     <a href="#monde">Carte du monde</a>
+    <a href="#geopol">Géopolitique</a>
     <a href="#agenda">Agenda</a>
     <a href="#sessions">Sessions</a>
     <div class="grp">ANALYSES</div>
@@ -767,6 +781,26 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div class="cinfo" id="mapInfo"><p class="hint">Touchez un pays (ou choisissez-le dans la liste) pour voir ses chiffres.</p></div>
       <div id="mapLive"></div>
       <p class="note">Mode « Trafic maritime » : passages de navires par les 28 détroits et canaux stratégiques (UN Global Platform ; FMI PortWatch, quelques jours de retard) et, au clic, carte VesselFinder en temps réel. Autres modes : Banque mondiale (dernière valeur annuelle disponible, l'année est indiquée à côté de chaque chiffre). Les prévisions du FMI ne sont pas affichées : son site refuse les robots. Contours : Natural Earth (domaine public). Taux directeurs des 8 grandes banques : voir « Banques centrales ».</p>
+    </section>
+
+    <section class="panel" id="geopol">
+      <div class="ph"><h2>Géopolitique : moniteur de risque</h2><span class="meta" id="geoMeta">robot</span></div>
+      <div class="geo-top">
+        <div class="geo-card" id="geoNote"><p class="hint">En attente du robot.</p></div>
+        <div class="geo-card" id="geoGpr"></div>
+      </div>
+      <div class="geo-grid">
+        <div><div class="pair-name pad">Escalades : tension des dernières 24 h contre les 30 jours précédents</div><div class="tbl"><table id="geoEsc"></table></div></div>
+        <div><div class="pair-name pad">Pays les plus tendus (24 h)</div><div class="tbl"><table id="geoTop"></table></div></div>
+      </div>
+      <div class="pair-name pad">Points chauds des dernières 24 h</div>
+      <div class="tbl"><table id="geoHot"></table></div>
+      <div class="geo-grid">
+        <div><div class="pair-name pad">Titres du jour</div><ul class="geo-news" id="geoNews"></ul></div>
+        <div><div class="pair-name pad">Avis de voyage officiels modifiés (14 jours)</div><div class="tbl"><table id="geoAdv"></table></div>
+          <div class="pair-name pad">Séismes de magnitude 5,5 et plus (7 jours)</div><div class="tbl"><table id="geoQuake"></table></div></div>
+      </div>
+      <p class="note">Comment c'est calculé. <b>Tension par pays</b> : nombre d'événements de conflit (manifestations, démonstrations de force, sanctions, attaques, combats) recensés par GDELT dans la presse mondiale sur 24 h. Le niveau est un <b>rang</b> entre pays (100 = le plus tendu). <b>Escalade</b> : écart du rythme des dernières 24 h avec les 30 jours précédents, en écarts-types (2 ou plus = inhabituel). C'est un <b>calcul maison</b> sur des articles codés automatiquement, pas une note d'agence : un pays très couvert par la presse ressort plus. <b>Indice GPR</b> : indice académique de Caldara et Iacoviello (Réserve fédérale), qui compte les articles sur les tensions géopolitiques dans 10 grands journaux, publié avec quelques jours de retard. <b>Note proposée</b> : application automatique de la grille de l'étape 4 de ta feuille, à valider toi-même. Sources : GDELT (gdeltproject.org), matteoiacoviello.com, Département d'État américain, USGS, Google Actualités.</p>
     </section>
 
     <section class="panel" id="maritime">
@@ -2115,7 +2149,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     ["CB", "Banques centrales", "banques"], ["ECO", "Indicateurs macro", "indicateurs"], ["CAL", "Calendrier économique", "calendrier"],
     ["AG", "Prochaines réunions", "agenda"], ["DESK", "Indicateurs des desks", "desk"], ["TX", "Taux, VIX, dollar", "taux"], ["DIFF", "Écarts de taux", "ecarts"],
     ["COT", "Positions COT", "cot"], ["SEAS", "Saisonnalité 20 ans", "saison"], ["HEAT", "Carte thermique", "heat"], ["CORR", "Corrélations", "correl"],
-    ["VOL", "Volatilité", "vola"], ["MAP", "Carte du monde", "monde"], ["SHIP", "Trafic maritime", "maritime"], ["CONS", "Consensus des banques", "consensus"], ["COM", "Comités", "comite"],
+    ["VOL", "Volatilité", "vola"], ["MAP", "Carte du monde", "monde"], ["GEO", "Géopolitique : moniteur de risque", "geopol"], ["SHIP", "Trafic maritime", "maritime"], ["CONS", "Consensus des banques", "consensus"], ["COM", "Comités", "comite"],
     ["FED", "Probabilités de taux", "probas"], ["SENT", "Sentiment des particuliers", "sentiment"], ["PIV", "Pivots et convertisseur", "outils"],
     ["LIVE", "Marchés en direct", "marches"], ["NEWS", "Communiqués", "actus"], ["VID", "Vidéos d'analyse", "videos"], ["CALC", "Calculateur de position", "calc"], ["RISK", "Gestion du risque", "conseils"],
     ["CHK", "Checklist", "check"], ["TAYL", "Règle de Taylor", "taylor"], ["VOLC", "Volatilité de l'or", "orvol"], ["ECSU", "Surprises économiques", "surprises"], ["WIRA", "Réserves des banques centrales", "reserves"], ["DATA", "Fraîcheur des données", "robot"], ["NOTE", "Notes rapides", "notes"]
@@ -2433,21 +2467,23 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* ---------- Carte du monde ---------- */
   var WMAP = null, mapSel = "", EZ = ["AUT", "BEL", "BGR", "HRV", "CYP", "EST", "FIN", "FRA", "DEU", "GRC", "IRL", "ITA", "LVA", "LTU", "LUX", "MLT", "NLD", "PRT", "SVK", "SVN", "ESP"];
   var MAJ = { USA: "USD", GBR: "GBP", JPN: "JPY", CHE: "CHF", AUS: "AUD", CAN: "CAD", NZL: "NZD" };
-  var MAPIND = [["ship", "Trafic maritime (détroits, pétroliers)", ""], ["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"], ["res", "Réserves des banques centrales", " Md $"], ["resg", "Part de l'or dans les réserves", " %"]];
+  var MAPIND = [["ship", "Trafic maritime (détroits, pétroliers)", ""], ["inf", "Inflation (dernière année)", " %"], ["gdp", "Croissance du PIB", " %"], ["unemp", "Chômage", " %"], ["ca", "Compte courant (% PIB)", " %"], ["lend", "Taux prêteur bancaire", " %"], ["res", "Réserves des banques centrales", " Md $"], ["resg", "Part de l'or dans les réserves", " %"], ["geo", "Géopolitique : tension par pays (24 h)", ""], ["gpr", "Risque géopolitique GPR (44 pays, mensuel)", ""], ["adv", "Avis de voyage officiels (niveaux 1 à 4)", ""]];
   function loadMap() {
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "world-map.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.c) throw new Error("format"); return j; }); }); });
-    return p.then(function (j) { WMAP = j; drawMap(); renderReserves(); }).catch(function (e) { $("mapBox").innerHTML = '<p class="note">Carte non chargée (' + esc(e && e.message) + ").</p>"; $("mapMeta").textContent = "indisponible"; });
+    return p.then(function (j) { WMAP = j; drawMap(); renderReserves(); renderGeo(); }).catch(function (e) { $("mapBox").innerHTML = '<p class="note">Carte non chargée (' + esc(e && e.message) + ").</p>"; $("mapMeta").textContent = "indisponible"; });
   }
   function initMap() {
     $("mapInd").innerHTML = MAPIND.map(function (m, i) { return '<option value="' + i + '">' + m[1] + "</option>"; }).join("");
-    $("mapInd").value = "1";
-    $("mapInd").addEventListener("change", function () { mapPt = ""; drawMap(); });
+    $("mapInd").value = "8";
+    $("mapInd").addEventListener("change", function () { mapPt = ""; geoPt = -1; drawMap(); });
     $("mapCty").addEventListener("change", function () { mapSel = this.value; if (MAPIND[+$("mapInd").value][0] === "ship") $("mapInd").value = "1"; drawMap(); });
     $("mapBox").addEventListener("click", function (e) {
+      var gh = e.target.closest && e.target.closest("[data-h]");
+      if (gh) { geoPt = +gh.getAttribute("data-h"); mapSel = ""; drawMap(); return; }
       var pt = e.target.closest && e.target.closest("[data-p]");
       if (pt) { mapPt = pt.getAttribute("data-p"); drawMap(); return; }
-      var a = e.target.getAttribute && e.target.getAttribute("data-c"); if (a) { mapSel = a; $("mapCty").value = a; drawMap(); }
+      var a = e.target.getAttribute && e.target.getAttribute("data-c"); if (a) { mapSel = a; geoPt = -1; $("mapCty").value = a; drawMap(); }
     });
     $("mapInfo").addEventListener("click", function (e) {
       var ez = e.target.closest && e.target.closest("button[data-ezgo]"); if (ez) { openPanel(ez.getAttribute("data-ezgo")); return; }
@@ -2487,16 +2523,20 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         '<div style="margin-top:10px"><button type="button" class="btn" data-live="' + p[2] + "," + p[3] + ',8" data-name="' + esc(nm) + '">Voir les navires en direct ici</button></div>';
     } else $("mapInfo").innerHTML = '<p class="hint">Touchez un cercle pour voir le trafic d\'un détroit et ouvrir la carte des navires en temps réel. Une chute brutale à Ormuz, Bab el-Mandeb ou Suez signale un risque sur le pétrole, souvent favorable à l\'or.</p>';
   }
+  function fillCty() {
+    var cty = $("mapCty");
+    if (cty.options.length <= 1) cty.innerHTML += '<option value="EZ">— Zone euro (21 pays) —</option>' + WMAP.c.filter(function (c) { return c[0]; }).sort(function (a, b) { return a[1].localeCompare(b[1], "fr"); }).map(function (c) { return '<option value="' + c[0] + '">' + esc(c[1]) + "</option>"; }).join("");
+  }
   function drawMap() {
     if (!WMAP) return;
     var W = (AUTO && AUTO.world) || {}, mi = MAPIND[+$("mapInd").value], key = mi[0];
     if (key === "ship") { drawShipMap(); return; }
+    if (key === "geo" || key === "gpr" || key === "adv") { fillCty(); drawGeoMap(key); return; }
     var vals = WMAP.c.map(function (c) { var x = W[c[0]] && W[c[0]][key]; return x ? x[0] : null; }).filter(function (v) { return v !== null; }).sort(function (a, b) { return a - b; });
     var q = function (p) { return vals.length ? vals[Math.floor(p * (vals.length - 1))] : 0; }, cuts = [q(0.2), q(0.4), q(0.6), q(0.8)];
     var pal = key === "unemp" || key === "inf" || key === "inf_f" || key === "lend" ? ["#2a3b2f", "#3f5a33", "#7a6a1e", "#a8521f", "#c4382e"] : ["#c4382e", "#a8521f", "#7a6a1e", "#3f5a33", "#2fb27a"];
     var col = function (v) { if (v === null) return "#1a1a1d"; var i = 0; while (i < 4 && v > cuts[i]) i++; return pal[i]; };
-    var cty = $("mapCty");
-    if (cty.options.length <= 1) cty.innerHTML += '<option value="EZ">— Zone euro (21 pays) —</option>' + WMAP.c.filter(function (c) { return c[0]; }).sort(function (a, b) { return a[1].localeCompare(b[1], "fr"); }).map(function (c) { return '<option value="' + c[0] + '">' + esc(c[1]) + "</option>"; }).join("");
+    fillCty();
     $("mapBox").innerHTML = '<svg viewBox="0 0 ' + WMAP.w + " " + WMAP.h + '" role="img" aria-label="Carte du monde : ' + esc(mi[1]) + '">' + WMAP.c.map(function (c) {
       var x = W[c[0]] && W[c[0]][key];
       return '<path d="' + c[2] + '" fill="' + col(x ? x[0] : null) + '" data-c="' + c[0] + '"' + (c[0] && (c[0] === mapSel || (mapSel === "EZ" && EZ.indexOf(c[0]) >= 0)) ? ' class="on"' : "") + "><title>" + esc(c[1]) + (x ? " : " + fmt(x[0], 1) + mi[2] + " (" + x[1] + ")" : " : pas de donnée") + "</title></path>";
@@ -2547,6 +2587,105 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     loadHist();
     var hx = HIST ? (HIST.missing ? '<p class="hint">Historique pas encore publié par le robot.</p>' : '<div class="pair-name" style="margin:10px 0 4px">Depuis 2001</div>' + histChart(HIST.c[a3])) : '<p class="hint">Chargement de l\'historique…</p>';
     $("mapInfo").innerHTML = h + "</div>" + (Object.keys(x).length ? "" : '<p class="hint">Aucune donnée du robot pour ce pays (ou robot pas encore passé).</p>') + hx;
+  }
+
+  /* =====================================================================
+     GÉOPOLITIQUE (31 oct. 2026) : couche de la carte + panneau « moniteur de risque ».
+     Données du robot (data.geo) : GDELT, indice GPR, avis de voyage US, USGS, titres.
+     ===================================================================== */
+  var GEO_CANAL = { IRN: "énergie, Ormuz", ISR: "Moyen-Orient", PSE: "Moyen-Orient", LBN: "Moyen-Orient", SYR: "Moyen-Orient", YEM: "mer Rouge, Bab el-Mandeb", SAU: "énergie", IRQ: "énergie", ARE: "énergie, Ormuz", QAT: "énergie, gaz", KWT: "énergie", OMN: "Ormuz", LBY: "énergie", VEN: "énergie", NGA: "énergie", RUS: "grande puissance, énergie", UKR: "guerre en Europe", CHN: "grande puissance", TWN: "Taïwan, semi-conducteurs", PRK: "nucléaire", KOR: "péninsule coréenne", IND: "puissance nucléaire", PAK: "puissance nucléaire", EGY: "canal de Suez", USA: "grande puissance", TUR: "Bosphore", PAN: "canal de Panama", SDN: "mer Rouge", ERI: "mer Rouge", DJI: "Bab el-Mandeb" };
+  var CAMEO = { "14": "manifestations", "15": "démonstration de force", "16": "sanctions, rupture", "17": "coercition", "18": "attaque", "19": "combats", "20": "violence de masse" };
+  var ADV_LAB = ["", "1 · précautions normales", "2 · vigilance accrue", "3 · reconsidérer le voyage", "4 · ne pas voyager"];
+  var GEO_PAL = ["#2b3a2e", "#6b5a1e", "#a8521f", "#c4382e"];
+  var geoPt = -1, geoLay = { hot: true, quake: true, ship: true };
+  function geoData() { return (AUTO && AUTO.geo) || {}; }
+  function ctyName(a3) { var c = WMAP && WMAP.c.filter(function (k) { return k[0] === a3; })[0]; return c ? c[1] : (a3 === "PSE" ? "Palestine" : a3); }
+  function tensLab(l) { return l >= 90 ? "très élevée" : l >= 70 ? "élevée" : l >= 40 ? "modérée" : "faible"; }
+  /* Projection Natural Earth (même que les contours) ajustée sur les points connus de la carte */
+  var PROJ = null;
+  function neRaw(lon, lat) { var l = lon * Math.PI / 180, p = lat * Math.PI / 180, p2 = p * p, p4 = p2 * p2; return [l * (0.8707 - 0.131979 * p2 + p4 * (-0.013791 + p4 * (0.003971 * p2 - 0.001529 * p4))), p * (1.007226 + p2 * (0.015085 + p4 * (-0.044475 + 0.028874 * p2 - 0.005916 * p4)))]; }
+  function proj(lat, lon) {
+    if (!PROJ) {
+      var P = Object.keys(WMAP.pts || {}).map(function (k) { var q = WMAP.pts[k], r = neRaw(q[3], q[2]); return [r[0], r[1], q[0], q[1]]; });
+      if (P.length < 3) return null;
+      var n = P.length, mX = 0, mY = 0, mx = 0, my = 0; P.forEach(function (q) { mX += q[0] / n; mY += q[1] / n; mx += q[2] / n; my += q[3] / n; });
+      var num = 0, den = 0; P.forEach(function (q) { num += (q[0] - mX) * (q[2] - mx) - (q[1] - mY) * (q[3] - my); den += Math.pow(q[0] - mX, 2) + Math.pow(q[1] - mY, 2); });
+      var s = num / den; PROJ = { s: s, tx: mx - s * mX, ty: my + s * mY };
+    }
+    var r = neRaw(lon, lat); return [PROJ.s * r[0] + PROJ.tx, PROJ.ty - PROJ.s * r[1]];
+  }
+  function geoColor(key, a3) {
+    var G = geoData();
+    if (key === "geo") { var c = G.c && G.c[a3]; if (!c || !c[0]) return null; return GEO_PAL[c[0] >= 90 ? 3 : c[0] >= 70 ? 2 : c[0] >= 40 ? 1 : 0]; }
+    if (key === "gpr") { var g = G.gpr && G.gpr.ctry && G.gpr.ctry[a3]; if (!g) return null; return GEO_PAL[g[1] >= 90 ? 3 : g[1] >= 70 ? 2 : g[1] >= 40 ? 1 : 0]; }
+    var a = G.adv && G.adv[a3]; return a ? GEO_PAL[Math.max(0, Math.min(3, a[0] - 1))] : null;
+  }
+  function drawGeoMap(key) {
+    var G = geoData(), mi = MAPIND[+$("mapInd").value];
+    var paths = WMAP.c.map(function (c) {
+      var col = geoColor(key, c[0]) || "#1a1a1d", t = G.c && G.c[c[0]], escd = key === "geo" && t && t[1] !== null && t[1] >= 2;
+      var tip = esc(c[1]) + (key === "geo" ? (t ? " : tension " + tensLab(t[0]) + " (" + t[0] + "/100), " + t[3] + " événements de conflit en 24 h" + (t[1] !== null ? ", escalade " + fmt(t[1], 1) : "") : " : pas d'événement de conflit") : key === "gpr" ? (G.gpr && G.gpr.ctry && G.gpr.ctry[c[0]] ? " : indice " + fmt(G.gpr.ctry[c[0]][0], 2) + ", " + G.gpr.ctry[c[0]][1] + "e percentile sur 10 ans" : " : pays non couvert par l'indice") : (G.adv && G.adv[c[0]] ? " : niveau " + ADV_LAB[G.adv[c[0]][0]] : " : pas d'avis"));
+      return '<path d="' + c[2] + '" fill="' + col + '" data-c="' + c[0] + '"' + (c[0] && c[0] === mapSel ? ' class="on"' : escd ? ' class="gesc"' : "") + "><title>" + tip + "</title></path>";
+    }).join("");
+    var marks = "";
+    if (geoLay.ship && AUTO && AUTO.shipping) Object.keys(WMAP.pts || {}).forEach(function (n) { var x = straitStats(n), p = WMAP.pts[n]; if (x && x.ch !== null && x.ch <= -10) marks += '<g data-p="' + esc(n) + '" style="cursor:pointer"><rect x="' + (p[0] - 4) + '" y="' + (p[1] - 4) + '" width="8" height="8" transform="rotate(45 ' + p[0] + " " + p[1] + ')" fill="none" stroke="#5fb4ff" stroke-width="1.8"><title>' + esc(shipName(n).fr) + " : trafic " + pct(x.ch) + " sur 7 jours</title></rect></g>"; });
+    if (geoLay.quake) (G.quakes || []).forEach(function (q) { var p = proj(q[0], q[1]); if (p) marks += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (2 + (q[2] - 5) * 3).toFixed(1) + '" fill="none" stroke="#b48cff" stroke-width="1.4"><title>Séisme M' + fmt(q[2], 1) + " : " + esc(q[3]) + "</title></circle>"; });
+    if (geoLay.hot) (G.hot || []).forEach(function (h, i) { var p = proj(h[0], h[1]); if (!p) return; var r = Math.min(9, 2.5 + Math.sqrt(h[4] + 2 * h[5]) / 1.6), col = +h[3] >= 18 ? "#ff5c4f" : "#f2b01e"; marks += '<circle data-h="' + i + '" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + col + '" fill-opacity=".7" stroke="' + (i === geoPt ? "#ece8dc" : "#060607") + '" stroke-width="' + (i === geoPt ? 2 : .6) + '" style="cursor:pointer"><title>' + esc((CAMEO[h[3]] || "événement") + " · " + h[6] + " · " + h[4] + " mentions") + "</title></circle>"; });
+    $("mapBox").innerHTML = '<svg viewBox="0 0 ' + WMAP.w + " " + WMAP.h + '" role="img" aria-label="Carte géopolitique : ' + esc(mi[1]) + '">' + paths + marks + "</svg>";
+    var labs = key === "geo" ? ["faible", "modérée", "élevée", "très élevée"] : key === "gpr" ? ["sous le 40e percentile", "40e à 70e", "70e à 90e", "90e et plus"] : ["1 · normal", "2 · vigilance", "3 · reconsidérer", "4 · ne pas voyager"];
+    $("mapLeg").innerHTML = GEO_PAL.map(function (p, i) { return '<span><i style="background:' + p + '"></i> ' + labs[i] + "</span>"; }).join("") + '<span><i style="background:#1a1a1d"></i> pas de donnée</span>' +
+      (key === "geo" ? '<span><i style="background:none;border:1.5px solid #ff5c4f"></i> escalade (2 écarts-types ou plus)</span>' : "") +
+      '<div class="geolay"><label><input type="checkbox" data-lay="hot"' + (geoLay.hot ? " checked" : "") + '> <b style="color:#ff5c4f">●</b> points chauds</label> <label><input type="checkbox" data-lay="quake"' + (geoLay.quake ? " checked" : "") + '> <b style="color:#b48cff">○</b> séismes</label> <label><input type="checkbox" data-lay="ship"' + (geoLay.ship ? " checked" : "") + '> <b style="color:#5fb4ff">◇</b> détroits en baisse</label></div>';
+    var src = key === "geo" ? (G.asof ? "GDELT au " + shortD(G.asof.slice(0, 10)) + " " + G.asof.slice(11, 16) + " UTC " + badge(ageDays(G.asof.slice(0, 10)) <= 1 ? "ok" : "old") : "GDELT : robot en attente") : key === "gpr" ? (G.gpr && G.gpr.month ? "indice GPR pays, mois de " + G.gpr.month + " " + badge(ageDays(G.gpr.month + "-28") <= 45 ? "ok" : "old") : "indice GPR : robot en attente") : (G.adv ? Object.keys(G.adv).length + " pays · Département d'État américain" : "avis : robot en attente");
+    $("mapMeta").innerHTML = src;
+    if (geoPt >= 0 && G.hot && G.hot[geoPt]) showGeoHot(G.hot[geoPt]); else if (mapSel && mapSel !== "EZ") showGeoCountry(mapSel); else $("mapInfo").innerHTML = '<p class="hint">Touchez un pays pour voir sa tension, ses escalades, son avis de voyage et les événements du jour ; touchez un point pour lire l\'article. Le panneau « Géopolitique : moniteur de risque » donne la vue d\'ensemble et la note proposée pour ta feuille.</p>';
+  }
+  function showGeoHot(h) {
+    $("mapInfo").innerHTML = "<h3>" + esc(CAMEO[h[3]] || "Événement") + " · " + esc(h[6] || ctyName(h[2])) + '</h3><div class="kv"><span>Pays</span><b>' + esc(ctyName(h[2])) + "</b><span>Mentions dans la presse</span><b>" + h[4] + "</b><span>Événements proches (même zone, 24 h)</span><b>" + h[5] + "</b><span>Recensé le</span><b>" + h[8].slice(6, 8) + "/" + h[8].slice(4, 6) + " à " + h[8].slice(8, 10) + " h " + h[8].slice(10, 12) + " UTC</b>" + (GEO_CANAL[h[2]] ? "<span>Canal pour l'or</span><b>" + esc(GEO_CANAL[h[2]]) + "</b>" : "") + "</div>" +
+      (h[7] ? '<p style="margin-top:8px"><a href="' + esc(h[7]) + '" target="_blank" rel="noopener">Lire l\'article source ↗</a></p>' : "") + '<p class="hint">Événement codé automatiquement par GDELT à partir d\'un article : le type peut être approximatif. Vérifie toujours la source avant de noter le pilier Risque.</p>';
+  }
+  function showGeoCountry(a3) {
+    var G = geoData(), t = G.c && G.c[a3], g = G.gpr && G.gpr.ctry && G.gpr.ctry[a3], a = G.adv && G.adv[a3], nm = ctyName(a3);
+    var h = "<h3>" + esc(nm) + '</h3><div class="kv">';
+    h += "<span>Tension (24 h)</span><b>" + (t ? tensLab(t[0]) + " <small>(" + t[0] + "/100)</small>" : "aucun événement de conflit") + "</b>";
+    if (t) h += "<span>Événements de conflit / tous événements</span><b>" + t[3] + " / " + t[2] + "</b><span>dont manifestations</span><b>" + t[4] + "</b><span>Part du total mondial</span><b>" + fmt(t[5], 1) + " %</b><span>Escalade contre 30 jours</span><b class=\"" + (t[1] !== null && t[1] >= 2 ? "down" : "") + "\">" + (t[1] === null ? "historique insuffisant" : fmt(t[1], 1) + " écart-type" + (Math.abs(t[1]) >= 2 ? "s : inhabituel" : "s")) + "</b>";
+    if (GEO_CANAL[a3]) h += "<span>Canal pour l'or</span><b>" + esc(GEO_CANAL[a3]) + "</b>";
+    h += "<span>Indice GPR du pays</span><b>" + (g ? fmt(g[0], 2) + " <small>(" + g[1] + "e percentile sur 10 ans, " + esc(G.gpr.month) + ")</small>" : "<small>pays non couvert</small>") + "</b>";
+    h += "<span>Avis de voyage US</span><b>" + (a ? ADV_LAB[a[0]] + " <small>(" + shortD(a[1]) + ")</small>" : "–") + "</b></div>";
+    if (a && a[2] && a[2].length) h += '<p class="hint">Raisons citées : ' + a[2].map(esc).join(", ") + (a[3] ? ' · <a href="' + esc(a[3]) + '" target="_blank" rel="noopener">avis officiel ↗</a>' : "") + "</p>";
+    var hs = (G.hot || []).map(function (x, i) { return [x, i]; }).filter(function (q) { return q[0][2] === a3; }).slice(0, 6);
+    if (hs.length) h += '<div class="pair-name" style="margin:8px 0 4px">Points chauds du jour</div><ul class="geo-news">' + hs.map(function (q) { var x = q[0]; return "<li>" + esc(CAMEO[x[3]] || "événement") + " · " + esc(x[6]) + " · " + x[4] + " mentions" + (x[7] ? ' · <a href="' + esc(x[7]) + '" target="_blank" rel="noopener">article ↗</a>' : "") + "</li>"; }).join("") + "</ul>";
+    var low = nm.toLowerCase(), news = (G.news || []).filter(function (n) { return n.t.toLowerCase().indexOf(low) >= 0; }).slice(0, 4);
+    if (news.length) h += '<div class="pair-name" style="margin:8px 0 4px">Titres du jour</div><ul class="geo-news">' + news.map(function (n) { return '<li><a href="' + esc(n.l) + '" target="_blank" rel="noopener">' + esc(n.t) + "</a></li>"; }).join("") + "</ul>";
+    $("mapInfo").innerHTML = h;
+  }
+  function renderGeo() {
+    var box = $("geoNote"); if (!box) return;
+    var G = geoData(), n = G.note, gp = G.gpr;
+    var sgn = function (v) { return v > 0 ? "+" + v : v < 0 ? "−" + Math.abs(v) : "0"; };
+    box.innerHTML = n ? '<small>Note proposée · pilier « Risque et refuge »</small><b class="geo-big ' + (n.v > 0 ? "up" : n.v < 0 ? "down" : "") + '">' + sgn(n.v) + '</b><ul class="geo-why">' + n.why.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + '</ul><p class="hint">Proposition automatique selon la grille de l\'étape 4 de ta feuille (+ = favorable à l\'or). Valide-la avec les news du jour avant de l\'écrire.</p>' : '<p class="hint">Note proposée : en attente du robot.</p>';
+    if (gp && gp.d && gp.d.length) {
+      var L = gp.d[gp.d.length - 1];
+      $("geoGpr").innerHTML = '<small>Indice de risque géopolitique mondial (GPR)</small><b class="geo-big">' + fmt(L[1], 0) + '</b><div class="kv"><span>Moyenne 7 jours</span><b>' + fmt(L[2], 0) + "</b><span>Moyenne 30 jours</span><b>" + fmt(L[3], 0) + "</b><span>Actes / menaces</span><b>" + fmt(L[4], 0) + " / " + fmt(L[5], 0) + "</b><span>Rang de la moyenne 7 j sur 3 ans</span><b>" + gp.pct3y + "e percentile</b><span>Dernier jour publié</span><b>" + shortD(gp.asof) + " " + badge(ageDays(gp.asof) <= 10 ? "ok" : "old") + "</b></div>" +
+        '<div class="pair-name" style="margin:8px 0 2px">Moyenne 7 jours, 12 derniers mois</div>' + spark(gp.d.slice(-365).map(function (x) { return { v: x[2] }; })).replace('class="spark"', 'class="spark" style="width:100%;height:56px"') + '<p class="hint">100 = moyenne 1985-2019. Au-dessus de 150, le monde est en tension forte (guerres, attentats majeurs).</p>';
+    } else $("geoGpr").innerHTML = '<p class="hint">Indice GPR : en attente du robot.</p>';
+    var C = G.c || {}, row = function (a3, t) { return "<td><a href=\"#\" data-gc=\"" + a3 + "\">" + esc(ctyName(a3)) + "</a></td>"; };
+    var es = (G.esc || []).filter(function (a3) { return C[a3]; });
+    $("geoEsc").innerHTML = es.length ? '<thead><tr><th>Pays</th><th class="r">Écart</th><th class="r">Conflits 24 h</th><th>Canal pour l\'or</th></tr></thead><tbody>' + es.map(function (a3) { var t = C[a3]; return "<tr>" + row(a3) + '<td class="r num ' + (t[1] >= 2 ? "down" : "") + '">' + fmt(t[1], 1) + '</td><td class="r num">' + t[3] + "</td><td>" + esc(GEO_CANAL[a3] || "–") + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">' + (G.days !== undefined && G.days < 5 ? "Historique en cours de constitution (" + G.days + " jours sur 30) : les escalades s'afficheront après 5 jours." : "Aucune escalade inhabituelle en ce moment.") + "</td></tr></tbody>";
+    var top = Object.keys(C).sort(function (a, b) { return C[b][3] - C[a][3]; }).slice(0, 12);
+    $("geoTop").innerHTML = top.length ? '<thead><tr><th>Pays</th><th class="r">Niveau</th><th class="r">Conflits</th><th class="r">Part</th><th class="r">Escalade</th></tr></thead><tbody>' + top.map(function (a3) { var t = C[a3]; return "<tr>" + row(a3) + '<td class="r num">' + t[0] + '</td><td class="r num">' + t[3] + '</td><td class="r num">' + fmt(t[5], 1) + ' %</td><td class="r num">' + (t[1] === null ? "–" : fmt(t[1], 1)) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">En attente du robot.</td></tr></tbody>';
+    var hot = (G.hot || []).slice(0, 15);
+    $("geoHot").innerHTML = hot.length ? '<thead><tr><th>Lieu</th><th>Pays</th><th>Type</th><th class="r">Mentions</th><th>Source</th></tr></thead><tbody>' + hot.map(function (h) { return "<tr><td>" + esc(h[6]) + "</td>" + row(h[2]) + "<td>" + esc(CAMEO[h[3]] || "–") + '</td><td class="r num">' + h[4] + "</td><td>" + (h[7] ? '<a href="' + esc(h[7]) + '" target="_blank" rel="noopener">article ↗</a>' : "–") + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">En attente du robot.</td></tr></tbody>';
+    $("geoNews").innerHTML = (G.news || []).slice(0, 10).map(function (n) { return '<li><a href="' + esc(n.l) + '" target="_blank" rel="noopener">' + esc(n.t) + "</a>" + (n.d ? " <small>" + esc(String(n.d).slice(11, 16)) + "</small>" : "") + "</li>"; }).join("") || '<li class="hint">En attente du robot.</li>';
+    var adv = G.adv ? Object.keys(G.adv).filter(function (k) { return ageDays(G.adv[k][1]) <= 14; }).sort(function (a, b) { return G.adv[b][1] < G.adv[a][1] ? -1 : 1; }).slice(0, 12) : [];
+    $("geoAdv").innerHTML = adv.length ? '<thead><tr><th>Pays</th><th>Niveau</th><th>Date</th></tr></thead><tbody>' + adv.map(function (k) { var a = G.adv[k]; return "<tr>" + row(k) + '<td class="' + (a[0] >= 3 ? "down" : "") + '">' + ADV_LAB[a[0]] + "</td><td>" + shortD(a[1]) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">' + (G.adv ? "Aucun avis modifié ces 14 derniers jours." : "En attente du robot.") + "</td></tr></tbody>";
+    $("geoQuake").innerHTML = (G.quakes || []).length ? '<tbody>' + G.quakes.slice(0, 6).map(function (q) { return '<tr><td class="num">M' + fmt(q[2], 1) + "</td><td>" + esc(q[3]) + "</td><td>" + shortD(q[4].slice(0, 10)) + "</td></tr>"; }).join("") + "</tbody>" : '<tbody><tr><td class="hint">Aucun séisme de magnitude 5,5 ou plus.</td></tr></tbody>';
+    $("geoMeta").innerHTML = G.asof ? "GDELT " + shortD(G.asof.slice(0, 10)) + " " + G.asof.slice(11, 16) + " UTC " + badge(ageDays(G.asof.slice(0, 10)) <= 1 ? "ok" : "old") + (gp ? " · GPR " + shortD(gp.asof) : "") : "robot : en attente";
+  }
+  function initGeo() {
+    var p = $("geopol"); if (!p) return;
+    p.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("[data-gc]"); if (!a) return; e.preventDefault(); var k = a.getAttribute("data-gc"); mapSel = k; geoPt = -1; $("mapCty").value = k; $("mapInd").value = String(MAPIND.map(function (m) { return m[0]; }).indexOf("geo")); drawMap(); $("monde").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    $("mapLeg").addEventListener("change", function (e) { var k = e.target.getAttribute && e.target.getAttribute("data-lay"); if (k) { geoLay[k] = e.target.checked; drawMap(); } });
   }
 
   /* ---------- Consensus des banques (recherche du 30 oct. 2026, à vérifier) ---------- */
@@ -2828,13 +2967,13 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités, réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"] },
     { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Cycle économique, projections de la Fed (dot plot) et de la BCE, calendrier avec analyse de chaque publication, indicateurs", p: ["cycle", "dotplot", "bceproj", "calendrier", "reactions", "surprises", "semaine", "indicateurs", "lecture"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Notes et articles sur le dollar, l'euro et les taux, consensus, vidéos", p: ["analyses", "consensus", "videos"] },
-    { id: "monde", t: "Monde & maritime", ic: "◍", d: "Carte macro des pays, détroits, navires en temps réel", p: ["monde", "maritime", "reserves"] },
+    { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique (tension, escalades, points chauds, avis officiels), carte macro, détroits, navires en temps réel", p: ["monde", "geopol", "maritime", "reserves"] },
     { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, moniteur multi-actifs, peur et avidité, sessions", p: ["marches", "multi", "sessions"] },
     { id: "position", t: "Positionnement", ic: "⚖", d: "Positions des fonds (COT), sentiment des particuliers", p: ["cot", "sentiment"] },
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, pivots, convertisseur, checklist, notes", p: ["calc", "outils", "check", "conseils", "notes", "liens"] },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source et liens", p: ["robot"] }
   ];
-  var WIDE = { scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   /* Nature des données de chaque panneau (demandée par l'audit) : EN DIRECT, DIFFÉRÉ, QUOTIDIEN, HEBDO, MENSUEL, ANNUEL, MANUEL, CALCUL */
   var NATURE = {
@@ -2843,7 +2982,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     banques: ["QUOTIDIEN", "taux, décisions et inflation relus par le robot (BRI, banques centrales, OCDE, Eurostat, BLS)"], selPanel: ["QUOTIDIEN", "fixings BCE"], agenda: ["OFFICIEL", "Fed : calendrier officiel lu par le robot ; autres banques : calendriers officiels publiés un an à l'avance"],
     semaine: ["HEBDO", "calendrier Forex Factory relu par le robot"], indicateurs: ["MENSUEL", "OCDE, instituts officiels et derniers chiffres publiés (calendrier), relus par le robot ; « auto » sur chaque case"], scorecard: ["CALCUL", "règles fixes sur les données du robot ; non validé statistiquement"],
     desk: ["QUOTIDIEN", "Trésor US, CBOE, BCE (robot)"], ecarts: ["QUOTIDIEN", "taux directeurs officiels"], saison: ["MENSUEL", "historique 20 ans, recalculé chaque semaine"], calendrier: ["HEBDO", "prévisions Forex Factory ; chiffres réels officiels quand disponibles"],
-    heat: ["QUOTIDIEN", "fixings BCE"], correl: ["QUOTIDIEN", "fixings BCE"], vola: ["QUOTIDIEN", "fixings BCE"], monde: ["ANNUEL", "Banque mondiale, FMI"], maritime: ["HEBDO", "FMI PortWatch ; carte des navires en direct (VesselFinder)"],
+    heat: ["QUOTIDIEN", "fixings BCE"], correl: ["QUOTIDIEN", "fixings BCE"], vola: ["QUOTIDIEN", "fixings BCE"], monde: ["QUOTIDIEN", "géopolitique : GDELT relu à chaque passage du robot ; macro : Banque mondiale (annuel)"], geopol: ["QUOTIDIEN", "GDELT (toutes les 15 min, relu par le robot), indice GPR (quotidien, quelques jours de retard), avis officiels US"], maritime: ["HEBDO", "FMI PortWatch ; carte des navires en direct (VesselFinder)"],
     consensus: ["DIFFÉRÉ", "relevé automatique des titres de presse (Google Actualités) à chaque passage du robot"], comite: ["CALCUL", "orientation calculée sur la dernière décision, l'inflation sous-jacente et les anticipations de marché"], probas: ["DIFFÉRÉ", "méthode CME FedWatch recalculée sur les contrats à terme fed funds (CBOT, différés) + marchés publics Kalshi et Polymarket"], sentiment: ["DIFFÉRÉ", "Myfxbook via le robot"],
     outils: ["CALCUL", "calculs dans votre navigateur"], pricing: ["DIFFÉRÉ", "Kalshi (robot) et courbes officielles quotidiennes"], analyses: ["DIFFÉRÉ", "flux RSS relus par le robot"], orvol: ["QUOTIDIEN", "GVZ (CBOE) et or"],
     courbe: ["QUOTIDIEN", "Trésor américain"], taylor: ["CALCUL", "chiffres officiels BLS et dot plot"], surprises: ["MENSUEL", "prévisions contre chiffres officiels"], reserves: ["ANNUEL", "Banque mondiale"], dotplot: ["TRIMESTRIEL", "projections officielles de la Fed"],
@@ -4323,7 +4462,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     MEETINGS.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
     applyFomc.done = true; renderAgenda();
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
@@ -4344,7 +4483,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
   buildBranches(); tagNature(); initMotion();
-  initCmd(); initCal(); initMap(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
+  initCmd(); initCal(); initMap(); initGeo(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
   initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });
