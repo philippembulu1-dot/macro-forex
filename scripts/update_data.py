@@ -623,6 +623,170 @@ def do_intraday(data):
          "daily", len(out) > 0, max((v["t"] for v in out.values()), default=None), err=("échec : " + ", ".join(bad)) if bad else None, url="https://finance.yahoo.com/")
 
 
+OUT_ETF = os.environ.get("MF_OUT_ETF", os.path.join(ROOT, "data", "gold-etf.json"))
+
+
+def ishares_snapshot(pid, slug, tick):
+    """Fiche quotidienne d'un ETF iShares (CSV public) : parts en circulation et quantité d'or détenue."""
+    url = "https://www.ishares.com/us/products/%s/%s/1467271812596.ajax?fileType=csv&fileName=%s_holdings&dataType=fund" % (pid, slug, tick)
+    txt = http("ish_%s.csv" % tick, url, tries=2, timeout=30)
+    if "%PDF" in txt[:10] or "<html" in txt[:300].lower():
+        raise ValueError("réponse non CSV")
+    asof, shares, oz, nav = None, None, None, None
+    lines = [l for l in txt.replace("\r", "").split("\n")]
+    head_i = None
+    for i, l in enumerate(lines[:40]):
+        ll = l.lower()
+        if "holdings as of" in ll or "fund holdings as of" in ll:
+            m = re.search(r'"?([A-Za-z]{3} \d{1,2}, \d{4})"?', l)
+            if m:
+                asof = datetime.strptime(m.group(1), "%b %d, %Y").strftime("%Y-%m-%d")
+        if ll.startswith("shares outstanding"):
+            shares = num(re.sub(r"[^\d.]", "", l.split(",", 1)[1] if "," in l else l))
+        if ll.startswith("ticker,") or ll.startswith('"ticker"'):
+            head_i = i
+            break
+    if head_i is not None:
+        rows = list(csv.reader(lines[head_i:head_i + 30]))
+        h = [c.strip().lower() for c in rows[0]]
+        qi = next((i for i, c in enumerate(h) if c in ("quantity", "shares")), None)
+        mi = next((i for i, c in enumerate(h) if "market value" in c), None)
+        for r in rows[1:]:
+            if len(r) > 1 and "gold" in " ".join(r).lower():
+                if qi is not None and qi < len(r):
+                    oz = num(re.sub(r"[^\d.]", "", r[qi]))
+                if mi is not None and mi < len(r):
+                    nav = num(re.sub(r"[^\d.]", "", r[mi]))
+                break
+    if not shares and not oz:
+        DIAG["ish_" + tick] = txt[:300]
+        raise ValueError("parts et onces introuvables")
+    return {"d": asof or TODAY, "shares": shares, "oz": oz, "val": nav}
+
+
+def gld_archive():
+    """Archive officielle GLD (SPDR) : tonnes d'or détenues, chaque jour ouvré."""
+    last = None
+    for url, hd in (("https://www.spdrgoldshares.com/assets/dynamic/GLD/GLD_US_archive_EN.csv", {"Referer": "https://www.spdrgoldshares.com/usa/historical-data/"}),
+                    ("https://spdrgoldshares.com/assets/dynamic/GLD/GLD_US_archive_EN.csv", {"Referer": "https://spdrgoldshares.com/usa/historical-data/", "Accept": "text/csv,*/*"}),
+                    ("https://www.spdrgoldshares.com/assets/dynamic/GLD/GLD_SG_archive_EN.csv", {"Referer": "https://www.spdrgoldshares.com/singapore/"})):
+        try:
+            txt = http("gld_%d.csv" % len(url), url, tries=1, timeout=40, headers=hd)
+            if txt[:5] == "%PDF-":
+                raise ValueError("PDF au lieu du CSV")
+            txt = txt.replace("\r\n", "\n").replace("\r", "\n")
+            rows = []
+            for line in txt.split("\n"):
+                try:
+                    rows.extend(csv.reader([line]))
+                except csv.Error:
+                    rows.append(line.split(","))
+            hi = next((i for i, r in enumerate(rows[:15]) if r and any("tonnes" in c.lower() for c in r)), None)
+            if hi is None:
+                raise ValueError("colonne des tonnes absente")
+            ct = next(i for i, c in enumerate(rows[hi]) if "tonnes" in c.lower())
+            out = []
+            for r in rows[hi + 1:]:
+                if len(r) <= ct or not r[0].strip():
+                    continue
+                d = None
+                for fmt_ in ("%d-%b-%Y", "%d-%b-%y", "%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y"):
+                    try:
+                        d = datetime.strptime(r[0].strip(), fmt_).strftime("%Y-%m-%d")
+                        break
+                    except ValueError:
+                        pass
+                v = num(re.sub(r"[^\d.\-]", "", r[ct]))
+                if d and v:
+                    out.append([d, round(v, 2)])
+            out.sort()
+            if len(out) < 20:
+                raise ValueError("trop peu de lignes")
+            return out
+        except Exception as e:
+            last = e
+    raise last
+
+
+def do_goldetf(data):
+    """Flux des ETF d'or : archive GLD si le fichier répond, sinon fiches quotidiennes mémorisées par le robot (GLD par l'archive, IAU par iShares)."""
+    st = {}
+    try:
+        with open(OUT_ETF, encoding="utf-8") as f:
+            st = json.load(f)
+    except Exception:
+        st = {}
+    st.setdefault("snap", {})
+    ok_any = False
+    try:
+        arc = gld_archive()
+        st["gld"] = arc[-400:]
+        note("etf.gld", "Or détenu par l'ETF GLD (SPDR, archive officielle, tonnes)", "daily", True, arc[-1][0], url="https://www.spdrgoldshares.com/usa/historical-data/")
+        ok_any = True
+    except Exception as e:
+        note("etf.gld", "Or détenu par l'ETF GLD (SPDR, archive officielle, tonnes)", "daily", False, err=e, url="https://www.spdrgoldshares.com/usa/historical-data/")
+    try:
+        sn = ishares_snapshot("239561", "ishares-gold-trust-fund", "IAU")
+        lst = st["snap"].setdefault("IAU", [])
+        if not lst or lst[-1]["d"] != sn["d"]:
+            lst.append(sn)
+        else:
+            lst[-1] = sn
+        st["snap"]["IAU"] = lst[-500:]
+        note("etf.iau", "ETF IAU (iShares) : parts et or détenu, mémorisés chaque jour", "daily", True, sn["d"], url="https://www.ishares.com/us/products/239561/ishares-gold-trust-fund")
+        ok_any = True
+    except Exception as e:
+        note("etf.iau", "ETF IAU (iShares) : parts et or détenu, mémorisés chaque jour", "daily", False, err=e, url="https://www.ishares.com/us/products/239561/ishares-gold-trust-fund")
+    st["generated"] = NOW.strftime("%Y-%m-%dT%H:%M:%SZ")
+    with open(OUT_ETF, "w", encoding="utf-8") as f:
+        json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
+    data["goldetf"] = {"gld": (st.get("gld") or [])[-260:], "snap": {k: v[-260:] for k, v in st["snap"].items()}}
+
+
+# Contrats à terme sur le taux des fonds fédéraux (CBOT, 30 jours) : base du calcul « méthode CME FedWatch »
+ZQ_M = "FGHJKMNQUVXZ"
+
+
+def do_zq(data):
+    out, bad = {}, []
+    y, m = NOW.year, NOW.month
+    for i in range(16):
+        yy, mm = y + (m - 1 + i) // 12, (m - 1 + i) % 12 + 1
+        sym = "ZQ%s%02d.CBT" % (ZQ_M[mm - 1], yy % 100)
+        try:
+            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=5d" % urllib.parse.quote(sym)
+            r = json.loads(http("zq_%s.json" % sym, url, tries=2, timeout=15))["chart"]["result"][0]
+            meta = r.get("meta") or {}
+            closes = [c for c in (r["indicators"]["quote"][0].get("close") or []) if c]
+            p_ = meta.get("regularMarketPrice") or (closes[-1] if closes else None)
+            if not p_ or not (80 < p_ < 101):
+                raise ValueError("prix absent")
+            t_ = meta.get("regularMarketTime")
+            out["%d-%02d" % (yy, mm)] = {"p": p_, "sym": sym, "t": datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%dT%H:%MZ") if t_ else None}
+        except Exception as e:
+            bad.append(sym)
+            DIAG["zq_" + sym] = fr_err(e)[:80]
+    data["zq"] = out
+    note("cbot.zq", "Contrats à terme fed funds (CBOT, via Yahoo) %d/16 mois : calcul méthode CME FedWatch" % len(out), "daily", len(out) >= 3,
+         max((v["t"] or "" for v in out.values()), default=None) or None, err=None if len(out) >= 3 else "contrats introuvables (%s)" % ", ".join(bad[:3]),
+         url="https://www.cmegroup.com/markets/interest-rates/stirs/30-day-federal-fund.html")
+
+
+def do_wgc(data):
+    """Veille de la dernière édition du rapport trimestriel du World Gold Council (Gold Demand Trends)."""
+    url = "https://www.gold.org/goldhub/research/gold-demand-trends"
+    try:
+        txt = http("wgc.html", url, tries=2, timeout=30)
+        eds = sorted(set(re.findall(r"gold-demand-trends-(q[1-4])-(20\d\d)", txt.lower())), key=lambda x: (x[1], x[0]))
+        if not eds:
+            raise ValueError("aucune édition trouvée")
+        q, yv = eds[-1]
+        data["wgc"] = {"latest": "%s %s" % (q.upper(), yv), "url": "https://www.gold.org/goldhub/research/gold-demand-trends/gold-demand-trends-%s-%s" % (q, yv)}
+        note("wgc.gdt", "Demande d'or (World Gold Council) : veille des nouvelles éditions", "quarterly", True, TODAY, url=url)
+    except Exception as e:
+        note("wgc.gdt", "Demande d'or (World Gold Council) : veille des nouvelles éditions", "quarterly", False, err=e, url=url)
+
+
 def do_gld(data):
     """Or détenu par le fonds GLD (SPDR Gold Shares), en tonnes : le plus grand ETF d'or, publié chaque jour par l'émetteur."""
     url = "https://www.spdrgoldshares.com/assets/dynamic/GLD/GLD_US_archive_EN.csv"
@@ -2042,7 +2206,7 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("gld", do_gld), ("cot2", do_cot_detail)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("wgc", do_wgc)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
