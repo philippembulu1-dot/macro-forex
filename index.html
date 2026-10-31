@@ -419,6 +419,27 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
 .bia .bsc { margin-left: auto; font: 11px var(--font-mono); color: var(--muted); }
 .bia ul { margin: 0; padding: 0 12px 10px 14px; list-style: none; font-size: 12px; }
 .bia li { margin: 4px 0; color: var(--muted); } .bia li b { color: var(--fg); font-weight: 600; }
+/* Cycle en 4 phases et moteurs du marché */
+.ph4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.ph4c { position: relative; border: 1px solid var(--line); padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow: hidden; }
+.ph4c small { font: 600 10px var(--font-mono); letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+.ph4c b { font: 600 13px var(--font-mono); }
+.ph4c .ph4s { font: 11px var(--font-mono); color: var(--muted); }
+.ph4c i { position: absolute; left: 0; bottom: 0; height: 3px; background: #4a4430; transition: width .8s cubic-bezier(.2,.8,.2,1); }
+.ph4c.on { border-color: var(--amber); background: var(--amber-soft); box-shadow: 0 0 0 1px var(--amber) inset; }
+.ph4c.on b, .ph4c.on small { color: var(--amber); } .ph4c.on i { background: var(--amber); }
+@media (max-width: 600px) { .ph4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.drvl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 1px; background: var(--line2); margin-top: 10px; }
+.drv { background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.drv.major { background-image: linear-gradient(90deg, rgba(242,176,30,.08), transparent 60%); }
+.drvh { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.drvh b { font: 600 13px var(--font-mono); }
+.drvr { font: 600 11px var(--font-mono); color: #111; background: var(--amber); width: 20px; height: 20px; display: inline-grid; place-items: center; }
+.drv:not(.major) .drvr { background: var(--line); color: var(--muted); }
+.drvz { margin-left: auto; font: 11px var(--font-mono); color: var(--muted); }
+.drvbar { height: 4px; background: var(--line2); } .drvbar i { display: block; height: 100%; background: var(--amber); transition: width .9s cubic-bezier(.2,.8,.2,1); }
+.drv:not(.major) .drvbar i { background: #6b5214; }
+.drvm { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font: 11px var(--font-mono); color: var(--muted); }
 /* ---------- Mouvement : réactions au toucher et à la souris ---------- */
 .pcard, .tile, .stat { background-image: radial-gradient(320px circle at var(--mx, -999px) var(--my, -999px), rgba(242,176,30,.075), transparent 45%); transition: border-color .25s, box-shadow .25s, transform .25s cubic-bezier(.2,.8,.2,1); }
 .panel { transition: border-color .3s, box-shadow .3s; }
@@ -887,8 +908,16 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <p class="note">Projections des services de la BCE publiées le 10 septembre 2026 (en % ; chômage en % de la population active). Chiffres repris d'un résumé de presse qui concorde avec la page officielle de la BCE : à vérifier sur le lien. Le robot surveille la page de la BCE et signale ici toute nouvelle publication (prochaine attendue en décembre).</p>
     </section>
 
+    <section class="panel" id="moteurs">
+      <div class="ph"><h2>Moteurs du marché</h2><span class="meta" id="drvMeta">robot</span></div>
+      <p class="hint" id="drvTop" style="max-width:none;padding:10px 12px 0"></p>
+      <div id="drvList" class="drvl"></div>
+      <p class="note">Huit moteurs suivis par les desks : Fed (taux à 2 ans), taux réels, dollar, pétrole, peur (VIX), anticipations d'inflation, emploi et inflation américaine. Classés du plus agité au plus calme ; les 4 premiers (et tout moteur au-delà de 1,5 écart-type) sont marqués « majeur ». Flèches = effet habituel du mouvement en cours sur l'or, le dollar et le Nasdaq. Touchez un moteur pour l'historique et le lien mesuré avec l'or.</p>
+    </section>
+
     <section class="panel" id="cycle">
       <div class="ph"><h2>Cycle économique américain : où en sommes-nous ?</h2><span class="meta" id="cyMeta">calcul maison · BLS</span></div>
+      <div id="cy4" style="padding:12px 12px 4px"></div>
       <div class="pgrid">
         <div class="pcard"><h3>Horloge du cycle</h3><svg id="cyClock" class="chart" style="max-width:360px;display:block;margin:0 auto" viewBox="0 0 320 320" role="img" aria-label="Horloge du cycle économique"></svg></div>
         <div class="pcard"><h3>Diagnostic</h3><div id="cyDiag"></div></div>
@@ -1986,7 +2015,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
      saisie datée et sourcée, marquée « à vérifier ».
      ===================================================================== */
   var CMDS = [
-    ["AM", "Ce matin (résumé)", "matin"], ["REACT", "Mémoire des réactions", "reactions"], ["DOTS", "Projections de la Fed (dot plot)", "dotplot"], ["BCEP", "Projections BCE zone euro", "bceproj"], ["CYC", "Cycle économique", "cycle"],
+    ["AM", "Ce matin (résumé)", "matin"], ["DRV", "Moteurs du marché", "moteurs"], ["REACT", "Mémoire des réactions", "reactions"], ["DOTS", "Projections de la Fed (dot plot)", "dotplot"], ["BCEP", "Projections BCE zone euro", "bceproj"], ["CYC", "Cycle économique", "cycle"],
     ["OR", "Or XAU/USD", "or"], ["GOLD", "Tableau de bord or (6 piliers)", "scorecard"], ["FX", "Paires", "paires"], ["FORCE", "Force des devises", "force"],
     ["CB", "Banques centrales", "banques"], ["ECO", "Indicateurs macro", "indicateurs"], ["CAL", "Calendrier économique", "calendrier"],
     ["AG", "Prochaines réunions", "agenda"], ["DESK", "Indicateurs des desks", "desk"], ["TX", "Taux, VIX, dollar", "taux"], ["DIFF", "Écarts de taux", "ecarts"],
@@ -2651,7 +2680,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
      BRANCHES : accueil en tuiles, chaque outil dans sa branche (31 oct. 2026)
      ===================================================================== */
   var BR = [
-    { id: "matin", t: "Ce matin", ic: "☀", d: "Résumé de la veille, publications du jour à l'heure de Kinshasa, biais par actif", p: ["matin"] },
+    { id: "matin", t: "Ce matin", ic: "☀", d: "Résumé de la veille, publications du jour à l'heure de Kinshasa, biais par actif, moteurs du marché", p: ["matin", "moteurs"] },
     { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, saisonnalité 20 ans", p: ["or", "orvol", "scorecard", "saison"] },
     { id: "devises", t: "Devises", ic: "⇄", d: "Paires, graphique, force des devises, appétit pour le risque, corrélations", p: ["selPanel", "paires", "force", "~duo", "heat", "correl", "vola"] },
     { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts de taux", p: ["pricing", "taylor", "ecarts", "taux", "desk"] },
@@ -2664,7 +2693,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, pivots, convertisseur, checklist, notes", p: ["calc", "outils", "check", "conseils", "notes", "liens"] },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source et liens", p: ["robot"] }
   ];
-  var WIDE = { matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   function buildBranches() {
     var main = document.querySelector(".main"), anchor = document.querySelector(".main > .grid"); /* après le bandeau et sa note */
@@ -2885,7 +2914,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* ---------- Recherche globale ---------- */
   var CUR_AL = { USD: "dollar américain états-unis usa us fed", EUR: "euro zone euro eurozone bce europe", GBP: "livre sterling royaume-uni angleterre boe", JPY: "yen japon boj", CHF: "franc suisse suisse bns",
     AUD: "dollar australien australie rba", CAD: "dollar canadien canada boc", NZD: "dollar néo-zélandais nouvelle-zélande rbnz" };
-  var KW = { matin: "ce matin résumé hier veille journée aujourd'hui biais brief", reactions: "réactions marché mémoire publication historique or dollar après", dotplot: "dot plot fed projections sep membres fomc taux médiane", bceproj: "bce projections zone euro europe croissance inflation scénarios ecb", cycle: "cycle économique récession sahm horloge expansion ralentissement stagflation reprise", orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
+  var KW = { moteurs: "moteurs drivers marché facteurs fed taux réels dollar pétrole peur vix inflation emploi", matin: "ce matin résumé hier veille journée aujourd'hui biais brief", reactions: "réactions marché mémoire publication historique or dollar après", dotplot: "dot plot fed projections sep membres fomc taux médiane", bceproj: "bce projections zone euro europe croissance inflation scénarios ecb", cycle: "cycle économique récession sahm horloge expansion ralentissement stagflation reprise", orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
     ecarts: "écart différentiel taux carry", taux: "rendement 10 ans vix dollar treasury", desk: "breakeven inflation anticipée gvz conditions financières", banques: "taux directeur décision",
     probas: "probabilité fedwatch kalshi polymarket", agenda: "réunion prochaine décision", comite: "comité hawkish dovish", actus: "communiqué actualité news", calendrier: "calendrier cpi nfp pib pmi publication",
     indicateurs: "inflation chômage pib salaires pmi indicateurs", analyses: "analyse banque note article ing goldman", consensus: "consensus prévision banques", videos: "vidéo youtube",
@@ -3026,6 +3055,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         what: "Part des comptes de particuliers (reliés à Myfxbook) qui sont acheteurs ou vendeurs sur cette paire.", how: "Les particuliers ont souvent tort aux extrêmes : au-delà de 70 % d'un côté, le marché a tendance à aller dans l'autre sens. À combiner avec la tendance et le COT des fonds.", src: "https://www.myfxbook.com/community/outlook", srcTxt: "API officielle, compte gratuit" });
     }
     if (type === "rx") return reactDetail(id);
+    if (type === "ph4") return detPhase(id);
+    if (type === "drv") return detDriver(id);
     if (type === "ev") { var ev_ = AUTO && AUTO.calendar && AUTO.calendar.events[+id]; if (ev_) evAnalysis(ev_); return; }
     if (type === "ind") {
       var row = IND[+id]; if (!row || row.g) return;
@@ -3529,7 +3560,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var fg = AUTO && AUTO.fng, v = vixNow();
     if (fg || v) pts.push("Ambiance : " + (fg ? "Peur et avidité <b>" + Math.round(fg.score) + "</b> (" + (fg.score < 25 ? "peur extrême" : fg.score < 45 ? "peur" : fg.score <= 55 ? "neutre" : fg.score <= 75 ? "avidité" : "avidité extrême") + ")" : "") + (v ? (fg ? ", " : "") + "VIX <b>" + fmt(v.v, 1) + "</b>" : "") + ".");
     var cy = typeof cycleCalc === "function" ? cycleCalc() : null;
-    if (cy) { var q = cy.g >= 0 ? (cy.i < 0 ? "rep" : "sur") : (cy.i >= 0 ? "sta" : "rec"); pts.push("Cycle américain : <b>" + QUAD[q][0].toLowerCase() + "</b> (" + QUAD[q][1] + ")."); }
+    if (cy) { var q = cy.g >= 0 ? (cy.i < 0 ? "rep" : "sur") : (cy.i >= 0 ? "sta" : "rec"); var c4 = typeof cycle4 === "function" ? cycle4() : null; pts.push("Cycle américain : <b>" + (c4 ? c4.P[c4.best].n.toLowerCase() + "</b> (" + c4.P[c4.best].s + " critères sur 5) ; tendance : " + QUAD[q][0].toLowerCase() + " (" + QUAD[q][1] + ")." : QUAD[q][0].toLowerCase() + "</b> (" + QUAD[q][1] + ").")); }
+    var dr = typeof DRV !== "undefined" ? DRV.map(function (d) { var c = drvCalc(d); return c ? { n: d.n, z: Math.abs(c.z) } : null; }).filter(Boolean).sort(function (a, b) { return b.z - a.z; }).slice(0, 4) : [];
+    if (dr.length) pts.push("Moteurs du moment : <b>" + dr.map(function (d) { return d.n.toLowerCase(); }).join("</b>, <b>") + "</b>.");
     var strong = B.filter(function (b) { return Math.abs(b.tot) >= 2; });
     if (strong.length) pts.push("Biais les plus nets : " + strong.map(function (b) { return "<b>" + b.n + " " + b.verd.toLowerCase() + "</b>"; }).join(", ") + ".");
     $("mtTop").innerHTML = '<ul class="advice" style="padding:10px 12px 4px 30px;margin:0">' + pts.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ul>";
@@ -3595,6 +3628,145 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       src: "https://finance.yahoo.com/", srcTxt: "bougies de 15 min et 1 h (non officiel)" });
   }
 
+
+  /* =====================================================================
+     CYCLE EN 4 PHASES (début, milieu, fin, contraction) ET MOTEURS DU MARCHÉ (31 oct. 2026)
+     ===================================================================== */
+  function cycle4() {
+    var c = AUTO && AUTO.cycle_src, x = cycleCalc(); if (!x || !c) return null;
+    var um = {}; c.unemp.forEach(function (p) { um[mIdx(p[0])] = p[1]; });
+    var uL = mIdx(c.unemp[c.unemp.length - 1][0]), uVals = c.unemp.map(function (p) { return p[1]; }), uMin = Math.min.apply(null, uVals);
+    var u3 = function (m) { var v = [m - 2, m - 1, m].map(function (k) { return um[k]; }).filter(function (v) { return v !== undefined; }); return v.length ? mean(v) : null; };
+    var sahmAt = function (m) { var now = u3(m), mins = []; for (var k = m - 12; k < m; k++) { var y = u3(k); if (y !== null) mins.push(y); } return now !== null && mins.length ? now - Math.min.apply(null, mins) : null; };
+    var recentSahm = false; for (var k = uL - 18; k < uL - 2; k++) { var s = sahmAt(k); if (s !== null && s >= 0.5) recentSahm = true; }
+    var curve = fred("T10Y2Y"), cv = curve ? curve.v : null, cur = fred("DFEDTARU"), mid = cur ? cur.v - 0.125 : null;
+    var L = typeof sepLR === "function" ? sepLR() : null, f0 = L ? L.ffr0 : null;
+    var pol = mid !== null && f0 !== null ? f0 - mid : null; /* > 0 : la Fed prévoit de monter ; < 0 : de baisser */
+    var du = x.u3 - x.u3_6, dc = x.cNow - x.c6, head = x.hNow;
+    var Y = function (ok, txt) { return { ok: !!ok, t: txt }; };
+    var P = {
+      early: { n: "Début de cycle", en: "Early", c: [
+        Y(recentSahm && x.sahm < 0.5, "sortie récente d'un signal de récession (règle de Sahm sur 18 mois)"),
+        Y(x.u3 - uMin >= 0.5 && du < 0, "chômage encore élevé mais en baisse"),
+        Y(x.a3 > x.a12, "créations d'emplois qui accélèrent"),
+        Y(dc < 0, "inflation sous-jacente en baisse"),
+        Y(pol !== null && pol < -0.1, "Fed qui prévoit de baisser ses taux")] },
+      mid: { n: "Milieu de cycle", en: "Mid", c: [
+        Y(x.a3 > 0 && x.a3 >= x.a12 * 0.8, "créations d'emplois positives et stables"),
+        Y(Math.abs(du) < 0.2, "chômage stable sur 6 mois"),
+        Y(x.cNow >= 1.5 && x.cNow <= 3 && Math.abs(dc) < 0.3, "inflation sous-jacente modérée et stable (1,5 à 3 %)"),
+        Y(cv !== null && cv > 0.5, "courbe des taux nettement positive (> 0,5 pt)"),
+        Y(pol !== null && Math.abs(pol) <= 0.1, "Fed qui ne prévoit ni hausse ni baisse")] },
+      late: { n: "Fin de cycle", en: "Late", c: [
+        Y(x.u3 - uMin <= 0.2, "chômage proche de son plus bas du cycle"),
+        Y(dc > 0 || (head !== null && head > 3), "inflation qui accélère ou inflation globale au-dessus de 3 %"),
+        Y(pol !== null && pol > 0.1, "Fed qui prévoit de monter ses taux"),
+        Y(cv !== null && cv < 0.5, "courbe des taux plate ou inversée (< 0,5 pt)"),
+        Y(x.a3 < x.a12, "créations d'emplois qui ralentissent")] },
+      contraction: { n: "Contraction", en: "Contraction", c: [
+        Y(x.sahm >= 0.5, "règle de Sahm déclenchée"),
+        Y(x.a3 < 0, "destructions d'emplois (moyenne 3 mois négative)"),
+        Y(du > 0.3, "chômage en hausse de plus de 0,3 pt sur 6 mois"),
+        Y(cv !== null && cv < 0, "courbe des taux inversée"),
+        Y(pol !== null && pol < -0.1, "Fed qui prévoit de baisser ses taux")] }
+    };
+    var order = ["early", "mid", "late", "contraction"], best = null;
+    order.forEach(function (k) { P[k].s = P[k].c.filter(function (q) { return q.ok; }).length; if (!best || P[k].s > P[best].s || (P[k].s === P[best].s && order.indexOf(k) > order.indexOf(best))) best = k; });
+    return { P: P, order: order, best: best, x: x };
+  }
+  var PH_IMPL = {
+    early: "Historiquement : actions (surtout cycliques et petites capitalisations) en tête, obligations moins recherchées, dollar souvent en baisse, or neutre.",
+    mid: "Historiquement : phase la plus longue ; actions encore porteuses (technologie), volatilité basse, dollar stable, or sans tendance nette.",
+    late: "Historiquement : matières premières, énergie et or mieux orientés ; actions plus fragiles et défensives préférées ; banques centrales restrictives ; dollar soutenu tant que la Fed monte ses taux.",
+    contraction: "Historiquement : obligations d'État et or recherchés, yen et franc suisse en hausse, actions en baisse, banques centrales qui baissent leurs taux."
+  };
+  function renderCycle4() {
+    var box = $("cy4"); if (!box) return;
+    var R = cycle4(); if (!R) { box.innerHTML = ""; return; }
+    box.innerHTML = '<div class="ph4">' + R.order.map(function (k, i) {
+      var p = R.P[k], on = k === R.best;
+      return '<div class="ph4c' + (on ? " on" : "") + '" data-det="ph4:' + k + '"><small>' + (i + 1) + ". " + p.en + '</small><b>' + p.n + '</b><span class="ph4s">' + p.s + " / 5 critères</span><i style=\"width:" + (p.s * 20) + '%"></i></div>';
+    }).join("") + "</div>" +
+      '<p class="hint" style="max-width:none;padding:6px 0 0"><b style="color:var(--amber)">Phase la plus probable : ' + R.P[R.best].n + "</b> (" + R.P[R.best].s + " critères sur 5). " + PH_IMPL[R.best] + " Touchez une phase pour voir chaque critère. L'horloge ci-dessous ne regarde que la direction (accélération ou ralentissement) ; les 4 phases regardent aussi les niveaux (chômage, courbe des taux, politique de la Fed) : les deux lectures peuvent différer.</p>";
+  }
+  function detPhase(k) {
+    var R = cycle4(); if (!R) return;
+    var p = R.P[k];
+    return openDetail({ t: "Cycle : " + p.n + " (" + p.en + ")", val: p.s + " critère(s) sur 5", sub: k === R.best ? "phase la plus probable aujourd'hui" : "phase la plus probable : " + R.P[R.best].n,
+      extra: '<h3>Critères</h3><ul class="advice" style="padding-top:0">' + p.c.map(function (q) { return '<li><b class="' + (q.ok ? "up" : "down") + '">' + (q.ok ? "✓" : "✗") + "</b> " + q.t + "</li>"; }).join("") + "</ul>",
+      now: PH_IMPL[k], how: "Les gérants (par exemple Fidelity) découpent le cycle en 4 phases : début (reprise après une récession), milieu (croissance régulière), fin (économie en surchauffe, banque centrale restrictive) et contraction (récession). Ici, chaque phase est testée sur 5 critères mesurés avec les chiffres officiels américains (BLS, Trésor, projections de la Fed) ; la phase qui en coche le plus l'emporte. C'est un repère, pas une prévision.",
+      src: "https://www.bls.gov/", srcTxt: "BLS, Trésor américain, projections de la Fed" });
+  }
+
+  /* Moteurs du marché : ce qui bouge le plus, comparé à son comportement habituel */
+  var DRV = [
+    { k: "fed", n: "Fed et taux courts", d: "taux US à 2 ans", get: function () { var f = fred("DGS2"); return f && f.hist; }, pct: false, u: " pt",
+      eff: [-1, 1, -1], why: "Le taux à 2 ans suit les anticipations sur la Fed : quand il monte, le marché attend des taux plus hauts." },
+    { k: "real", n: "Taux réels", d: "taux réel à 10 ans (TIPS)", get: function () { var f = fred("DFII10"); return f && f.hist; }, pct: false, u: " pt",
+      eff: [-1, 1, -1], why: "Le rendement après inflation : c'est le coût d'opportunité de détenir de l'or, qui ne rapporte rien." },
+    { k: "usd", n: "Dollar", d: "indice dollar (DXY)", get: function () { var f = fred("DXY"); return f && f.hist; }, pct: true, u: " %",
+      eff: [-1, 1, -1], why: "L'or et la plupart des actifs sont cotés en dollars : un dollar fort les renchérit pour le reste du monde." },
+    { k: "oil", n: "Pétrole et géopolitique", d: "pétrole WTI", get: function () { var o = AUTO && AUTO.daily && AUTO.daily.oil; return o && o.c; }, pct: true, u: " %",
+      eff: [1, 0, -1], why: "Le pétrole nourrit l'inflation et reflète les tensions (détroits, Moyen-Orient)." },
+    { k: "fear", n: "Peur et volatilité", d: "VIX", get: function () { var f = fred("VIXCLS"); return f && f.hist; }, pct: false, u: " pt",
+      eff: [1, 1, -1], why: "Quand la peur monte, les investisseurs vendent les actions et cherchent les refuges (or, dollar, yen)." },
+    { k: "infexp", n: "Anticipations d'inflation", d: "inflation attendue à 10 ans (point mort)", get: function () { var f = fred("T10YIE"); return f && f.hist; }, pct: false, u: " pt",
+      eff: [1, 0, -1], why: "Ce que le marché obligataire anticipe comme inflation : quand elle monte, l'or sert de protection." },
+    { k: "jobs", n: "Croissance et emploi", d: "créations d'emplois (moyenne 3 mois)", monthly: true, u: " k",
+      get: function () { var c = AUTO && AUTO.cycle_src; if (!c || !c.nfp) return null; var ch = mDiff(c.nfp), o = []; for (var i = 2; i < ch.length; i++) o.push([ch[i][0], (ch[i][1] + ch[i - 1][1] + ch[i - 2][1]) / 3]); return o; },
+      eff: [-1, 1, 1], why: "Une économie qui crée plus d'emplois pousse la Fed à rester ferme, soutient le dollar et les bénéfices des entreprises." },
+    { k: "cpi", n: "Inflation", d: "inflation sous-jacente américaine (sur 1 an)", monthly: true, u: " pt",
+      get: function () { var c = AUTO && AUTO.cycle_src; return c && c.core ? mPct(c.core, 12) : null; },
+      eff: [1, 1, -1], why: "Une inflation qui accélère oblige la Fed à durcir le ton (dollar soutenu, actions pénalisées) ; l'or sert de protection à long terme." }
+  ];
+  function drvCalc(dv) {
+    var s = dv.get(); if (!s || s.length < (dv.monthly ? 12 : 30)) return null;
+    s = s.filter(function (p) { return p[1] !== null && p[1] !== undefined && isFinite(p[1]); });
+    var lag = dv.monthly ? 3 : 20, ch = [];
+    for (var i = lag; i < s.length; i++) ch.push(dv.pct ? (s[i][1] / s[i - lag][1] - 1) * 100 : s[i][1] - s[i - lag][1]);
+    if (dv.monthly) { ch = []; var by = {}; s.forEach(function (p) { by[mIdx(p[0])] = p[1]; }); s.forEach(function (p) { var b = by[mIdx(p[0]) - lag]; if (b !== undefined) ch.push(p[1] - b); }); }
+    if (ch.length < 8) return null;
+    var last = ch[ch.length - 1], m = mean(ch), sd = Math.sqrt(ch.reduce(function (a, x) { return a + Math.pow(x - m, 2); }, 0) / (ch.length - 1)) || 1;
+    /* Lien mesuré avec l'or : corrélation des variations quotidiennes sur les dates communes */
+    var corr = null, g = AUTO && AUTO.daily && AUTO.daily.gold;
+    if (!dv.monthly && g && g.c) {
+      var gm = {}; g.c.forEach(function (p) { gm[p[0]] = p[1]; });
+      var xs = [], ys = [];
+      for (var j = 1; j < s.length; j++) { var d0 = String(s[j - 1][0]).slice(0, 10), d1 = String(s[j][0]).slice(0, 10); if (gm[d0] && gm[d1]) { xs.push(dv.pct ? s[j][1] / s[j - 1][1] - 1 : s[j][1] - s[j - 1][1]); ys.push(gm[d1] / gm[d0] - 1); } }
+      if (xs.length >= 40) { var mx = mean(xs), my = mean(ys), sxy = 0, sx = 0, sy = 0; xs.forEach(function (v, i) { sxy += (v - mx) * (ys[i] - my); sx += Math.pow(v - mx, 2); sy += Math.pow(ys[i] - my, 2); }); corr = { r: sxy / Math.sqrt(sx * sy), n: xs.length }; }
+    }
+    return { last: last, z: (last - m) / sd, asof: String(s[s.length - 1][0]).slice(0, 10), now: s[s.length - 1][1], corr: corr, lag: lag };
+  }
+  function renderDrivers() {
+    var box = $("drvList"); if (!box) return;
+    var rows = DRV.map(function (dv) { var c = drvCalc(dv); return c ? { dv: dv, c: c } : null; }).filter(Boolean).sort(function (a, b) { return Math.abs(b.c.z) - Math.abs(a.c.z); });
+    if (!rows.length) { box.innerHTML = '<p class="hint">Données du robot pas encore disponibles.</p>'; return; }
+    var arrow = function (e, up) { if (up === null) return '<b style="color:var(--muted)">≈</b>'; var v = e * (up ? 1 : -1); return v > 0 ? '<b class="up">↑</b>' : v < 0 ? '<b class="down">↓</b>' : '<b style="color:var(--muted)">≈</b>'; };
+    box.innerHTML = rows.map(function (r, i) {
+      var c = r.c, dv = r.dv, up = Math.abs(c.z) < 0.2 || Math.abs(c.last) < 1e-6 ? null : c.last >= 0, major = i < 4 || Math.abs(c.z) >= 1.5, w = Math.min(100, Math.abs(c.z) / 3 * 100);
+      var chTxt = (c.last >= 0 ? "+" : "−") + fmt(Math.abs(c.last), dv.u === " k" ? 0 : 2) + dv.u;
+      return '<div class="drv' + (major ? " major" : "") + '" data-det="drv:' + dv.k + '"><div class="drvh"><span class="drvr">' + (i + 1) + '</span><b>' + dv.n + "</b>" + (major ? '<span class="pill warn">majeur</span>' : "") + '<span class="drvz">' + (Math.abs(c.z) >= 2 ? "très fort" : Math.abs(c.z) >= 1 ? "fort" : Math.abs(c.z) >= 0.5 ? "modéré" : "calme") + "</span></div>" +
+        '<div class="drvbar"><i style="width:' + w.toFixed(0) + '%"></i></div>' +
+        '<div class="drvm"><span>' + esc(dv.d) + " : <b class=\"" + cls(c.last) + "\">" + chTxt + "</b> en " + (dv.monthly ? "3 mois" : "20 séances") + "</span><span>effet habituel → or " + arrow(dv.eff[0], up) + " · dollar " + arrow(dv.eff[1], up) + " · Nasdaq " + arrow(dv.eff[2], up) + "</span></div></div>";
+    }).join("");
+    var top = rows.slice(0, 4).map(function (r) { return r.dv.n.toLowerCase(); });
+    $("drvTop").innerHTML = "Les 4 moteurs qui bougent le plus en ce moment : <b>" + top.join("</b>, <b>") + "</b>. Le classement compare le mouvement récent de chaque moteur à ses mouvements habituels de l'année écoulée (écart-type).";
+    var g = AUTO && AUTO.daily && AUTO.daily.gold;
+    $("drvMeta").innerHTML = "robot · " + (rows[0] ? "jusqu'au " + shortD(rows.map(function (r) { return r.c.asof; }).sort().pop()) + " " + badge(ageDays(rows.map(function (r) { return r.c.asof; }).sort().pop()) <= 4 ? "ok" : "old") : "");
+  }
+  function detDriver(k) {
+    var dv = DRV.filter(function (d) { return d.k === k; })[0]; if (!dv) return; var c = drvCalc(dv); if (!c) return;
+    var s = dv.get().filter(function (p) { return p[1] !== null; }).slice(-(dv.monthly ? 24 : 130));
+    var eff = function (e) { return e > 0 ? "en hausse" : e < 0 ? "en baisse" : "sans effet net"; };
+    return openDetail({ t: "Moteur : " + dv.n, val: fmt(c.now, dv.k === "jobs" ? 0 : 2) + ({ fed: " %", real: " %", infexp: " %", cpi: " %", jobs: " k", oil: " $" }[dv.k] || ""), sub: esc(dv.d) + " · au " + shortD(c.asof),
+      chart: s.map(function (p) { return [String(p[0]).slice(0, 10), p[1]]; }),
+      extra: '<h3>Intensité</h3><div class="stats"><div class="stat"><small>Mouvement récent</small><b class="' + cls(c.last) + '">' + (c.last >= 0 ? "+" : "−") + fmt(Math.abs(c.last), dv.u === " k" ? 0 : 2) + dv.u + '</b></div><div class="stat"><small>Par rapport à l\'habitude</small><b>' + fmt(Math.abs(c.z), 1) + ' écart-type</b></div>' +
+        (c.corr ? '<div class="stat"><small>Lien mesuré avec l\'or</small><b>' + fmt(c.corr.r, 2) + '</b></div><div class="stat"><small>Jours comparés</small><b>' + c.corr.n + "</b></div>" : "") + "</div>" +
+        (c.corr ? '<p class="hint" style="max-width:none">Corrélation des variations quotidiennes avec l\'or sur ' + c.corr.n + " jours : " + (Math.abs(c.corr.r) < 0.15 ? "presque aucun lien en ce moment." : (c.corr.r > 0 ? "ils bougent plutôt dans le même sens" : "ils bougent plutôt en sens inverse") + (Math.abs(c.corr.r) >= 0.4 ? ", lien fort." : ", lien modéré.")) + "</p>" : ""),
+      now: "Quand ce moteur monte, l'effet habituel est : or " + eff(dv.eff[0]) + ", dollar " + eff(dv.eff[1]) + ", Nasdaq " + eff(dv.eff[2]) + ". " + dv.why,
+      how: "Un moteur est « majeur » quand il bouge nettement plus que d'habitude : on compare son mouvement sur " + (dv.monthly ? "3 mois" : "20 séances") + " à tous ses mouvements de même durée sur l'historique disponible (en écarts-types). Les effets indiqués sont les relations habituelles ; elles peuvent s'inverser pendant un temps, d'où la corrélation mesurée.",
+      src: dv.monthly ? "https://www.bls.gov/" : (dv.k === "oil" ? "https://finance.yahoo.com/" : "https://home.treasury.gov/"), srcTxt: "chiffres relevés par le robot" });
+  }
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
   function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
@@ -3608,7 +3780,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   $("hmTVfx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-forex-heat-map.js", { width: "100%", height: 420, currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "NZD"], isTransparent: true, colorTheme: "dark", locale: "fr" }, "Carte TradingView"); });
   $("hmTVspx").addEventListener("click", function () { tvEmbed($("hmTVBox"), "embed-widget-stock-heatmap.js", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "fr", colorTheme: "dark", hasTopBar: false, isZoomEnabled: true, width: "100%", height: 460 }, "Carte TradingView"); });
 
-  function renderAuto() { if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
