@@ -849,7 +849,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         </div>
         <div class="out" id="tyOut" aria-live="polite"></div>
       </div>
-      <p class="note">Formule : taux = r* + inflation + 0,5 × (inflation − cible) + poids × écart de production, avec écart de production ≈ 2 × (u* − chômage) (loi d'Okun). Inflation et chômage : derniers chiffres officiels (BLS) récupérés par le robot, modifiables. r* et u* sont des hypothèses (ordre de grandeur des estimations publiques de la Fed), à ajuster. La Fed ne suit pas mécaniquement cette règle : c'est un repère pour juger si sa politique est plutôt restrictive ou accommodante.</p>
+      <p class="hint" id="tySrc" style="max-width:none;padding:0 12px"></p>
+      <p class="note">Formule : taux = r* + inflation + 0,5 × (inflation − cible) + poids × écart de production, avec écart de production ≈ 2 × (u* − chômage) (loi d'Okun). Inflation et chômage : derniers chiffres officiels (BLS) récupérés par le robot, modifiables. r* et u* viennent des projections de long terme de la Fed (dot plot), modifiables. La Fed ne suit pas mécaniquement cette règle : c'est un repère pour juger si sa politique est plutôt restrictive ou accommodante.</p>
     </section>
 
     <section class="panel" id="surprises">
@@ -3098,12 +3099,26 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* Règle de Taylor */
   function initTaylor() {
     ["tyInf", "tyU", "tyR", "tyUs", "tyT", "tyW"].forEach(function (id) { $(id).addEventListener("input", calcTaylor); $(id).addEventListener("change", calcTaylor); });
+    ["tyR", "tyUs"].forEach(function (id) { $(id).addEventListener("input", function () { tyTouched = true; }); });
   }
-  var tyAuto = false;
+  var tyAuto = false, tySep = false, tyTouched = false;
+  /* Taux neutre et chômage d'équilibre tirés du dot plot (projections « long terme » de la Fed) */
+  function sepLR() {
+    var f = AUTO && AUTO.projections && AUTO.projections.fed; if (!f || !f.median) return null;
+    var M = f.median, i = M.years.indexOf("Longer run"); if (i < 0) return null;
+    var g = function (k) { return M.rows[k] && M.rows[k].v[i] !== null && M.rows[k].v[i] !== undefined ? M.rows[k].v[i] : null; };
+    var ffr = g("ffr"), pce = g("pce"), un = g("unemp"); if (ffr === null || un === null) return null;
+    var y0 = M.years[0], i0 = 0;
+    return { date: f.date, url: f.url, ffr: ffr, pce: pce === null ? 2 : pce, rstar: ffr - (pce === null ? 2 : pce), ustar: un, y0: y0, ffr0: M.rows.ffr ? M.rows.ffr.v[i0] : null };
+  }
   function fillTaylor() {
     var D = AUTO && AUTO.derived || {};
     if (!tyAuto && D.us_core && D.us_unemp) { $("tyInf").value = String(D.us_core.v).replace(".", ","); $("tyU").value = String(D.us_unemp.v).replace(".", ","); tyAuto = true; }
-    $("tyMeta").innerHTML = D.us_core ? "inflation sous-jacente IPC " + shortD(D.us_core.asof) + " · chômage " + (D.us_unemp ? shortD(D.us_unemp.asof) : "–") + " (BLS)" : "en attente des chiffres BLS";
+    var L = sepLR();
+    if (L && !tySep && !tyTouched) { $("tyR").value = fmt(L.rstar, 2); $("tyUs").value = fmt(L.ustar, 1); tySep = true; }
+    $("tyMeta").innerHTML = (D.us_core ? "inflation sous-jacente IPC " + shortD(D.us_core.asof) + " · chômage " + (D.us_unemp ? shortD(D.us_unemp.asof) : "–") + " (BLS)" : "en attente des chiffres BLS") +
+      (L ? " · r* et u* : dot plot du " + shortD(L.date) + " " + badge(ageDays(L.date) <= 100 ? "ok" : "old") : "");
+    $("tySrc").innerHTML = L ? "Valeurs de départ tirées des projections « long terme » de la Fed (" + shortD(L.date) + ") : taux directeur de long terme " + fmt(L.ffr, 2) + " % − inflation de long terme " + fmt(L.pce, 1) + " % = <b>r* " + fmt(L.rstar, 2) + " %</b> ; chômage de long terme <b>u* " + fmt(L.ustar, 1) + " %</b>. Mises à jour automatiquement à chaque nouveau dot plot (4 fois par an), sauf si vous modifiez les cases." : "Dot plot pas encore lu par le robot : r* et u* sont des hypothèses à ajuster.";
     calcTaylor();
   }
   function calcTaylor() {
@@ -3113,6 +3128,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     out.innerHTML = '<div class="stat big"><small>Taux « recommandé » par la règle</small><b>' + fmt(rate, 2) + " %</b></div>" +
       '<div class="stat"><small>Taux actuel de la Fed</small><b>' + (cur ? fmt(lo, 2) + "–" + fmt(cur.v, 2) + " %" : "–") + "</b></div>" +
       '<div class="stat"><small>Écart règle − Fed</small><b class="' + (d === null ? "" : d > 0 ? "up" : "down") + '">' + (d === null ? "–" : (d >= 0 ? "+" : "−") + fmt(Math.abs(d), 2) + " pt") + "</b></div>" +
+      (function () { var L = sepLR(); if (!L || L.ffr0 === null) return ""; var dd = rate - L.ffr0; return '<div class="stat"><small>Ce que la Fed prévoit (fin ' + L.y0 + ', dot plot)</small><b>' + fmt(L.ffr0, 2) + ' %</b></div><div class="stat"><small>Écart règle − prévision de la Fed</small><b class="' + (dd > 0 ? "up" : "down") + '">' + (dd >= 0 ? "+" : "−") + fmt(Math.abs(dd), 2) + " pt</b></div>"; })() +
       '<div class="stat"><small>Écart de production estimé</small><b>' + (gap >= 0 ? "+" : "−") + fmt(Math.abs(gap), 1) + " %</b></div>" +
       '<div class="stat"><small>Inflation au-dessus de la cible</small><b>' + (pi - t >= 0 ? "+" : "−") + fmt(Math.abs(pi - t), 1) + " pt</b></div>" +
       (d === null ? "" : '<div class="stat" style="grid-column:1/-1"><small>Lecture</small><b style="font-size:13px;font-family:var(--font-body);font-weight:400">' + (d > 0.5 ? "La règle suggère des taux <b>plus hauts</b> : la Fed est plutôt accommodante par rapport à l'inflation et à l'emploi. Cela peut alimenter des anticipations de hausse (bon pour le dollar, moins pour l'or)." : d < -0.5 ? "La règle suggère des taux <b>plus bas</b> : la Fed est plutôt restrictive. Cela peut alimenter des anticipations de baisse (moins bon pour le dollar, favorable à l'or)." : "La Fed est proche de ce que suggère la règle.") + "</b></div>");
@@ -3228,18 +3244,25 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   }
 
   /* Cycle économique américain */
+  /* Séries mensuelles avec mois manquants (ex. octobre 2025, shutdown) : calculs par date, jamais par position */
+  function mIdx(d) { return parseInt(String(d).slice(0, 4), 10) * 12 + parseInt(String(d).slice(5, 7), 10) - 1; }
+  function mDiff(s) { var o = []; for (var i = 1; i < s.length; i++) if (mIdx(s[i][0]) - mIdx(s[i - 1][0]) === 1) o.push([s[i][0], s[i][1] - s[i - 1][1]]); return o; }
+  function mPct(s, lag) { var by = {}; s.forEach(function (p) { by[mIdx(p[0])] = p[1]; }); var o = []; s.forEach(function (p) { var b = by[mIdx(p[0]) - lag]; if (b) o.push([p[0], (p[1] / b - 1) * 100]); }); return o; }
   function cycleCalc() {
     var c = AUTO && AUTO.cycle_src; if (!c || !c.nfp || c.nfp.length < 16 || !c.unemp || c.unemp.length < 18) return null;
-    var nfpCh = []; for (var i = 1; i < c.nfp.length; i++) nfpCh.push([c.nfp[i][0], c.nfp[i][1] - c.nfp[i - 1][1]]);
+    var nfpCh = mDiff(c.nfp);
     var last = function (a, n) { return a.slice(-n).map(function (p) { return p[1]; }); };
     var a3 = mean(last(nfpCh, 3)), a12 = mean(last(nfpCh, 12));
-    var u = c.unemp.map(function (p) { return p[1]; }), u3 = function (end) { return mean(u.slice(end - 3, end)); }, n = u.length;
-    var u3now = u3(n), mins = []; for (var k = n - 15; k <= n - 3; k++) if (k >= 3) mins.push(u3(k));
-    var sahm = u3now - Math.min.apply(null, mins), u3_6 = u3(n - 6);
-    var yoy = function (s) { var out = []; for (var j = 12; j < s.length; j++) out.push([s[j][0], (s[j][1] / s[j - 12][1] - 1) * 100]); return out; };
+    var um = {}; c.unemp.forEach(function (p) { um[mIdx(p[0])] = p[1]; });
+    var uL = mIdx(c.unemp[c.unemp.length - 1][0]);
+    var u3 = function (m) { var v = [m - 2, m - 1, m].map(function (k) { return um[k]; }).filter(function (x) { return x !== undefined; }); return v.length ? mean(v) : null; };
+    var u3now = u3(uL), mins = []; for (var k = uL - 12; k < uL; k++) { var x = u3(k); if (x !== null) mins.push(x); }
+    var sahm = Math.round((u3now - Math.min.apply(null, mins)) * 100) / 100 + 0, u3_6 = u3(uL - 6);
+    var yoy = function (s) { return mPct(s, 12); };
     var core = yoy(c.core || []), head = yoy(c.cpi || []);
     if (core.length < 7) return null;
-    var cNow = core[core.length - 1][1], c6 = core[core.length - 7][1];
+    var cNow = core[core.length - 1][1], c6p = core.filter(function (p) { return mIdx(p[0]) === mIdx(core[core.length - 1][0]) - 6; })[0];
+    if (!c6p) return null; var c6 = c6p[1];
     var clamp = function (x) { return Math.max(-1, Math.min(1, x)); };
     var g = clamp((a3 - a12) / 100) * 0.6 + clamp(-(u3now - u3_6) / 0.5) * 0.4, inf = clamp((cNow - c6) / 0.5);
     return { a3: a3, a12: a12, u3: u3now, u3_6: u3_6, sahm: sahm, cNow: cNow, c6: c6, hNow: head.length ? head[head.length - 1][1] : null, g: g, i: inf, asof: c.nfp[c.nfp.length - 1][0], nfpCh: nfpCh, core: core };
@@ -3304,9 +3327,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     /* Historique officiel et taille d'une vraie surprise */
     var C = AUTO && AUTO.cycle_src, hist = null, unit = "", note_ = "";
     if (isUSD && C) {
-      if (/Non-Farm|Employment Change/i.test(e.t) && C.nfp) { hist = []; for (var i = 1; i < C.nfp.length; i++) hist.push([C.nfp[i][0], C.nfp[i][1] - C.nfp[i - 1][1]]); unit = " k"; }
+      if (/Non-Farm|Employment Change/i.test(e.t) && C.nfp) { hist = mDiff(C.nfp); unit = " k"; }
       else if (/Unemployment Rate/i.test(e.t) && C.unemp) { hist = C.unemp; unit = " %"; }
-      else if (/CPI/i.test(e.t) && C.cpi) { var src = /Core/i.test(e.t) ? C.core : C.cpi; hist = []; if (/y\/y/i.test(e.t)) { for (var j = 12; j < src.length; j++) hist.push([src[j][0], (src[j][1] / src[j - 12][1] - 1) * 100]); } else { for (var k = 1; k < src.length; k++) hist.push([src[k][0], (src[k][1] / src[k - 1][1] - 1) * 100]); } unit = " %"; }
+      else if (/CPI/i.test(e.t) && C.cpi) { var src = /Core/i.test(e.t) ? C.core : C.cpi; hist = mPct(src, /y\/y/i.test(e.t) ? 12 : 1); unit = " %"; }
       if (hist && hist.length > 6) {
         var ch = []; for (var q = 1; q < hist.length; q++) ch.push(hist[q][1] - hist[q - 1][1]);
         var m = mean(ch), sd = Math.sqrt(ch.reduce(function (a, x) { return a + Math.pow(x - m, 2); }, 0) / (ch.length - 1));
