@@ -3001,7 +3001,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   }
 
   /* ---------- Calendrier économique : vues pro (Myfxbook, Investing.com) et terminal ---------- */
-  var CALV = { pro: { src: "https://widgets.myfxbook.com/widgets/calendar.html?lang=fr&impacts=0,1,2,3&symbols=AUD,CAD,CHF,CNY,EUR,GBP,JPY,NZD,USD", t: "Myfxbook", note: "Calendrier Myfxbook en direct : impact (faible, moyen, fort), chiffres réel, prévu et précédent mis à jour à la seconde de la publication, compte à rebours, filtres par devise et par impact, heures dans le fuseau de ton appareil. Vérifié depuis nos serveurs le 31 oct. 2026." } };
+  var CALV = { pro: { src: "https://widgets.myfxbook.com/widgets/calendar.html?lang=fr&impacts=0,1,2,3&symbols=AUD,CAD,CHF,CNY,EUR,GBP,JPY,NZD,USD", t: "Myfxbook", note: "Calendrier Myfxbook en direct : impact (faible, moyen, fort), chiffres réel, prévu et précédent, compte à rebours, filtres par devise et par impact, heures dans le fuseau de ton appareil. Vérifié dans un vrai navigateur le 31 oct. 2026 : le tableau s'affiche, mais le module de mise à jour à la seconde de Myfxbook est bloqué par Myfxbook lui-même ; recharge la page (ou l'onglet) juste après une publication pour voir le chiffre réel. La vue « Terminal » reçoit aussi les chiffres réels à chaque passage du robot." } };
   function showCalView(v) {
     if (!CALV[v] && v !== "term") v = "pro";
     try { localStorage.setItem("mf_calv", v); } catch (e) { }
