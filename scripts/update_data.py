@@ -1726,12 +1726,7 @@ def do_reactions(data):
         except Exception:
             continue
         cands.append({"d": t.strftime("%Y-%m-%dT%H:%M:%SZ"), "c": e["c"], "t": e["t"], "type": react_type(e["t"]), "i": "High", "f": e.get("f") or "", "p": e.get("p") or "", "a": e.get("a") or "", "src": "FF"})
-    try:
-        bls = bls_schedule()
-        cands += [x for x in bls if x["d"] >= (NOW - timedelta(days=720)).strftime("%Y-%m-%d")]
-        note("react.bls", "Calendrier officiel des publications IPC et emploi (BLS)", "monthly", True, TODAY, url="https://www.bls.gov/schedule/")
-    except Exception as e:
-        note("react.bls", "Calendrier officiel des publications IPC et emploi (BLS)", "monthly", False, err=e, url="https://www.bls.gov/schedule/")
+    # Calendrier BLS (rattrapage 2 ans) : testé le 31 oct. 2026, le site refuse les serveurs de GitHub (403). Mémoire construite au fil des publications.
     todo = []
     for c in cands:
         ts = datetime.strptime(c["d"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()

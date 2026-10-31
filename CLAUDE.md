@@ -19,7 +19,7 @@
 8. Ne jamais prétendre qu'une source marche sans l'avoir exécutée. **Vérifier chaque source avec un vrai appel réseau** et corriger (le premier jet a été écrit sans accès Internet : voir §6).
 
 ## 3. État actuel (ce qui existe déjà)
-Fichiers : `index.html` (site complet, ~1100 lignes de JS), `scripts/update_data.py` (robot, bibliothèque standard Python), `.github/workflows/update-data.yml` (cron toutes les 2 h + lancement manuel, permission `contents: write`).
+Fichiers : `index.html` (site complet, ~1100 lignes de JS), `scripts/update_data.py` (robot, bibliothèque standard Python), `.github/workflows/update-data.yml` (cron toutes les 30 min + lancement manuel, permission `contents: write`).
 
 Déjà fait :
 - Bandeau de cotations TradingView (XAUUSD, NAS100, paires, US10Y, DXY, BTC) + performances de l'or (jour / semaine / 7 j / 30 j, hauts/bas, SMA5/20) via PAXG sur Binance (proxy étiqueté).
@@ -89,3 +89,4 @@ Avant d'ajouter des indicateurs, **rechercher sur le web et citer des sources** 
 - **Remplaçants qui marchent** : Trésor US (2/5/10 ans nominaux et réels), CBOE (VIX, GVZ), Fed de New York (fourchette cible), BCE (taux de dépôt, taux de change → DXY recalculé), BLS v1 sans clé (IPC, chômage, NFP), Fed de Chicago (NFCI, fichier arrêté au 24 avr. 2026), FMI PortWatch via ArcGIS (requête « year >= … », 28 détroits), Banque mondiale, Eurostat/BCE IPCH (s'arrêtent à déc. 2025 côté source), BoE, BoC, BNS, ONS, CFTC, CNN, Kalshi, Polymarket, Forex Factory (semaine en cours uniquement, sans chiffres réels), flux RSS des 7 autres banques, YouTube (BFM Business, Bloomberg, CNBC, Kitco).
 - **Sans remplaçant gratuit** : spreads ICE (HY, IG), STLFSI, bilan de la Fed, PCE sous-jacent, taux RBA (saisie manuelle).
 - Le robot se relance tout seul à chaque envoi de `scripts/update_data.py` ou du workflow ; chronomètre global 7 min ; enregistrement sans conflit.
+- **31 oct. 2026** : Yahoo Finance (`query1.finance.yahoo.com/v8/finance/chart`, sans clé, non officiel) marche depuis GitHub : clôtures quotidiennes de 12 actifs et bougies 15 min (mémoire des réactions, `data/reactions.json`). Calendrier BLS (`bls.ics`) : 403, même avec un robot identifié. Les passages programmés GitHub sont retardés (≈ 30 min) ou sautés : cron passé à toutes les 30 min.
