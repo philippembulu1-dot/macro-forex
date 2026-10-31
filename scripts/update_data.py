@@ -405,6 +405,8 @@ def fallbacks(data):
                 ser[x["seriesID"]] = sorted(("%s-%s-01" % (o["year"], o["period"][1:]), num(o["value"])) for o in x["data"]
                                             if o["period"].startswith("M") and o["period"] != "M13" and num(o["value"]) is not None)
             D = data["derived"]
+            data["cycle_src"] = {"unemp": ser.get("LNS14000000", [])[-36:], "nfp": ser.get("CES0000000001", [])[-36:],
+                                 "cpi": ser.get("CUSR0000SA0", [])[-48:], "core": ser.get("CUSR0000SA0L1E", [])[-48:]}
             for sid, key in (("CUSR0000SA0", "us_cpi"), ("CUSR0000SA0L1E", "us_core")):
                 y = yoy(ser.get(sid))
                 if y:
@@ -1460,6 +1462,115 @@ def do_surprises(data):
          url="https://www.forexfactory.com/calendar")
 
 
+# ---------------------------------------------------------------- Projections de la Fed (SEP, « dot plot ») et veille des projections de la BCE
+from html.parser import HTMLParser
+
+
+class Tables(HTMLParser):
+    """Lit tous les tableaux d'une page : [(titre précédent, [[cellules]])]."""
+    def __init__(self):
+        super().__init__()
+        self.tables, self.cur, self.row, self.cell, self.last_head, self.in_head, self.buf = [], None, None, None, "", False, ""
+
+    def handle_starttag(self, tag, a):
+        if tag in ("h3", "h4", "h5", "caption"):
+            self.in_head, self.buf = True, ""
+        elif tag == "table":
+            self.cur = []
+        elif tag == "tr" and self.cur is not None:
+            self.row = []
+        elif tag in ("td", "th") and self.row is not None:
+            self.cell = ""
+
+    def handle_endtag(self, tag):
+        if tag in ("h3", "h4", "h5", "caption") and self.in_head:
+            self.in_head = False
+            if self.buf.strip():
+                self.last_head = re.sub(r"\s+", " ", self.buf).strip()
+        elif tag in ("td", "th") and self.cell is not None and self.row is not None:
+            self.row.append(re.sub(r"\s+", " ", self.cell).strip())
+            self.cell = None
+        elif tag == "tr" and self.row is not None and self.cur is not None:
+            if self.row:
+                self.cur.append(self.row)
+            self.row = None
+        elif tag == "table" and self.cur is not None:
+            self.tables.append((self.last_head, self.cur))
+            self.cur = None
+
+    def handle_data(self, d):
+        if self.in_head:
+            self.buf += d
+        if self.cell is not None:
+            self.cell += d
+
+
+def do_projections(data):
+    P = {}
+    # --- Fed : dernière page « fomcprojtabl » trouvée sur le calendrier du FOMC
+    try:
+        cal = http("fomc_cal.html", "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm", timeout=40)
+        dates = sorted(set(re.findall(r"fomcprojtabl(\d{8})\.htm", cal)))
+        if not dates:
+            raise ValueError("aucune page de projections trouvée sur le calendrier")
+        d8 = dates[-1]
+        url = "https://www.federalreserve.gov/monetarypolicy/fomcprojtabl%s.htm" % d8
+        tp = Tables()
+        tp.feed(http("fomc_sep.html", url, timeout=40))
+        med, dots = None, None
+        for head, rows in tp.tables:
+            flat = " ".join(" ".join(r) for r in rows)
+            if med is None and "Change in real GDP" in flat and "Federal funds rate" in flat:
+                yrs = None
+                for r in rows[:3]:
+                    ys = [c for c in r if re.match(r"^(\d{4}|Longer run)$", c)]
+                    if len(ys) >= 3:
+                        yrs = ys[:len(ys) // 3] if len(ys) >= 9 else ys
+                        break
+                if not yrs:
+                    continue
+                n = len(yrs)
+                med = {"years": yrs, "rows": {}}
+                for r in rows:
+                    lab = re.sub(r"\d+$", "", r[0]).strip() if r else ""
+                    for key, rx in (("gdp", r"^Change in real GDP"), ("unemp", r"^Unemployment rate"), ("pce", r"^PCE inflation"),
+                                    ("core", r"^Core PCE inflation"), ("ffr", r"^Federal funds rate")):
+                        if re.match(rx, lab) and key not in med["rows"]:
+                            vals = [num(c) for c in r[1:1 + n]]
+                            prev_row = rows[rows.index(r) + 1] if rows.index(r) + 1 < len(rows) else []
+                            prev = [num(re.sub(r"[()]", "", c)) for c in prev_row[1:1 + n]] if prev_row and re.search(r"projection", prev_row[0], re.I) else None
+                            med["rows"][key] = {"v": vals, "prev": prev}
+            if dots is None and re.search(r"Figure 2", head or "") or (dots is None and rows and re.match(r"^\d\.\d{3}$", (rows[1][0] if len(rows) > 1 and rows[1] else ""))):
+                hdr = rows[0]
+                yrs = [c for c in hdr[1:] if re.match(r"^(\d{4}|Longer run)$", c)]
+                lev = []
+                for r in rows[1:]:
+                    x = num(r[0]) if r else None
+                    if x is not None and 0 <= x < 15:
+                        lev.append([x] + [int(num(c)) if num(c) is not None else 0 for c in r[1:1 + len(yrs)]])
+                if yrs and lev:
+                    dots = {"years": yrs, "levels": lev}
+        if not med or not med["rows"].get("ffr"):
+            raise ValueError("tableau des médianes illisible")
+        P["fed"] = {"date": "%s-%s-%s" % (d8[:4], d8[4:6], d8[6:]), "url": url, "median": med, "dots": dots}
+        note("proj.fed", "Projections de la Fed (dot plot)", "quarterly", True, P["fed"]["date"], url=url)
+    except Exception as e:
+        note("proj.fed", "Projections de la Fed (dot plot)", "quarterly", False, err=e, url="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm")
+    # --- BCE : date de la dernière publication des projections (les chiffres sont saisis et sourcés sur le site)
+    try:
+        page = http("ecb_proj.html", "https://www.ecb.europa.eu/press/projections/html/index.en.html", timeout=40)
+        links = re.findall(r'href="(/press/projections/html/ecb\.projections(\d{6})_[^"]+\.en\.html)"', page)
+        if not links:
+            raise ValueError("aucune publication trouvée")
+        links.sort(key=lambda x: x[1])
+        path, ym = links[-1]
+        P["ecb"] = {"latest": ym[:4] + "-" + ym[4:], "url": "https://www.ecb.europa.eu" + path}
+        note("proj.ecb", "Projections de la BCE (veille des publications)", "quarterly", True, ym[:4] + "-" + ym[4:] + "-01", url=P["ecb"]["url"])
+    except Exception as e:
+        note("proj.ecb", "Projections de la BCE (veille des publications)", "quarterly", False, err=e, url="https://www.ecb.europa.eu/press/projections/html/index.en.html")
+    data["projections"] = P
+
+
 # ---------------------------------------------------------------- Historique macro depuis 2001 (fichier séparé)
 def do_history(force=False):
     """Inflation et croissance annuelles de tous les pays depuis 2001 (Banque mondiale). Recalcul une fois par semaine."""
@@ -1497,7 +1608,7 @@ def do_history(force=False):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
