@@ -404,6 +404,40 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
 .drawer.on { transform: none; }
 @media (max-width: 600px) { .drawer { top: auto; height: 88vh; width: 100%; border-left: 0; border-top: 1px solid var(--amber); transform: translateY(100%); } }
 @media (prefers-reduced-motion: reduce) { .drawer, .dback { transition: none; } }
+/* ---------- Mouvement : réactions au toucher et à la souris ---------- */
+.pcard, .tile, .stat { background-image: radial-gradient(320px circle at var(--mx, -999px) var(--my, -999px), rgba(242,176,30,.075), transparent 45%); transition: border-color .25s, box-shadow .25s, transform .25s cubic-bezier(.2,.8,.2,1); }
+.panel { transition: border-color .3s, box-shadow .3s; }
+.panel:hover { border-color: #3a3422; box-shadow: 0 12px 40px -24px rgba(242,176,30,.35); }
+.tile:hover, .stat:hover { transform: translateY(-2px); }
+.tilecard { will-change: transform; }
+.tilecard.tilt { transition: transform .08s linear, border-color .25s, box-shadow .25s; }
+button, .bnav a, .seg button, .bhead a, select { transition: transform .15s cubic-bezier(.2,.8,.2,1), background .2s, color .2s, border-color .2s, box-shadow .2s; }
+button:active, .bnav a:active, .bhead a:active, .seg button:active { transform: scale(.94); }
+.tilecard:active { transform: scale(.985) !important; }
+input, select { transition: border-color .2s, box-shadow .25s, background .2s; }
+input:focus, select:focus { box-shadow: 0 0 0 3px rgba(242,176,30,.18); background: #15130d; }
+input:hover:not(:focus), select:hover:not(:focus) { border-color: #4a4430; }
+tbody tr { transition: background .18s, box-shadow .18s; }
+tbody tr:hover { background: rgba(242,176,30,.035); box-shadow: inset 2px 0 0 var(--amber); }
+.rip { position: absolute; border-radius: 50%; pointer-events: none; background: rgba(242,176,30,.35); transform: scale(0); animation: rip .55s ease-out forwards; }
+@keyframes rip { to { transform: scale(1); opacity: 0; } }
+.bump { animation: bump .45s cubic-bezier(.3,1.5,.5,1); }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.025); box-shadow: 0 0 0 2px rgba(242,176,30,.35); } 100% { transform: scale(1); } }
+.chart path.dr { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.3s cubic-bezier(.4,0,.2,1) .1s forwards; }
+.chart path.fd { animation: fdin .9s ease .3s backwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes fdin { from { opacity: 0; } }
+.chart circle:not(.xc) { transform-box: fill-box; transform-origin: center; animation: pop .5s cubic-bezier(.3,1.6,.5,1) backwards; }
+@keyframes pop { from { transform: scale(0); opacity: 0; } }
+.chart circle.pulse { animation: pop .5s cubic-bezier(.3,1.6,.5,1) backwards, glow 2.4s ease-in-out .6s infinite; }
+@keyframes glow { 50% { filter: drop-shadow(0 0 6px rgba(242,176,30,.9)); } }
+.chart { touch-action: pan-y; }
+.chart .xh line { stroke: var(--amber); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .xh rect { fill: #0d0d0f; stroke: var(--amber); stroke-width: 1; opacity: .94; }
+.chart .xh text { fill: var(--fg); font: 600 10px var(--font-mono); }
+.chart .xh circle { stroke: #0d0d0f; stroke-width: 2; }
+.inview { animation: benter .55s cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .pcard, .tile, .stat, .panel, button, input, select, tbody tr, .tilecard { transition: none !important; } .rip, .bump, .inview, .chart path.dr, .chart path.fd, .chart circle { animation: none !important; } .chart path.dr { stroke-dasharray: none; stroke-dashoffset: 0; } }
 .drawer .dtop { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
 .drawer h2 { margin: 0; font: 600 15px var(--font-mono); letter-spacing: .06em; color: var(--amber); }
 .drawer .x { background: transparent; border: 1px solid var(--line); color: var(--fg); font: 600 13px var(--font-mono); padding: 4px 10px; cursor: pointer; }
@@ -817,7 +851,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     </section>
 
     <section class="panel" id="dotplot">
-      <div class="ph"><h2>Dot plot de la Fed</h2><span class="meta" id="dpMeta">robot · Fed</span></div>
+      <div class="ph"><h2>Projections de la Fed (dot plot)</h2><span class="meta" id="dpMeta">robot · Fed</span></div>
       <div class="pgrid">
         <div class="pcard"><h3>Où chaque membre de la Fed voit le taux</h3><div class="m" id="dpSub"></div><svg id="dpSvg" class="chart" viewBox="0 0 440 260" role="img" aria-label="Dot plot de la Fed"></svg><div class="lg"><span><i style="background:#ece8dc"></i>un point = un membre</span><span><i style="background:#f2b01e"></i>médiane de la Fed</span><span><i style="background:#c77dff"></i>médiane du marché (Kalshi)</span></div></div>
         <div class="pcard"><h3>Projections économiques de la Fed (médianes)</h3><div class="tbl"><table id="sepTbl"></table></div><p class="hint" id="dpTxt"></p></div>
@@ -826,7 +860,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     </section>
 
     <section class="panel" id="bceproj">
-      <div class="ph"><h2>Projections de la zone euro (BCE)</h2><span class="meta" id="bpMeta">saisie sourcée</span></div>
+      <div class="ph"><h2>Projections de la BCE (zone euro)</h2><span class="meta" id="bpMeta">saisie sourcée</span></div>
       <div id="bpWarn"></div>
       <div class="pgrid">
         <div class="pcard"><h3>Scénario central de la BCE</h3><div class="tbl"><table id="bpTbl"></table></div></div>
@@ -1907,7 +1941,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
      saisie datée et sourcée, marquée « à vérifier ».
      ===================================================================== */
   var CMDS = [
-    ["DOTS", "Dot plot de la Fed", "dotplot"], ["BCEP", "Projections BCE zone euro", "bceproj"], ["CYC", "Cycle économique", "cycle"],
+    ["DOTS", "Projections de la Fed (dot plot)", "dotplot"], ["BCEP", "Projections BCE zone euro", "bceproj"], ["CYC", "Cycle économique", "cycle"],
     ["OR", "Or XAU/USD", "or"], ["GOLD", "Tableau de bord or (6 piliers)", "scorecard"], ["FX", "Paires", "paires"], ["FORCE", "Force des devises", "force"],
     ["CB", "Banques centrales", "banques"], ["ECO", "Indicateurs macro", "indicateurs"], ["CAL", "Calendrier économique", "calendrier"],
     ["AG", "Prochaines réunions", "agenda"], ["DESK", "Indicateurs des desks", "desk"], ["TX", "Taux, VIX, dollar", "taux"], ["DIFF", "Écarts de taux", "ecarts"],
@@ -2574,9 +2608,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   var BR = [
     { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, saisonnalité 20 ans", p: ["or", "orvol", "scorecard", "saison"] },
     { id: "devises", t: "Devises", ic: "⇄", d: "Paires, graphique, force des devises, appétit pour le risque, corrélations", p: ["selPanel", "paires", "force", "~duo", "heat", "correl", "vola"] },
-    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, dot plot, courbes US et zone euro, écarts de taux", p: ["pricing", "dotplot", "taylor", "ecarts", "taux", "desk"] },
+    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts de taux", p: ["pricing", "taylor", "ecarts", "taux", "desk"] },
     { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités, réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"] },
-    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Cycle économique, calendrier avec analyse de chaque publication, projections BCE, de la semaine, indicateurs", p: ["cycle", "calendrier", "surprises", "bceproj", "semaine", "indicateurs", "lecture"] },
+    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Cycle économique, projections de la Fed (dot plot) et de la BCE, calendrier avec analyse de chaque publication, indicateurs", p: ["cycle", "dotplot", "bceproj", "calendrier", "surprises", "semaine", "indicateurs", "lecture"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Notes et articles sur le dollar, l'euro et les taux, consensus, vidéos", p: ["analyses", "consensus", "videos"] },
     { id: "monde", t: "Monde & maritime", ic: "◍", d: "Carte macro des pays, détroits, navires en temps réel", p: ["monde", "maritime", "reserves"] },
     { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, peur et avidité, sessions", p: ["marches", "sessions"] },
@@ -2630,8 +2664,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (id === "taux") renderPricing();
       if (!id) renderHub();
       setTimeout(function () { window.dispatchEvent(new Event("resize")); }, 60); /* redessine les graphiques qui étaient cachés */
+      countUp(id ? $("br-" + id) : $("hub"));
     };
-    if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(apply); else apply();
+    if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) { var vt = document.startViewTransition(apply), q_ = function () {}; if (vt) { if (vt.ready) vt.ready.catch(q_); if (vt.finished) vt.finished.catch(q_); if (vt.updateCallbackDone) vt.updateCallbackDone.catch(q_); } } else apply();
   }
   function goBranch(id) { if (location.hash === "#/" + id) route(); else location.hash = "#/" + id; }
   function openPanel(id) {
@@ -2710,10 +2745,33 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     series.forEach(function (s) {
       var d = "", started = false;
       s.pts.forEach(function (p) { if (p[1] === null || p[1] === undefined) return; d += (started ? "L" : "M") + sx(p[0]).toFixed(1) + " " + sy(p[1]).toFixed(1); started = true; });
-      if (d) h += '<path d="' + d + '" fill="none" stroke="' + s.c + '" stroke-width="' + (s.w || 1.8) + '"' + (s.dash ? ' stroke-dasharray="5 4"' : "") + ' stroke-linejoin="round"/>';
+      if (d) h += '<path d="' + d + '" fill="none" stroke="' + s.c + '" stroke-width="' + (s.w || 1.8) + '"' + (s.dash ? ' stroke-dasharray="5 4" class="fd"' : ' pathLength="1" class="dr"') + ' stroke-linejoin="round"/>';
       if (s.dots) s.pts.forEach(function (p) { if (p[1] !== null) h += '<circle cx="' + sx(p[0]).toFixed(1) + '" cy="' + sy(p[1]).toFixed(1) + '" r="3" fill="' + s.c + '"/>'; });
     });
     svg.innerHTML = h;
+    svg.__lc = { sx: sx, sy: sy, series: series, n: n, lab: opts.lab || opts.xl || [], W: W, H: H, L: L, R: R, T: T, B: B, dec: hi - lo > 100 ? 0 : 2 };
+    if (!svg.__lcb) { svg.__lcb = 1; crosshair(svg); }
+  }
+  /* Curseur qui suit la souris ou le doigt : valeur exacte au point survolé */
+  function crosshair(svg) {
+    var draw = function (ev) {
+      var c = svg.__lc; if (!c || !c.n) return;
+      var m = svg.getScreenCTM(); if (!m) return;
+      var pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; var q = pt.matrixTransform(m.inverse());
+      var i = Math.round((q.x - c.L) / (c.W - c.L - c.R) * (c.n - 1)); i = Math.max(0, Math.min(c.n - 1, i));
+      var rows = [], h = "", x = c.sx(i);
+      c.series.forEach(function (s) { var p = s.pts.filter(function (p) { return p[0] === i; })[0]; if (!p || p[1] === null || p[1] === undefined) return; rows.push([s.c, p[1]]); h += '<circle class="xc" cx="' + x.toFixed(1) + '" cy="' + c.sy(p[1]).toFixed(1) + '" r="4" fill="' + s.c + '"/>'; });
+      if (!rows.length) return;
+      var lab = c.lab[i] ? String(c.lab[i]) : "", lines = (lab ? [lab] : []).concat(rows.map(function (r) { return r[1].toLocaleString("fr-FR", { minimumFractionDigits: c.dec, maximumFractionDigits: c.dec }); }));
+      var bw = Math.max.apply(null, lines.map(function (t) { return t.length; })) * 6.4 + 14, bh = lines.length * 13 + 8;
+      var bx = x + 10 + bw > c.W - c.R ? x - 10 - bw : x + 10, by = c.T + 2;
+      var t = '<rect x="' + bx.toFixed(1) + '" y="' + by + '" width="' + bw.toFixed(1) + '" height="' + bh + '" rx="2"/>';
+      lines.forEach(function (l, k) { var col = lab && k === 0 ? "#8d8878" : rows[k - (lab ? 1 : 0)][0]; t += '<text x="' + (bx + 7).toFixed(1) + '" y="' + (by + 14 + k * 13) + '" style="fill:' + col + '">' + esc(l) + "</text>"; });
+      var g = svg.querySelector("g.xh"); if (!g) { g = document.createElementNS("http://www.w3.org/2000/svg", "g"); g.setAttribute("class", "xh"); g.setAttribute("pointer-events", "none"); svg.appendChild(g); }
+      g.innerHTML = '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + c.T + '" y2="' + (c.H - c.B) + '"/>' + h + t;
+    };
+    var hide = function () { var g = svg.querySelector("g.xh"); if (g) g.parentNode.removeChild(g); };
+    svg.addEventListener("pointermove", draw); svg.addEventListener("pointerdown", draw); svg.addEventListener("pointerleave", hide); svg.addEventListener("pointercancel", hide);
   }
   function renderPricing() {
     if (!$("fedPath")) return;
@@ -2874,7 +2932,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       (o.what ? "<h3>De quoi s'agit-il ?</h3><p>" + o.what + "</p>" : "") + (o.how ? "<h3>Comment le lire</h3><p>" + o.how + "</p>" : "") +
       (o.src ? '<h3>Source</h3><p><a href="' + esc(o.src) + '" target="_blank" rel="noopener">' + esc(o.src.replace(/^https?:\/\//, "").split("/")[0]) + "</a>" + (o.srcTxt ? " · " + o.srcTxt : "") + "</p>" : "") +
       '<p class="fine" style="padding:12px 0 0">Lecture automatique et éducative, pas un conseil d\'investissement.</p>';
-    if (o.chart) lineChart($("dchart"), 520, 210, [{ pts: o.chart.map(function (p, i) { return [i, p[1]]; }), c: "#f2b01e" }], { n: o.chart.length, zero: o.zero, xl: o.chart.map(function (p, i) { return i === 0 || i === o.chart.length - 1 || i === Math.floor(o.chart.length / 2) ? (/^\d{4}-\d{2}/.test(p[0]) ? shortD(String(p[0]).slice(0, 10)) : String(p[0])) : ""; }) });
+    if (o.chart) lineChart($("dchart"), 520, 210, [{ pts: o.chart.map(function (p, i) { return [i, p[1]]; }), c: "#f2b01e" }], { n: o.chart.length, zero: o.zero, xl: o.chart.map(function (p, i) { return i === 0 || i === o.chart.length - 1 || i === Math.floor(o.chart.length / 2) ? (/^\d{4}-\d{2}/.test(p[0]) ? shortD(String(p[0]).slice(0, 10)) : String(p[0])) : ""; }), lab: o.chart.map(function (p) { return /^\d{4}-\d{2}-\d{2}/.test(p[0]) ? longD(String(p[0]).slice(0, 10)) : String(p[0]); }) });
+    countUp(dr);
     back.classList.add("on"); dr.classList.add("on"); dr.setAttribute("aria-hidden", "false");
     lastFocus = document.activeElement; $("dclose").focus();
   }
@@ -3078,7 +3137,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     yrs.forEach(function (yr, i) {
       var cx = L + cw * (i + 0.5);
       h += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + (yr === "Longer run" ? "Long terme" : yr) + "</text>";
-      lv.forEach(function (r) { var n = r[i + 1]; for (var k = 0; k < n; k++) h += '<circle cx="' + (cx + (k - (n - 1) / 2) * 7).toFixed(1) + '" cy="' + sy(r[0]).toFixed(1) + '" r="3" fill="#ece8dc"><title>' + n + " membre(s) à " + fmt(r[0], 3) + " %</title></circle>"; });
+      lv.forEach(function (r) { var n = r[i + 1]; for (var k = 0; k < n; k++) h += '<circle cx="' + (cx + (k - (n - 1) / 2) * 7).toFixed(1) + '" cy="' + sy(r[0]).toFixed(1) + '" r="3" fill="#ece8dc" style="animation-delay:' + (0.15 + i * 0.12 + k * 0.03).toFixed(2) + 's"><title>' + n + " membre(s) à " + fmt(r[0], 3) + " %</title></circle>"; });
       var md = f.median.rows.ffr && f.median.rows.ffr.v[i];
       if (md !== null && md !== undefined) h += '<line x1="' + (cx - cw * 0.42).toFixed(1) + '" x2="' + (cx + cw * 0.42).toFixed(1) + '" y1="' + sy(md).toFixed(1) + '" y2="' + sy(md).toFixed(1) + '" stroke="#f2b01e" stroke-width="2"><title>Médiane ' + fmt(md, 2) + " %</title></line>";
     });
@@ -3157,7 +3216,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     });
     h += '<line x1="' + (c - r) + '" x2="' + (c + r) + '" y1="' + c + '" y2="' + c + '" stroke="#4a4430"/><line y1="' + (c - r) + '" y2="' + (c + r) + '" x1="' + c + '" x2="' + c + '" stroke="#4a4430"/>';
     h += '<text x="' + c + '" y="' + (c - r - 8) + '" text-anchor="middle">croissance ↑</text><text x="' + c + '" y="' + (c + r + 16) + '" text-anchor="middle">croissance ↓</text><text x="' + (c + r - 4) + '" y="' + (c + 14) + '" text-anchor="end" style="font-size:9px">inflation ↑</text><text x="' + (c - r + 4) + '" y="' + (c + 14) + '" style="font-size:9px">inflation ↓</text>';
-    h += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="8" fill="#f2b01e" stroke="#0d0d0f" stroke-width="2"><title>Position actuelle</title></circle>';
+    h += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="8" class="pulse" fill="#f2b01e" stroke="#0d0d0f" stroke-width="2"><title>Position actuelle</title></circle>';
     $("cyClock").innerHTML = h;
     var curve = fred("T10Y2Y");
     $("cyDiag").innerHTML = '<div class="now"><b style="color:var(--amber);font-family:var(--font-mono)">' + Q[0].toUpperCase() + "</b><br>" + Q[1] + ".</div><h3 style=\"margin:12px 0 4px;font:600 11px var(--font-mono);letter-spacing:.12em\">CE QUE ÇA IMPLIQUE D'HABITUDE</h3><p class=\"hint\" style=\"max-width:none\">" + Q[2] + "</p>" +
@@ -3231,6 +3290,66 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       now: pb[2], how: "Méthode des desks : 1) connaître la prévision et la fourchette des économistes avant ; 2) mesurer l'écart au moment de la publication ; 3) lire les détails (sous-jacent, révisions) ; 4) vérifier si le marché confirme (taux à 2 ans, dollar) avant d'agir. Réduisez la taille des positions juste avant les publications à fort impact.", src: "https://www.forexfactory.com/calendar", srcTxt: "calendrier Forex Factory, chiffres officiels BLS" });
   }
 
+
+  /* ---------- Mouvement : chiffres qui défilent, onde au toucher, reflet, inclinaison ---------- */
+  var CALM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function countUp(root) {
+    if (CALM || !root) return;
+    Array.prototype.forEach.call(root.querySelectorAll(".tile b, .stat b, .tilecard .big, .dval"), function (el) {
+      if (el.children.length || el.__cu) return;
+      var txt = el.textContent, m = /-?\d{1,3}(?:[\s  ]\d{3})+(?:,\d+)?|-?\d+(?:,\d+)?/.exec(txt); if (!m) return;
+      var raw = m[0], sep = /[\s  ]/.test(raw), dec = (raw.split(",")[1] || "").length;
+      var target = parseFloat(raw.replace(/[\s  ]/g, "").replace(",", ".")); if (!isFinite(target) || target === 0) return;
+      var pre = txt.slice(0, m.index), post = txt.slice(m.index + raw.length), t0 = null, dur = 750, mine = null;
+      var f = function (v) { var p_ = Math.abs(v).toFixed(dec).split("."), ip = p_[0]; if (sep) ip = ip.replace(/\B(?=(\d{3})+(?!\d))/g, " "); return (v < 0 ? "-" : "") + ip + (dec ? "," + p_[1] : ""); };
+      el.__cu = 1;
+      var step = function (ts) {
+        if (mine !== null && el.textContent !== mine) { el.__cu = 0; return; } /* contenu remplacé entre-temps : on s'arrête */
+        if (t0 === null) t0 = ts; var k = Math.min(1, (ts - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        el.textContent = mine = k < 1 ? pre + f(target * e) + post : txt;
+        if (k < 1) requestAnimationFrame(step); else el.__cu = 0;
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  function initMotion() {
+    if (CALM) return;
+    /* Onde dorée à l'appui */
+    document.addEventListener("pointerdown", function (e) {
+      var el = e.target.closest && e.target.closest("button, .tilecard, .bnav a, .bhead a, .tile[data-det], .stat"); if (!el) return;
+      var cs = getComputedStyle(el); if (cs.position === "static") el.style.position = "relative"; if (cs.overflow === "visible") el.style.overflow = "hidden";
+      var r = el.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2, sp = document.createElement("span");
+      sp.className = "rip"; sp.style.width = sp.style.height = d + "px"; sp.style.left = (e.clientX - r.left - d / 2) + "px"; sp.style.top = (e.clientY - r.top - d / 2) + "px";
+      el.appendChild(sp); setTimeout(function () { if (sp.parentNode) sp.parentNode.removeChild(sp); }, 600);
+    }, { passive: true });
+    /* Reflet qui suit la souris ou le doigt, et inclinaison des tuiles de l'accueil */
+    var raf = 0, last = null;
+    document.addEventListener("pointermove", function (e) {
+      last = e; if (raf) return;
+      raf = requestAnimationFrame(function () {
+        raf = 0; var ev = last, t = ev.target.closest && ev.target.closest(".pcard, .tile, .stat, .tilecard"); if (!t) return;
+        var r = t.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+        t.style.setProperty("--mx", x + "px"); t.style.setProperty("--my", y + "px");
+        if (t.classList.contains("tilecard") && ev.pointerType === "mouse") { t.classList.add("tilt"); t.style.transform = "perspective(700px) translateY(-3px) rotateX(" + ((0.5 - y / r.height) * 7).toFixed(2) + "deg) rotateY(" + ((x / r.width - 0.5) * 9).toFixed(2) + "deg)"; }
+      });
+    }, { passive: true });
+    document.addEventListener("pointerout", function (e) {
+      var t = e.target.closest && e.target.closest(".tilecard, .pcard, .tile, .stat"); if (!t || (e.relatedTarget && t.contains(e.relatedTarget))) return;
+      t.style.removeProperty("--mx"); t.style.removeProperty("--my"); if (t.classList.contains("tilecard")) { t.classList.remove("tilt"); t.style.transform = ""; }
+    });
+    /* Les résultats des calculateurs « rebondissent » quand on modifie une case */
+    document.addEventListener("input", function (e) {
+      var box = e.target.closest && e.target.closest(".calc"); if (!box) return;
+      var out = box.querySelector(".out"); if (!out) return;
+      out.classList.remove("bump"); void out.offsetWidth; out.classList.add("bump");
+    });
+    /* Apparition douce des panneaux plus bas dans la page, au défilement */
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (es) { es.forEach(function (x) { if (x.isIntersecting) { x.target.classList.add("inview"); countUp(x.target); io.unobserve(x.target); } }); }, { rootMargin: "0px 0px -8% 0px" });
+      var watch = function () { Array.prototype.forEach.call(document.querySelectorAll(".branch.on > .panel"), function (p) { if (p.getBoundingClientRect().top > innerHeight) { p.classList.remove("inview"); io.observe(p); } }); };
+      window.addEventListener("hashchange", function () { setTimeout(watch, 150); }); setTimeout(watch, 600);
+    }
+  }
   /* ---------- Rendu groupé ---------- */
   function renderTerminal() { renderScore(); renderDesk(); renderDiff(); renderCal(); renderCons(); renderCom(); renderPM(); renderSent(); drawMap(); }
   function renderFx2() { renderHeat(); renderCorr(); renderVol(); renderPiv(); conv(); }
@@ -3264,7 +3383,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   $("agendaMore").addEventListener("click", function () { agendaAll = !agendaAll; renderAgenda(); });
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
-  buildBranches();
+  buildBranches(); initMotion();
   initCmd(); initCal(); initMap(); initConv(); initSearch(); initTaylor(); loadSurp();
   initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
