@@ -1,0 +1,20 @@
+name: Sonde calendriers (ponctuelle)
+on:
+  push:
+    branches: [main]
+    paths: ["scripts/probe_cal.py", ".github/workflows/probe-cal.yml"]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - run: python scripts/probe_cal.py || true
+      - run: |
+          git config user.name "macro-forex-robot"; git config user.email "actions@users.noreply.github.com"
+          cp data/probe-cal.json /tmp/p.json
+          for i in 1 2 3 4; do git fetch -q origin main && git reset -q --hard origin/main; cp /tmp/p.json data/probe-cal.json; git add data/probe-cal.json; git diff --staged --quiet && exit 0; git commit -q -m "Sonde calendriers"; git push -q origin HEAD:main && exit 0; sleep 6; done
