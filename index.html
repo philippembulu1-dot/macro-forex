@@ -4158,8 +4158,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var vx = fred("VIXCLS"); if (vx) add("Risque / refuge", vx.v > 25 ? 1 : vx.v < 15 ? (asset === "gold" ? -1 : -1) : 0, "VIX " + fmt(vx.v, 1) + (vx.v > 25 ? " : stress, recherche de refuges" : vx.v < 15 ? " : marché calme, peu de demande de refuge" : " : niveau intermédiaire"), 1); else miss.push("VIX");
     var cot = asset === "gold" ? (AUTO.cot2 && AUTO.cot2.XAU && AUTO.cot2.XAU.g.mm) : null;
     if (asset === "gold") { if (cot && cot.idx1y !== null) add("Positionnement des fonds", cot.idx1y >= 85 ? -1 : cot.idx1y <= 15 ? 1 : 0, "gestionnaires de fonds à " + cot.idx1y + " % de leur fourchette d'un an" + (cot.idx1y >= 85 ? " : très chargés, risque de ventes" : cot.idx1y <= 15 ? " : peu chargés, place pour des achats" : ""), 1); else miss.push("COT détaillé"); }
-    var sent = AUTO.retail && AUTO.retail.symbols ? AUTO.retail.symbols.filter(function (s) { return /XAU/.test(s.name || ""); })[0] : null;
-    if (asset === "gold") { if (sent) add("Sentiment des particuliers", sent.longPercentage >= 70 ? -1 : sent.shortPercentage >= 70 ? 1 : 0, Math.round(sent.longPercentage) + " % acheteurs (lecture à contre-courant)", 0.5); else miss.push("sentiment des particuliers (Myfxbook non configuré)"); }
+    var sent = AUTO.retail && AUTO.retail.s ? AUTO.retail.s.XAUUSD : null;
+    if (asset === "gold") { if (sent) add("Sentiment des particuliers", sent.long >= 70 ? -1 : sent.short >= 70 ? 1 : 0, Math.round(sent.long) + " % des particuliers acheteurs" + (sent.long >= 70 ? " : foule très acheteuse, lecture à contre-courant plutôt baissière" : sent.short >= 70 ? " : foule très vendeuse, lecture à contre-courant plutôt haussière" : " : pas d'excès"), 0.5); else miss.push("sentiment des particuliers"); }
     /* Confirmation par le prix */
     var pk = asset === "gold" ? "gold" : "dxy", ps = AUTO.daily && AUTO.daily[pk];
     var trend = ps && ps.c && ps.c.length > 21 ? (ps.c[ps.c.length - 1][1] / ps.c[ps.c.length - 21][1] - 1) * 100 : null;
