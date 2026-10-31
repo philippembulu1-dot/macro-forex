@@ -931,9 +931,34 @@ def eurostat_hicp():
     return best
 
 
+def eurostat_minr(coicop):
+    """Eurostat a remplacé prc_hicp_manr (arrêté en déc. 2025) par prc_hicp_minr (ECOICOP v2) en 2026."""
+    last = None
+    for geo in ("EA", "EA21", "EA20"):
+        try:
+            url = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_minr"
+                   "?format=JSON&lang=EN&geo=%s&coicop18=%s&unit=RCH_A&sinceTimePeriod=%d-01" % (geo, coicop, NOW.year - 1))
+            j = json.loads(http("eurostat_minr_%s_%s.json" % (geo, coicop), url, timeout=30, tries=1))
+            tidx = j["dimension"]["time"]["category"]["index"]
+            vals = j.get("value") or {}
+            obs = []
+            for t, i in tidx.items():
+                v = vals.get(str(i))
+                if v is not None:
+                    obs.append((t[:7] + "-01", float(v)))
+            r = last2(obs)
+            DIAG.setdefault("eurostat_minr", {})[geo + "/" + coicop] = r["asof"] if r else "vide"
+            if r:
+                return r
+        except Exception as e:
+            last = e
+            DIAG.setdefault("eurostat_minr", {})[geo + "/" + coicop] = fr_err(e)[:60]
+    raise last or ValueError("vide")
+
+
 def ez_cpi():
     best, err = None, None
-    for fn in (eurostat_hicp, ecb_hicp):
+    for fn in (lambda: eurostat_minr("TOTAL"), eurostat_hicp, ecb_hicp):
         try:
             r = fn()
             if r and (not best or r["asof"] > best["asof"]):
@@ -1189,6 +1214,191 @@ def probe_credit(data):
             DIAG["credit_" + key] = "répond : " + txt[:80].replace("\n", " ")
         except Exception as e:
             DIAG["credit_" + key] = fr_err(e)[:90]
+
+
+def do_core(data):
+    """Inflation sous-jacente (hors alimentation et énergie) des 8 économies : OCDE (SDMX) + Eurostat pour la zone euro ;
+    inflation du Japon : BRI (série longue des prix), absente de l'API de l'OCDE."""
+    core, got = {}, []
+    for exp in ("_TXCP01_NRG", "TXCP01_NRG", "_TXNRG_01_02"):
+        try:
+            url = ("https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_PRICES@DF_PRICES_ALL,1.0/%s.M+Q.N.CPI.PA.%s.N.GY?startPeriod=%d-01&dimensionAtObservation=AllDimensions&format=csvfile"
+                   % ("+".join(OECD_CPI), exp, NOW.year - 2))
+            rows = list(csv.DictReader(io.StringIO(http("oecd_core_%s.csv" % exp, url, tries=1, timeout=50))))
+            by = {}
+            for r in rows:
+                a, f, t, v = r.get("REF_AREA"), r.get("FREQ"), r.get("TIME_PERIOD", ""), num(r.get("OBS_VALUE"))
+                if a in OECD_CPI and v is not None:
+                    if f == "Q":
+                        q = re.match(r"(\d{4})-Q(\d)", t)
+                        if not q:
+                            continue
+                        t = "%s-%02d" % (q.group(1), int(q.group(2)) * 3)
+                    by.setdefault(a, {}).setdefault(f, []).append((t[:7] + "-01", v))
+            for a, cc in OECD_CPI.items():
+                ser = sorted((by.get(a) or {}).get("M") or (by.get(a) or {}).get("Q") or [])
+                if ser:
+                    core[cc] = {"v": round(ser[-1][1], 2), "prev": round(ser[-2][1], 2) if len(ser) > 1 else None, "asof": ser[-1][0], "via": "OCDE"}
+            DIAG["oecd_core_" + exp] = ",".join(sorted(core)) or "vide"
+            if core:
+                break
+        except Exception as e:
+            DIAG["oecd_core_" + exp] = fr_err(e)[:80]
+    for co in ("TOT_X_NRG_FOOD", "TOT_X_NRG_FOOD_NP", "TOTXNRGFOOD"):
+        try:
+            r = eurostat_minr(co)
+            if not core.get("EZ") or core["EZ"]["asof"] < r["asof"]:
+                core["EZ"] = {"v": r["v"], "prev": r["prev"], "asof": r["asof"], "via": "Eurostat"}
+            break
+        except Exception:
+            pass
+    D = data["derived"].get("us_core")
+    if D:
+        core["US"] = {"v": D["v"], "prev": D.get("prev"), "asof": D["asof"], "via": "BLS"}
+    data["core"] = core
+    got = sorted(core)
+    note("core.cpi", "Inflation sous-jacente des 8 économies (OCDE, Eurostat, BLS) : %s" % ", ".join(got), "monthly", len(got) >= 4,
+         max((v["asof"] for v in core.values()), default=None), err=None if len(got) >= 4 else "trop peu de pays", url="https://data-explorer.oecd.org/")
+    # Japon : inflation globale (BRI)
+    try:
+        url = "https://stats.bis.org/api/v2/data/dataflow/BIS/WS_LONG_CPI/1.0/M.JP.771?startPeriod=%d-01&format=csv" % (NOW.year - 2)
+        rows = list(csv.DictReader(io.StringIO(http("bis_cpi_jp.csv", url, tries=2, timeout=30))))
+        obs = sorted((r["TIME_PERIOD"][:7] + "-01", num(r.get("OBS_VALUE"))) for r in rows if r.get("TIME_PERIOD") and num(r.get("OBS_VALUE")) is not None)
+        if not obs:
+            raise ValueError("aucune valeur")
+        res = last2(obs)
+        res["via"], res["src"] = "BRI", "https://data.bis.org/topics/CPI"
+        old = data["national"].get("cpi_JP")
+        if not old or old.get("asof", "") < res["asof"]:
+            data["national"]["cpi_JP"] = res
+        note("bis.cpi.jp", "Inflation du Japon (BRI)", "monthly", True, res["asof"], url="https://data.bis.org/topics/CPI")
+    except Exception as e:
+        note("bis.cpi.jp", "Inflation du Japon (BRI)", "monthly", False, err=e, url="https://data.bis.org/topics/CPI")
+
+
+def do_fomc_dates(data):
+    """Dates officielles des réunions de la Fed (page du calendrier du FOMC)."""
+    url = "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+    try:
+        txt = http("fomc_cal.html", url, tries=2, timeout=30)
+        MON = {m: i + 1 for i, m in enumerate(["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"])}
+        out = []
+        for yb in re.finditer(r"(20\d\d) FOMC Meetings(.*?)(?=20\d\d FOMC Meetings|$)", txt, re.S):
+            y = int(yb.group(1))
+            for m in re.finditer(r'fomc-meeting__month[^>]*>\s*<strong>([A-Za-z/]+)</strong>.*?fomc-meeting__date[^>]*>([^<]+)<', yb.group(2), re.S):
+                mon, days = m.group(1).split("/")[-1], re.sub(r"[^\d\-–]", "", m.group(2))
+                last_day = re.split(r"[-–]", days)[-1]
+                if mon in MON and last_day.isdigit():
+                    mo = MON[mon] if "/" not in m.group(1) or int(last_day) < 15 else MON[mon]
+                    out.append("%d-%02d-%02d" % (y, mo, int(last_day)))
+        out = sorted(set(d for d in out if d >= (NOW - timedelta(days=60)).strftime("%Y-%m-%d")))
+        if len(out) < 4:
+            DIAG["fomc_extrait"] = re.sub(r"\s+", " ", txt[txt.find("FOMC Meetings"):txt.find("FOMC Meetings") + 400]) if "FOMC Meetings" in txt else txt[:200]
+            raise ValueError("dates introuvables")
+        data["fomc"] = out
+        note("fed.fomc", "Calendrier officiel des réunions de la Fed", "monthly", True, TODAY, url=url)
+    except Exception as e:
+        note("fed.fomc", "Calendrier officiel des réunions de la Fed", "monthly", False, err=e, url=url)
+
+
+def strip_html(t):
+    t = re.sub(r"(?is)<(script|style).*?</\1>", " ", t)
+    t = re.sub(r"<[^>]+>", " ", t)
+    t = t.replace("&nbsp;", " ").replace("&#160;", " ").replace("&amp;", "&")
+    return re.sub(r"\s+", " ", t)
+
+
+def do_wgc_figures(data):
+    """Chiffres clés de la dernière édition du rapport trimestriel du World Gold Council, lus dans son résumé public."""
+    w = data.get("wgc")
+    if not w:
+        return
+    try:
+        txt = strip_html(http("wgc_ed.html", w["url"], tries=2, timeout=30))
+        pats = {"tot": r"[Tt]otal gold demand[^.]{0,160}?([\d,]+(?:\.\d+)?)\s?t\b", "cb": r"[Cc]entral bank[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b",
+                "etf": r"ETF[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b", "jew": r"[Jj]ewel(?:le)?ry[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b",
+                "bar": r"[Bb]ar and coin[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b", "tech": r"[Tt]echnology[^.]{0,200}?([\d,]+(?:\.\d+)?)\s?t\b"}
+        fig = {}
+        for k, pt in pats.items():
+            m = re.search(pt, txt)
+            if m:
+                v = num(m.group(1).replace(",", ""))
+                ctx = txt[max(0, m.start() - 20): m.end() + 10]
+                if k == "etf" and re.search(r"outflow|fell|declin|sold|redemption", ctx, re.I):
+                    v = -abs(v)
+                fig[k] = {"v": v, "txt": ctx[:200]}
+        if not fig:
+            DIAG["wgc_extrait"] = txt[:300]
+            raise ValueError("aucun chiffre lu dans le résumé")
+        w["fig"] = fig
+        note("wgc.fig", "Demande d'or : chiffres clés du dernier rapport WGC (%s), lus automatiquement" % w["latest"], "quarterly", True, TODAY, url=w["url"])
+    except Exception as e:
+        note("wgc.fig", "Demande d'or : chiffres clés du dernier rapport WGC", "quarterly", False, err=e, url=w["url"])
+
+
+def do_ecb_proj_table(data):
+    """Tableau des projections de la BCE, lu sur la page officielle de la dernière publication."""
+    P = (data.get("projections") or {}).get("ecb")
+    if not P or not P.get("url"):
+        return
+    try:
+        tp = Tables()
+        tp.feed(http("ecb_proj_page.html", P["url"], tries=2, timeout=40))
+        want_ = {"gdp": r"^real gdp", "hicp": r"^hicp$|^hicp\b(?!.*excl)", "core": r"hicp excl.*(energy|food)", "unemp": r"unemployment"}
+        best = None
+        for head, rows in tp.tables:
+            years = None
+            for r in rows[:4]:
+                ys = [c for c in r if re.fullmatch(r"20\d\d", c.strip())]
+                if len(ys) >= 3:
+                    years = ys
+                    break
+            if not years:
+                continue
+            found = {}
+            for r in rows:
+                lab = (r[0] if r else "").strip().lower()
+                vals = [num(c.replace("−", "-")) for c in r[1:]]
+                vals = [v for v in vals if v is not None]
+                for k, rx in want_.items():
+                    if k not in found and re.search(rx, lab) and len(vals) >= len(years):
+                        found[k] = vals[-len(years):]
+            if len(found) >= 2:
+                best = {"years": years, "rows": found}
+                break
+        if not best:
+            DIAG["ecb_proj_tables"] = [(h[:40], (rows[0] if rows else [])[:5]) for h, rows in tp.tables[:6]]
+            raise ValueError("tableau des projections introuvable")
+        P["tbl"] = best
+        note("proj.ecb.tbl", "Projections de la BCE (%s), tableau lu automatiquement" % P.get("latest"), "quarterly", True, (P.get("latest") or TODAY[:7]) + "-01", url=P["url"])
+    except Exception as e:
+        note("proj.ecb.tbl", "Projections de la BCE, tableau lu automatiquement", "quarterly", False, err=e, url=P["url"])
+
+
+def retail_public(data):
+    """Sentiment des particuliers sans identifiants : page publique « Community Outlook » de Myfxbook."""
+    url = "https://www.myfxbook.com/community/outlook"
+    txt = http("mfb_public.html", url, tries=2, timeout=30)
+    out = {}
+    for m in re.finditer(r"community/outlook/([A-Z]{6})\b", txt):
+        sym = m.group(1)
+        if sym in out:
+            continue
+        seg = strip_html(txt[m.end(): m.end() + 4000])
+        sh = re.search(r"Short\D{0,40}?(\d{1,3}(?:\.\d+)?)\s?%", seg)
+        lo = re.search(r"Long\D{0,40}?(\d{1,3}(?:\.\d+)?)\s?%", seg)
+        if not (sh and lo):
+            pc = re.findall(r"(\d{1,3}(?:\.\d+)?)\s?%", seg)[:2]
+            if len(pc) == 2 and abs(float(pc[0]) + float(pc[1]) - 100) < 1.5:
+                DIAG.setdefault("mfb_ordre", seg[:160])
+            continue
+        s_, l_ = float(sh.group(1)), float(lo.group(1))
+        if abs(s_ + l_ - 100) < 1.5:
+            out[sym] = {"long": round(l_, 1), "short": round(s_, 1)}
+    if not out:
+        DIAG["mfb_extrait"] = strip_html(txt)[:300]
+        raise ValueError("pourcentages introuvables sur la page publique")
+    return out
 
 
 def do_cot(data):
@@ -1858,6 +2068,13 @@ def do_retail(data):
                                 "variables_vues": sorted(k for k in os.environ if k.upper().startswith("MYFX"))}
     prev = PREVIOUS.get("retail")
     if not (em and pw) and not MOCK:
+        try:
+            out = retail_public(data)
+            data["retail"] = {"asof": NOW.strftime("%Y-%m-%dT%H:%MZ"), "src": "Myfxbook Community Outlook (page publique)", "s": out}
+            note("myfxbook", lab + " : page publique, sans identifiants", "daily", True, TODAY, url=url_info)
+            return
+        except Exception as e:
+            DIAG["mfb_public"] = fr_err(e)[:100]
         if prev:
             data["retail"] = prev
         note("myfxbook", lab, "config", False, err="à configurer : compte Myfxbook gratuit + secrets GitHub (voir le guide)", url=url_info)
@@ -2383,7 +2600,8 @@ def do_daily(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("projections", do_projections), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("wgc", do_wgc), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api)]
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates),
+             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d)))]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
@@ -2413,6 +2631,10 @@ def main():
             do_surprises(data)
         except Exception as e:
             note("surp", "Surprises économiques", "weekly", False, err=e)
+    try:
+        do_core(data)  # après les autres blocs : utilise l'inflation sous-jacente américaine déjà lue
+    except Exception as e:
+        note("core.cpi", "Inflation sous-jacente des 8 économies", "monthly", False, err=e)
     if want("reactions") or want("calendar"):
         try:
             do_reactions(data)
