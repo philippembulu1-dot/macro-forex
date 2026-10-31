@@ -1,0 +1,195 @@
+{
+ "gdelt_last": {
+  "ok": false,
+  "err": "<HTTPError 404: 'Not Found'>"
+ },
+ "gdelt_doc": {
+  "ok": false,
+  "err": "<HTTPError 429: 'Too Many Requests'>"
+ },
+ "gdelt_doc_art": {
+  "ok": false,
+  "err": "<HTTPError 429: 'Too Many Requests'>"
+ },
+ "gdelt_geo": {
+  "ok": false,
+  "err": "<HTTPError 404: 'Not Found'>"
+ },
+ "gpr_daily": {
+  "ok": true,
+  "status": 200,
+  "s": 0.2,
+  "ct": "application/vnd.ms-excel",
+  "len": 600000,
+  "head": "��\u0011ࡱ\u001a�\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000>\u0000\u0003\u0000��\t\u0000\u0006\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00004\u0000\u0000\u0000�\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0010\u0000\u0000����\u0000\u0000\u0000\u0000����\u0000\u0000\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000�\u0018\u0000\u0000����������������",
+  "magic": "d0cf11e0a1b11ae1"
+ },
+ "gpr_export": {
+  "ok": true,
+  "status": 200,
+  "s": 0.0,
+  "ct": "application/vnd.ms-excel",
+  "len": 600000,
+  "head": "��\u0011ࡱ\u001a�\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000>\u0000\u0003\u0000��\t\u0000\u0006\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000,\u0000\u0000\u0000�\u0014\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0010\u0000\u0000����\u0000\u0000\u0000\u0000����\u0000\u0000\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000�\u0014\u0000\u0000������������������������������������������������",
+  "magic": "d0cf11e0a1b11ae1"
+ },
+ "gpr_daily_csv": {
+  "ok": false,
+  "err": "<HTTPError 404: 'Not Found'>"
+ },
+ "travel_us": {
+  "ok": true,
+  "status": 200,
+  "s": 0.5,
+  "ct": "application/json; charset=utf-8",
+  "len": 490774,
+  "head": "[{\"Title\":\"Iran - Level 4: Do Not Travel\",\"Link\":\"https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.irn.html\",\"Category\":[\"IR\"],\"Summary\":\"Do not travel<p>to <b>Iran </b>due to the risk of <b>terrorism</b>, <b>unrest</b>, <b>kidnapping</b>, <b>arb"
+ },
+ "usgs": {
+  "ok": true,
+  "status": 200,
+  "s": 0.0,
+  "ct": "application/json; charset=utf-8",
+  "len": 105892,
+  "head": "{\"type\":\"FeatureCollection\",\"metadata\":{\"generated\":1793446019000,\"url\":\"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson\",\"title\":\"USGS Magnitude 4.5+ Earthquakes, Past Week\",\"status\":200,\"api\":\"2.8.2\",\"count\":151},\"features\":[{\"type\":\"Feature\",\"properties\":{\"mag\":4.9,\"pla"
+ },
+ "reliefweb": {
+  "ok": false,
+  "err": "<HTTPError 410: 'Gone'>"
+ },
+ "ofac_rss": {
+  "ok": false,
+  "err": "<HTTPError 404: 'Not Found'>"
+ },
+ "gnews_geo": {
+  "ok": true,
+  "status": 200,
+  "s": 0.3,
+  "ct": "application/xml; charset=utf-8",
+  "len": 76176,
+  "head": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><rss version=\"2.0\" xmlns:media=\"http://search.yahoo.com/mrss/\"><channel><generator>NFE/5.0</generator><title>\"gold geopolitical when:1d\" - Google News</title><link>https://news.google.com/search?q=gold+geopolitical+when:1d&amp;hl=en-US&amp;gl=US"
+ },
+ "acled_x": {
+  "ok": true,
+  "status": 200,
+  "s": 0.2,
+  "ct": "text/html; charset=utf-8",
+  "len": 79145,
+  "head": "<!DOCTYPE html>\n<html lang=\"en\" dir=\"ltr\" prefix=\"og: https://ogp.me/ns#\"><head>\n  <script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('consent','default',{ 'ad_storage':'denied', 'analytics_storage':'denied', 'ad_user_data':'denied', 'ad_personalizati"
+ },
+ "crisisgroup": {
+  "ok": false,
+  "err": "<HTTPError 403: 'Forbidden'>"
+ },
+ "gpr_export_parse": {
+  "sheets": [
+   "Sheet1"
+  ],
+  "rows": 1522,
+  "hdr": [
+   "month",
+   "GPR",
+   "GPRT",
+   "GPRA",
+   "GPRH",
+   "GPRHT",
+   "GPRHA",
+   "SHARE_GPR",
+   "N10",
+   "SHARE_GPRH",
+   "N3H",
+   "GPRH_NOEW",
+   "GPR_NOEW",
+   "GPRH_AND",
+   "GPR_AND",
+   "GPRH_BASIC",
+   "GPR_BASIC",
+   "SHAREH_CAT_1",
+   "SHAREH_CAT_2",
+   "SHAREH_CAT_3",
+   "SHAREH_CAT_4",
+   "SHAREH_CAT_5",
+   "SHAREH_CAT_6",
+   "SHAREH_CAT_7",
+   "SHAREH_CAT_8",
+   "GPRC_ARG",
+   "GPRC_AUS",
+   "GPRC_BEL",
+   "GPRC_BRA",
+   "GPRC_CAN",
+   "GPRC_CHE",
+   "GPRC_CHL",
+   "GPRC_CHN",
+   "GPRC_COL",
+   "GPRC_DEU",
+   "GPRC_DNK",
+   "GPRC_EGY",
+   "GPRC_ESP",
+   "GPRC_FIN",
+   "GPRC_FRA",
+   "GPRC_GBR",
+   "GPRC_HKG",
+   "GPRC_HUN",
+   "GPRC_IDN",
+   "GPRC_IND",
+   "GPRC_ISR",
+   "GPRC_ITA",
+   "GPRC_JPN",
+   "GPRC_KOR",
+   "GPRC_MEX",
+   "GPRC_MYS",
+   "GPRC_NLD",
+   "GPRC_NOR",
+   "GPRC_PER",
+   "GPRC_PHL",
+   "GPRC_POL",
+   "GPRC_PRT",
+   "GPRC_RUS",
+   "GPRC_SAU",
+   "GPRC_SWE"
+  ],
+  "last": [
+   46266.0,
+   146.20989990234375,
+   173.0873565673828,
+   144.28797912597656,
+   136.79727172851562,
+   191.68751525878906,
+   135.63307189941406,
+   4.385396480560303,
+   13887.0,
+   4.934859752655029,
+   7599.0,
+   196.13829040527344
+  ]
+ },
+ "gpr_daily_parse": {
+  "rows": 15275,
+  "hdr": [
+   "DAY",
+   "N10D",
+   "GPRD",
+   "GPRD_ACT",
+   "GPRD_THREAT",
+   "date",
+   "GPRD_MA30",
+   "GPRD_MA7",
+   "event",
+   "var_name",
+   "var_label"
+  ],
+  "last": [
+   "20261026",
+   441.0,
+   165.2528076171875,
+   149.7674102783203,
+   187.3812255859375,
+   46321.0,
+   175.43894958496094,
+   181.41552734375,
+   "",
+   "",
+   ""
+  ]
+ }
+}
