@@ -3533,7 +3533,7 @@ def do_euro(data):
             v = num((q.get("last") or "").replace("%", ""))
             p = num((q.get("previous_day_closing") or "").replace("%", ""))
             if v is not None:
-                Q[cc] = {"y": v, "prev": p, "t": (q.get("last_time") or "")[:19], "mkt": q.get("curmktstatus")}
+                Q[cc] = {"y": v, "prev": p, "t": (q.get("last_time") or "")[:19], "mkt": q.get("curmktstatus"), "mat": q.get("maturity_date"), "cpn": q.get("coupon")}
         if "DE" not in Q:
             raise ValueError("rendement du Bund absent")
         note("ez.quotes", "Rendements 10 ans zone euro, %d pays (CNBC, source secondaire, différé)" % len(Q), "daily", True, Q["DE"]["t"][:10], url="https://www.cnbc.com/bonds/")
@@ -3577,11 +3577,12 @@ def do_euro(data):
     try:
         rows = []
         for ln in http("bbk_bund.csv", BBK_BUND, timeout=30).splitlines():
-            m = re.match(r"(\d{4}-\d{2}-\d{2});([-\d,\.]+);", ln)
+            m = re.match(r'"?(\d{4}-\d{2}-\d{2})"?[;,]\s*"?(-?\d+[.,]\d+)', ln)
             if m:
                 rows.append((m.group(1), num(m.group(2).replace(",", "."))))
         rows = [r for r in rows if r[1] is not None]
         if not rows:
+            DIAG["bbk_head"] = "\n".join(http("bbk_bund.csv", BBK_BUND, timeout=30).splitlines()[-4:])[:300]
             raise ValueError("aucune valeur")
         E["bbk"] = {"d": rows[-1][0], "v": rows[-1][1]}
         note("ez.bbk", "Bund 10 ans officiel (Bundesbank, courbe ajustée)", "daily", True, rows[-1][0], url="https://www.bundesbank.de/en/statistics/money-and-capital-markets/interest-rates-and-yields")
@@ -3589,7 +3590,7 @@ def do_euro(data):
         note("ez.bbk", "Bund 10 ans officiel (Bundesbank)", "daily", False, err=e, url="https://www.bundesbank.de/en/statistics/money-and-capital-markets/interest-rates-and-yields")
     de = Q.get("DE")
     if de:
-        E["de"] = {"y": de["y"], "prev": de["prev"], "t": de["t"]}
+        E["de"] = {"y": de["y"], "prev": de["prev"], "t": de["t"], "mat": de.get("mat")}
         if E.get("bbk"):
             E["de"]["chk"] = round((de["y"] - E["bbk"]["v"]) * 100, 1)  # écart entre les deux sources, en pb
     elif H.get("DE"):
@@ -3599,7 +3600,7 @@ def do_euro(data):
         r = {"cc": c, "name": name}
         q = Q.get(c)
         if q and de:
-            r["y"], r["bp"], r["t"], r["src"] = q["y"], round((q["y"] - de["y"]) * 100, 1), q["t"], "CNBC"
+            r["y"], r["bp"], r["t"], r["src"], r["mat"] = q["y"], round((q["y"] - de["y"]) * 100, 1), q["t"], "CNBC", q.get("mat")
             if q.get("prev") is not None and de.get("prev") is not None:
                 r["d1"] = round(r["bp"] - (q["prev"] - de["prev"]) * 100, 1)
         if c in H and "DE" in H:
@@ -3820,7 +3821,9 @@ def do_deficits(data):
         L0 = ytd[0]
         rd = L0["record_date"]
         mo = int(rd[5:7])
-        mrows = json.loads(http("mts_m.json", base + "filter=record_date:eq:%s&page[size]=40&fields=classification_desc,current_month_dfct_sur_amt,current_month_gross_rcpt_amt,current_month_gross_outly_amt" % rd, timeout=30))["data"]
+        mrows = json.loads(http("mts_m.json", base + "filter=record_date:eq:%s&page[size]=40" % rd, timeout=30))["data"]
+        DIAG["mts_rows"] = [[x.get("classification_desc"), x.get("classification_id"), x.get("parent_id"), x.get("src_line_nbr"), x.get("current_month_dfct_sur_amt")] for x in mrows]
+        DIAG["mts_ytd"] = [[x.get("record_date"), x.get("current_month_dfct_sur_amt"), x.get("current_month_gross_rcpt_amt")] for x in ytd[:6]]
         mrow = next((x for x in mrows if x.get("classification_desc") == MONTHS_EN[mo - 1]), None)
         prev_rd = "%d%s" % (int(rd[:4]) - 1, rd[4:])
         py = next((x for x in ytd if x["record_date"][:7] == prev_rd[:7]), None)
