@@ -1321,7 +1321,7 @@ def do_analyses(data):
 # ---------------------------------------------------------------- Sentiment des particuliers : API officielle Myfxbook (compte gratuit)
 def do_retail(data):
     """Identifiants lus dans les secrets GitHub (MYFXBOOK_EMAIL, MYFXBOOK_PASSWORD) : jamais écrits dans les fichiers ni le journal.
-    Secrets créés par l'utilisateur le 31 oct. 2026."""
+    Secrets créés par l'utilisateur le 31 oct. 2026 (vérifiés à 01 h 08)."""
     lab, url_info = "Sentiment des particuliers (Myfxbook)", "https://www.myfxbook.com/community/outlook"
     em, pw = os.environ.get("MYFXBOOK_EMAIL", "").strip(), os.environ.get("MYFXBOOK_PASSWORD", "")
     prev = PREVIOUS.get("retail")
