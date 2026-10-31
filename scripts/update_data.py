@@ -1161,13 +1161,17 @@ def do_fred_api(data):
     if not key:
         return
     start = (NOW - timedelta(days=400)).strftime("%Y-%m-%d")
-    for sid, lab in (("BAMLH0A0HYM2", "Écart de crédit haut rendement (ICE, via l'API FRED)"), ("BAMLC0A0CM", "Écart de crédit qualité (ICE, via l'API FRED)")):
+    for sid, lab in (("BAMLH0A0HYM2", "Écart de crédit haut rendement (ICE, via l'API FRED)"), ("BAMLC0A0CM", "Écart de crédit qualité (ICE, via l'API FRED)"),
+                     ("NFCI", "Conditions financières NFCI (via l'API FRED, plus récent que le fichier de Chicago)")):
         url = "https://api.stlouisfed.org/fred/series/observations?" + urllib.parse.urlencode({"series_id": sid, "api_key": key, "file_type": "json", "observation_start": start})
         try:
             j = json.loads(http("fredapi_%s.json" % sid, url, tries=2, timeout=30))
             obs = [[o["date"], num(o["value"])] for o in j.get("observations", []) if num(o.get("value")) is not None]
             if len(obs) < 10:
                 raise ValueError("série vide")
+            old = data["fred"].get(sid)
+            if old and old.get("asof", "") >= obs[-1][0]:
+                continue  # la source déjà lue est au moins aussi récente
             data["fred"][sid] = {"v": obs[-1][1], "prev": obs[-6][1], "asof": obs[-1][0], "hist": obs[-260:], "via": "FRED (API officielle)"}
             note("fredapi." + sid, lab, "daily", True, obs[-1][0], url="https://fred.stlouisfed.org/series/" + sid)
         except Exception as e:
