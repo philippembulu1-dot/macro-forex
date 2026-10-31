@@ -346,6 +346,9 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .cap { caption-side: bottom; text-align: left; font-size: 11px; color: var(--muted); padding: 6px 4px; }
 .pill.bad { color: var(--down); border-color: #6b2a24; } .pill.warn { color: var(--amber); border-color: #6b5214; } .pill.okp { color: var(--up); border-color: #1f5a41; }
 tr.hl td { background: #15130c; }
+#ezTbl td.num, #ezTbl th, #ezTgb td.num, #defOecd td.num, #defOecd th, #defEu td.num, #defEu th { white-space: nowrap; }
+#defOecd td:last-child, #defEu td:last-child { min-width: 150px; }
+#defOecd td:first-child, #ezTbl td:first-child { white-space: nowrap; }
 @media (max-width: 640px) { .ez-state { grid-template-columns: 1fr; } }
 .geo-alerts { padding: 8px 12px 0; display: grid; gap: 4px; }
 .galert { font-size: 12px; padding: 6px 10px; border-left: 3px solid #ff5c4f; background: #1a0f0e; }
