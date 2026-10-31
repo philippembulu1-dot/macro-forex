@@ -7,7 +7,7 @@ def get(u, n=600000, hd=None):
     t = time.time()
     with urllib.request.urlopen(urllib.request.Request(u, headers=h), timeout=40) as r:
         b = r.read(n if n else -1); return r.status, b, round(time.time() - t, 1), r.headers.get("Content-Type")
-T = {
+T0 = {
  "gdelt_last": "http://data.gdeltproject.org/gdeltv2/lastupdate.txt",
  "gdelt_doc": "https://api.gdeltproject.org/api/v2/doc/doc?query=%28war%20OR%20missile%20OR%20airstrike%29&mode=TimelineVolRaw&format=json&timespan=7d",
  "gdelt_doc_art": "https://api.gdeltproject.org/api/v2/doc/doc?query=%28airstrike%20OR%20missile%29%20sourcelang:english&mode=ArtList&format=json&maxrecords=5&timespan=1d",
@@ -23,12 +23,22 @@ T = {
  "acled_x": "https://acleddata.com/",
  "crisisgroup": "https://www.crisisgroup.org/crisiswatch",
 }
+T = {
+ "gdelt_last": "https://data.gdeltproject.org/gdeltv2/lastupdate.txt",
+ "gdelt_last_http": "http://data.gdeltproject.org/gdeltv2/lastupdate.txt",
+ "gdelt_doc": "https://api.gdeltproject.org/api/v2/doc/doc?query=airstrike&mode=TimelineVolRaw&format=json&timespan=3d",
+ "gpr_export": T0["gpr_export"], "gpr_daily": T0["gpr_daily"], "travel_us": T0["travel_us"],
+}
 for k, u in T.items():
+    if k == "gdelt_doc": time.sleep(8)
     try:
         st, b, dt, ct = get(u)
         R[k] = {"ok": True, "status": st, "s": dt, "ct": ct, "len": len(b), "head": b[:300].decode("utf-8", "replace")}
+        if k == "travel_us":
+            j = json.loads(get(u, 0)[1]); R[k]["n"] = len(j); R[k]["keys"] = list(j[0].keys()); R[k]["ex"] = {kk: str(vv)[:160] for kk, vv in j[1].items()}
         if k == "gdelt_last":
             line = b.decode().split("\n")[0].split()
+            R[k]["lines"] = b.decode()[:500]
             url = line[2]
             st2, z, dt2, _ = get(url, 0)
             zf = zipfile.ZipFile(io.BytesIO(z)); name = zf.namelist()[0]; rows = zf.read(name).decode("utf-8", "replace").split("\n")
@@ -43,7 +53,7 @@ try:
     import xlrd
     st, b, dt, ct = get(T["gpr_export"], 0)
     wb = xlrd.open_workbook(file_contents=b); sh = wb.sheet_by_index(0)
-    R["gpr_export_parse"] = {"sheets": wb.sheet_names(), "rows": sh.nrows, "hdr": sh.row_values(0)[:60], "last": sh.row_values(sh.nrows - 1)[:12]}
+    R["gpr_export_parse"] = {"sheets": wb.sheet_names(), "rows": sh.nrows, "hdr": [h for h in sh.row_values(0) if str(h).startswith("GPRC") or str(h).startswith("GPRHC")], "last": sh.row_values(sh.nrows - 1)[:12]}
     st, b, dt, ct = get(T["gpr_daily"], 0)
     wb = xlrd.open_workbook(file_contents=b); sh = wb.sheet_by_index(0)
     R["gpr_daily_parse"] = {"rows": sh.nrows, "hdr": sh.row_values(0)[:20], "last": sh.row_values(sh.nrows - 1)[:12]}
