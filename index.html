@@ -329,6 +329,24 @@ table.hm td.h, table.hm th.h { text-align: left; color: var(--amber); font-weigh
 .pop-m { font: 10px var(--font-mono); color: var(--muted); margin: 6px 0 2px; }
 .pop-sec p { margin: 4px 0; } .pop-sec .geo-news { padding-left: 16px; }
 .pop-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.ez-state { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 12px; margin: 10px 12px 0; padding: 10px 12px; border: 1px solid var(--line2); border-left: 4px solid var(--up); background: #0d0d0f; cursor: pointer; }
+.ez-state.amb { border-left-color: var(--amber); } .ez-state.down { border-left-color: var(--down); }
+.ez-state small { display: block; font: 10px var(--font-mono); color: var(--muted); text-transform: uppercase; }
+.ez-state b { display: block; font: 600 26px var(--font-mono); } .ez-state.up b { color: var(--up); } .ez-state.amb b { color: var(--amber); } .ez-state.down b { color: var(--down); }
+.ez-state span { font-size: 11px; color: var(--muted); } .ez-state ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 12px; }
+.ez-state li { display: flex; gap: 6px; align-items: baseline; } .ez-state li b { display: inline; font: 600 12px var(--font-mono); color: var(--text, #ece8dc); }
+.pts { font: 600 10px var(--font-mono); min-width: 22px; text-align: center; border: 1px solid var(--line); color: var(--muted); }
+.pts.p1 { color: var(--amber); border-color: #6b5214; } .pts.p2 { color: var(--down); border-color: #6b2a24; }
+.amb { color: var(--amber); }
+.ez-tabs { display: flex; gap: 6px; padding: 10px 12px 0; flex-wrap: wrap; } .ez-tabs button { background: #131316; color: var(--muted); border: 1px solid var(--line2); padding: 6px 10px; font: 11px var(--font-mono); cursor: pointer; min-height: 32px; }
+.ez-tabs button.on { color: var(--amber); border-color: var(--amber); }
+.ez-leg { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; align-items: center; } .ez-leg button { background: none; border: 1px solid var(--line2); color: var(--text, #ece8dc); font-size: 11px; padding: 4px 8px; cursor: pointer; min-height: 30px; display: flex; gap: 5px; align-items: center; }
+.ez-leg button.off { opacity: .4; } .ez-leg i { width: 10px; height: 10px; display: inline-block; }
+.ez-h { font: 600 11px var(--font-mono); color: var(--amber); text-transform: uppercase; letter-spacing: .5px; margin: 14px 12px 6px; } .ez-sort { color: var(--muted); text-transform: none; font-weight: 400; letter-spacing: 0; }
+.cap { caption-side: bottom; text-align: left; font-size: 11px; color: var(--muted); padding: 6px 4px; }
+.pill.bad { color: var(--down); border-color: #6b2a24; } .pill.warn { color: var(--amber); border-color: #6b5214; } .pill.okp { color: var(--up); border-color: #1f5a41; }
+tr.hl td { background: #15130c; }
+@media (max-width: 640px) { .ez-state { grid-template-columns: 1fr; } }
 .geo-alerts { padding: 8px 12px 0; display: grid; gap: 4px; }
 .galert { font-size: 12px; padding: 6px 10px; border-left: 3px solid #ff5c4f; background: #1a0f0e; }
 .galert.ok { border-color: #3ddc97; background: #0e1a14; } .galert.note, .galert.pm { border-color: #f2b01e; background: #1a160b; } .galert.ship { border-color: #5fb4ff; background: #0d141c; }
@@ -745,6 +763,30 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div id="deskBody"></div>
     </section>
 
+    <section class="panel" id="ezone">
+      <div class="ph"><h2>Zone euro : écarts de taux et fragmentation</h2><span class="meta" id="ezMeta">robot</span></div>
+      <div id="ezState"></div>
+      <div class="ez-tabs" id="ezTabs" role="tablist"><button type="button" class="on" data-v="1y">1 an (quotidien)</button><button type="button" data-v="long">depuis 2005 (mensuel BCE)</button></div>
+      <svg id="ezChart" class="chart" viewBox="0 0 640 220" role="img" aria-label="Écarts de taux contre l'Allemagne"></svg>
+      <div class="ez-leg" id="ezLeg"></div>
+      <div class="tbl"><table id="ezTbl"></table></div>
+      <h3 class="ez-h">Stress souverain (indice SovCISS de la BCE)</h3>
+      <div id="ezSov"></div>
+      <h3 class="ez-h">Soldes TARGET (flux de capitaux entre pays)</h3>
+      <div class="tbl"><table id="ezTgb"></table></div>
+      <p class="note">Écart de taux = rendement à 10 ans d'un pays − rendement du Bund allemand (en points de base, 100 pb = 1 %). Il mesure la prime que les marchés exigent pour prêter à ce pays plutôt qu'à l'Allemagne. Quand les écarts s'envolent ensemble, la zone euro se « fragmente » : la même politique de la BCE ne se transmet plus de la même façon partout, l'euro est souvent sous pression et la BCE peut activer son instrument anti-fragmentation (TPI). Rendements du moment : CNBC (source secondaire, différée) ; références officielles : BCE (taux de convergence mensuels, SovCISS, CISS, TARGET) et Bundesbank. L'état « Calme / Tension / Fragmentation » est une règle fixe du terminal, détaillée critère par critère : une aide à la lecture, pas une vérité ni un signal.</p>
+    </section>
+
+    <section class="panel" id="deficits">
+      <div class="ph"><h2>Déficits et dettes publics</h2><span class="meta" id="defMeta">robot</span></div>
+      <div id="defTiles"></div>
+      <h3 class="ez-h">8 grandes économies (OCDE, avec prévisions)</h3>
+      <div class="tbl"><table id="defOecd"></table></div>
+      <h3 class="ez-h">Pays de la zone euro (Eurostat) <span class="ez-sort" id="defSortLab"></span></h3>
+      <div class="tbl"><table id="defEu"></table></div>
+      <p class="note">Solde public = recettes − dépenses de l'État et des administrations, en % du PIB ; négatif = déficit. Règles européennes (traité de Maastricht, pacte de stabilité) : déficit au plus 3 % du PIB et dette au plus 60 %. Un pays au-delà s'expose à une procédure pour déficit excessif (décidée par l'UE, non calculée ici). Un déficit qui se creuse oblige l'État à emprunter davantage : cela pèse souvent sur ses obligations (écart de taux) et peut peser sur sa devise. Sources officielles : Eurostat (annuel et trimestriel), OCDE Perspectives économiques (prévisions signalées « prév. »), Trésor américain (mensuel), ONS (mensuel).</p>
+    </section>
+
     <section class="panel" id="ecarts">
       <div class="ph"><h2>Écarts de taux face au dollar</h2><span class="meta">taux directeurs</span></div>
       <div id="diffBody"></div>
@@ -1067,6 +1109,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div class="ph"><h2 id="mtTitle">Ce matin</h2><span class="meta" id="mtMeta">robot</span></div>
       <div id="mtTop" class="mtop"></div>
       <div class="pcard" id="mtGeo"></div>
+      <div class="pcard" id="mtEz"></div>
       <div class="pgrid">
         <div class="pcard"><h3>Hier : ce qui a bougé</h3><div class="m" id="mtYmeta"></div><div class="tbl"><table id="mtYday"></table></div></div>
         <div class="pcard"><h3>Aujourd'hui (heure de Kinshasa)</h3><div class="m" id="mtTmeta"></div><div class="tbl"><table id="mtToday"></table></div></div>
@@ -2074,12 +2117,13 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var sp = fred("T10Y2Y"), h = '<div class="tiles">' +
       tile("US 10 ans", "DGS10", 2, " %") + tile("US 2 ans", "DGS2", 2, " %") +
       tile("Écart 10a − 2a", "T10Y2Y", 2, " pt") + tile("Réel 10 ans (TIPS)", "DFII10", 2, " %") +
-      tile("VIX", "VIXCLS", 1, "") + (fred("DTWEXBGS") || !fred("DXY") ? tile("Dollar large", "DTWEXBGS", 1, "") : tile("Dollar DXY", "DXY", 2, "")) + (fred("BAMLH0A0HYM2") || !fred("OFRCREDIT") ? tile("Spread crédit HY", "BAMLH0A0HYM2", 2, " %") : tile("Stress du crédit (OFR)", "OFRCREDIT", 2, "")) + "</div>";
+      tile("VIX", "VIXCLS", 1, "") + (fred("DTWEXBGS") || !fred("DXY") ? tile("Dollar large", "DTWEXBGS", 1, "") : tile("Dollar DXY", "DXY", 2, "")) + (fred("BAMLH0A0HYM2") || !fred("OFRCREDIT") ? tile("Spread crédit HY", "BAMLH0A0HYM2", 2, " %") : tile("Stress du crédit (OFR)", "OFRCREDIT", 2, "")) + '<div class="tile" id="moveTile" data-det="move:1"></div>' + "</div>";
     var l = [], dr = chg5("DFII10"), v = fred("VIXCLS");
     if (dr !== null) l.push(dr > 0.1 ? "Rendement réel en hausse de " + fmt(dr, 2) + " pt sur 5 séances : plutôt <b>défavorable à l'or</b>." : dr < -0.1 ? "Rendement réel en baisse de " + fmt(-dr, 2) + " pt sur 5 séances : plutôt <b>favorable à l'or</b>." : "Rendement réel stable sur 5 séances : pas de signal pour l'or.");
     if (sp) l.push(sp.v < 0 ? "Courbe <b>inversée</b> (10a sous 2a) : le marché anticipe un ralentissement ou des baisses de taux." : "Courbe <b>positive</b> (10a au-dessus de 2a).");
     var oc = fred("OFRCREDIT"); if (!fred("BAMLH0A0HYM2") && oc) l.push("Stress du crédit (OFR) à " + fmt(oc.v, 2) + " : " + (oc.v < 0 ? "crédit détendu." : oc.v < 1 ? "légère tension." : "<b>crédit sous tension</b>, plutôt risk-off."));
     var hy = fred("BAMLH0A0HYM2"); if (hy) l.push("Spread de crédit à " + fmt(hy.v, 2) + " % : " + (hy.v < 3.5 ? "crédit détendu." : hy.v < 5 ? "prudence modérée." : "<b>stress de crédit</b>, plutôt risk-off."));
+    if (typeof moveLine === "function" && moveLine()) l.push(moveLine());
     if (v) l.push("VIX à " + fmt(v.v, 1) + " : " + (v.v < 15 ? "marché calme." : v.v < 20 ? "volatilité normale." : v.v < 30 ? "<b>tension</b>, prudence sur les tailles de position." : "<b>stress élevé</b>, réduire le risque."));
     h += '<div class="pad idea" style="margin:10px 12px">' + l.join(" ") + ' C\'est une piste de lecture, pas un signal.</div>';
     h += '<p class="note">Sources : FRED (Réserve fédérale de Saint-Louis) ; si FRED ne répond pas, Trésor américain, CBOE, Fed de New York et BCE (la source est indiquée sous chaque chiffre). Données de clôture quotidiennes, mises à jour par le robot. Le rendement réel est le principal moteur de l\'or à moyen terme.</p>';
@@ -3198,9 +3242,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   var BR = [
     { id: "matin", t: "Ce matin", ic: "☀", d: "Résumé de la veille, alertes géopolitiques, publications du jour à l'heure de Kinshasa, biais par actif, scénarios, régime et moteurs du marché", p: ["matin", "scenarios", "regime", "moteurs"] },
     { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, flux de l'or (ETF, banques centrales), volatilité, saisonnalité 20 ans", p: ["or", "scorecard", "flux", "orvol", "saison"] },
-    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, taux réels, indicateurs des desks, écarts de taux, règle de Taylor", p: ["pricing", "courbe", "taux", "desk", "ecarts", "taylor"] },
+    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts France/Italie/Espagne − Allemagne et fragmentation, MOVE, taux réels, indicateurs des desks, règle de Taylor", p: ["pricing", "courbe", "ezone", "taux", "desk", "ecarts", "taylor"] },
     { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"] },
-    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique (pro en direct et analyse), surprises, réactions du marché, cycle, indicateurs, projections Fed et BCE", p: ["calendrier", "surprises", "reactions", "cycle", "indicateurs", "semaine", "dotplot", "bceproj", "lecture"] },
+    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique (pro en direct et analyse), surprises, réactions du marché, cycle, indicateurs, déficits et dettes publics, projections Fed et BCE", p: ["calendrier", "surprises", "reactions", "cycle", "indicateurs", "deficits", "semaine", "dotplot", "bceproj", "lecture"] },
     { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique avec fiche détaillée au clic, moniteur de risque (crises, alertes, prédictions, énergie, calendrier), détroits, réserves", p: ["monde", "geopol", "maritime", "reserves"] },
     { id: "devises", t: "Devises", ic: "⇄", d: "Force des devises multi-horizons, paires, graphique, appétit pour le risque, carte thermique, corrélations, volatilité", p: ["fstr", "force", "paires", "selPanel", "~duo", "heat", "correl", "vola"] },
     { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["marches", "multi", "sessions"] },
@@ -3209,10 +3253,11 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"] },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source (robot) et liens", p: ["robot"] }
   ];;
-  var WIDE = { scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   /* Nature des données de chaque panneau (demandée par l'audit) : EN DIRECT, DIFFÉRÉ, QUOTIDIEN, HEBDO, MENSUEL, ANNUEL, MANUEL, CALCUL */
   var NATURE = {
+    ezone: ["DIFFÉRÉ", "rendements CNBC relus à chaque passage du robot ; BCE et Bundesbank (officiel, quotidien et mensuel)"], deficits: ["MENSUEL", "Trésor US et ONS (mensuel), Eurostat (trimestriel, annuel), OCDE (annuel + prévisions)"],
     paires: ["QUOTIDIEN", "fixings de la BCE, 1 fois par jour ; graphique relu toutes les 15 min"], sessions: ["EN DIRECT", "horloges calculées dans votre navigateur"],
     or: ["EN DIRECT", "jeton PAXG (Binance), relu toutes les 30 s ; contrat à terme COMEX différé (robot)"], risque: ["QUOTIDIEN", "calculé à partir des fixings BCE"], rang: ["QUOTIDIEN", "fixings BCE"], force: ["QUOTIDIEN", "fixings BCE ; horizons 1 h et 4 h : cotations différées (robot)"],
     banques: ["QUOTIDIEN", "taux, décisions et inflation relus par le robot (BRI, banques centrales, OCDE, Eurostat, BLS)"], selPanel: ["QUOTIDIEN", "fixings BCE"], agenda: ["OFFICIEL", "Fed : calendrier officiel lu par le robot ; autres banques : calendriers officiels publiés un an à l'avance"],
@@ -3456,7 +3501,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   /* ---------- Recherche globale ---------- */
   var CUR_AL = { USD: "dollar américain états-unis usa us fed", EUR: "euro zone euro eurozone bce europe", GBP: "livre sterling royaume-uni angleterre boe", JPY: "yen japon boj", CHF: "franc suisse suisse bns",
     AUD: "dollar australien australie rba", CAD: "dollar canadien canada boc", NZD: "dollar néo-zélandais nouvelle-zélande rbnz" };
-  var KW = { geopol: "géopolitique geopolitique moniteur risque guerre conflit crise escalade gdelt gpr sanctions prédiction polymarket pétrole brent gaz défense otan iran israël russie ukraine taïwan chine yémen venezuela calendrier géopolitique alertes", scenarios: "scénarios lecture macro or dollar haussier baissier confirmation invalidation facteurs", fstr: "force des devises 1h 4h jour semaine dominante divergence currency strength", flux: "flux or etf gld cot gestionnaires banques centrales demande physique", multi: "moniteur multi-actifs corrélations divergences régime cross asset", regime: "régime macro croissance inflation politique monétaire restrictive accommodante risk-on risk-off", courbe: "courbe des taux pente 2s10s 5s30s 2 ans 5 ans 30 ans taux réel point mort décomposition steepener flattener", moteurs: "moteurs drivers marché facteurs fed taux réels dollar pétrole peur vix inflation emploi", matin: "ce matin résumé hier veille journée aujourd'hui biais brief", reactions: "réactions marché mémoire publication historique or dollar après", dotplot: "dot plot fed projections sep membres fomc taux médiane", bceproj: "bce projections zone euro europe croissance inflation scénarios ecb", cycle: "cycle économique récession sahm horloge expansion ralentissement stagflation reprise", orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
+  var KW = { ezone: "écart de taux spread oat bund btp france allemagne italie espagne grèce portugal fragmentation zone euro sovciss ciss target2 tpi bce stress souverain obligations", deficits: "déficit budgétaire dette publique solde public maastricht 3% 60% eurostat ocde trésor ons emprunt pacte de stabilité", taux_move: "move volatilité obligataire", geopol: "géopolitique geopolitique moniteur risque guerre conflit crise escalade gdelt gpr sanctions prédiction polymarket pétrole brent gaz défense otan iran israël russie ukraine taïwan chine yémen venezuela calendrier géopolitique alertes", scenarios: "scénarios lecture macro or dollar haussier baissier confirmation invalidation facteurs", fstr: "force des devises 1h 4h jour semaine dominante divergence currency strength", flux: "flux or etf gld cot gestionnaires banques centrales demande physique", multi: "moniteur multi-actifs corrélations divergences régime cross asset", regime: "régime macro croissance inflation politique monétaire restrictive accommodante risk-on risk-off", courbe: "courbe des taux pente 2s10s 5s30s 2 ans 5 ans 30 ans taux réel point mort décomposition steepener flattener", moteurs: "moteurs drivers marché facteurs fed taux réels dollar pétrole peur vix inflation emploi", matin: "ce matin résumé hier veille journée aujourd'hui biais brief", reactions: "réactions marché mémoire publication historique or dollar après", dotplot: "dot plot fed projections sep membres fomc taux médiane", bceproj: "bce projections zone euro europe croissance inflation scénarios ecb", cycle: "cycle économique récession sahm horloge expansion ralentissement stagflation reprise", orvol: "volatilité or gvz fourchette mouvement attendu ratio argent régression sensibilité", taylor: "taylor règle taux fed neutre", surprises: "surprise économique réel prévu ecsu", reserves: "réserves banques centrales or achats wira", or: "gold xau or métal précieux", scorecard: "piliers or tableau de bord", saison: "saisonnalité mois historique 20 ans", pricing: "pricing anticipations fed courbe taux trajectoire écart",
     ecarts: "écart différentiel taux carry", taux: "rendement 10 ans vix dollar treasury", desk: "breakeven inflation anticipée gvz conditions financières", banques: "taux directeur décision",
     probas: "probabilité fedwatch kalshi polymarket", agenda: "réunion prochaine décision", comite: "comité hawkish dovish", actus: "communiqué actualité news", calendrier: "calendrier cpi nfp pib pmi publication",
     indicateurs: "inflation chômage pib salaires pmi indicateurs", analyses: "analyse banque note article ing goldman", consensus: "consensus prévision banques", videos: "vidéo youtube",
@@ -3597,6 +3642,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         now: "Lecture : <b>" + rd[0] + "</b>." + (px && rr.alp ? (px < rr.alp ? " Les acheteurs sont en moyenne <b>en perte</b> : leurs stops peuvent accélérer une baisse." : " Les acheteurs sont en moyenne <b>en gain</b>.") : "") + (px && rr.asp ? (px > rr.asp ? " Les vendeurs sont en moyenne <b>en perte</b> : un rachat forcé peut accélérer une hausse." : " Les vendeurs sont en moyenne <b>en gain</b>.") : ""),
         what: "Part des comptes de particuliers (reliés à Myfxbook) qui sont acheteurs ou vendeurs sur cette paire.", how: "Les particuliers ont souvent tort aux extrêmes : au-delà de 70 % d'un côté, le marché a tendance à aller dans l'autre sens. À combiner avec la tendance et le COT des fonds.", src: "https://www.myfxbook.com/community/outlook", srcTxt: "API officielle, compte gratuit" });
     }
+    if (["ez", "frag", "sov", "tgb", "def", "move"].indexOf(type) >= 0) return detEz(key);
     if (type === "rx") return reactDetail(id);
     if (type === "ph4") return detPhase(id);
     if (type === "fw") return detFedWatch(id);
@@ -4698,7 +4744,185 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     MEETINGS.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
     applyFomc.done = true; renderAgenda();
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  /* ===== Zone euro : écarts de taux contre le Bund, fragmentation ; déficits publics ; MOVE ===== */
+  var EZC = { FR: "#4da3ff", IT: "#3ddc97", ES: "#f2b01e", PT: "#c084fc", GR: "#ff7a6e", BE: "#9aa4b2" }, ezView = "1y", ezHide = {};
+  var EZFR = { FR: "France", IT: "Italie", ES: "Espagne", PT: "Portugal", GR: "Grèce", BE: "Belgique", NL: "Pays-Bas", AT: "Autriche", IE: "Irlande", FI: "Finlande", DE: "Allemagne", EL: "Grèce", SK: "Slovaquie", BG: "Bulgarie", HR: "Croatie", LV: "Lettonie", SI: "Slovénie", MT: "Malte", EE: "Estonie", LT: "Lituanie", LU: "Luxembourg", CY: "Chypre" };
+  function bp(v, sign) { if (typeof v !== "number") return "–"; var a = Math.round(Math.abs(v)); return (sign ? (v > 0 ? "+" : v < 0 ? "−" : "") : (v < 0 ? "−" : "")) + a + " pb"; }
+  function rk(p) { return typeof p === "number" ? p + "/100" : "–"; }
+  function mLab(m) { var d = new Date(m.slice(0, 7) + "-01T00:00:00"); return d.toLocaleDateString("fr-FR", { month: "short", year: "numeric" }); }
+  var MOFR = { October: "oct.", November: "nov.", December: "déc.", January: "janv.", February: "févr.", March: "mars", April: "avr.", May: "mai", June: "juin", July: "juil.", August: "août", September: "sept." };
+  function ezData() { return AUTO && AUTO.ezspread && AUTO.ezspread.cc && AUTO.ezspread.cc.length ? AUTO.ezspread : null; }
+  function ezBy(c) { var E = ezData(); return E ? E.cc.filter(function (r) { return r.cc === c; })[0] : null; }
+  function fragState() { var R = AUTO && AUTO.frag && AUTO.frag.rule; return R || null; }
+  function stCls(st) { return st === "Fragmentation" ? "down" : st === "Tension" ? "amb" : "up"; }
+  function renderEzone() {
+    if (!$("ezTbl")) return;
+    var E = ezData(), F = (AUTO && AUTO.frag) || {}, R = F.rule;
+    if (!E) { $("ezState").innerHTML = '<p class="note pad">Pas encore de données : le robot les ajoute à son prochain passage.</p>'; $("ezTbl").innerHTML = ""; $("ezChart").innerHTML = ""; $("ezMeta").textContent = "robot : en attente"; return; }
+    var s1 = srcOf("ez.quotes"), de = E.de || {};
+    $("ezMeta").innerHTML = "Bund " + (typeof de.y === "number" ? fmt(de.y, 2) + " %" : "–") + (de.t ? " · " + shortD(de.t.slice(0, 10)) + " " + badge(s1 && s1.ok ? fresh(de.t.slice(0, 10), "daily") : "old") : "");
+    /* État de la zone euro */
+    if (R) {
+      var c = stCls(R.state);
+      $("ezState").innerHTML = '<div class="ez-state ' + c + '" data-det="frag:1"><div><small>État de la zone euro (règle du terminal)</small><b>' + esc(R.state) + '</b><span>' + R.score + " point" + (R.score > 1 ? "s" : "") + " sur " + R.max + ' · détail ›</span></div><ul>' +
+        R.crit.map(function (k) { return '<li><span class="pts p' + k.pts + '">' + (k.pts ? "+" + k.pts : "0") + "</span>" + esc(k.l) + " : <b>" + esc(k.v) + "</b></li>"; }).join("") + "</ul></div>" +
+        '<p class="hint pad">Seuils : 0 à 2 points = calme ; 3 à 4 = tension ; 5 et plus = fragmentation. ' + (R.state === "Calme" ? "Les écarts et le stress souverain sont dans leur zone habituelle." : R.state === "Tension" ? "Plusieurs signaux de tension : surveillez l'écart France − Allemagne et Italie − Allemagne, et l'euro." : "<b>Plusieurs signaux de fragmentation en même temps</b> : historiquement, l'euro souffre et la BCE peut être poussée à agir (TPI).") + "</p>";
+    } else $("ezState").innerHTML = "";
+    /* Tableau des écarts */
+    $("ezTbl").innerHTML = '<thead><tr><th>Pays</th><th class="r">10 ans</th><th class="r" title="Rendement du pays − rendement allemand">Écart vs Bund</th><th class="r">1 j</th><th class="r">5 j</th><th class="r">20 j</th><th class="r" title="Rang de l\'écart actuel sur un an (0 = plus bas, 100 = plus haut)">Rang 1 an</th><th class="r" title="Rang par rapport aux moyennes mensuelles officielles de la BCE depuis 2005">Rang depuis 2005</th><th class="r">Record (mois)</th></tr></thead><tbody>' +
+      E.cc.map(function (r) {
+        var ch = function (v) { return typeof v === "number" ? '<span class="' + (v > 0 ? "down" : v < 0 ? "up" : "") + '">' + bp(v, 1) + "</span>" : "–"; };
+        return '<tr data-det="ez:' + r.cc + '"><td><b>' + esc(r.name) + '</b> <span class="more">›</span>' + (r.src && r.src !== "CNBC" ? ' <span class="pill">' + esc(r.src) + "</span>" : "") + '</td><td class="r num">' + (typeof r.y === "number" ? fmt(r.y, 2) + " %" : "–") + '</td><td class="r num"><b>' + bp(r.bp) + '</b></td><td class="r num">' + ch(r.d1) + '</td><td class="r num">' + ch(r.d5) + '</td><td class="r num">' + ch(r.d20) + '</td><td class="r num">' + rk(r.p1y) + '</td><td class="r num">' + rk(r.plong) + '</td><td class="r num">' + (r.maxlong ? bp(r.maxlong[1]) + " <small>" + esc(mLab(r.maxlong[0])) + "</small>" : "–") + "</td></tr>";
+      }).join("") + "</tbody>";
+    drawEz();
+    /* SovCISS */
+    var sv = F.sov, ci = F.ciss, cc = F.cc || {};
+    if (sv) {
+      var order = Object.keys(cc).sort(function (a, b) { return (cc[b].p || 0) - (cc[a].p || 0); });
+      $("ezSov").innerHTML = '<div class="tiles"><div class="tile" data-det="sov:U2"><small>SovCISS zone euro <span class="more">›</span></small><b>' + fmt(sv.v, 3) + '</b><span class="dl">rang ' + rk(sv.p) + " depuis " + (sv.since || "2008").slice(0, 4) + '</span><span class="asof">au ' + shortD(sv.d) + " " + badge(F.stale ? "old" : fresh(sv.d, "daily")) + "</span></div>" +
+        (ci ? '<div class="tile" data-det="sov:CISS"><small>Stress systémique CISS <span class="more">›</span></small><b>' + fmt(ci.v, 3) + '</b><span class="dl">rang ' + rk(ci.p) + '</span><span class="asof">au ' + shortD(ci.d) + "</span></div>" : "") +
+        order.slice(0, 6).map(function (k) { var x = cc[k]; return '<div class="tile" data-det="sov:' + k + '"><small>' + esc(EZFR[k] || k) + ' <span class="more">›</span></small><b class="' + ((x.p || 0) >= 90 ? "down" : (x.p || 0) >= 75 ? "amb" : "") + '">' + fmt(x.v, 3) + '</b><span class="dl">rang ' + rk(x.p) + '</span><span class="asof">au ' + shortD(x.d) + "</span></div>"; }).join("") + "</div>" +
+        '<p class="hint pad">Indice de stress souverain de la BCE (0 = aucun stress, 1 = stress maximal) : il combine rendements, écarts, volatilité et liquidité des obligations d\'État. Le rang compare la valeur actuelle à tout l\'historique depuis 2008 (crise de la dette 2011-2012 comprise). Rang ≥ 90 = stress rare.</p>';
+    } else $("ezSov").innerHTML = '<p class="note pad">Indice SovCISS indisponible au dernier passage du robot.</p>';
+    /* TARGET */
+    var T = F.tgb;
+    if (T) {
+      var ks = ["DE", "IT", "ES", "FR", "GR", "PT", "NL", "BE"].filter(function (k) { return T[k]; });
+      $("ezTgb").innerHTML = '<thead><tr><th>Banque centrale</th><th class="r">Solde (Md€)</th><th class="r">3 mois</th><th class="r">12 mois</th><th class="r">Au</th></tr></thead><tbody>' + ks.map(function (k) {
+        var x = T[k], d = function (v) { return typeof v === "number" ? (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(Math.round(v)).toLocaleString("fr-FR") : "–"; };
+        return '<tr data-det="tgb:' + k + '"><td><b>' + esc(EZFR[k] || k) + '</b> <span class="more">›</span></td><td class="r num ' + (x.v >= 0 ? "up" : "down") + '">' + d(x.v) + '</td><td class="r num">' + d(x.d3) + '</td><td class="r num">' + d(x.d12) + '</td><td class="r">' + esc(mLab(x.d)) + "</td></tr>";
+      }).join("") + '</tbody><caption class="cap">Solde positif = la banque centrale du pays prête au reste de l\'Eurosystème (l\'argent afflue, ex. Allemagne) ; solde qui plonge = les capitaux quittent le pays. En 2011-2012, la chute des soldes italien et espagnol a signalé la fragmentation. Mensuel (BCE).</caption>';
+    } else $("ezTgb").innerHTML = "";
+  }
+  function drawEz() {
+    var E = ezData(); if (!E || !$("ezChart")) return;
+    var rows = E.cc.filter(function (r) { return EZC[r.cc] && (ezView === "1y" ? r.hist : r.long); });
+    var ax = []; rows.forEach(function (r) { (ezView === "1y" ? r.hist : r.long).forEach(function (p) { if (ax.indexOf(p[0]) < 0) ax.push(p[0]); }); }); ax.sort();
+    var ser = rows.filter(function (r) { return !ezHide[r.cc]; }).map(function (r) { var m = {}; (ezView === "1y" ? r.hist : r.long).forEach(function (p) { m[p[0]] = p[1]; }); return { pts: ax.map(function (d, i) { return [i, m[d] === undefined ? null : m[d]]; }), c: EZC[r.cc], w: 1.6 }; });
+    var n = ax.length, xl = ax.map(function (d, i) { return i === 0 || i === n - 1 || i === Math.floor(n / 2) ? (ezView === "1y" ? shortD(d) : d.slice(0, 4)) : ""; });
+    lineChart($("ezChart"), 640, 220, ser, { n: n, xl: xl, lab: ax.map(function (d) { return ezView === "1y" ? longD(d) : mLab(d); }), zero: true });
+    $("ezLeg").innerHTML = rows.map(function (r) { return '<button type="button" class="' + (ezHide[r.cc] ? "off" : "") + '" data-c="' + r.cc + '"><i style="background:' + EZC[r.cc] + '"></i>' + esc(r.name) + " − Allemagne</button>"; }).join("") + '<span class="hint">en points de base ; touchez un pays pour le masquer</span>';
+  }
+  function initEz() {
+    if (!$("ezTabs")) return;
+    $("ezTabs").addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; ezView = b.getAttribute("data-v"); [].forEach.call($("ezTabs").querySelectorAll("button"), function (x) { x.className = x === b ? "on" : ""; }); drawEz(); });
+    $("ezLeg").addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; var c = b.getAttribute("data-c"); ezHide[c] = !ezHide[c]; drawEz(); });
+    if ($("defEu")) $("defEu").addEventListener("click", function (e) { var th = e.target.closest("th[data-s]"); if (!th) return; defSort = th.getAttribute("data-s"); renderDeficits(); });
+  }
+  var defSort = "b9";
+  function renderDeficits() {
+    if (!$("defEu")) return;
+    var D = AUTO && AUTO.deficits; if (!D) { $("defTiles").innerHTML = '<p class="note pad">Pas encore de données : le robot les ajoute à son prochain passage.</p>'; $("defMeta").textContent = "robot : en attente"; return; }
+    var bn = function (v, cur) { return typeof v === "number" ? Math.abs(v).toLocaleString("fr-FR", { maximumFractionDigits: 0 }) + " " + cur : "–"; };
+    var t = "", U = D.us, K = D.uk, EA = null, EAk = null;
+    if (D.eu) Object.keys(D.eu).forEach(function (g) { if (/^EA/.test(g) && (!EAk || g > EAk)) { EAk = g; EA = D.eu[g]; } });
+    if (U) t += '<div class="tile" data-det="def:US"><small>États-Unis · ' + esc(mLab(U.d)) + ' <span class="more">›</span></small><b class="' + (U.m > 0 ? "down" : "up") + '">' + (U.m > 0 ? "déficit " : "excédent ") + bn(U.m, "Md$") + '</b><span class="dl">sur 12 mois : ' + (typeof U.r12 === "number" ? "déficit " + bn(U.r12, "Md$") : "–") + '</span><span class="asof">exercice ' + esc(U.fy) + " à date : " + bn(U.ytd, "Md$") + (typeof U.pytd === "number" ? " (" + (U.ytd > U.pytd ? "plus" : "moins") + " que l'an dernier : " + bn(U.pytd, "Md$") + ")" : "") + "</span></div>";
+    if (K) t += '<div class="tile" data-det="def:GB"><small>Royaume-Uni · ' + esc(mLab(K.d)) + ' <span class="more">›</span></small><b class="' + (K.m > 0 ? "down" : "up") + '">' + (K.m > 0 ? "emprunt " : "excédent ") + bn(K.m, "Md£") + '</b><span class="dl">sur 12 mois : ' + bn(K.r12, "Md£") + '</span><span class="asof">exercice (avril →) : ' + bn(K.ytd, "Md£") + (typeof K.pytd === "number" ? " (an dernier : " + bn(K.pytd, "Md£") + ")" : "") + "</span></div>";
+    if (EA) { var yrs = Object.keys(EA.b9 || {}).sort(), y = yrs[yrs.length - 1], q = D.euq && D.euq[EAk], qk = q ? Object.keys(q).sort().pop() : null;
+      t += '<div class="tile" data-det="def:' + EAk + '"><small>Zone euro · ' + esc(y) + ' <span class="more">›</span></small><b class="' + (EA.b9[y] <= -3 ? "down" : EA.b9[y] < 0 ? "amb" : "up") + '">' + fmt(EA.b9[y], 1) + ' % du PIB</b><span class="dl">dette ' + (EA.gd && EA.gd[y] ? fmt(EA.gd[y], 1) + " %" : "–") + '</span><span class="asof">' + (qk ? "dernier trimestre (" + esc(qk.replace("-", " ")) + ") : " + fmt(q[qk], 1) + " %" : "") + "</span></div>"; }
+    $("defTiles").innerHTML = t ? '<div class="tiles">' + t + "</div>" : "";
+    var se = srcOf("es.edp"); $("defMeta").innerHTML = se && se.asof ? "Eurostat " + se.asof.slice(0, 4) + " · " + badge(se.ok ? "ok" : "old") : "robot";
+    /* OCDE */
+    var O = D.oecd;
+    if (O && O.cc) {
+      var Y = O.yr || new Date().getFullYear(), cols = [Y - 2, Y - 1, Y, Y + 1], NM = { US: "États-Unis", EA: "Zone euro", JP: "Japon", GB: "Royaume-Uni", CA: "Canada", AU: "Australie", NZ: "Nouvelle-Zélande", CH: "Suisse" };
+      $("defOecd").innerHTML = '<thead><tr><th>Économie</th>' + cols.map(function (c) { return '<th class="r">Solde ' + c + (c >= Y ? " <small>prév.</small>" : c === Y - 1 ? " <small>est.</small>" : "") + "</th>"; }).join("") + '<th class="r">Dette ' + (Y - 1) + "</th><th>Lecture (" + Y + ")</th></tr></thead><tbody>" +
+        ["US", "EA", "JP", "GB", "CA", "AU", "NZ", "CH"].filter(function (k) { return O.cc[k]; }).map(function (k) {
+          var x = O.cc[k], b = x.bal || {}, dv = (x.debt || {})[String(Y - 1)], cur = b[String(Y)], prv = b[String(Y - 1)];
+          var lec = typeof cur !== "number" ? "" : cur >= 0 ? "excédent" : cur > -3 ? "déficit modéré" : "<b class=\"down\">déficit élevé (> 3 %)</b>";
+          if (typeof cur === "number" && typeof prv === "number") lec += cur < prv - 0.3 ? " · se creuse" : cur > prv + 0.3 ? " · se réduit" : " · stable";
+          return "<tr><td><b>" + NM[k] + "</b></td>" + cols.map(function (c) { var v = b[String(c)]; return '<td class="r num ' + (typeof v !== "number" ? "" : v <= -3 ? "down" : v < 0 ? "amb" : "up") + '">' + (typeof v === "number" ? fmt(v, 1) + " %" : "–") + "</td>"; }).join("") + '<td class="r num">' + (typeof dv === "number" ? fmt(dv, 0) + " %" : "–") + "</td><td>" + lec + "</td></tr>";
+        }).join("") + '</tbody><caption class="cap">' + esc(O.ed || "OCDE, Perspectives économiques") + " · solde en % du PIB (négatif = déficit) ; dette brute des administrations en % du PIB (définition OCDE, différente de la dette « Maastricht »).</caption>";
+    } else $("defOecd").innerHTML = '<tbody><tr><td>OCDE indisponible au dernier passage du robot.</td></tr></tbody>';
+    /* Zone euro */
+    var A = D.eu;
+    if (A) {
+      var keys = Object.keys(A).filter(function (g) { return g !== "EU27_2020" && !/^EA/.test(g); }), y0 = null;
+      keys.forEach(function (g) { Object.keys(A[g].b9 || {}).forEach(function (yy) { if (!y0 || yy > y0) y0 = yy; }); });
+      var yP = String(+y0 - 1), Qk = D.euq || {};
+      keys.sort(function (a, b) { var va = defSort === "gd" ? -((A[a].gd || {})[y0] || 0) : ((A[a].b9 || {})[y0] || 0), vb = defSort === "gd" ? -((A[b].gd || {})[y0] || 0) : ((A[b].b9 || {})[y0] || 0); return va - vb; });
+      if (EAk) keys.unshift(EAk);
+      $("defSortLab").textContent = "· triés par " + (defSort === "gd" ? "dette" : "déficit") + " (touchez l'en-tête pour changer)";
+      $("defEu").innerHTML = '<thead><tr><th>Pays</th><th class="r" data-s="b9" style="cursor:pointer">Solde ' + y0 + ' ▾</th><th class="r">Solde ' + yP + '</th><th class="r">Dernier trim.</th><th class="r" data-s="gd" style="cursor:pointer">Dette ' + y0 + " ▾</th><th>Règles UE</th></tr></thead><tbody>" + keys.map(function (g) {
+        var x = A[g], b = (x.b9 || {})[y0], bp_ = (x.b9 || {})[yP], d = (x.gd || {})[y0], qq = Qk[g], qk = qq ? Object.keys(qq).sort().pop() : null;
+        var fl = []; if (typeof b === "number" && b < -3) fl.push('<span class="pill bad">déficit > 3 %</span>'); if (typeof d === "number" && d > 60) fl.push('<span class="pill warn">dette > 60 %</span>'); if (!fl.length) fl.push('<span class="pill okp">dans les règles</span>');
+        var nm = /^EA/.test(g) ? "Zone euro (" + g + ")" : (x.name || g).replace("Euro area", "Zone euro");
+        return '<tr data-det="def:' + g + '"' + (/^EA/.test(g) ? ' class="hl"' : "") + "><td><b>" + esc(EZFR[g] || nm) + '</b> <span class="more">›</span></td><td class="r num ' + (typeof b !== "number" ? "" : b <= -3 ? "down" : b < 0 ? "amb" : "up") + '">' + (typeof b === "number" ? fmt(b, 1) + " %" : "–") + '</td><td class="r num">' + (typeof bp_ === "number" ? fmt(bp_, 1) + " %" : "–") + '</td><td class="r num">' + (qk && typeof qq[qk] === "number" ? fmt(qq[qk], 1) + " % <small>" + esc(qk.replace("-", " ")) + "</small>" : "–") + '</td><td class="r num">' + (typeof d === "number" ? fmt(d, 1) + " %" : "–") + "</td><td>" + fl.join(" ") + "</td></tr>";
+      }).join("") + '</tbody><caption class="cap">Eurostat (notification de déficit excessif), données annuelles ; dernier trimestre corrigé des variations saisonnières quand disponible. ' + keys.filter(function (g) { var b = (A[g].b9 || {})[y0]; return !/^EA/.test(g) && typeof b === "number" && b < -3; }).length + " pays de la zone euro au-delà de 3 % de déficit en " + y0 + ".</caption>";
+    }
+  }
+  function renderMove() {
+    var M = AUTO && AUTO.move, el = $("moveTile"); if (!el) return;
+    if (!M || typeof M.v !== "number") { el.innerHTML = '<small>MOVE (volatilité obligataire)</small><b>–</b><span class="asof">indisponible</span>'; return; }
+    var h = M.hist ? M.hist.slice(-40).map(function (p) { return { v: p[1] }; }) : null;
+    el.innerHTML = '<small>MOVE (vol. obligataire) <span class="more">›</span></small><b class="' + (M.v >= 130 ? "down" : M.v >= 100 ? "amb" : "") + '">' + fmt(M.v, 1) + "</b>" + (typeof M.d1 === "number" ? '<span class="dl ' + (M.d1 > 0 ? "down" : "up") + '">' + (M.d1 >= 0 ? "+" : "−") + fmt(Math.abs(M.d1), 1) + "</span>" : "") + (h && h.length > 3 ? spark(h) : "") + '<span class="asof">au ' + shortD(M.d) + (M.stale ? " " + badge("old") : "") + " · rang 1 an " + rk(M.p1y) + "</span>";
+  }
+  function moveLine() {
+    var M = AUTO && AUTO.move; if (!M || typeof M.v !== "number") return "";
+    return "MOVE à " + fmt(M.v, 0) + " : " + (M.v < 80 ? "obligations américaines calmes." : M.v < 100 ? "volatilité obligataire normale." : M.v < 130 ? "<b>obligations agitées</b> : taux plus imprévisibles, l'or et le dollar bougent davantage." : "<b>stress obligataire élevé</b> (niveau de crise) : prudence sur les tailles de position.");
+  }
+  function detEz(key) {
+    var k = key.split(":"), type = k[0], id = k[1], F = (AUTO && AUTO.frag) || {};
+    if (type === "ez") {
+      var r = ezBy(id); if (!r) return;
+      return openDetail({ t: "Écart " + r.name + " − Allemagne (10 ans)", val: bp(r.bp), sub: (typeof r.y === "number" ? r.name + " " + fmt(r.y, 2) + " % · Bund " + fmt(AUTO.ezspread.de.y, 2) + " % · " : "") + (r.t ? "au " + shortD(String(r.t).slice(0, 10)) + " · " : "") + esc(r.src || ""),
+        chart: r.long && r.long.length ? r.long : r.hist, zero: true,
+        now: [typeof r.d20 === "number" ? "Sur 20 séances, l'écart a " + (r.d20 > 0 ? "augmenté" : "baissé") + " de " + bp(Math.abs(r.d20)) + "." : "", typeof r.p1y === "number" ? "Rang sur un an : " + r.p1y + "/100 (plus bas " + bp(r.lo1y) + ", plus haut " + bp(r.hi1y) + ")." : "", typeof r.plong === "number" ? "Rang depuis " + (r.since || "2005").slice(0, 4) + " (moyennes mensuelles BCE) : " + r.plong + "/100 ; record " + bp(r.maxlong[1]) + " en " + mLab(r.maxlong[0]) + "." : "", r.irs ? "Dernière moyenne mensuelle officielle (BCE, " + mLab(r.irs[0]) + ") : " + bp(r.irs[1]) + "." : ""].filter(Boolean).join(" "),
+        what: "La prime que les investisseurs exigent pour prêter 10 ans à " + r.name + " plutôt qu'à l'Allemagne, jugée la plus sûre de la zone euro. 100 points de base = 1 point de pourcentage.",
+        how: "Un écart qui monte vite = inquiétude sur les finances publiques ou la politique du pays (élections, budget, note de crédit). Si plusieurs écarts montent ensemble, on parle de fragmentation : souvent négatif pour l'euro (EUR/USD) et favorable aux valeurs refuges comme l'or. Un écart qui se resserre = confiance qui revient.",
+        src: "https://data.ecb.europa.eu/data/datasets/IRS", srcTxt: "BCE (officiel, mensuel) ; rendements du jour : CNBC (secondaire, différé)" });
+    }
+    if (type === "frag") {
+      var R = F.rule; if (!R) return;
+      return openDetail({ t: "Fragmentation de la zone euro", val: esc(R.state), sub: R.score + " point(s) sur " + R.max + " · règle fixe du terminal",
+        extra: '<h3>Critères</h3><div class="tbl"><table><tbody>' + R.crit.map(function (c) { return "<tr><td>" + esc(c.l) + '</td><td class="r num"><b>' + esc(c.v) + '</b></td><td class="r">' + (c.pts ? "+" + c.pts : "0") + " pt</td><td><small>" + esc(c.r) + "</small></td></tr>"; }).join("") + "</tbody></table></div>",
+        what: "La fragmentation, c'est quand les pays de la zone euro empruntent à des conditions de plus en plus différentes : les écarts de taux s'écartent, le stress souverain monte, les capitaux fuient le Sud vers le Nord (soldes TARGET). La politique de la BCE ne se transmet alors plus de la même manière partout.",
+        how: "0 à 2 points = calme ; 3 à 4 = tension ; 5 et plus = fragmentation. Ce n'est qu'une règle de lecture transparente : regardez chaque critère. En cas de fragmentation « désordonnée », la BCE peut acheter les obligations du pays touché avec son instrument TPI (créé en juillet 2022).",
+        src: R.tpi, srcTxt: "BCE, communiqué de création du TPI" });
+    }
+    if (type === "sov") {
+      var x = id === "U2" ? F.sov : id === "CISS" ? F.ciss : (F.cc || {})[id]; if (!x) return;
+      return openDetail({ t: id === "U2" ? "Stress souverain zone euro (SovCISS)" : id === "CISS" ? "Stress systémique zone euro (CISS)" : "Stress souverain : " + (EZFR[id] || id), val: fmt(x.v, 3), sub: "rang " + rk(x.p) + " depuis 2008 · au " + shortD(x.d),
+        chart: x.hist, now: (typeof x.d20 === "number" ? "Variation sur 20 séances : " + (x.d20 >= 0 ? "+" : "−") + fmt(Math.abs(x.d20), 3) + ". " : "") + (x.max ? "Record : " + fmt(x.max[1], 3) + " le " + longD(x.max[0]) + "." : ""),
+        what: id === "CISS" ? "Indice de stress de tout le système financier de la zone euro (actions, obligations, monnaie, change, banques), calculé chaque jour par la BCE." : "Indice de la BCE qui mesure le stress sur les obligations d'État : niveaux de rendement, écarts, volatilité, liquidité, à 2, 5 et 10 ans.",
+        how: "Entre 0 et 1 : plus c'est haut, plus il y a de stress. Comparez au rang : au-dessus de 90/100, le stress n'a été dépassé que dans les grandes crises (2011-2012, 2020, 2022).", src: "https://data.ecb.europa.eu/data/datasets/CISS", srcTxt: "BCE, quotidien" });
+    }
+    if (type === "tgb") {
+      var tg = (F.tgb || {})[id]; if (!tg) return;
+      return openDetail({ t: "Solde TARGET : " + (EZFR[id] || id), val: Math.round(tg.v).toLocaleString("fr-FR") + " Md€", sub: "fin " + mLab(tg.d) + " · BCE, mensuel", chart: tg.hist, zero: true,
+        what: "Créance (+) ou dette (−) de la banque centrale nationale envers le reste de l'Eurosystème, née des paiements entre pays.", how: "Quand les capitaux fuient un pays (Italie, Espagne) vers un pays sûr (Allemagne), le solde du premier baisse et celui du second monte : signe de fragmentation financière.", src: "https://data.ecb.europa.eu/data/datasets/TGB", srcTxt: "BCE" });
+    }
+    if (type === "def") {
+      var D = AUTO.deficits || {};
+      if (id === "US" && D.us) { var U = D.us; return openDetail({ t: "Déficit fédéral américain", val: (U.m > 0 ? "déficit " : "excédent ") + Math.abs(U.m).toLocaleString("fr-FR") + " Md$", sub: "mois de " + mLab(U.d) + " · Trésor américain (Monthly Treasury Statement)", chart: (U.months || []).map(function (m) { return [MOFR[m[0]] || m[0], m[1]]; }), zero: true,
+        now: "Exercice " + U.fy + " à date (octobre → " + mLab(U.d) + ") : recettes " + Math.round(U.rcpt).toLocaleString("fr-FR") + " Md$, dépenses " + Math.round(U.outl).toLocaleString("fr-FR") + " Md$, déficit " + Math.round(U.ytd).toLocaleString("fr-FR") + " Md$" + (typeof U.pytd === "number" ? " contre " + Math.round(U.pytd).toLocaleString("fr-FR") + " Md$ un an plus tôt." : ".") + (typeof U.r12 === "number" ? " Sur 12 mois glissants : " + Math.round(U.r12).toLocaleString("fr-FR") + " Md$." : ""),
+        what: "Écart entre les dépenses et les recettes de l'État fédéral, publié chaque mois vers le 8e jour ouvré. Le graphique montre le déficit de chaque mois de l'exercice (octobre → septembre ; négatif = excédent du mois).", how: "Un déficit qui grossit oblige le Trésor à émettre plus d'obligations : pression à la hausse sur les taux longs américains, parfois favorable à l'or (inquiétude sur la dette).", src: "https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/", srcTxt: "Trésor US (officiel)" }); }
+      if (id === "GB" && D.uk) { var K = D.uk; return openDetail({ t: "Emprunt net du secteur public britannique", val: Math.abs(K.m).toLocaleString("fr-FR") + " Md£", sub: "mois de " + mLab(K.d) + " · ONS", now: "Exercice en cours (depuis avril) : " + K.ytd.toLocaleString("fr-FR") + " Md£" + (typeof K.pytd === "number" ? " contre " + K.pytd.toLocaleString("fr-FR") + " Md£ un an plus tôt." : ".") + " Sur 12 mois : " + K.r12.toLocaleString("fr-FR") + " Md£.", what: "Ce que l'État britannique a dû emprunter (hors banques publiques) : c'est le déficit au sens britannique.", how: "Un dérapage par rapport aux prévisions de l'OBR inquiète le marché des Gilts et peut peser sur la livre (souvenir de l'automne 2022).", src: "https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance", srcTxt: "ONS (officiel)" }); }
+      var x2 = (D.eu || {})[id]; if (!x2) return;
+      var yrs = Object.keys(x2.b9 || {}).sort();
+      return openDetail({ t: "Finances publiques : " + (EZFR[id] || x2.name || id), val: fmt(x2.b9[yrs[yrs.length - 1]], 1) + " % du PIB", sub: "solde public " + yrs[yrs.length - 1] + " · Eurostat",
+        now: yrs.map(function (y) { return y + " : solde " + fmt(x2.b9[y], 1) + " %" + (x2.gd && typeof x2.gd[y] === "number" ? ", dette " + fmt(x2.gd[y], 1) + " %" : ""); }).join(" · "),
+        what: "Solde (négatif = déficit) et dette des administrations publiques, au sens des règles européennes.", how: "Au-delà de 3 % de déficit ou 60 % de dette, la Commission peut ouvrir une procédure pour déficit excessif. Un déficit qui dérape fait souvent monter l'écart de taux du pays avec l'Allemagne.", src: "https://ec.europa.eu/eurostat/databrowser/view/gov_10dd_edpt1/default/table", srcTxt: "Eurostat (officiel)" });
+    }
+    if (type === "move") {
+      var M = AUTO.move; if (!M) return;
+      return openDetail({ t: "Indice MOVE (volatilité des obligations US)", val: fmt(M.v, 1), sub: "au " + shortD(M.d) + " · " + esc(M.src) + (M.stale ? " · ancienne valeur" : ""), chart: M.hist,
+        now: moveLine() + (typeof M.d5 === "number" ? " Sur 5 séances : " + (M.d5 >= 0 ? "+" : "−") + fmt(Math.abs(M.d5), 1) + "." : "") + (typeof M.p1y === "number" ? " Rang sur un an : " + M.p1y + "/100 (plus bas " + fmt(M.lo1y, 0) + ", plus haut " + fmt(M.hi1y, 0) + ")." : "") + (M.ratio_vix ? " Rapport MOVE/VIX : " + fmt(M.ratio_vix, 1) + "." : ""),
+        what: "Le « VIX des obligations » : volatilité attendue des Treasuries américains sur un mois, tirée des options (indice ICE BofA). Moyenne historique autour de 100.", how: "Sous 80 : calme. 100 à 130 : agitation. Au-dessus de 130-150 : stress (2008, mars 2020, mars 2023 avec SVB). Un MOVE élevé rend les taux réels et le dollar plus nerveux, donc l'or aussi.", src: "https://finance.yahoo.com/quote/%5EMOVE/", srcTxt: "valeur relevée par le robot (source non officielle) ; l'indice appartient à ICE" });
+    }
+  }
+  function renderMtEz() {
+    var el = $("mtEz"); if (!el) return;
+    var R = fragState(), fr = ezBy("FR"), it = ezBy("IT"), M = AUTO && AUTO.move, D = AUTO && AUTO.deficits, l = [];
+    if (!R && !fr && !M) { el.innerHTML = ""; return; }
+    if (R) l.push('Zone euro : <b class="' + stCls(R.state) + '">' + esc(R.state) + "</b> (" + R.score + "/" + R.max + ")");
+    if (fr) l.push("France − Allemagne " + bp(fr.bp) + (typeof fr.d1 === "number" ? " (" + bp(fr.d1, 1) + " sur 1 j)" : ""));
+    if (it) l.push("Italie − Allemagne " + bp(it.bp) + (typeof it.d1 === "number" ? " (" + bp(it.d1, 1) + ")" : ""));
+    if (M && typeof M.v === "number") l.push("MOVE " + fmt(M.v, 0));
+    if (D && D.us && typeof D.us.r12 === "number") l.push("déficit US 12 mois " + Math.round(D.us.r12).toLocaleString("fr-FR") + " Md$");
+    el.innerHTML = '<h3>Obligations et finances publiques</h3><div class="m">' + l.join(" · ") + ' · <a href="#/taux">ouvrir</a></div>' + (R && R.state !== "Calme" ? '<div class="galert">⚠ Zone euro en ' + esc(R.state.toLowerCase()) + " : surveillez EUR/USD et l'or.</div>" : "");
+  }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
@@ -4719,7 +4943,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   renderMacro(); renderAgenda(); renderInd(); renderHow(); renderWeek(); renderClocks(); setInterval(renderClocks, 1000);
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
   buildBranches(); tagNature(); initMotion();
-  initCmd(); initCal(); initCalViews(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
+  initCmd(); initCal(); initCalViews(); initEz(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
   initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });

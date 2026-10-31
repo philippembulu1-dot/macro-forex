@@ -3728,6 +3728,9 @@ def do_frag(data):
     if pl:
         m = sum(pl) / float(len(pl))
         score += add("Niveau moyen des écarts (IT, FR, ES, PT), rang depuis 2005", "%d/100" % round(m), 1 if m >= 80 else 0, "≥ 80 : 1 pt")
+    rec = [sp[c]["name"] + " " + "%d/100" % sp[c]["plong"] for c in ("FR", "IT", "ES") if sp.get(c, {}).get("plong") is not None and sp[c]["plong"] >= 95]
+    if pl:
+        score += add("Grand pays (FR, IT, ES) à un écart record depuis 2005 (rang ≥ 95)", ", ".join(rec) or "aucun", 1 if rec else 0, "au moins un pays : 1 pt")
     hot = [c for c, x in (F.get("cc") or {}).items() if c != "DE" and (x.get("p") or 0) >= 90]
     if F.get("cc"):
         score += add("Pays en stress souverain élevé (rang ≥ 90)", ", ".join(hot) or "aucun", 1 if len(hot) >= 2 else 0, "2 pays ou plus : 1 pt")
@@ -3814,30 +3817,37 @@ def do_deficits(data):
         note("oecd.eo", "Solde et dette publics des 8 économies (OCDE)", "annual", False, err=e, url="https://data-explorer.oecd.org/")
     try:
         base = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/mts/mts_table_1?"
-        ytd = json.loads(http("mts_ytd.json", base + "filter=classification_desc:eq:Year-to-Date&sort=-record_date&page[size]=15&fields=record_date,current_month_dfct_sur_amt,current_month_gross_rcpt_amt,current_month_gross_outly_amt,record_fiscal_year", timeout=30))["data"]
-        ytd = [x for x in ytd if num(x.get("current_month_dfct_sur_amt")) is not None]
-        if not ytd:
-            raise ValueError("aucune ligne")
-        L0 = ytd[0]
-        rd = L0["record_date"]
-        mo = int(rd[5:7])
-        mrows = json.loads(http("mts_m.json", base + "filter=record_date:eq:%s&page[size]=40" % rd, timeout=30))["data"]
-        DIAG["mts_rows"] = [[x.get("classification_desc"), x.get("classification_id"), x.get("parent_id"), x.get("src_line_nbr"), x.get("current_month_dfct_sur_amt")] for x in mrows]
-        DIAG["mts_ytd"] = [[x.get("record_date"), x.get("current_month_dfct_sur_amt"), x.get("current_month_gross_rcpt_amt")] for x in ytd[:6]]
-        mrow = next((x for x in mrows if x.get("classification_desc") == MONTHS_EN[mo - 1]), None)
-        prev_rd = "%d%s" % (int(rd[:4]) - 1, rd[4:])
-        py = next((x for x in ytd if x["record_date"][:7] == prev_rd[:7]), None)
-        fy_end = next((x for x in ytd if x["record_date"][:7] == "%d-09" % (int(L0["record_fiscal_year"]) - 1)), None)
+        # Attention : demander seulement certains champs fait additionner les lignes par l'API ; on lit les lignes complètes.
+        last = json.loads(http("mts_last.json", base + "sort=-record_date&page[size]=1", timeout=30))["data"][0]["record_date"]
+        rows = json.loads(http("mts_m.json", base + "filter=record_date:eq:%s&page[size]=60" % last, timeout=30))["data"]
+        heads = {x["classification_id"]: x["classification_desc"] for x in rows if str(x.get("parent_id")) == "null" and str(x.get("classification_desc", "")).startswith("FY ")}
+        if len(heads) < 1:
+            raise ValueError("exercices introuvables")
+        fy_id = max(heads, key=lambda i: heads[i])
+        py_id = min(heads, key=lambda i: heads[i]) if len(heads) > 1 else None
         bn = lambda x: round(num(x) / 1e9, 1) if num(x) is not None else None
-        U = {"d": rd, "fy": L0["record_fiscal_year"], "ytd": bn(L0["current_month_dfct_sur_amt"]),
-             "rcpt": bn(L0["current_month_gross_rcpt_amt"]), "outl": bn(L0["current_month_gross_outly_amt"]),
-             "m": bn(mrow["current_month_dfct_sur_amt"]) if mrow else None, "pytd": bn(py["current_month_dfct_sur_amt"]) if py else None}
-        if mo == 9:
+        FM = ["October", "November", "December", "January", "February", "March", "April", "May", "June", "July", "August", "September"]
+        def kids(pid):
+            return {x["classification_desc"]: x for x in rows if x.get("parent_id") == pid}
+        cur, prv = kids(fy_id), kids(py_id) if py_id else {}
+        ytdr = cur.get("Year-to-Date")
+        if not ytdr:
+            raise ValueError("ligne « Year-to-Date » absente")
+        mo = int(last[5:7])
+        fi = FM.index(MONTHS_EN[mo - 1])
+        mrow = cur.get(MONTHS_EN[mo - 1])
+        pytd = sum(num(prv[m]["current_month_dfct_sur_amt"]) or 0 for m in FM[:fi + 1] if m in prv) if prv else None
+        pfull = num((prv.get("Year-to-Date") or {}).get("current_month_dfct_sur_amt")) if prv else None
+        U = {"d": last, "fy": heads[fy_id].replace("FY ", ""), "ytd": bn(ytdr["current_month_dfct_sur_amt"]),
+             "rcpt": bn(ytdr["current_month_gross_rcpt_amt"]), "outl": bn(ytdr["current_month_gross_outly_amt"]),
+             "m": bn(mrow["current_month_dfct_sur_amt"]) if mrow else None, "pytd": round(pytd / 1e9, 1) if pytd is not None else None,
+             "months": [[m, bn(cur[m]["current_month_dfct_sur_amt"])] for m in FM if m in cur]}
+        if fi == 11:
             U["r12"] = U["ytd"]
-        elif py and fy_end:
-            U["r12"] = round(U["ytd"] + bn(fy_end["current_month_dfct_sur_amt"]) - U["pytd"], 1)
+        elif pytd is not None and pfull is not None:
+            U["r12"] = round(U["ytd"] + (pfull - pytd) / 1e9, 1)
         D["us"] = U
-        note("ust.mts", "Déficit fédéral américain, mensuel (Trésor US, Monthly Treasury Statement)", "monthly", True, rd, url="https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/")
+        note("ust.mts", "Déficit fédéral américain, mensuel (Trésor US, Monthly Treasury Statement)", "monthly", True, last, url="https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/")
     except Exception as e:
         note("ust.mts", "Déficit fédéral américain (Trésor US)", "monthly", False, err=e, url="https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/")
     try:
