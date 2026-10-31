@@ -3585,7 +3585,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function countUp(root) {
     if (CALM || !root) return;
     Array.prototype.forEach.call(root.querySelectorAll(".tile b, .stat b, .tilecard .big, .dval"), function (el) {
-      if (el.children.length || el.__cu) return;
+      if (el.children.length || el.__cu || /\d\s*[–-]\s*\d/.test(el.textContent)) return; /* pas d'animation sur les fourchettes (ex. 3,75–4,00 %) */
       var txt = el.textContent, m = /-?\d{1,3}(?:[\s  ]\d{3})+(?:,\d+)?|-?\d+(?:,\d+)?/.exec(txt); if (!m) return;
       var raw = m[0], sep = /[\s  ]/.test(raw), dec = (raw.split(",")[1] || "").length;
       var target = parseFloat(raw.replace(/[\s  ]/g, "").replace(",", ".")); if (!isFinite(target) || target === 0) return;
