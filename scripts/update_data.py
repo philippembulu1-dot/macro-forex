@@ -1730,6 +1730,38 @@ def do_calendar(data):
         except Exception as e:
             DIAG["ff_" + key] = fr_err(e)[:60]
     data["calendar_extra"] = extra
+    # Calendrier TradingView (vérifié depuis GitHub le 31 oct. 2026) : semaine en cours ET suivante, importance, chiffres réels.
+    # On garde Forex Factory pour la semaine en cours (analyses, surprises) et on ajoute TradingView au-delà.
+    try:
+        cur = {"US": "USD", "EU": "EUR", "DE": "EUR", "FR": "EUR", "IT": "EUR", "ES": "EUR", "GB": "GBP", "JP": "JPY", "CH": "CHF", "AU": "AUD", "CA": "CAD", "NZ": "NZD", "CN": "CNY"}
+        imp = {1: "High", 0: "Medium", -1: "Low"}
+        d0, d1 = (NOW - timedelta(days=1)).strftime("%Y-%m-%d"), (NOW + timedelta(days=13)).strftime("%Y-%m-%d")
+        url = "https://economic-calendar.tradingview.com/events?from=%sT00:00:00.000Z&to=%sT23:59:59.000Z&countries=%s" % (d0, d1, ",".join(cur))
+        j = json.loads(http("tv_cal.json", url, tries=2, timeout=40, headers={"Origin": "https://www.tradingview.com", "Referer": "https://www.tradingview.com/"}))
+        def tvfmt(v, e):
+            if v is None:
+                return ""
+            u, sc = e.get("unit") or "", e.get("scale") or ""
+            x = ("%g" % v) if isinstance(v, (int, float)) else str(v)
+            return (u if u not in ("%",) and len(u) <= 2 and not u.isalpha() else "") + x + sc + ("%" if u == "%" else "")
+        ff_end = max((e["d"][:10] for e in evs), default="")
+        tv, n_hi = [], 0
+        for e in j.get("result") or []:
+            d = e.get("date") or ""
+            if not d or d[:10] <= ff_end:
+                continue  # semaine déjà couverte par Forex Factory
+            c = e.get("country") or ""
+            t = (e.get("title") or "")[:80]
+            if c in ("DE", "FR", "IT", "ES"):
+                t = "[%s] %s" % (c, t)
+            i = imp.get(e.get("importance"), "Low")
+            n_hi += i == "High"
+            tv.append({"t": t, "c": cur.get(c, c), "d": d.replace(".000Z", "Z"), "i": i, "f": tvfmt(e.get("forecast"), e),
+                       "p": tvfmt(e.get("previous"), e), "a": tvfmt(e.get("actual"), e), "src": "TV"})
+        evs += tv
+        note("cal.tv", "Calendrier économique semaine suivante (TradingView) : %d publications dont %d fortes" % (len(tv), n_hi), "calendar", True, TODAY, url="https://www.tradingview.com/economic-calendar/")
+    except Exception as e:
+        note("cal.tv", "Calendrier économique semaine suivante (TradingView)", "calendar", False, err=e, url="https://www.tradingview.com/economic-calendar/")
     seen, out = set(), []
     for e in sorted(evs, key=lambda e: e["d"]):
         k = (e["d"], e["c"], e["t"])

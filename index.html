@@ -350,6 +350,15 @@ tr.hl td { background: #15130c; }
 #defOecd td:last-child, #defEu td:last-child { min-width: 150px; }
 #defOecd td:first-child, #ezTbl td:first-child { white-space: nowrap; }
 @media (max-width: 640px) { .ez-state { grid-template-columns: 1fr; } }
+.live { display: flex; gap: 1px; overflow-x: auto; background: var(--line2); border: 1px solid var(--line2); margin: 0 0 1px; scrollbar-width: thin; }
+.live .li { background: #0d0d0f; padding: 6px 10px; display: flex; flex-direction: column; min-width: 92px; cursor: pointer; flex: none; }
+.live .li b { font: 600 10px var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; }
+.live .li span { font: 600 14px var(--font-mono); white-space: nowrap; } .live .li small { font: 11px var(--font-mono); white-space: nowrap; }
+.live .li.stale span { color: var(--muted); } .live .lhead { min-width: 120px; justify-content: center; }
+.lst { font: 600 11px var(--font-mono); color: var(--muted); } .lst.on { color: var(--up); } .lst.off { color: var(--amber); } .lst.ko { color: var(--down); }
+.lv { color: var(--up); font-size: 9px; vertical-align: middle; }
+.bstat { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 14px; font: 11px var(--font-mono); color: var(--muted); }
+.bs.on { color: var(--up); } .bs.off, .bs.old { color: var(--amber); } .bs.ko { color: var(--down); }
 .geo-alerts { padding: 8px 12px 0; display: grid; gap: 4px; }
 .galert { font-size: 12px; padding: 6px 10px; border-left: 3px solid #ff5c4f; background: #1a0f0e; }
 .galert.ok { border-color: #3ddc97; background: #0e1a14; } .galert.note, .galert.pm { border-color: #f2b01e; background: #1a160b; } .galert.ship { border-color: #5fb4ff; background: #0d141c; }
@@ -490,6 +499,9 @@ tr[data-det]:hover td, .tile[data-det]:hover, .pil[data-det]:hover { background:
 .rg b { font: 600 14px var(--font-mono); color: var(--amber); } .rg b.up { color: var(--up); } .rg b.down { color: var(--down); }
 .rg span { font-size: 12px; color: var(--fg); } .rg em { font: 10px var(--font-mono); color: var(--muted); font-style: normal; }
 .nat { display: inline-block; margin-left: 8px; vertical-align: middle; font: 600 9px var(--font-mono); letter-spacing: .08em; padding: 1px 5px; border: 1px solid var(--line); color: var(--muted); cursor: help; }
+.bgrp { grid-column: 1 / -1; margin: 10px 0 -4px; font: 600 12px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--amber); display: flex; align-items: center; gap: 10px; }
+.bgrp::after { content: ""; flex: 1; height: 1px; background: var(--line2); }
+.nat-guide, .nat-outil, .nat-liens { color: #9aa4b2; border-color: #3a3f47; }
 .nat-endirect { color: var(--up); border-color: #1f5a41; } .nat-diffr { color: #4da3ff; border-color: #234a73; } .nat-manuel { color: #c77dff; border-color: #5b3a7a; } .nat-calcul { color: var(--amber); border-color: #6b5214; }
 /* Cycle en 4 phases et moteurs du marché */
 .ph4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
@@ -622,8 +634,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div class="cmdmsg" id="cmdMsg" aria-live="polite"></div>
     </div>
     <div class="tv" id="tv" aria-label="Cotations en direct"></div>
+    <div class="live" id="liveBar" aria-label="Cotations en direct (CNBC)" aria-live="off"></div>
     <div class="tape" id="tape" aria-label="Cours des paires"></div>
-    <p class="tapenote">* XAUUSD : cours du jeton PAXG, adossé à l'or (Binance), très proche du spot. DXY recalculé à partir des taux BCE du jour. NAS100 et US10Y : barre TradingView ci-dessus. Les paires : taux BCE, variation sur 7 jours.</p>
+    <p class="tapenote">Ligne du haut : cotations en direct (CNBC, relues toutes les 60 s, différé de quelques minutes ; touchez une case pour le détail). Ligne du bas : * XAUUSD = jeton PAXG (Binance, toutes les 30 s), DXY* recalculé avec les taux BCE, paires BCE sur 7 jours.</p>
 
     <div class="grid">
       <div class="col">
@@ -688,7 +701,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
 
         <section class="panel o-force" id="force">
           <div class="ph">
-            <h2>Force des devises</h2>
+            <h2>Force des devises sur 1 et 3 mois (fixings BCE)</h2>
             <div class="seg" role="group" aria-label="Période">
               <button type="button" data-w="30" aria-pressed="false">1M</button>
               <button type="button" data-w="92" aria-pressed="true">3M</button>
@@ -791,7 +804,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     </section>
 
     <section class="panel" id="ecarts">
-      <div class="ph"><h2>Écarts de taux face au dollar</h2><span class="meta">taux directeurs</span></div>
+      <div class="ph"><h2>Différentiels de taux directeurs face au dollar</h2><span class="meta">taux directeurs</span></div>
       <div id="diffBody"></div>
       <p class="note">Écart = taux directeur de la devise − taux de la Fed (borne haute). Un écart qui se creuse en faveur d'une devise la soutient souvent (carry). Chiffre automatique quand une source officielle a répondu, sinon saisie manuelle datée.</p>
     </section>
@@ -1109,7 +1122,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     </section>
 
     <section class="panel" id="matin">
-      <div class="ph"><h2 id="mtTitle">Ce matin</h2><span class="meta" id="mtMeta">robot</span></div>
+      <div class="ph"><h2><span id="mtTitle">Ce matin</span></h2><span class="meta" id="mtMeta">robot</span></div>
       <div id="mtTop" class="mtop"></div>
       <div class="pcard" id="mtGeo"></div>
       <div class="pcard" id="mtEz"></div>
@@ -3243,23 +3256,24 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
      BRANCHES : accueil en tuiles, chaque outil dans sa branche (31 oct. 2026)
      ===================================================================== */
   var BR = [
-    { id: "matin", t: "Ce matin", ic: "☀", d: "Résumé de la veille, alertes géopolitiques, publications du jour à l'heure de Kinshasa, biais par actif, scénarios, régime et moteurs du marché", p: ["matin", "scenarios", "regime", "moteurs"] },
-    { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, flux de l'or (ETF, banques centrales), volatilité, saisonnalité 20 ans", p: ["or", "scorecard", "flux", "orvol", "saison"] },
-    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts France/Italie/Espagne − Allemagne et fragmentation, MOVE, taux réels, indicateurs des desks, règle de Taylor", p: ["pricing", "courbe", "ezone", "taux", "desk", "ecarts", "taylor"] },
-    { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"] },
-    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique (pro en direct et analyse), surprises, réactions du marché, cycle, indicateurs, déficits et dettes publics, projections Fed et BCE", p: ["calendrier", "surprises", "reactions", "cycle", "indicateurs", "deficits", "semaine", "dotplot", "bceproj", "lecture"] },
-    { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique avec fiche détaillée au clic, moniteur de risque (crises, alertes, prédictions, énergie, calendrier), détroits, réserves", p: ["monde", "geopol", "maritime", "reserves"] },
-    { id: "devises", t: "Devises", ic: "⇄", d: "Force des devises multi-horizons, paires, graphique, appétit pour le risque, carte thermique, corrélations, volatilité", p: ["fstr", "force", "paires", "selPanel", "~duo", "heat", "correl", "vola"] },
-    { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["marches", "multi", "sessions"] },
+    { id: "matin", t: "Ce matin", ic: "☀", d: "Résumé de la veille, alertes géopolitiques, publications du jour à l'heure de Kinshasa, biais par actif, scénarios, régime et moteurs du marché", p: ["matin", "scenarios", "regime", "moteurs"], g: { matin: "Résumé du jour", scenarios: "Lecture du marché" } },
+    { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, flux de l'or (ETF, banques centrales), volatilité, saisonnalité 20 ans", p: ["or", "scorecard", "flux", "orvol", "saison"], g: { or: "Cours", scorecard: "Analyse fondamentale", orvol: "Volatilité et saisonnalité" } },
+    { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts France/Italie/Espagne − Allemagne et fragmentation, MOVE, taux réels, indicateurs des desks, règle de Taylor", p: ["pricing", "taylor", "courbe", "taux", "desk", "ezone", "ecarts"], g: { pricing: "Fed : où vont les taux", courbe: "Courbes, taux réels et volatilité", ezone: "Zone euro et écarts entre pays" } },
+    { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"], g: { banques: "Taux et probabilités", agenda: "Réunions, comités, communiqués" } },
+    { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique (pro en direct et analyse), surprises, réactions du marché, cycle, indicateurs, déficits et dettes publics, projections Fed et BCE", p: ["calendrier", "semaine", "surprises", "reactions", "cycle", "indicateurs", "deficits", "dotplot", "bceproj", "lecture"], g: { calendrier: "Calendrier", surprises: "Surprises et réactions du marché", cycle: "Économie : cycle, indicateurs, finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
+    { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique avec fiche détaillée au clic, moniteur de risque (crises, alertes, prédictions, énergie, calendrier), détroits, réserves", p: ["monde", "geopol", "maritime", "reserves"], g: { monde: "Carte", geopol: "Risque géopolitique", maritime: "Commerce et réserves" } },
+    { id: "devises", t: "Devises", ic: "⇄", d: "Force des devises multi-horizons, paires, graphique, appétit pour le risque, carte thermique, corrélations, volatilité", p: ["fstr", "force", "heat", "paires", "selPanel", "~duo", "correl", "vola"], g: { fstr: "Force des devises", paires: "Paires et graphique", correl: "Corrélations et volatilité" } },
+    { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["marches", "multi", "sessions"], g: { marches: "En direct", multi: "Multi-actifs et sessions" } },
     { id: "position", t: "Positionnement", ic: "⚖", d: "Positions des fonds (COT), sentiment des particuliers", p: ["cot", "sentiment"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Consensus des banques, notes sur le dollar, l'euro et les taux, vidéos", p: ["consensus", "analyses", "videos"] },
-    { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"] },
+    { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"], g: { calc: "Avant d'entrer", outils: "Outils, notes et liens" } },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source (robot) et liens", p: ["robot"] }
   ];;
   var WIDE = { ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   /* Nature des données de chaque panneau (demandée par l'audit) : EN DIRECT, DIFFÉRÉ, QUOTIDIEN, HEBDO, MENSUEL, ANNUEL, MANUEL, CALCUL */
   var NATURE = {
+    lecture: ["GUIDE", "texte explicatif fixe"], calc: ["CALCUL", "calcul dans votre navigateur"], check: ["OUTIL", "cases enregistrées sur cet appareil"], conseils: ["GUIDE", "règles de gestion du risque"], notes: ["OUTIL", "notes enregistrées sur cet appareil"], liens: ["LIENS", "sites officiels et gratuits"],
     ezone: ["DIFFÉRÉ", "rendements CNBC relus à chaque passage du robot ; BCE et Bundesbank (officiel, quotidien et mensuel)"], deficits: ["MENSUEL", "Trésor US et ONS (mensuel), Eurostat (trimestriel, annuel), OCDE (annuel + prévisions)"],
     paires: ["QUOTIDIEN", "fixings de la BCE, 1 fois par jour ; graphique relu toutes les 15 min"], sessions: ["EN DIRECT", "horloges calculées dans votre navigateur"],
     or: ["EN DIRECT", "jeton PAXG (Binance), relu toutes les 30 s ; contrat à terme COMEX différé (robot)"], risque: ["QUOTIDIEN", "calculé à partir des fixings BCE"], rang: ["QUOTIDIEN", "fixings BCE"], force: ["QUOTIDIEN", "fixings BCE ; horizons 1 h et 4 h : cotations différées (robot)"],
@@ -3290,10 +3304,11 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     main.insertBefore(hub, anchor);
     BR.forEach(function (b) {
       var box = document.createElement("div"); box.className = "branch"; box.id = "br-" + b.id; box.setAttribute("role", "region"); box.setAttribute("aria-label", b.t);
-      box.innerHTML = '<div class="bhead"><a href="#/">← Accueil</a><h1>' + b.t + "</h1><p>" + b.d + "</p></div>";
+      box.innerHTML = '<div class="bhead"><a href="#/">← Accueil</a><h1>' + b.t + "</h1><p>" + b.d + '</p><div class="bstat" aria-label="Fraîcheur"></div></div>';
       b.p.forEach(function (id) {
         var el = id === "~duo" ? document.querySelector(".duo.o-duo") : $(id);
         if (!el) return;
+        if (b.g && b.g[id]) { var gh = document.createElement("h2"); gh.className = "bgrp"; gh.textContent = b.g[id]; box.appendChild(gh); }
         if (WIDE[id]) el.classList.add("wide");
         box.appendChild(el); PANEL_BR[id] = b.id;
         if (id === "~duo") { PANEL_BR.risque = b.id; PANEL_BR.rang = b.id; el.classList.add("wide"); }
@@ -3344,6 +3359,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     else { var sc = AUTO && AUTO.cot && AUTO.cot.XAU; T.or = ["XAU/USD", "cours en chargement" + (sc ? " · fonds acheteurs nets" : "")]; }
     var eu = pairOf("EURUSD"), s = series(eu); T.devises = ["EUR/USD " + fmt(s[s.length - 1].v, 4), '<span class="' + cls(change7(s)) + '">' + pct(change7(s)) + "</span> sur 7 j · BCE"];
     var t10 = fred("DGS10"), cv = AUTO && AUTO.curves;
+    var l10 = typeof LIVE !== "undefined" && LIVE.q.US10Y; if (l10 && t10 && l10.t && l10.t > Date.parse(t10.asof + "T12:00:00Z")) t10 = { v: l10.v, asof: new Date(l10.t).toISOString().slice(0, 10) };
     if (t10) T.taux = ["US 10 ans " + fmt(t10.v, 2) + " %", cv && cv.us && cv.eu && cv.us.now && cv.eu.now ? "écart 2 ans US − euro " + fmt(cv.us.now.v[4] - cv.eu.now.v[4], 2) + " pt" : "au " + shortD(t10.asof)];
     var t0 = new Date(); t0.setHours(0, 0, 0, 0);
     var nx = MEETINGS.filter(function (m) { return parseD(m.d) >= t0; })[0];
@@ -3645,6 +3661,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         now: "Lecture : <b>" + rd[0] + "</b>." + (px && rr.alp ? (px < rr.alp ? " Les acheteurs sont en moyenne <b>en perte</b> : leurs stops peuvent accélérer une baisse." : " Les acheteurs sont en moyenne <b>en gain</b>.") : "") + (px && rr.asp ? (px > rr.asp ? " Les vendeurs sont en moyenne <b>en perte</b> : un rachat forcé peut accélérer une hausse." : " Les vendeurs sont en moyenne <b>en gain</b>.") : ""),
         what: "Part des comptes de particuliers (reliés à Myfxbook) qui sont acheteurs ou vendeurs sur cette paire.", how: "Les particuliers ont souvent tort aux extrêmes : au-delà de 70 % d'un côté, le marché a tendance à aller dans l'autre sens. À combiner avec la tendance et le COT des fonds.", src: "https://www.myfxbook.com/community/outlook", srcTxt: "API officielle, compte gratuit" });
     }
+    if (type === "live") return detLive(id);
     if (["ez", "frag", "sov", "tgb", "def", "move"].indexOf(type) >= 0) return detEz(key);
     if (type === "rx") return reactDetail(id);
     if (type === "ph4") return detPhase(id);
@@ -4925,7 +4942,97 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (D && D.us && typeof D.us.r12 === "number") l.push("déficit US 12 mois " + Math.round(D.us.r12).toLocaleString("fr-FR") + " Md$");
     el.innerHTML = '<h3>Obligations et finances publiques</h3><div class="m">' + l.join(" · ") + ' · <a href="#/taux">ouvrir</a></div>' + (R && R.state !== "Calme" ? '<div class="galert">⚠ Zone euro en ' + esc(R.state.toLowerCase()) + " : surveillez EUR/USD et l'or.</div>" : "");
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  /* ===== Couche « direct » : cotations CNBC lues par le navigateur toutes les 60 s (CORS ouvert, vérifié le 31 oct. 2026) ===== */
+  var LIVE = { q: {}, at: 0, err: "" };
+  var LIVE_SYM = [
+    ["XAU=", "Or spot", 2, "$"], ["@GC.1", "Or COMEX", 1, "$"], ["@SI.1", "Argent", 2, "$"], [".DXY", "DXY", 2, ""], ["EUR=", "EUR/USD", 4, ""], ["JPY=", "USD/JPY", 2, ""], ["GBP=", "GBP/USD", 4, ""],
+    ["CHF=", "USD/CHF", 4, ""], ["AUD=", "AUD/USD", 4, ""], ["CAD=", "USD/CAD", 4, ""], ["NZD=", "NZD/USD", 4, ""],
+    ["US2Y", "US 2 ans", 3, "%"], ["US5Y", "US 5 ans", 3, "%"], ["US10Y", "US 10 ans", 3, "%"], ["US30Y", "US 30 ans", 3, "%"], ["DE10Y-DE", "Bund 10 ans", 3, "%"], ["DE2Y-DE", "Schatz 2 ans", 3, "%"],
+    ["FR10Y-FR", "OAT 10 ans", 3, "%"], ["IT10Y-IT", "BTP 10 ans", 3, "%"], ["ES10Y-ES", "Bonos 10 ans", 3, "%"], ["GB10Y-GB", "Gilt 10 ans", 3, "%"],
+    [".VIX", "VIX", 2, ""], [".MOVE", "MOVE", 1, ""], [".GVZ", "GVZ (vol. or)", 2, ""], ["@LCO.1", "Brent", 2, "$"], ["@CL.1", "WTI", 2, "$"], ["@NG.1", "Gaz US", 3, "$"],
+    [".SPX", "S&P 500", 0, ""], ["@SP.1", "S&P fut.", 0, ""], [".NDX", "Nasdaq 100", 0, ""], ["@ND.1", "Nasdaq fut.", 0, ""], ["BTC.CM=", "Bitcoin", 0, "$"]
+  ];
+  var LIVE_BAR = ["XAU=", "US10Y", "US2Y", ".DXY", "EUR=", ".VIX", ".MOVE", "~FRDE", "@LCO.1", "@ND.1"];
+  function liveNum(s) { if (s === undefined || s === null || s === "UNCH") return s === "UNCH" ? 0 : null; var v = parseFloat(String(s).replace(/[%,\s]/g, "")); return isNaN(v) ? null : v; }
+  function liveTime(s) { if (!s) return null; var t = String(s).replace(/([+-]\d{2})(\d{2})$/, "$1:$2"); var d = Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(t) ? t + "T21:00:00Z" : t); return isNaN(d) ? null : d; }
+  function pollLive() {
+    if (document.hidden) return;
+    var syms = LIVE_SYM.map(function (x) { return x[0]; }), chunks = [];
+    for (var i = 0; i < syms.length; i += 12) chunks.push(syms.slice(i, i + 12));
+    Promise.all(chunks.map(function (ch) {
+      var u = "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=" + ch.map(encodeURIComponent).join("%7C") + "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json";
+      var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 9000);
+      return fetch(u, ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" }).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.json(); });
+    })).then(function (all) {
+      var n = 0;
+      all.forEach(function (j) { ((j.FormattedQuoteResult || {}).FormattedQuote || []).forEach(function (q) {
+        var v = liveNum(q.last); if (v === null || q.code) return;
+        var p = liveNum(q.previous_day_closing), c = liveNum(q.change);
+        LIVE.q[q.symbol] = { v: v, c: c, p: p !== null ? p : (c !== null ? v - c : null), t: liveTime(q.last_time), st: q.curmktstatus, name: q.name };
+        n++;
+      }); });
+      if (!n) throw new Error("aucune cotation");
+      LIVE.at = Date.now(); LIVE.err = "";
+      renderLive();
+    }).catch(function (e) { LIVE.err = String(e && e.message || e); renderLive(); });
+  }
+  function fxWeekend() { var d = new Date(), w = d.getUTCDay(), h = d.getUTCHours(); return w === 6 || (w === 0 && h < 21) || (w === 5 && h >= 21); }
+  function liveOpen() { return !fxWeekend() && ["EUR=", "US10Y", "XAU=", "@GC.1", "@ND.1"].some(function (k) { return liveFresh(LIVE.q[k]); }); }
+  function liveDef(s) { return LIVE_SYM.filter(function (x) { return x[0] === s; })[0]; }
+  function liveFresh(q) { if (!q || !q.t || fxWeekend()) return false; var a = Date.now() - q.t; return a > -3 * 60 * 1000 && a < 20 * 60 * 1000; }
+  function ago(ms) { var s = Math.round(ms / 1000); return s < 60 ? s + " s" : s < 3600 ? Math.round(s / 60) + " min" : s < 86400 ? Math.round(s / 3600) + " h" : Math.round(s / 86400) + " j"; }
+  function liveSpread(c) { var a = LIVE.q[c + "10Y-" + c], b = LIVE.q["DE10Y-DE"]; if (!a || !b) return null; return { v: (a.v - b.v) * 100, c: a.p !== null && b.p !== null ? (a.v - b.v - (a.p - b.p)) * 100 : null, t: Math.min(a.t || 0, b.t || 0) }; }
+  function renderLive() {
+    var el = $("liveBar"); if (!el) return;
+    var any = Object.keys(LIVE.q).length, fresh = liveOpen();
+    var st = !any ? (LIVE.err ? '<span class="lst ko">● DIRECT indisponible</span>' : '<span class="lst">● DIRECT : chargement…</span>') : fresh ? '<span class="lst on">● DIRECT</span>' : '<span class="lst off">● MARCHÉS FERMÉS</span>';
+    var h = '<div class="li lhead" data-det="live:info">' + st + "<small>" + (LIVE.at ? "relu il y a " + ago(Date.now() - LIVE.at) : "") + "</small></div>";
+    LIVE_BAR.forEach(function (s) {
+      if (s === "~FRDE") { var sp = liveSpread("FR"); if (sp) h += '<div class="li" data-det="ez:FR"><b>OAT−Bund</b><span>' + Math.round(sp.v) + " pb</span>" + (sp.c !== null ? '<small class="' + (sp.c > 0 ? "down" : sp.c < 0 ? "up" : "") + '">' + (sp.c >= 0 ? "+" : "−") + Math.abs(Math.round(sp.c)) + " pb</small>" : "") + "</div>"; return; }
+      var q = LIVE.q[s], d = liveDef(s); if (!q || !d) return;
+      var ch = q.p ? (d[3] === "%" ? (q.v - q.p) * 100 : (q.v / q.p - 1) * 100) : null;
+      h += '<div class="li' + (liveFresh(q) ? "" : " stale") + '" data-det="live:' + s + '"><b>' + esc(d[1]) + "</b><span>" + fmt(q.v, d[2]) + (d[3] === "%" ? " %" : "") + "</span>" + (ch !== null ? '<small class="' + (ch > 0 ? "up" : ch < 0 ? "down" : "") + '">' + (d[3] === "%" ? (ch >= 0 ? "+" : "−") + Math.abs(Math.round(ch)) + " pb" : pct(ch)) + "</small>" : "") + "</div>";
+    });
+    el.innerHTML = h;
+    liveOverlay();
+    renderBrStatus();
+  }
+  /* Les panneaux qui ont un équivalent en direct l'affichent (avec l'heure) */
+  function liveOverlay() {
+    var M = LIVE.q[".MOVE"], mt = $("moveTile");
+    if (M && mt && AUTO && AUTO.move && M.t && Date.parse(AUTO.move.d + "T21:00:00Z") <= M.t + 36e5) {
+      var b = mt.querySelector("b"); if (b) b.textContent = fmt(M.v, 1);
+      var a = mt.querySelector(".asof"); if (a && a.textContent.indexOf("direct") < 0) a.innerHTML = "direct · " + new Date(M.t).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + " · rang 1 an " + rk(AUTO.move.p1y);
+    }
+    var tb = $("ezTbl"); if (!tb) return;
+    ["FR", "IT", "ES"].forEach(function (c) {
+      var sp = liveSpread(c), row = tb.querySelector('tr[data-det="ez:' + c + '"]'), r = ezBy(c); if (!sp || !row || !r) return;
+      var cell = row.children[2], yc = row.children[1], q = LIVE.q[c + "10Y-" + c];
+      if (cell) cell.innerHTML = "<b>" + bp(sp.v) + '</b> <span class="lv" title="Calcul en direct (CNBC)">●</span>';
+      if (yc && q) yc.textContent = fmt(q.v, 2) + " %";
+    });
+    var de = LIVE.q["DE10Y-DE"]; if (de && $("ezMeta")) $("ezMeta").innerHTML = "Bund " + fmt(de.v, 2) + ' % · <span class="lv">●</span> direct ' + (de.t ? new Date(de.t).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
+  }
+  function detLive(id) {
+    if (id === "info") return openDetail({ t: "Cotations en direct", val: Object.keys(LIVE.q).length + " cotations", sub: LIVE.at ? "relues il y a " + ago(Date.now() - LIVE.at) + " · toutes les 60 s quand la page est ouverte" : "en attente",
+      now: LIVE.err ? "Dernière erreur : " + esc(LIVE.err) + ". Le reste du terminal continue avec les données du robot." : "Point vert = cotation de moins de 20 minutes ; gris = marché fermé (week-end, nuit) : la dernière cotation reste affichée avec son heure.",
+      what: "Votre navigateur lit lui-même les cotations publiques de CNBC (taux, indices, matières premières, devises), sans passer par le robot : c'est la couche « direct » du terminal.", how: "Les cotations sont différées de quelques secondes à quelques minutes selon l'actif ; les contrats à terme (or COMEX, pétrole, Nasdaq) sont souvent différés de 10 à 15 minutes. Source secondaire, non officielle : pour un chiffre officiel, voir les panneaux (Trésor US, BCE, etc.).", src: "https://www.cnbc.com/markets/", srcTxt: "CNBC (non officiel)" });
+    var q = LIVE.q[id], d = liveDef(id); if (!q || !d) return;
+    var ch = q.p ? (d[3] === "%" ? (q.v - q.p) * 100 : (q.v / q.p - 1) * 100) : null;
+    return openDetail({ t: d[1] + " · direct", val: fmt(q.v, d[2]) + (d[3] === "%" ? " %" : d[3] ? " " + d[3] : ""), sub: (q.name ? esc(q.name) + " · " : "") + (q.t ? new Date(q.t).toLocaleString("fr-FR", { timeZone: KIN, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + " (Kinshasa)" : ""),
+      now: (ch !== null ? "Depuis la clôture précédente : " + (d[3] === "%" ? (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(1).replace(".", ",") + " pb" : pct(ch)) + ". " : "") + (liveFresh(q) ? "Cotation récente." : "Marché fermé ou cotation ancienne : dernière valeur connue."),
+      what: "Cotation lue directement par votre navigateur toutes les 60 secondes.", how: "Pour l'historique et l'analyse, ouvrez le panneau correspondant (Taux, Or, Devises, Marchés).", src: "https://www.cnbc.com/quotes/" + encodeURIComponent(id), srcTxt: "CNBC (non officiel, différé)" });
+  }
+  /* Barre d'état de chaque branche : direct, robot, relecture */
+  function renderBrStatus() {
+    var gen = AUTO && AUTO.generated ? Date.parse(AUTO.generated) : null, bad = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return !s.ok; }).length : null, tot = AUTO && AUTO.sources ? AUTO.sources.length : 0;
+    var live = Object.keys(LIVE.q).length, fresh = liveOpen();
+    var txt = '<span class="bs ' + (live ? (fresh ? "on" : "off") : "ko") + '">● Direct ' + (live ? (fresh ? "· relu il y a " + ago(Date.now() - LIVE.at) : "· marchés fermés") : "indisponible") + "</span>" +
+      '<span class="bs ' + (gen && Date.now() - gen < 2 * 36e5 ? "on" : "old") + '">● Robot ' + (gen ? "· " + new Date(gen).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }) + " (il y a " + ago(Date.now() - gen) + ")" : "· en attente") + "</span>" +
+      '<span class="bs">Sources : ' + (tot ? (tot - bad) + "/" + tot + " OK" : "–") + "</span>" + '<span class="bs">Site relu toutes les 5 min</span>';
+    Array.prototype.forEach.call(document.querySelectorAll(".bstat"), function (e) { e.innerHTML = txt; });
+  }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
@@ -4947,9 +5054,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
   buildBranches(); tagNature(); initMotion();
   initCmd(); initCal(); initCalViews(); initEz(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
-  initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 10 * 60 * 1000);
+  initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 5 * 60 * 1000); pollLive(); setInterval(pollLive, 60000); setInterval(function () { if (!document.hidden) renderBrStatus(); }, 15000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
-  document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshGold(); });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) { refreshGold(); pollLive(); if (!AUTO || !AUTO.generated || Date.now() - Date.parse(AUTO.generated) > 30 * 6e4) loadAuto(); } });
   $("gChart").addEventListener("pointermove", function (e) { if (gCur) gShow(idx(e, $("gChart"), gCur.W, gCur.L, gCur.Rm, gCur.s.length), false); });
   $("gChart").addEventListener("pointerleave", function () { if (gCur) gShow(gCur.s.length - 1, true); });
   var rzT = null;
