@@ -1324,6 +1324,9 @@ def do_retail(data):
     Secrets créés par l'utilisateur le 31 oct. 2026 (vérifiés à 01 h 08)."""
     lab, url_info = "Sentiment des particuliers (Myfxbook)", "https://www.myfxbook.com/community/outlook"
     em, pw = os.environ.get("MYFXBOOK_EMAIL", "").strip(), os.environ.get("MYFXBOOK_PASSWORD", "")
+    # Diagnostic sans jamais révéler le contenu : seulement « présent » ou « vide »
+    DIAG["myfxbook_secrets"] = {"MYFXBOOK_EMAIL": "présent" if em else "vide", "MYFXBOOK_PASSWORD": "présent" if pw else "vide",
+                                "variables_vues": sorted(k for k in os.environ if k.upper().startswith("MYFX"))}
     prev = PREVIOUS.get("retail")
     if not (em and pw) and not MOCK:
         if prev:
