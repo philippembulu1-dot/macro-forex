@@ -18,7 +18,7 @@
 7. Il a un **forfait gratuit** : avancer **par étapes**, livrer à chaque étape quelque chose qui marche, et lui dire quoi taper pour continuer.
 8. Ne jamais prétendre qu'une source marche sans l'avoir exécutée. **Vérifier chaque source avec un vrai appel réseau** et corriger (le premier jet a été écrit sans accès Internet : voir §6).
 
-## 3. État au 31 oct. 2026, 9 h 30 : TERMINÉ, 79 sources sur 79, aucune erreur
+## 3. État au 31 oct. 2026, 9 h 30 : TERMINÉ, 79 sources sur 79 (88 sur 88 depuis le module géopolitique du 31 oct. 13 h), aucune erreur
 **Site** : https://philippembulu1-dot.github.io/macro-forex/ — dépôt `philippembulu1-dot/macro-forex`, branche `main`.
 Fichiers : `index.html` (site complet, CSS + JS inline, ~4 500 lignes), `scripts/update_data.py` (robot, Python standard), `.github/workflows/update-data.yml` (cron `17,47 * * * *` ≈ 1 passage/h réel, lancement manuel, relance à chaque envoi du robot ; actions checkout v5 / setup-python v6), `data/` : `macro.json`, `seasonal.json`, `macro-history.json`, `surprises.json`, `reactions.json`, `gold-etf.json`, `world-map.json`.
 **Secrets GitHub** (remplis par l'utilisateur, ne jamais les demander ni les afficher) : `FRED_API_KEY`, `MYFXBOOK_EMAIL`, `MYFXBOOK_PASSWORD`. Le robot n'écrit que « présent / vide » dans `diag`.
