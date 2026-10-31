@@ -1768,14 +1768,15 @@ def do_reactions(data):
             continue  # pas encore 4 h de recul
         c["id"] = c["d"][:16] + "|" + c["c"] + "|" + c["type"]
         old = have.get(c["id"])
-        if old and old.get("r") and all(v and v[2] is not None for v in old["r"].values()):
+        fine_ok = old and (old.get("rf") is not None or ts < now - 55 * 86400)
+        if old and old.get("r") and all(v and v[2] is not None for v in old["r"].values()) and fine_ok:
             for k in ("f", "p", "a"):  # complète la prévision si l'ancienne entrée n'en avait pas
                 if c.get(k) and not old.get(k):
                     old[k] = c[k]
             continue
         c["ts"] = ts
         todo.append(c)
-    bars, src = {}, {}
+    bars, src, fbars = {}, {}, {}
     if todo:
         first = min(c["ts"] for c in todo)
         for key, ysym, bsym in REACT_ASSETS:
@@ -1795,6 +1796,15 @@ def do_reactions(data):
                 except Exception as e:
                     DIAG["react_" + key + "_bn"] = fr_err(e)[:120]
             bars[key] = got
+            fine = []
+            for interval, rng, step in (("1m", "7d", 60), ("5m", "60d", 300)):
+                if interval == "1m" and first < now - 6.5 * 86400 and max(c["ts"] for c in todo) < now - 6.5 * 86400:
+                    continue
+                try:
+                    fine.append((step, yahoo_bars(ysym, interval, rng)))
+                except Exception as e:
+                    DIAG["react_" + key + "_" + interval] = fr_err(e)[:120]
+            fbars[key] = fine
         n_ok = sum(1 for k in bars if bars[k])
         note("react.prices", "Prix autour des publications (%d actifs sur %d : %s)" % (n_ok, len(REACT_ASSETS), ", ".join(sorted(set(src.values()))) or "aucun"),
              "daily", n_ok > 0, TODAY if n_ok else None, err=None if n_ok else "aucune source de prix", url="https://finance.yahoo.com/")
@@ -1810,9 +1820,21 @@ def do_reactions(data):
                         r[key] = v
                         gran = min(gran or step, step)
                         break
+        rf = {}
+        for key, _y, _b in REACT_ASSETS:
+            vals = [None, None, None]
+            for step, b in fbars.get(key) or []:
+                if not b or b[0][0] > c["ts"] - step:
+                    continue
+                for i, m in enumerate((1, 5, 30)):
+                    if vals[i] is None and m * 60 >= step:
+                        vals[i] = move_after(b, step, c["ts"], m, rate=(key == "us10"))
+            if any(v is not None for v in vals):
+                rf[key] = vals
         if r:
             ts = c.pop("ts")
             c["r"], c["g"] = r, ("15 min" if gran == 900 else "1 h")
+            c["rf"] = rf  # 1, 5 et 30 min (bougies 1 min sur 7 jours, 5 min sur 60 jours)
             have[c["id"]] = c
         else:
             c.pop("ts", None)
