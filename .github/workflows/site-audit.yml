@@ -1,0 +1,22 @@
+name: Audit du site en ligne
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["scripts/site_audit.js", ".github/workflows/site-audit.yml"]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: "20" }
+      - run: npm i --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
+      - run: mkdir -p audit-out && node scripts/site_audit.js | tee audit-out/rapport.txt
+        env: { SITE: "https://philippembulu1-dot.github.io/macro-forex/" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: audit, path: audit-out/ }
