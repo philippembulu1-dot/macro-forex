@@ -2257,7 +2257,7 @@ def do_retail(data):
     """Identifiants lus dans les secrets GitHub (MYFXBOOK_EMAIL, MYFXBOOK_PASSWORD) : jamais écrits dans les fichiers ni le journal.
     Secrets créés par l'utilisateur le 31 oct. 2026 (vérifiés à 01 h 08)."""
     lab, url_info = "Sentiment des particuliers (Myfxbook)", "https://www.myfxbook.com/community/outlook"
-    em, pw = os.environ.get("MYFXBOOK_EMAIL", "").strip(), os.environ.get("MYFXBOOK_PASSWORD", "")
+    em, pw = os.environ.get("MYFXBOOK_EMAIL", "").strip(), os.environ.get("MYFXBOOK_PASSWORD", "").strip("\r\n")  # retour à la ligne collé par erreur
     # Diagnostic sans jamais révéler le contenu : seulement « présent » ou « vide »
     DIAG["myfxbook_secrets"] = {"MYFXBOOK_EMAIL": "présent" if em else "vide", "MYFXBOOK_PASSWORD": "présent" if pw else "vide",
                                 "variables_vues": sorted(k for k in os.environ if k.upper().startswith("MYFX"))}
@@ -2279,10 +2279,19 @@ def do_retail(data):
         if MOCK:
             session = "mock"
         else:
-            j = json.loads(http("mfb_login.json", "https://www.myfxbook.com/api/login.json?" + urllib.parse.urlencode({"email": em, "password": pw}), tries=1, timeout=30))
+            j, tried = None, []
+            # essais : e-mail tel quel, puis en minuscules ; mot de passe tel quel, puis sans espaces autour
+            for e_, p_ in ((em, pw), (em.lower(), pw), (em.lower(), pw.strip())):
+                if (e_, p_) in tried:
+                    continue
+                tried.append((e_, p_))
+                j = json.loads(http("mfb_login.json", "https://www.myfxbook.com/api/login.json?" + urllib.parse.urlencode({"email": e_, "password": p_}), tries=1, timeout=30))
+                if not j.get("error"):
+                    break
+            DIAG["myfxbook_essais"] = len(tried)
             if j.get("error"):
                 raise ValueError("connexion refusée par Myfxbook : " + str(j.get("message", ""))[:80])
-            session = j.get("session")
+            session = urllib.parse.unquote(j.get("session") or "")
         j = json.loads(http("mfb_outlook.json", "https://www.myfxbook.com/api/get-community-outlook.json?session=" + urllib.parse.quote(session or ""), tries=2, timeout=30))
         if j.get("error"):
             raise ValueError("Myfxbook : " + str(j.get("message", ""))[:80])
