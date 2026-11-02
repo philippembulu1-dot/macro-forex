@@ -124,6 +124,8 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .ck.ok { color: var(--up); } .ck.bad { color: var(--amber); }
 table.ind td.lab .ih { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; margin-top: 2px; white-space: normal; }
 table.ind .cell .lvl { font-style: normal; text-transform: uppercase; letter-spacing: .05em; font-size: 9.5px; }
+#e19Tbl td:last-child { white-space: normal; min-width: 260px; }
+#e19 td small.ih, #consensus td small.ih { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; margin-top: 2px; }
 .subh { margin: 14px 12px 6px; font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--amber); }
 .sggrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
 .sgc { background: var(--panel); padding: 12px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -3581,7 +3583,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"], g: { calc: "Avant d'entrer", outils: "Outils, notes et liens" } },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source (robot) et liens", p: ["robot"] }
   ];;
-  var WIDE = { ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { e19: 1, consensus: 1, ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   /* Nature des données de chaque panneau (demandée par l'audit) : EN DIRECT, DIFFÉRÉ, QUOTIDIEN, HEBDO, MENSUEL, ANNUEL, MANUEL, CALCUL */
   var NATURE = {
