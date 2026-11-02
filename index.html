@@ -1650,8 +1650,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { k: "hy", fid: "BAMLH0A0HYM2", nt: 1, l: "Spread high yield", h: "Voir Bloc 1, 1.4", u: " %", d: 2, dir: -1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { k: "nfci", fid: "NFCI", nt: 1, l: "Conditions financières (NFCI)", h: "Sous 0 : conditions plus souples que la moyenne", u: "", d: 3, dir: -1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { g: "Activité" },
-    { k: "pmim", l: "PMI manufacturier", u: "", d: 1, dir: 1, v: { USD: [56.0, 55.9, "oct."], EUR: [52.4, 52.9, "oct."], GBP: [52.8, 51.9, "oct."], JPY: [53.3, 54.1, "oct."], CHF: [55.3, 57.1, "sept."], AUD: [49.7, 49.6, "oct."], CAD: [51.5, 53.0, "sept."], NZD: [56.5, 53.3, "sept."] } },
-    { k: "pmis", l: "PMI services", u: "", d: 1, dir: 1, v: { USD: [57.9, 58.8, "oct."], EUR: [51.7, 53.0, "oct."], GBP: [53.1, 52.1, "oct."], JPY: [52.0, 51.3, "oct."], CHF: [59.8, 58.3, "sept."], AUD: [47.8, 51.9, "oct."], CAD: [48.3, 46.8, "sept."], NZD: [50.9, 51.0, "sept."] } },
+    { k: "pmim", l: "PMI manufacturier (US : S&P Global)", u: "", d: 1, dir: 1, v: { USD: [56.0, 55.9, "oct."], EUR: [52.4, 52.9, "oct."], GBP: [52.8, 51.9, "oct."], JPY: [53.3, 54.1, "oct."], CHF: [55.3, 57.1, "sept."], AUD: [49.7, 49.6, "oct."], CAD: [51.5, 53.0, "sept."], NZD: [56.5, 53.3, "sept."] } },
+    { k: "pmis", l: "PMI services (US : S&P Global)", u: "", d: 1, dir: 1, v: { USD: [57.9, 58.8, "oct."], EUR: [51.7, 53.0, "oct."], GBP: [53.1, 52.1, "oct."], JPY: [52.0, 51.3, "oct."], CHF: [59.8, 58.3, "sept."], AUD: [47.8, 51.9, "oct."], CAD: [48.3, 46.8, "sept."], NZD: [50.9, 51.0, "sept."] } },
+    { k: "ismm", nt: 1, l: "ISM manufacturier (États-Unis)", h: "Au-dessus de 50 : l'industrie progresse ; sous 50 : elle recule", u: "", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "isms", nt: 1, l: "ISM services (États-Unis)", h: "Au-dessus de 50 : les services progressent ; sous 50 : ils reculent", u: "", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { k: "retail", l: "Ventes au détail m/m (CH : a/a)", u: " %", d: 1, dir: 1, v: { USD: [0.8, 1.3, "sept."], EUR: [0.1, -0.6, "août"], GBP: [-0.4, 0.7, "sept."], JPY: [-1.2, 2.1, "août"], CHF: [3.2, 2.6, "août"], AUD: null, CAD: [0.7, 1.2, "sept."], NZD: [-0.5, 1.0, "juin"] } },
     { g: "Commerce et confiance" },
     { k: "trade", l: "Balance commerciale (Md, devise locale)", u: "", d: "auto", dir: 1, v: { USD: [-106.0, -92.83, "août"], EUR: [-16.11, 10.7, "août"], GBP: [-0.92, -3.45, "août"], JPY: [-537, -1112, "sept."], CHF: [1.353, 5.369, "sept."], AUD: [0.495, 1.351, "août"], CAD: [4.199, 0.787, "août"], NZD: [-1.971, -1.536, "sept."] } },
@@ -1664,6 +1666,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     ["PIB", "Mesure la croissance de l'économie, par trimestre. Il est publié en plusieurs estimations successives, la première (avance) fait le plus bouger les prix."],
     ["Emploi, chômage, salaires", "Aux États-Unis, le rapport sur l'emploi (NFP) sort le premier vendredi du mois. Un marché du travail solide et des salaires qui montent alimentent l'inflation et soutiennent les taux."],
     ["PMI", "Enquête auprès des directeurs d'achat. Au-dessus de 50, l'activité progresse, en dessous elle recule. Publié en début de mois, avec une version « flash » vers le 23. C'est un indicateur avancé."],
+    ["ISM", "Enquête de l'Institute for Supply Management auprès des directeurs d'achat américains, publiée le 1er jour ouvré du mois (manufacturier) et le 3e (services), à 16 h heure de Kinshasa (15 h en été américain). Au-dessus de 50 : expansion, sous 50 : contraction. Les marchés regardent aussi les sous-indices : prix payés (inflation), nouvelles commandes (activité à venir) et emploi (avant le rapport NFP). Plus suivi que le PMI de S&P Global."],
     ["Ventes au détail", "Dépenses des ménages, publiées chaque mois. Les chiffres sont volatils : regardez la tendance sur plusieurs mois."],
     ["Balance commerciale", "Exportations moins importations. Un déficit qui se creuse pèse à long terme sur la devise, un excédent la soutient."],
     ["Confiance des consommateurs", "Indice de moral des ménages, qui annonce la consommation. Les niveaux ne se comparent pas d'un pays à l'autre, seule la variation compte."],
@@ -1719,6 +1722,22 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       var back = k === "nfci" ? 4 : 21, hh = fs.hist || [], pv = hh.length > back ? hh[hh.length - 1 - back] : null;
       return { v: fs.v, p: pv ? pv[1] : fs.v, per: shortD(String(fs.asof).slice(0, 10)), src: (fs.via || "robot") + ", au " + fs.asof + " ; précédent = " + (pv ? pv[0] : fs.asof) + " (il y a environ 1 mois)", lvl: sigLevel(k, fs.v) };
     }
+    /* ISM : chiffres réels du calendrier TradingView (robot) ; repli : dernier chiffre mémorisé du calendrier Forex Factory */
+    if (k === "ismm" || k === "isms") {
+      if (c !== "USD") return null;
+      var IS = AUTO.ism && AUTO.ism.series, kk = k === "ismm" ? "manuf" : "serv", ser = IS && IS[kk + ".pmi"] || [];
+      var done = ser.filter(function (e) { return e.a !== null && e.a !== undefined; }), nx = ser.filter(function (e) { return (e.a === null || e.a === undefined) && Date.parse(e.d) > Date.now() - 864e5; })[0];
+      var subs = ["prix", "commandes", "emploi"].map(function (sk) { var a = (IS && IS[kk + "." + sk] || []).filter(function (e) { return e.a !== null && e.a !== undefined; }); var l = a[a.length - 1]; return l ? { prix: "prix payés", commandes: "nouvelles commandes", emploi: "emploi" }[sk] + " " + fmt(l.a, 1) : null; }).filter(Boolean);
+      var nxt = nx ? "prochain : " + new Date(nx.d).toLocaleString("fr-FR", { timeZone: KIN, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + (nx.f !== null && nx.f !== undefined ? ", prévu " + fmt(nx.f, 1) : "") : "";
+      if (done.length) {
+        var L1 = done[done.length - 1], L0 = done.length > 1 ? done[done.length - 2] : null, mo = new Date(L1.d); mo.setUTCDate(1); mo.setUTCMonth(mo.getUTCMonth() - 1);
+        return { v: L1.a, p: L0 ? L0.a : (L1.p !== null ? L1.p : L1.a), per: MOIS[mo.getUTCMonth()], src: "ISM (Institute for Supply Management), publié le " + String(L1.d).slice(0, 10) + " ; lu dans le calendrier TradingView" + (L1.f !== null && L1.f !== undefined ? " ; prévu " + fmt(L1.f, 1) : ""),
+          lvl: [(L1.a >= 50 ? "expansion" : "contraction") + (subs.length ? " · " + subs.join(" · ") : "") + (nxt ? " · " + nxt : ""), L1.a >= 50 ? "f" : "u"] };
+      }
+      var fb = (function () { var M = AUTO.ffmem || {}, key = "USD|" + (k === "ismm" ? "ISM Manufacturing PMI" : "ISM Services PMI"); var m = M[key]; if (!m) return null; var v = numOf(m.p); return v === null ? null : { v: v, d: m.d }; })();
+      if (fb) return { v: fb.v, p: fb.v, per: "avant le " + shortD(fb.d), src: "dernier chiffre publié avant le " + fb.d + " (calendrier Forex Factory)", lvl: [(fb.v >= 50 ? "expansion" : "contraction") + (nxt ? " · " + nxt : ""), fb.v >= 50 ? "f" : "u"] };
+      return null;
+    }
     /* OCDE (indicateurs clés) : dernière observation et la précédente */
     var K = AUTO.kei && AUTO.kei[c], kei = function (m, tr, fr) {
       if (!K) return null; var best = null;
@@ -1737,6 +1756,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (k === "gdpy") return fresh_(kei("B1GQ_Q", "GY", ["Q"]), 200);
     if (k === "wage") return fresh_(kei("H_EARN", "GY", ["M", "Q"]), 200);
     if (k === "retail") return ff(/^(Core )?Retail Sales [my]\/[my]$/) || fresh_(kei("TOVM", "G1", ["M"]), 120) || fresh_(kei("TOVM", "G1", ["Q"]), 220);
+    if (k === "pmim" && c === "USD") return ff(/^(S&P Global Manufacturing PMI( Final)?|Final Manufacturing PMI|Flash Manufacturing PMI)$/);
+    if (k === "pmis" && c === "USD") return ff(/^(S&P Global Services PMI( Final)?|Final Services PMI|Flash Services PMI)$/);
     if (k === "pmim") return ff(/(ISM |Flash |Final |)Manufacturing PMI$|Business NZ Manufacturing Index|^Manufacturing PMI$/);
     if (k === "pmis") return ff(/(ISM |Flash |Final |)Services PMI$|^Services PMI$|Ivey PMI|BusinessNZ Services Index/);
     if (k === "trade") return ff(/^(Goods )?Trade Balance$/);
@@ -3807,7 +3828,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       var how = (HOW.filter(function (x) { return row.l.toLowerCase().indexOf(x[0].toLowerCase().split(" ")[0]) >= 0; })[0] || ["", ""])[1];
       var cells = IND_C.map(function (c) { var au = row.k ? indAuto(row.k, c) : null, x = row.v[c]; if (au && row.k !== "rate") x = [au.v, au.p, au.per]; return x ? '<div class="stat"><small>' + c + (au ? " · auto" : "") + "</small><b>" + fmtNum(x[0], row) + row.u + '</b><span class="dsub">avant : ' + fmtNum(x[1], row) + " · " + esc(x[2]) + "</span></div>" : '<div class="stat"><small>' + c + "</small><b>–</b></div>"; }).join("");
       var vals = IND_C.map(function (c) { var x = row.v[c]; return x ? [c, x[0] - x[1]] : null; }).filter(Boolean).sort(function (a, b) { return (b[1] - a[1]) * row.dir; });
-      return openDetail({ t: row.l, val: IND_C.length + " économies", sub: "dernier chiffre et précédent", extra: '<h3>Par devise</h3><div class="stats">' + cells + "</div>",
+      var nEco = IND_C.filter(function (c) { return (row.k && indAuto(row.k, c)) || row.v[c]; }).length;
+      return openDetail({ t: row.l, val: nEco > 1 ? nEco + " économies" : "États-Unis", sub: "dernier chiffre et précédent", extra: '<h3>Par devise</h3><div class="stats">' + cells + "</div>",
         now: vals.length ? "Meilleure évolution pour la devise : <b>" + vals[0][0] + "</b>. Plus mauvaise : <b>" + vals[vals.length - 1][0] + "</b>. À croiser avec la force des devises." : "",
         how: how || "Le prix réagit surtout à l'écart entre le chiffre publié et la prévision des économistes.", src: "https://www.forexfactory.com/calendar" });
     }
