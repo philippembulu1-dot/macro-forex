@@ -1470,7 +1470,8 @@ def do_euro_guide(data):
                     if not EU_TV_RX.search(t):
                         continue
                     k = (e.get("country") or "") + "|" + t
-                    tv.setdefault(k, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous")})
+                    tv.setdefault(k, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous"),
+                                                 "u": (e.get("unit") or "")[:8], "sc": (e.get("scale") or "")[:3]})
                 start = end + timedelta(days=1)
         for k in tv:
             uniq = {}
