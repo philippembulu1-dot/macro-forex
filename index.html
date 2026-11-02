@@ -1643,7 +1643,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { k: "core", l: "Inflation sous-jacente a/a", u: " %", d: 1, dir: 1, v: { USD: [2.6, 2.4, "sept."], EUR: [2.5, 2.4, "sept."], GBP: [2.8, 2.6, "sept."], JPY: [2.1, 1.7, "sept."], CHF: [0.5, 0.4, "sept."], AUD: [3.6, 3.6, "août"], CAD: [2.2, 2.4, "sept."], NZD: [3.2, 3.2, "sept."] } },
     { k: "pce", nt: 1, l: "PCE a/a (États-Unis)", h: "Cible de la Fed : 2 %", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { k: "pcec", nt: 1, l: "PCE sous-jacent a/a (États-Unis)", h: "Cible de 2 % ; l'indicateur préféré de la Fed", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
-    { k: "supercore", nt: 1, l: "Services hors loyers du logement (supercore)", h: "Moteur de la persistance", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "supercore", nt: 1, l: "Services hors loyers du logement (proche du supercore)", h: "Moteur de la persistance ; mesure officielle la plus proche du supercore des desks", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { k: "shelter", nt: 1, l: "Logement (shelter) a/a", h: "Composante lente du CPI", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { k: "ppi", nt: 1, l: "PPI (prix à la production) a/a", h: "Pression en amont", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { k: "ahe", nt: 1, l: "Salaire horaire moyen (AHE) a/a", h: "Risque de boucle prix-salaires", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
@@ -1771,7 +1771,15 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (k === "ppi") return withC(yo(IU.ppi, "BLS, prix à la production, demande finale (WPSFD4)", null), /^ppi yoy$/i);
       if (k === "ahe") return withC(yo(IU.ahe, "BLS, salaire horaire moyen du privé (CES0500000003)", IU.ahe ? [IU.ahe.v >= 4 ? "pression salariale" : IU.ahe.v >= 3.5 ? "un peu élevé" : "compatible 2 %", IU.ahe.v >= 4 ? "u" : "z"] : null), /^average hourly earnings yoy$/i);
       if (k === "eci") return yo(IU.eci, "BLS, indice du coût de l'emploi (CIU1010000000000I), trimestriel", null);
-      if (k === "impp") return yo(IU.import, "BLS, prix à l'importation (EIUIR)", null);
+      if (k === "impp") {
+        /* chiffre officiel du communiqué BLS (tel que publié, repris par le calendrier) ; repli : calcul sur l'indice */
+        var tvi = ((AUTO.ism && AUTO.ism.series) || {})["tv.Import Prices YoY"], li = tvi ? tvi.filter(function (e) { return e.a !== null && e.a !== undefined; }) : [];
+        if (li.length && ageDays(String(li[li.length - 1].d).slice(0, 10)) <= 45) {
+          var a1 = li[li.length - 1], a0 = li.length > 1 ? li[li.length - 2] : null, rm = new Date(a1.d); rm.setUTCDate(1); rm.setUTCMonth(rm.getUTCMonth() - 1);
+          return { v: a1.a, p: a1.p !== null && a1.p !== undefined ? a1.p : a0 ? a0.a : a1.a, per: MOIS[rm.getUTCMonth()], src: "BLS, communiqué du " + String(a1.d).slice(0, 10) + " (chiffre publié, repris par le calendrier TradingView)" };
+        }
+        return yo(IU.import, "BLS, prix à l'importation (EIUIR), calculé sur l'indice", null);
+      }
       if (k === "be5y5y") { var b5 = fred("T5YIFR"); if (!b5) return null; var bh = b5.hist || [], bp = bh.length > 21 ? bh[bh.length - 22][1] : b5.v;
         return { v: b5.v, p: bp, per: shortD(b5.asof), src: (b5.via || "robot") + ", au " + b5.asof + " ; précédent = il y a environ 1 mois", lvl: [b5.v > 2.5 ? "désancrage possible" : b5.v >= 2 ? "ancré" : "bas", b5.v > 2.5 ? "u" : "f"] }; }
       if (k === "mich1" || k === "mich5") {
