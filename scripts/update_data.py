@@ -1372,6 +1372,77 @@ def do_bls_infl(data):
         note("bls.infl", "Composantes de l'inflation US (BLS)", "monthly", False, err=e, url="https://www.bls.gov/cpi/")
 
 
+BPR_MARKETS = {"or": "CMX GOLD", "argent": "CMX SILVER", "EUR": "CME EURO FX", "JPY": "CME JAPANESE YEN", "GBP": "CME BRITISH POUND",
+               "CHF": "CME SWISS FRANC", "AUD": "CME AUSTRALIAN DOLLAR", "CAD": "CME CANADIAN DOLLAR", "NZD": "CME NZ DOLLAR",
+               "UST10": "CBT 10-YEAR U.S. TREASURY NOTES", "UST2": "CBT 2-YEAR U.S. TREASURY NOTES"}
+
+
+def do_bank_cot(data):
+    """« COT des banques » : rapport mensuel de la CFTC sur la participation des banques (Bank Participation Report, contrats
+    à terme) : positions acheteuses et vendeuses des banques américaines et non américaines, positions du 1er mardi du mois.
+    Il n'existe AUCUN rapport public équivalent pour les banques centrales. Relu une fois par jour, 7 derniers mois."""
+    old = PREVIOUS.get("bank_cot") or {}
+    if old.get("day") == TODAY and old.get("m"):
+        data["bank_cot"] = old
+        return
+    mois = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+    months, y, m = {}, NOW.year, NOW.month
+    tried, samples = [], []
+    for k in range(8):
+        mm, yy = (m - 1 - k) % 12, y + (m - 1 - k) // 12
+        code = "dea%s%02df" % (mois[mm], yy % 100)
+        url = "https://www.cftc.gov/MarketReports/BankParticipation/" + code
+        try:
+            html = http("bpr_" + code + ".html", url, tries=1, timeout=30)
+        except Exception as e:
+            tried.append(code + " : " + fr_err(e)[:40])
+            continue
+        txt = re.sub(r"<(tr|br|p|div)[^>]*>", "\n", html, flags=re.I)
+        txt = re.sub(r"<[^>]+>", " ", txt).replace("&nbsp;", " ")
+        lines = [" ".join(l.split()) for l in txt.split("\n")]
+        lines = [l for l in lines if l]
+        dm = re.search(r"(\d{1,2})/(\d{1,2})/(\d{4})", " ".join(lines[:80]))
+        asof = "%s-%02d-%02d" % (dm.group(3), int(dm.group(1)), int(dm.group(2))) if dm else "%d-%02d-01" % (yy, mm + 1)
+        nums = lambda l: [float(x.replace(",", "")) for x in re.findall(r"(?<![A-Za-z])-?[\d,]*\.?\d+(?![A-Za-z])", l)]
+        res = {}
+        for key, name in BPR_MARKETS.items():
+            i = next((j for j, l in enumerate(lines) if l.upper().startswith(name) and "U.S." in l.upper()), None)
+            if i is None or i + 2 >= len(lines):
+                continue
+            a = nums(lines[i][len(name):])
+            b = nums(lines[i + 1].upper().replace("NON U.S.", ""))
+            c = nums(lines[i + 2])
+            # U.S. : [nombre de banques], acheteurs, %, vendeurs, %, intérêt ouvert ; NON U.S. et total : [nombre], acheteurs, %, vendeurs, %
+            if len(a) == 6:
+                a = a[1:]
+            if len(a) != 5:
+                continue
+            b = b[1:] if len(b) == 5 else b
+            c = c[1:] if len(c) == 5 else c
+            if len(b) != 4 or len(c) != 4:
+                continue
+            res[key] = {"us_l": a[0], "us_s": a[2], "nus_l": b[0], "nus_s": b[2], "l": c[0], "s": c[2], "oi": a[4],
+                        "net": c[0] - c[2], "net_pct": round((c[0] - c[2]) / a[4] * 100, 1) if a[4] else None}
+        if not res:
+            samples.append(code + " : " + " | ".join(l for l in lines if "GOLD" in l.upper())[:200])
+            tried.append(code + " : format non reconnu")
+            continue
+        months[asof] = res
+        if len(months) >= 7:
+            break
+    DIAG["bank_cot"] = tried[:8] + samples[:2]
+    if months:
+        data["bank_cot"] = {"day": TODAY, "m": dict(sorted(months.items()))}
+        last = max(months)
+        note("cftc.bpr", "COT des banques : participation des banques américaines et étrangères (CFTC, mensuel)", "monthly", True, last,
+             url="https://www.cftc.gov/MarketReports/BankParticipationReports/index.htm")
+    else:
+        if old.get("m"):
+            data["bank_cot"] = old
+        note("cftc.bpr", "COT des banques (CFTC, Bank Participation Report)", "monthly", False, err="; ".join(tried[:3]) or "aucune page lue",
+             url="https://www.cftc.gov/MarketReports/BankParticipationReports/index.htm")
+
+
 def probe_credit(data):
     """Écarts de crédit ICE (HY, IG) : n'existent gratuitement que chez la Fed de St. Louis ; on essaie ses autres adresses."""
     for key, url in (("api", "https://api.stlouisfed.org/fred/series/observations?series_id=BAMLH0A0HYM2&file_type=json"),
@@ -4131,7 +4202,7 @@ def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
-             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl)]
+             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl), ("bankcot", do_bank_cot)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
