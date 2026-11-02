@@ -122,6 +122,17 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .badge.ko { color: var(--down); border-color: #6b2a24; }
 .ck { font: 11px var(--font-mono); margin-left: 6px; }
 .ck.ok { color: var(--up); } .ck.bad { color: var(--amber); }
+.sggrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
+.sgc { background: var(--panel); padding: 12px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.sgc h3 { margin: 0; font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+.sgc .sgv { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sgc .sgv b { font: 600 26px var(--font-mono); }
+.sgc .rule { font-size: 12px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 8px; }
+.sgc svg { width: 100%; height: 130px; display: block; }
+.sgc ul { margin: 0; padding-left: 16px; font-size: 12px; color: var(--muted); }
+.sgper { display: flex; gap: 6px; padding: 8px 12px; }
+.sgper button { font: 500 11px var(--font-mono); background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 4px 10px; min-height: 30px; cursor: pointer; }
+.sgper button.on { color: var(--amber); border-color: var(--amber); }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
 .tile { background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .tile small { color: var(--muted); font: 10px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
@@ -1029,6 +1040,12 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <p class="note">« Observé » = chiffre publié par une source officielle (CFTC, Banque mondiale) ; « Calcul » = calcul maison sur ces chiffres ; « Manuel » = pas de source gratuite automatisable, lien vers la source. Flux des ETF : calculés chaque jour par le robot à partir de la taille des fonds GLD et IAU, plus le dernier chiffre mensuel publié. Demande physique : derniers chiffres trimestriels du World Gold Council (saisie datée et sourcée), le robot signale chaque nouvelle édition.</p>
     </section>
 
+    <section class="panel" id="signaux">
+      <div class="ph"><h2>Courbe, crédit et conditions financières</h2><span class="meta" id="sgMeta">robot</span></div>
+      <div class="sgper" role="group" aria-label="Période des graphiques" id="sgPer"><button type="button" data-p="1">1 an</button><button type="button" data-p="5" class="on">5 ans</button><button type="button" data-p="0">Tout</button></div>
+      <div class="sggrid" id="sgBody"></div>
+      <p class="note">Trois signaux avancés suivis par les desks macro. Courbe 2s10s : rendement 10 ans − 2 ans du Trésor US (quotidien). Spread haut rendement : prime ICE BofA des obligations d'entreprises risquées sur l'État américain (quotidien, API FRED ; historique gratuit limité par ICE). NFCI : indice des conditions financières de la Fed de Chicago (hebdomadaire, publié le mercredi pour la semaine finie le vendredi précédent). Les seuils sont des repères de lecture, pas des signaux d'achat ou de vente.</p>
+    </section>
     <section class="panel" id="multi">
       <div class="ph"><h2>Moniteur multi-actifs</h2><span class="meta" id="maMeta">robot</span></div>
       <div class="tbl"><table id="maTbl"></table></div>
@@ -2401,6 +2418,71 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     $("scMeta").textContent = n + "/6 piliers calculés"; SCORE_OR = { tot: tot, n: n };
   }
 
+
+  /* ---------- Signaux : courbe 2s10s, spread haut rendement, NFCI (demande du 2 nov. 2026) ---------- */
+  var SGP = 5;
+  function sgSeries(id) {
+    var S = AUTO && AUTO.signals, L = S && S.long && S.long[id] ? S.long[id] : [], f = fred(id), rec = f && f.hist ? f.hist : [];
+    var cut = rec.length ? rec[0][0] : "9999", h = L.filter(function (p) { return p[0] < cut; }).concat(rec);
+    if (SGP) { var lim = new Date(Date.now() - SGP * 365.25 * 864e5).toISOString().slice(0, 10); h = h.filter(function (p) { return p[0] >= lim; }); }
+    var step = Math.max(1, Math.ceil(h.length / 400)), out = h.filter(function (p, i) { return i % step === 0 || i === h.length - 1; });
+    return out;
+  }
+  function sgChart(svg, id, dec, ref) {
+    var h = sgSeries(id); if (h.length < 3) { svg.innerHTML = ""; return 0; }
+    var n = h.length, span = (Date.parse(h[n - 1][0]) - Date.parse(h[0][0])) / 864e5;
+    var xl = h.map(function (p, i) { return i === 0 || i === n - 1 || i === Math.round(n / 2) ? (span < 800 ? parseD(p[0]).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }) : p[0].slice(0, 4)) : ""; });
+    lineChart(svg, 420, 130, [{ pts: h.map(function (p, i) { return [i, p[1]]; }), c: "#f2b01e", w: 1.4 }], { n: n, xl: xl, lab: h.map(function (p) { return longD(p[0]); }), zero: true, ref: ref });
+    return h[0][0];
+  }
+  function renderSignaux() {
+    var b = $("sgBody"); if (!b) return;
+    var S = (AUTO && AUTO.signals) || {}, cv = fred("T10Y2Y"), hy = fred("BAMLH0A0HYM2"), nf = fred("NFCI"), cards = [];
+    var pill = function (c, t) { return '<span class="pill ' + c + '">' + t + "</span>"; };
+    var age = function (d, max) { return badge(ageDays(d) <= max ? "ok" : "old"); };
+    var dlt = function (v, d, u) { return v === null || v === undefined ? "–" : (v >= 0 ? "+" : "−") + fmtN(Math.abs(v), d) + u; };
+    /* 1. Courbe */
+    if (cv) {
+      var inv = (S.curve && S.curve.inversions) || [], lastInv = inv.length ? inv[inv.length - 1] : null, st, cl, txt;
+      var mSince = lastInv && lastInv.sortie ? Math.round((Date.now() - Date.parse(lastInv.sortie)) / (30.44 * 864e5)) : null;
+      if (cv.v < 0) { st = "Inversée"; cl = "warn"; txt = "La courbe est inversée : historiquement, un ralentissement ou une récession a souvent suivi dans les 6 à 24 mois. Ce n'est pas encore le signal le plus proche : surveillez la désinversion."; }
+      else if (mSince !== null && mSince <= 24) { st = "Désinversion récente"; cl = "bad"; txt = "La courbe est repassée au-dessus de 0 le " + longD(lastInv.sortie) + " (il y a " + mSince + " mois) après une inversion de " + Math.round((Date.parse(lastInv.fin) - Date.parse(lastInv.debut)) / (30.44 * 864e5)) + " mois : c'est la phase où, historiquement, la contraction est la plus proche. À confirmer par l'emploi (règle de Sahm)."; }
+      else { st = cv.v < 0.5 ? "Positive mais plate" : "Positive"; cl = cv.v < 0.5 ? "warn" : "okp"; txt = "Pas d'inversion en cours." + (lastInv ? " Dernière inversion : du " + longD(lastInv.debut) + " au " + longD(lastInv.fin) + (lastInv.sortie ? ", désinversion il y a " + mSince + " mois" : "") + "." : (S.curve ? " Aucune inversion durable dans l'historique chargé." : " Historique long en cours de chargement par le robot.")); }
+      var c20 = chgN("T10Y2Y", 20);
+      cards.push('<div class="sgc" data-det="fred:T10Y2Y"><h3>Courbe 2s10s (T10Y2Y) <span class="more">›</span></h3><div class="sgv"><b>' + fmtN(cv.v, 2) + ' pt</b>' + pill(cl, st) + '<small class="num">' + dlt(c20 && c20.d, 2, " pt") + " sur 20 séances</small></div>" +
+        '<div class="rule">Sous 0 : inversion ; désinversion : contraction proche</div><p class="hint" style="max-width:none;margin:0">' + txt + '</p><svg id="sgC" role="img" aria-label="Historique de la courbe 2s10s"></svg>' +
+        (inv.length ? "<ul>" + inv.slice(-4).map(function (r) { return "<li>Inversion " + shortD(r.debut) + " " + r.debut.slice(0, 4) + " → " + (r.sortie ? "désinversion " + shortD(r.sortie) + " " + r.sortie.slice(0, 4) : "en cours") + "</li>"; }).join("") + "</ul>" : "") +
+        '<small class="meta">' + longD(cv.asof) + " " + age(cv.asof, 5) + " · " + esc(cv.via || "Trésor US") + "</small></div>");
+    } else cards.push('<div class="sgc"><h3>Courbe 2s10s (T10Y2Y)</h3><p class="hint">Indisponible : voir « Fraîcheur des données ».</p></div>');
+    /* 2. Spread haut rendement */
+    if (hy) {
+      var Hs = S.hy || {}, d1 = Hs.d1m !== undefined && Hs.d1m !== null ? Hs.d1m : (chgN("BAMLH0A0HYM2", 20) || {}).d, z, zc;
+      if (hy.v < 3) { z = "Très serré (complaisance)"; zc = "warn"; } else if (hy.v < 4.5) { z = "Détendu"; zc = "okp"; } else if (hy.v < 6) { z = "Prudence"; zc = "warn"; } else if (hy.v < 8) { z = "Stress"; zc = "bad"; } else { z = "Crise"; zc = "bad"; }
+      var wid = d1 !== null && d1 !== undefined && d1 >= 0.5;
+      cards.push('<div class="sgc" data-det="fred:BAMLH0A0HYM2"><h3>Spread high yield <span class="more">›</span></h3><div class="sgv"><b>' + fmtN(hy.v, 2) + ' %</b>' + pill(zc, z) + '<small class="num">' + dlt(d1, 2, " pt") + " sur 1 mois</small></div>" +
+        '<div class="rule">Voir Bloc 1, 1.4 · repères : sous 3 % complaisance, 3 à 4,5 % détendu, 4,5 à 6 % prudence, 6 à 8 % stress, au-delà de 8 % crise ; un élargissement rapide (+0,5 pt en 1 mois) compte plus que le niveau</div>' +
+        '<p class="hint" style="max-width:none;margin:0">' + (wid ? "<b class=\"down\">Élargissement rapide</b> : les investisseurs exigent nettement plus pour prêter aux entreprises fragiles, signal de montée de l'aversion au risque (souvent défavorable aux actions et au dollar australien, favorable au yen, au franc suisse et parfois à l'or)." : d1 !== null && d1 !== undefined && d1 <= -0.3 ? "Resserrement : l'appétit pour le risque s'améliore." : "Pas de mouvement brutal sur le mois.") + (Hs.rank !== undefined ? " Niveau au " + Hs.rank + "<sup>e</sup> centile depuis " + longD(Hs.since) + " (" + fmtN(Hs.min, 2) + " à " + fmtN(Hs.max, 2) + " %)." : "") + '</p><svg id="sgH" role="img" aria-label="Historique du spread haut rendement"></svg>' +
+        '<small class="meta">' + longD(hy.asof) + " " + age(hy.asof, 5) + " · ICE BofA US High Yield (OAS), " + esc(hy.via || "FRED") + "</small></div>");
+    } else cards.push('<div class="sgc"><h3>Spread high yield</h3><p class="hint">Indisponible : le robot le lit avec la clé gratuite FRED (secret FRED_API_KEY). Voir « Fraîcheur des données ».</p></div>');
+    /* 3. NFCI */
+    if (nf) {
+      var Ns = S.nfci || {}, nd = Ns.d1m !== undefined ? Ns.d1m : ((chgN("NFCI", 4) || {}).d !== undefined ? chgN("NFCI", 4).d : null), nz = nf.v < -0.5 ? "Très souples" : nf.v < 0 ? "Souples" : nf.v < 0.5 ? "Tendues" : "Très tendues", nc = nf.v < 0 ? "okp" : nf.v < 0.5 ? "warn" : "bad";
+      cards.push('<div class="sgc" data-det="fred:NFCI"><h3>Conditions financières (NFCI) <span class="more">›</span></h3><div class="sgv"><b>' + fmtN(nf.v, 3) + "</b>" + pill(nc, nz) + '<small class="num">' + dlt(nd, 3, "") + " sur 1 mois</small></div>" +
+        '<div class="rule">Sous 0 : conditions plus souples que la moyenne</div><p class="hint" style="max-width:none;margin:0">' + (nf.v < 0 ? "Le crédit, les marchés et le financement des banques fonctionnent plus facilement que la moyenne depuis 1971" : "Les conditions de financement sont plus difficiles que la moyenne depuis 1971") + (nd !== null ? ", et elles " + (nd > 0.05 ? "se durcissent" : nd < -0.05 ? "s'assouplissent" : "bougent peu") + " sur le mois" : "") + ". Des conditions qui se durcissent freinent l'économie quelques mois plus tard ; la Fed en tient compte.</p>" +
+        '<svg id="sgN" role="img" aria-label="Historique du NFCI"></svg><small class="meta">semaine du ' + longD(nf.asof) + " " + age(nf.asof, 14) + " · Fed de Chicago, " + esc(nf.via || "FRED") + "</small></div>");
+    } else cards.push('<div class="sgc"><h3>Conditions financières (NFCI)</h3><p class="hint">Indisponible : voir « Fraîcheur des données ».</p></div>');
+    b.innerHTML = cards.join("");
+    var f0 = [];
+    if ($("sgC")) f0.push(sgChart($("sgC"), "T10Y2Y", 2));
+    if ($("sgH")) f0.push(sgChart($("sgH"), "BAMLH0A0HYM2", 2));
+    if ($("sgN")) f0.push(sgChart($("sgN"), "NFCI", 3));
+    $("sgMeta").innerHTML = S.long_day ? "historique long relu le " + longD(S.long_day) : "historique : 1 an (historique long au prochain passage du robot)";
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("#sgPer button"); if (!t) return;
+    SGP = +t.getAttribute("data-p"); [].forEach.call($("sgPer").children, function (x) { x.classList.toggle("on", x === t); }); renderSignaux();
+  });
+
   /* ---------- Indicateurs des desks (recherche du 30 oct. 2026) ---------- */
   var DESK = [
     ["T10YIE", "Inflation anticipée 10 ans", 2, " %", "Breakeven : l'inflation que le marché obligataire anticipe. En hausse = soutien pour l'or."],
@@ -3300,7 +3382,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique sur 2 semaines (chiffres réels et analyse), surprises, réactions du marché, cycle, indicateurs, déficits et dettes publics, projections Fed et BCE", p: ["calendrier", "semaine", "surprises", "reactions", "cycle", "indicateurs", "deficits", "dotplot", "bceproj", "lecture"], g: { calendrier: "Calendrier", surprises: "Surprises et réactions du marché", cycle: "Économie : cycle, indicateurs, finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
     { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique avec fiche détaillée au clic, moniteur de risque (crises, alertes, prédictions, énergie, calendrier), détroits, réserves", p: ["monde", "geopol", "maritime", "reserves"], g: { monde: "Carte", geopol: "Risque géopolitique", maritime: "Commerce et réserves" } },
     { id: "devises", t: "Devises", ic: "⇄", d: "Force des devises multi-horizons, paires, graphique, appétit pour le risque, carte thermique, corrélations, volatilité", p: ["fstr", "force", "heat", "paires", "selPanel", "~duo", "correl", "vola"], g: { fstr: "Force des devises", paires: "Paires et graphique", correl: "Corrélations et volatilité" } },
-    { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["marches", "multi", "sessions"], g: { marches: "En direct", multi: "Multi-actifs et sessions" } },
+    { id: "marches", t: "Marchés & risque", ic: "≈", d: "Courbe 2s10s, spread haut rendement, conditions financières NFCI, graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["signaux", "marches", "multi", "sessions"], g: { signaux: "Signaux de cycle et de crédit", marches: "En direct", multi: "Multi-actifs et sessions" } },
     { id: "position", t: "Positionnement", ic: "⚖", d: "Positions des fonds (COT), sentiment des particuliers", p: ["cot", "sentiment"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Consensus des banques, notes sur le dollar, l'euro et les taux, vidéos", p: ["consensus", "analyses", "videos"] },
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"], g: { calc: "Avant d'entrer", outils: "Outils, notes et liens" } },
@@ -3324,7 +3406,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     bceproj: ["TRIMESTRIEL", "tableau lu automatiquement sur la page officielle de la BCE à chaque nouvelle publication"], regime: ["CALCUL", "règles fixes sur données officielles"], moteurs: ["CALCUL", "données quotidiennes du robot"], cycle: ["MENSUEL", "chiffres officiels BLS"],
     matin: ["DIFFÉRÉ", "clôtures de la veille et dernier passage du robot"], reactions: ["DIFFÉRÉ", "bougies 1 à 60 min (Yahoo) autour de chaque publication"], marches: ["EN DIRECT", "graphiques maison : historique et cotation CNBC relue toutes les 60 s ; peur et avidité CNN"], taux: ["QUOTIDIEN", "Trésor US, CBOE, BCE"],
     cot: ["HEBDO", "CFTC : positions du mardi, publiées le vendredi"], actus: ["DIFFÉRÉ", "communiqués RSS relus par le robot"], videos: ["DIFFÉRÉ", "flux YouTube relus par le robot"], robot: ["DIFFÉRÉ", "état du dernier passage du robot"],
-    flux: ["QUOTIDIEN", "ETF GLD (émetteur), CFTC, Banque mondiale"], multi: ["QUOTIDIEN", "clôtures quotidiennes (Yahoo, Trésor)"], scenarios: ["CALCUL", "règles fixes sur les données du robot"], fstr: ["DIFFÉRÉ", "cotations heure par heure (robot) et fixings BCE"]
+    flux: ["QUOTIDIEN", "ETF GLD (émetteur), CFTC, Banque mondiale"], multi: ["QUOTIDIEN", "clôtures quotidiennes (Yahoo, Trésor)"], signaux: ["QUOTIDIEN", "Trésor US (courbe), ICE BofA via l'API FRED (crédit), Fed de Chicago (NFCI, hebdo)"], scenarios: ["CALCUL", "règles fixes sur les données du robot"], fstr: ["DIFFÉRÉ", "cotations heure par heure (robot) et fixings BCE"]
   };
   function tagNature() {
     Object.keys(NATURE).forEach(function (id) {
@@ -5082,7 +5164,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       '<span class="bs">Sources : ' + (tot ? (tot - bad) + "/" + tot + " OK" : "–") + "</span>" + '<span class="bs">Site relu toutes les 5 min</span>';
     Array.prototype.forEach.call(document.querySelectorAll(".bstat"), function (e) { e.innerHTML = txt; });
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderSignaux(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })

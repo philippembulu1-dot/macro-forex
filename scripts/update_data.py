@@ -1204,6 +1204,72 @@ def do_fred_api(data):
             note("fredapi." + sid, lab, "daily", False, err=msg, url="https://fred.stlouisfed.org/series/" + sid)
 
 
+def do_signals(data):
+    """Signaux de cycle et de crédit (demande du 2 nov. 2026) : longue histoire de la courbe 2s10s, du spread haut rendement
+    et des conditions financières NFCI (API FRED, clé gratuite en secret). Relue une fois par jour, résumée chaque passage."""
+    key = os.environ.get("FRED_API_KEY", "").strip()
+    old = PREVIOUS.get("signals") or {}
+    today = NOW.strftime("%Y-%m-%d")
+    long = dict(old.get("long") or {})
+    if key and old.get("long_day") != today:
+        for sid, start in (("T10Y2Y", "1990-01-01"), ("BAMLH0A0HYM2", "1997-01-01"), ("NFCI", "1990-01-01")):
+            url = "https://api.stlouisfed.org/fred/series/observations?" + urllib.parse.urlencode({"series_id": sid, "api_key": key, "file_type": "json", "observation_start": start, "frequency": "w", "aggregation_method": "eop"})
+            try:
+                j = json.loads(http("sig_%s.json" % sid, url, tries=2, timeout=40))
+                obs = [[o["date"], num(o["value"])] for o in j.get("observations", []) if num(o.get("value")) is not None]
+                if len(obs) < 50:
+                    raise ValueError("série trop courte")
+                long[sid] = obs
+                note("signals." + sid, "Historique long " + sid + " (API FRED, hebdomadaire)", "daily", True, obs[-1][0], url="https://fred.stlouisfed.org/series/" + sid)
+            except Exception as e:
+                note("signals." + sid, "Historique long " + sid + " (API FRED, hebdomadaire)", "daily", False, err=fr_err(e).replace(key, "***"), url="https://fred.stlouisfed.org/series/" + sid)
+        long_day = today
+    else:
+        long_day = old.get("long_day")
+    F = data.get("fred") or {}
+
+    def merged(sid):
+        """historique hebdomadaire long + points quotidiens récents du passage en cours"""
+        h = list(long.get(sid) or [])
+        rec = (F.get(sid) or {}).get("hist") or []
+        if rec:
+            cut = rec[0][0]
+            h = [p for p in h if p[0] < cut] + [list(p) for p in rec]
+        return h
+
+    out = {"long_day": long_day, "long": long, "asof": NOW.isoformat(timespec="seconds")}
+    # 1) Courbe 2s10s : inversions passées (au moins 20 jours ouvrés ou 4 semaines sous 0) et désinversion
+    c = merged("T10Y2Y")
+    if c:
+        runs, start, cnt = [], None, 0
+        for d, v in c:
+            if v < 0:
+                if start is None:
+                    start, cnt = d, 0
+                cnt += 1
+                last_neg = d
+            elif start is not None:
+                runs.append({"debut": start, "fin": last_neg, "sortie": d, "points": cnt})
+                start = None
+        if start is not None:
+            runs.append({"debut": start, "fin": last_neg, "sortie": None, "points": cnt})
+        long_runs = [r for r in runs if r["points"] >= 4 and (datetime.strptime(r["fin"], "%Y-%m-%d") - datetime.strptime(r["debut"], "%Y-%m-%d")).days >= 28]
+        out["curve"] = {"v": c[-1][1], "asof": c[-1][0], "inversions": long_runs[-6:], "min12": min(v for d, v in c[-260:]) if len(c) > 5 else None}
+    # 2) Spread haut rendement : niveau, variation 1 mois, rang sur l'historique disponible
+    h = merged("BAMLH0A0HYM2")
+    if h:
+        vals = sorted(v for d, v in h)
+        rank = round(sum(1 for x in vals if x <= h[-1][1]) / len(vals) * 100)
+        m1 = next((v for d, v in reversed(h) if d <= (datetime.strptime(h[-1][0], "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")), None)
+        out["hy"] = {"v": h[-1][1], "asof": h[-1][0], "d1m": None if m1 is None else round(h[-1][1] - m1, 2), "rank": rank, "since": h[0][0], "min": vals[0], "max": vals[-1]}
+    # 3) NFCI
+    n = merged("NFCI")
+    if n:
+        m1 = next((v for d, v in reversed(n) if d <= (datetime.strptime(n[-1][0], "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")), None)
+        out["nfci"] = {"v": n[-1][1], "asof": n[-1][0], "d1m": None if m1 is None else round(n[-1][1] - m1, 3), "since": n[0][0]}
+    data["signals"] = out
+
+
 def probe_credit(data):
     """Écarts de crédit ICE (HY, IG) : n'existent gratuitement que chez la Fed de St. Louis ; on essaie ses autres adresses."""
     for key, url in (("api", "https://api.stlouisfed.org/fred/series/observations?series_id=BAMLH0A0HYM2&file_type=json"),
@@ -4006,6 +4072,11 @@ def main():
             geo_note(data)  # après les autres blocs : utilise le VIX et le trafic des détroits
         except Exception as e:
             note("geo.note", "Note proposée du pilier Risque et refuge", "daily", False, err=e)
+    if want("fred") or want("fredapi"):
+        try:
+            do_signals(data)  # après les blocs FRED / Trésor : complète leur historique récent par l'historique long
+        except Exception as e:
+            note("signals", "Signaux courbe, crédit et conditions financières", "daily", False, err=e)
     if want("reactions") or want("calendar"):
         try:
             do_reactions(data)
