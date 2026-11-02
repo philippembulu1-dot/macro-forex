@@ -1132,7 +1132,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div class="pcard" id="mtGeo"></div>
       <div class="pcard" id="mtEz"></div>
       <div class="pgrid">
-        <div class="pcard"><h3>Hier : ce qui a bougé</h3><div class="m" id="mtYmeta"></div><div class="tbl"><table id="mtYday"></table></div></div>
+        <div class="pcard"><h3>Dernière séance : ce qui a bougé</h3><div class="m" id="mtYmeta"></div><div class="tbl"><table id="mtYday"></table></div></div>
         <div class="pcard"><h3>Aujourd'hui (heure de Kinshasa)</h3><div class="m" id="mtTmeta"></div><div class="tbl"><table id="mtToday"></table></div></div>
       </div>
       <div class="pcard"><h3>Biais par actif</h3><div class="m">calcul maison, chaque élément est expliqué · cliquez sur un actif pour le détail · <span class="pill warn" title="Aucun test historique (backtest) : à lire comme un résumé des signaux, pas comme une probabilité">non validé statistiquement</span></div><div id="mtBias" class="bias"></div></div>
@@ -4172,16 +4172,19 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     $("mtMeta").innerHTML = gen ? "robot " + kinTime(new Date(gen)) + " " + badge((Date.now() - Date.parse(gen)) / 36e5 < 2 ? "ok" : "old") : "robot : en attente";
     /* Hier */
     var keys = ["gold", "silver", "nq", "es", "dxy", "us10", "eur", "gbp", "jpy", "oil", "vix", "btc"], rows = [], movers = [], lastD = "";
+    var LMAP = { gold: "@GC.1", silver: "@SI.1", nq: "@ND.1", es: "@SP.1", dxy: ".DXY", us10: "US10Y", eur: "EUR=", gbp: "GBP=", jpy: "JPY=", oil: "@CL.1", vix: ".VIX", btc: "BTC.CM=" }, nLive = 0;
     keys.forEach(function (k) {
       var s = dSeries(k); if (!s) return; var L = DL[k];
+      var lq = typeof LIVE !== "undefined" && LIVE.q[LMAP[k]]; /* cotation CNBC relue toutes les 60 s : plus récente que le robot */
+      if (lq && (k === "btc" ? lq.t && Date.now() - lq.t < 20 * 60 * 1000 : liveFresh(lq))) { s.live = lq.v; nLive++; }
       var ch = s.isRate ? s.last[1] - s.prev[1] : (s.last[1] / s.prev[1] - 1) * 100, nt = s.live ? (s.isRate ? s.live - s.last[1] : (s.live / s.last[1] - 1) * 100) : null;
       var f = function (v) { return v === null ? "–" : s.isRate ? '<span class="' + cls(k === "vix" ? -v : v) + '">' + (v >= 0 ? "+" : "−") + (k === "us10" ? Math.round(Math.abs(v) * 100) + " pb" : fmt(Math.abs(v), 1) + " pt") + "</span>" : '<span class="' + cls(v) + '">' + pct(v) + "</span>"; };
-      lastD = s.last[0] > lastD ? s.last[0] : lastD;
+      if (k !== "btc") lastD = s.last[0] > lastD ? s.last[0] : lastD; /* le bitcoin cote le week-end : il ne fixe pas la date de la séance */
       if (!s.isRate) movers.push([L[0], ch]);
       rows.push("<tr><td><b>" + L[0] + '</b></td><td class="r num">' + fmtN(s.last[1], L[1]) + L[2] + '</td><td class="r num">' + f(ch) + '</td><td class="r num col-core">' + f(nt) + "</td></tr>");
     });
-    $("mtYday").innerHTML = rows.length ? '<thead><tr><th>Actif</th><th class="r">Clôture</th><th class="r">Séance</th><th class="r col-core">Nuit</th></tr></thead><tbody>' + rows.join("") + "</tbody>" : '<tbody><tr><td>Clôtures pas encore publiées par le robot (prochain passage dans moins de 30 min).</td></tr></tbody>';
-    $("mtYmeta").innerHTML = lastD ? "séance du " + longD(lastD) + " " + badge(ageDays(lastD) <= 4 ? "ok" : "old") : "";
+    $("mtYday").innerHTML = rows.length ? '<thead><tr><th>Actif</th><th class="r">Clôture</th><th class="r">Séance</th><th class="r col-core">' + (nLive ? "Maintenant" : "Depuis") + '</th></tr></thead><tbody>' + rows.join("") + "</tbody>" : '<tbody><tr><td>Clôtures pas encore publiées par le robot (prochain passage dans moins de 30 min).</td></tr></tbody>';
+    $("mtYmeta").innerHTML = lastD ? "séance du " + longD(lastD) + " " + badge(ageDays(lastD) <= 4 ? "ok" : "old") + " · dernière colonne : variation depuis cette clôture" + (nLive ? ", cotations en direct (CNBC, 60 s)" : ", dernier passage du robot") : "";
     /* Aujourd'hui */
     var today = kinDay(), cal = (AUTO && AUTO.calendar && AUTO.calendar.events) || [];
     var td = cal.map(function (e, i) { return [e, i]; }).filter(function (x) { var d = new Date(x[0].d); return !isNaN(d) && kinDay(d) === today && (x[0].i === "High" || x[0].i === "Medium"); });
@@ -4201,7 +4204,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     /* À retenir */
     var pts = [];
     movers.sort(function (a, b) { return Math.abs(b[1]) - Math.abs(a[1]); });
-    if (movers.length) pts.push("Plus forte variation hier : <b>" + movers[0][0] + ' <span class="' + cls(movers[0][1]) + '">' + pct(movers[0][1]) + "</span></b>" + (movers[1] ? ", puis " + movers[1][0] + ' <span class="' + cls(movers[1][1]) + '">' + pct(movers[1][1]) + "</span>" : "") + ".");
+    if (movers.length) pts.push((lastD && lastD < kinDay(new Date(Date.now() - 864e5)) ? "Plus forte variation de la dernière séance (" + parseD(lastD).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) + ")" : "Plus forte variation hier") + " : <b>" + movers[0][0] + ' <span class="' + cls(movers[0][1]) + '">' + pct(movers[0][1]) + "</span></b>" + (movers[1] ? ", puis " + movers[1][0] + ' <span class="' + cls(movers[1][1]) + '">' + pct(movers[1][1]) + "</span>" : "") + ".");
     var hi = td.filter(function (x) { return x[0].i === "High" && Date.parse(x[0].d) > Date.now(); });
     if (hi.length) pts.push("À surveiller aujourd'hui : <b>" + hi.map(function (x) { return kinTime(new Date(x[0].d)) + " " + esc(frEvent(x[0].t).t) + " (" + x[0].c + ")"; }).slice(0, 3).join(" · ") + "</b>. Réduisez la taille des positions juste avant.");
     else if (nxt) pts.push("Pas de publication à fort impact aujourd'hui. Prochaine : <b>" + new Date(nxt.d).toLocaleDateString("fr-FR", { timeZone: KIN, weekday: "long" }) + " " + kinTime(new Date(nxt.d)) + " · " + esc(frEvent(nxt.t).t) + " (" + nxt.c + ")</b>.");
@@ -5029,6 +5032,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   }
   /* Les panneaux qui ont un équivalent en direct l'affichent (avec l'heure) */
   function liveOverlay() {
+    if (curBr === "matin") { try { renderMatin(); } catch (e) { /* le résumé reste celui du robot */ } }
     var M = LIVE.q[".MOVE"], mt = $("moveTile");
     if (M && mt && AUTO && AUTO.move && M.t && Date.parse(AUTO.move.d + "T21:00:00Z") <= M.t + 36e5) {
       var b = mt.querySelector("b"); if (b) b.textContent = fmt(M.v, 1);

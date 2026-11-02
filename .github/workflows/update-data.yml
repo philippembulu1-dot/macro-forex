@@ -1,7 +1,7 @@
 name: Mise à jour des données
 on:
   schedule:
-    - cron: "2,17,32,47 * * * *"  # toutes les 15 min demandées : GitHub retarde ou saute des passages (≈ 2 par heure en pratique)
+    - cron: "2,32 * * * *"  # GitHub retarde ou saute des passages (≈ 1 par heure en pratique) : chaque passage tourne donc en boucle ~1 h
   workflow_dispatch:
   push:
     branches: [main]
@@ -16,7 +16,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -25,26 +25,37 @@ jobs:
       - name: Lecteur de fichiers Excel (indice géopolitique GPR)
         run: |
           pip install --quiet xlrd==2.0.1 || echo "xlrd indisponible, l'indice GPR sera noté en échec"
-      - name: Récupérer les données
+      - name: Récupérer et publier les données toutes les 12 minutes pendant environ 1 heure
         env:
           PYTHONUNBUFFERED: "1"
           MYFXBOOK_EMAIL: ${{ secrets.MYFXBOOK_EMAIL }}
           MYFXBOOK_PASSWORD: ${{ secrets.MYFXBOOK_PASSWORD }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-        run: python scripts/update_data.py
-      - name: Publier si changé
+          CYCLES: ${{ github.event_name == 'schedule' && '5' || '1' }}
         run: |
           git config user.name "macro-forex-robot"
           git config user.email "actions@users.noreply.github.com"
-          mkdir -p /tmp/out && cp data/macro.json data/seasonal.json /tmp/out/ && for f in macro-history surprises reactions gold-etf geo-history; do cp data/$f.json /tmp/out/ 2>/dev/null || true; done
-          for i in 1 2 3; do
-            # On repart de la dernière version du dépôt et on y pose les nouvelles données (évite les conflits entre deux passages du robot)
+          publish() {
+            mkdir -p /tmp/out && rm -f /tmp/out/*.json && cp data/macro.json data/seasonal.json /tmp/out/ && for f in macro-history surprises reactions gold-etf geo-history; do cp data/$f.json /tmp/out/ 2>/dev/null || true; done
+            for i in 1 2 3; do
+              # On repart de la dernière version du dépôt et on y pose les nouvelles données (évite les conflits entre deux passages)
+              git fetch -q origin main && git reset -q --hard origin/main
+              cp /tmp/out/*.json data/
+              git add data/*.json
+              if git diff --staged --quiet; then echo "Rien de nouveau"; return 0; fi
+              git commit -q -m "Données mises à jour"
+              if git push -q origin HEAD:main; then echo "Publié"; return 0; fi
+              echo "Envoi refusé, nouvel essai ($i)"; sleep 5
+            done
+            return 1
+          }
+          ok=0
+          for c in $(seq 1 $CYCLES); do
+            start=$(date +%s)
+            echo "=== Passage $c / $CYCLES : $(date -u +%H:%M) UTC"
+            # le robot part de la dernière version publiée (mémoires et historiques à jour)
             git fetch -q origin main && git reset -q --hard origin/main
-            cp /tmp/out/*.json data/
-            git add data/macro.json data/seasonal.json $( [ -f data/macro-history.json ] && echo data/macro-history.json ) $( [ -f data/surprises.json ] && echo data/surprises.json ) $( [ -f data/reactions.json ] && echo data/reactions.json ) $( [ -f data/gold-etf.json ] && echo data/gold-etf.json ) $( [ -f data/geo-history.json ] && echo data/geo-history.json )
-            if git diff --staged --quiet; then echo "Rien de nouveau"; exit 0; fi
-            git commit -q -m "Données mises à jour"
-            if git push -q origin HEAD:main; then echo "Publié"; exit 0; fi
-            echo "Envoi refusé, nouvel essai ($i)"; sleep 5
+            if python scripts/update_data.py && publish; then ok=1; else echo "Passage $c en échec"; fi
+            [ "$c" -lt "$CYCLES" ] && sleep $(( 720 - ($(date +%s) - start) > 30 ? 720 - ($(date +%s) - start) : 30 ))
           done
-          exit 1
+          [ $ok = 1 ]
