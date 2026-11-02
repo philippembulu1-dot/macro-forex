@@ -1638,9 +1638,21 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { g: "Croissance" },
     { k: "gdpq", l: "PIB trimestriel t/t", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.5, "T2"], EUR: [0.6, 0.0, "T2"], GBP: [0.5, 0.6, "T2"], JPY: [0.4, 0.5, "T2"], CHF: [1.5, 0.5, "T2"], AUD: [0.4, 0.3, "T2"], CAD: [0.8, 0.1, "T2"], NZD: [0.2, 0.9, "T2"] } },
     { k: "gdpy", l: "PIB a/a", u: " %", d: 1, dir: 1, v: { USD: [2.2, 2.6, "T2"], EUR: [1.2, 0.6, "T2"], GBP: [1.4, 0.8, "T2"], JPY: [0.7, 0.5, "T2"], CHF: [2.3, 0.4, "T2"], AUD: [2.1, 2.5, "T2"], CAD: [1.1, 0.1, "T2"], NZD: [2.6, 1.7, "T2"] } },
-    { g: "Inflation" },
+    { g: "Inflation", gh: "Cadre du guide (États-Unis) : sous 2 % dovish ; autour de 2,3 % neutre (2 à 2,7 % ici) ; 3 % et plus trop fort. Écart de ±0,1 point avec le consensus = surprise. Le Core PCE est l'indicateur préféré de la Fed." },
     { k: "cpi", l: "Inflation (IPC) a/a", u: " %", d: 1, dir: 1, v: { USD: [3.7, 3.4, "sept."], EUR: [3.8, 3.2, "sept."], GBP: [3.5, 3.1, "sept."], JPY: [2.1, 1.9, "sept."], CHF: [1.0, 0.8, "sept."], AUD: [4.0, 3.5, "août"], CAD: [3.1, 3.0, "sept."], NZD: [3.7, 4.1, "sept."] } },
     { k: "core", l: "Inflation sous-jacente a/a", u: " %", d: 1, dir: 1, v: { USD: [2.6, 2.4, "sept."], EUR: [2.5, 2.4, "sept."], GBP: [2.8, 2.6, "sept."], JPY: [2.1, 1.7, "sept."], CHF: [0.5, 0.4, "sept."], AUD: [3.6, 3.6, "août"], CAD: [2.2, 2.4, "sept."], NZD: [3.2, 3.2, "sept."] } },
+    { k: "pce", nt: 1, l: "PCE a/a (États-Unis)", h: "Cible de la Fed : 2 %", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "pcec", nt: 1, l: "PCE sous-jacent a/a (États-Unis)", h: "Cible de 2 % ; l'indicateur préféré de la Fed", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "supercore", nt: 1, l: "Services hors loyers du logement (supercore)", h: "Moteur de la persistance", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "shelter", nt: 1, l: "Logement (shelter) a/a", h: "Composante lente du CPI", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "ppi", nt: 1, l: "PPI (prix à la production) a/a", h: "Pression en amont", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "ahe", nt: 1, l: "Salaire horaire moyen (AHE) a/a", h: "Risque de boucle prix-salaires", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "eci", nt: 1, l: "Coût de l'emploi (ECI) a/a", h: "Risque de boucle prix-salaires (trimestriel)", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "be5y5y", nt: 1, l: "Breakeven 5y5y (inflation attendue dans 5 ans pour 5 ans)", h: "Ancrage des anticipations", u: " %", d: 2, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "mich1", nt: 1, l: "Anticipations Michigan à 1 an", h: "Désancrage si hausse durable", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "mich5", nt: 1, l: "Anticipations Michigan long terme (5-10 ans)", h: "Désancrage si hausse durable", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "impp", nt: 1, l: "Prix à l'importation a/a", h: "Choc d'énergie et effet du dollar", u: " %", d: 1, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "oil", nt: 1, l: "Pétrole WTI ($ le baril)", h: "Choc d'énergie", u: "", d: 2, dir: 1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { g: "Emploi" },
     { k: "unemp", l: "Taux de chômage", u: " %", d: 1, dir: -1, v: { USD: [4.2, 4.1, "sept."], EUR: [6.4, 6.4, "août"], GBP: [4.7, 4.9, "août"], JPY: [2.5, 2.4, "août"], CHF: [3.0, 3.0, "sept."], AUD: [4.7, 4.7, "sept."], CAD: [6.5, 6.4, "sept."], NZD: [5.6, 5.4, "T2"] } },
     { k: "wage", l: "Salaires a/a", u: " %", d: 1, dir: 1, v: { USD: [4.17, 4.18, "août"], EUR: [3.0, 3.4, "T2"], GBP: [3.7, 3.9, "août"], JPY: [3.8, 4.3, "août"], CHF: null, AUD: [3.2, 3.2, "T2"], CAD: [3.2, 3.39, "juil."], NZD: [2.1, 2.0, "T2"] } },
@@ -1691,6 +1703,14 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     return v.toFixed(d).replace(".", ",").replace("-", "−");
   }
   /* Chiffre officiel récupéré par le robot pour une case du tableau (sinon null : la saisie manuelle reste). */
+  /* Cadre du guide (étape 1.3) : sous 2 % dovish ; autour de 2,3 % neutre ; 3 % et plus trop fort */
+  function inflLvl(v) { if (v === null || v === undefined) return null; return v < 2 ? ["dovish (sous 2 %)", "f"] : v < 2.7 ? ["neutre (2 à 2,7 %)", "z"] : v < 3 ? ["au-dessus du neutre (2,7 à 3 %)", "z"] : ["trop fort (3 % et plus)", "u"]; }
+  /* Écart du dernier chiffre réel avec le consensus (calendrier TradingView) */
+  function tvSurprise(rx) {
+    var tvs = (AUTO && AUTO.ism && AUTO.ism.series) || {}, key = Object.keys(tvs).filter(function (t) { return rx.test(t.slice(3)); })[0]; if (!key) return null;
+    var a = tvs[key].filter(function (e) { return e.a !== null && e.a !== undefined && e.f !== null && e.f !== undefined; }); if (!a.length) return null;
+    var l = a[a.length - 1]; return ageDays(String(l.d).slice(0, 10)) <= 45 ? Math.round((l.a - l.f) * 10) / 10 : null;
+  }
   function sigLevel(k, v) {
     if (k === "t10y2y") {
       var S = AUTO && AUTO.signals && AUTO.signals.curve, inv = S && S.inversions || [], li = inv.length ? inv[inv.length - 1] : null;
@@ -1738,6 +1758,35 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (fb) return { v: fb.v, p: fb.v, per: "avant le " + shortD(fb.d), src: "dernier chiffre publié avant le " + fb.d + " (calendrier Forex Factory)", lvl: [(fb.v >= 50 ? "expansion" : "contraction") + (nxt ? " · " + nxt : ""), fb.v >= 50 ? "f" : "u"] };
       return null;
     }
+    /* Inflation américaine détaillée (guide, étape 1.3) */
+    if (["pce", "pcec", "supercore", "shelter", "ppi", "ahe", "eci", "be5y5y", "mich1", "mich5", "impp", "oil"].indexOf(k) >= 0) {
+      if (c !== "USD") return null;
+      var IU = (AUTO.infl_us && AUTO.infl_us.s) || {}, mo = function (a) { return MOIS[parseInt(String(a).slice(5, 7), 10) - 1]; };
+      var yo = function (o, src, lv) { return o && ageDays(o.asof) <= 130 ? { v: o.v, p: o.prev === null || o.prev === undefined ? o.v : o.prev, per: mo(o.asof), src: src + ", " + mo(o.asof) + " " + String(o.asof).slice(0, 4), lvl: lv } : null; };
+      var withC = function (o, rx) { if (!o) return o; var cs = tvSurprise(rx); if (cs === null) return o; var t = Math.abs(cs) < 0.05 ? "conforme au consensus" : "vs consensus " + (cs >= 0 ? "+" : "−") + fmt(Math.abs(cs), 1) + " pt" + (Math.abs(cs) >= 0.1 ? " (surprise)" : ""); o.lvl = o.lvl ? [o.lvl[0] + " · " + t, o.lvl[1]] : [t, "z"]; return o; };
+      if (k === "pce") return withC(yo(D.us_pce, "BEA (indice des prix PCE)", inflLvl(D.us_pce && D.us_pce.v)), /^pce price index yoy$/i);
+      if (k === "pcec") return withC(yo(D.us_pce_core, "BEA (PCE hors alimentation et énergie)", inflLvl(D.us_pce_core && D.us_pce_core.v)), /^core pce price index yoy$/i);
+      if (k === "supercore") return yo(IU.supercore, "BLS, services hors loyers du logement (CUSR0000SASL2RS)", inflLvl(IU.supercore && IU.supercore.v));
+      if (k === "shelter") return yo(IU.shelter, "BLS, logement (CUSR0000SAH1)", null);
+      if (k === "ppi") return withC(yo(IU.ppi, "BLS, prix à la production, demande finale (WPSFD4)", null), /^ppi yoy$/i);
+      if (k === "ahe") return withC(yo(IU.ahe, "BLS, salaire horaire moyen du privé (CES0500000003)", IU.ahe ? [IU.ahe.v >= 4 ? "pression salariale" : IU.ahe.v >= 3.5 ? "un peu élevé" : "compatible 2 %", IU.ahe.v >= 4 ? "u" : "z"] : null), /^average hourly earnings yoy$/i);
+      if (k === "eci") return yo(IU.eci, "BLS, indice du coût de l'emploi (CIU1010000000000I), trimestriel", null);
+      if (k === "impp") return yo(IU.import, "BLS, prix à l'importation (EIUIR)", null);
+      if (k === "be5y5y") { var b5 = fred("T5YIFR"); if (!b5) return null; var bh = b5.hist || [], bp = bh.length > 21 ? bh[bh.length - 22][1] : b5.v;
+        return { v: b5.v, p: bp, per: shortD(b5.asof), src: (b5.via || "robot") + ", au " + b5.asof + " ; précédent = il y a environ 1 mois", lvl: [b5.v > 2.5 ? "désancrage possible" : b5.v >= 2 ? "ancré" : "bas", b5.v > 2.5 ? "u" : "f"] }; }
+      if (k === "mich1" || k === "mich5") {
+        /* versions préliminaire et finale réunies : on garde la plus récente */
+        var tvs = (AUTO.ism && AUTO.ism.series) || {}, arr = [];
+        Object.keys(tvs).forEach(function (t) { if (/michigan/i.test(t) && /inflation/i.test(t) && (k === "mich5" ? /5 year|long/i.test(t) : !/5 year|long/i.test(t))) arr = arr.concat(tvs[t]); });
+        arr = arr.filter(function (e) { return e.a !== null && e.a !== undefined; }).sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+        if (!arr.length) return null; var la = arr[arr.length - 1], pa = null;
+        for (var ii = arr.length - 2; ii >= 0; ii--) if (String(arr[ii].d).slice(0, 7) !== String(la.d).slice(0, 7)) { pa = arr[ii]; break; }
+        return { v: la.a, p: pa ? pa.a : la.a, per: shortD(String(la.d).slice(0, 10)), src: "Université du Michigan (« " + la.t + " »), publié le " + String(la.d).slice(0, 10) + " ; calendrier TradingView ; précédent = mois d'avant",
+          lvl: k === "mich5" ? [la.a > 3 ? "au-dessus de l'habitude" : "ancré", la.a > 3 ? "u" : "f"] : null };
+      }
+      if (k === "oil") { var ds = typeof dSeries === "function" ? dSeries("oil") : null; if (!ds) return null; var oc = ds.c, op = oc.length > 21 ? oc[oc.length - 22][1] : ds.prev[1];
+        return { v: ds.live || ds.last[1], p: op, per: shortD(ds.last[0]), src: "contrat à terme WTI (Yahoo), précédent = il y a environ 1 mois" }; }
+    }
     /* OCDE (indicateurs clés) : dernière observation et la précédente */
     var K = AUTO.kei && AUTO.kei[c], kei = function (m, tr, fr) {
       if (!K) return null; var best = null;
@@ -1764,6 +1813,14 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (k === "conf") { var fc = ff(/Consumer Confidence|GfK Consumer Climate|Consumer Sentiment|Westpac Consumer Sentiment/); if (fc) return fc; var kc = fresh_(kei("CCICP", "_Z", ["M", "Q"]), 150); if (kc) { kc.src += " (indice OCDE harmonisé, 100 = moyenne)"; return kc; } return null; }
     if (k === "unemp" && c !== "USD") { var ku = fresh_(kei("UNEMP", "_Z", ["M"]), 120) || ff(/^Unemployment Rate$/) || fresh_(kei("UNEMP", "_Z", ["Q"]), 220); if (ku) return ku; }
     if (k === "core" && c !== "USD" && AUTO.core) { var co = AUTO.core[cc === "EA" ? "EZ" : cc]; if (co && ageDays(co.asof) <= 120) x = co; else if (c === "JPY") { var fj = ff(/^National Core CPI y\/y$/); if (fj) return fj; } }
+    if ((k === "cpi" || k === "core") && c === "USD") {
+      var xo = k === "cpi" ? D.us_cpi : D.us_core;
+      if (xo && xo.v !== null && ageDays(xo.asof) <= 80) {
+        var cons = tvSurprise(k === "cpi" ? /^(inflation rate|cpi) y\/?o\/?y$/i : /^core (inflation rate|cpi) y\/?o\/?y$/i), lv = inflLvl(xo.v);
+        if (cons !== null) lv = [lv[0] + " · " + (Math.abs(cons) < 0.05 ? "conforme au consensus" : "vs consensus " + (cons >= 0 ? "+" : "−") + fmt(Math.abs(cons), 1) + " pt" + (Math.abs(cons) >= 0.1 ? " (surprise)" : "")), lv[1]];
+        return { v: xo.v, p: xo.prev === null || xo.prev === undefined ? xo.v : xo.prev, per: per(xo.asof), src: "BLS, mois de " + per(xo.asof) + " " + String(xo.asof).slice(0, 4), lvl: lv };
+      }
+    }
     if (k === "cpi") x = c === "USD" ? D.us_cpi : N["cpi_" + cc];
     if (k === "core" && c === "USD") x = D.us_core;
     if (k === "unemp" && c === "USD") x = D.us_unemp;
@@ -1778,7 +1835,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       return '<th class="r"><span class="dot" style="background:' + COL[c] + '"></span>' + c + "</th>";
     }).join("") + "</tr></thead><tbody>";
     IND.forEach(function (row) {
-      if (row.g) { h += '<tr class="grp"><td colspan="9">' + row.g + "</td></tr>"; return; }
+      if (row.g) { h += '<tr class="grp"><td colspan="9">' + row.g + (row.gh ? '<small class="ih">' + row.gh + "</small>" : "") + "</td></tr>"; return; }
       h += '<tr data-det="' + (row.fid ? "fred:" + row.fid : "ind:" + IND.indexOf(row)) + '"><td class="lab">' + row.l + ' <span class="more">›</span>' + (row.h ? '<small class="ih">' + row.h + "</small>" : "") + "</td>";
       IND_C.forEach(function (c) {
         var x = row.v[c], au = row.k ? indAuto(row.k, c) : null;
