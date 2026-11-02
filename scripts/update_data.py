@@ -1446,6 +1446,61 @@ def do_bank_cot(data):
              url="https://www.cftc.gov/MarketReports/BankParticipationReports/index.htm")
 
 
+EU_TV_RX = re.compile(r"pmi|ifo|zew|sentix|gdp|retail sales|unemployment rate|inflation rate|core inflation|\bcpi\b|harmoni[sz]ed|wage|negotiated|deposit|refinanc|lending facility", re.I)
+
+
+def do_euro_guide(data):
+    """Zone euro, étapes 3.4 / 3.5 / 3.7 du guide de l'utilisateur.
+    1) Calendrier TradingView (zone euro, Allemagne, France, Italie, Espagne) : chiffre réel, consensus, précédent
+       (IPCH flash, PMI par pays, chômage, PIB, ventes au détail, Ifo, ZEW, Sentix, salaires négociés…), 13 mois une fois par jour.
+    2) BCE (API officielle) : taux de refinancement, facilité de prêt marginal, €STR, salaires négociés."""
+    old = PREVIOUS.get("eu_guide") or {}
+    full = old.get("full_day") != TODAY or not old.get("tv")
+    tv = {} if full else {k: [x for x in v if x["d"] < (NOW - timedelta(days=45)).strftime("%Y-%m-%d")] for k, v in (old.get("tv") or {}).items()}
+    start = NOW - timedelta(days=400 if full else 45)
+    try:
+        while start < NOW + timedelta(days=12):
+            end = min(start + timedelta(days=40), NOW + timedelta(days=12))
+            u = "https://economic-calendar.tradingview.com/events?from=%sT00:00:00.000Z&to=%sT23:59:59.000Z&countries=EU,DE,FR,IT,ES" % (start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
+            j = json.loads(http("tv_eu_%s.json" % start.strftime("%Y%m%d"), u, tries=2, timeout=40, headers={"Origin": "https://www.tradingview.com", "Referer": "https://www.tradingview.com/"}))
+            for e in j.get("result") or []:
+                t = (e.get("title") or "").strip()
+                if not EU_TV_RX.search(t):
+                    continue
+                k = (e.get("country") or "") + "|" + t
+                tv.setdefault(k, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous")})
+            start = end + timedelta(days=1)
+        for k in tv:
+            uniq = {}
+            for x in tv[k]:
+                uniq[x["d"][:10]] = x
+            tv[k] = sorted(uniq.values(), key=lambda x: x["d"])[-16:]
+        last = max((x["d"][:10] for v in tv.values() for x in v if x["a"] is not None), default=None)
+        note("eu.tv", "Zone euro : IPCH flash, PMI par pays, chômage, PIB, Ifo, ZEW, Sentix… (calendrier TradingView, %d séries)" % len(tv), "daily", bool(tv), last,
+             url="https://www.tradingview.com/economic-calendar/")
+    except Exception as e:
+        tv = old.get("tv") or {}
+        note("eu.tv", "Zone euro : indicateurs du calendrier (TradingView)", "daily", False, err=e, url="https://www.tradingview.com/economic-calendar/")
+    ecb = dict(old.get("ecb") or {})
+    if full or not ecb:
+        for key, path in (("mro", "FM/D.U2.EUR.4F.KR.MRR_FR.LEV?lastNObservations=400"), ("mlf", "FM/D.U2.EUR.4F.KR.MLFR.LEV?lastNObservations=400"),
+                          ("estr", "EST/B.EU000A2X2A25.WT?lastNObservations=60"),
+                          ("negwage", "STS/Q.I9.N.INWR.000000.3.ANR?lastNObservations=12"), ("negwage8", "STS/Q.I8.N.INWR.000000.3.ANR?lastNObservations=12")):
+            try:
+                rows = ecb_rows("ecb_g_%s.csv" % key, path)
+                obs = list(rows.values())[0]
+                ecb[key] = {"v": obs[-1][1], "prev": obs[-2][1] if len(obs) > 1 else None, "asof": obs[-1][0], "hist": obs[-40:]}
+                DIAG["ecb_" + key] = "ok " + obs[-1][0]
+            except Exception as e:
+                DIAG["ecb_" + key] = fr_err(e)[:60]
+        if "negwage" not in ecb and "negwage8" in ecb:
+            ecb["negwage"] = ecb.pop("negwage8")
+        ok = [k for k in ("mro", "estr", "negwage") if k in ecb]
+        note("ecb.guide", "BCE : taux de refinancement, €STR, salaires négociés (%s)" % ", ".join(ok or ["aucun"]), "daily", bool(ok),
+             max((ecb[k]["asof"] for k in ok), default=None), url="https://data.ecb.europa.eu/")
+    data["eu_guide"] = {"tv": tv, "ecb": ecb, "full_day": TODAY if full else old.get("full_day")}
+
+
 def probe_credit(data):
     """Écarts de crédit ICE (HY, IG) : n'existent gratuitement que chez la Fed de St. Louis ; on essaie ses autres adresses."""
     for key, url in (("api", "https://api.stlouisfed.org/fred/series/observations?series_id=BAMLH0A0HYM2&file_type=json"),
@@ -4221,7 +4276,7 @@ def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
-             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl), ("bankcot", do_bank_cot)]
+             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl), ("bankcot", do_bank_cot), ("euguide", do_euro_guide)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
