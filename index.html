@@ -122,6 +122,8 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .badge.ko { color: var(--down); border-color: #6b2a24; }
 .ck { font: 11px var(--font-mono); margin-left: 6px; }
 .ck.ok { color: var(--up); } .ck.bad { color: var(--amber); }
+table.ind td.lab .ih { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; margin-top: 2px; white-space: normal; }
+table.ind .cell .lvl { font-style: normal; text-transform: uppercase; letter-spacing: .05em; font-size: 9.5px; }
 .sggrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
 .sgc { background: var(--panel); padding: 12px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .sgc h3 { margin: 0; font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
@@ -1040,12 +1042,6 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <p class="note">« Observé » = chiffre publié par une source officielle (CFTC, Banque mondiale) ; « Calcul » = calcul maison sur ces chiffres ; « Manuel » = pas de source gratuite automatisable, lien vers la source. Flux des ETF : calculés chaque jour par le robot à partir de la taille des fonds GLD et IAU, plus le dernier chiffre mensuel publié. Demande physique : derniers chiffres trimestriels du World Gold Council (saisie datée et sourcée), le robot signale chaque nouvelle édition.</p>
     </section>
 
-    <section class="panel" id="signaux">
-      <div class="ph"><h2>Courbe, crédit et conditions financières</h2><span class="meta" id="sgMeta">robot</span></div>
-      <div class="sgper" role="group" aria-label="Période des graphiques" id="sgPer"><button type="button" data-p="1">1 an</button><button type="button" data-p="5" class="on">5 ans</button><button type="button" data-p="0">Tout</button></div>
-      <div class="sggrid" id="sgBody"></div>
-      <p class="note">Trois signaux avancés suivis par les desks macro. Courbe 2s10s : rendement 10 ans − 2 ans du Trésor US (quotidien). Spread haut rendement : prime ICE BofA des obligations d'entreprises risquées sur l'État américain (quotidien, API FRED ; historique gratuit limité par ICE). NFCI : indice des conditions financières de la Fed de Chicago (hebdomadaire, publié le mercredi pour la semaine finie le vendredi précédent). Les seuils sont des repères de lecture, pas des signaux d'achat ou de vente.</p>
-    </section>
     <section class="panel" id="multi">
       <div class="ph"><h2>Moniteur multi-actifs</h2><span class="meta" id="maMeta">robot</span></div>
       <div class="tbl"><table id="maTbl"></table></div>
@@ -1649,6 +1645,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { k: "unemp", l: "Taux de chômage", u: " %", d: 1, dir: -1, v: { USD: [4.2, 4.1, "sept."], EUR: [6.4, 6.4, "août"], GBP: [4.7, 4.9, "août"], JPY: [2.5, 2.4, "août"], CHF: [3.0, 3.0, "sept."], AUD: [4.7, 4.7, "sept."], CAD: [6.5, 6.4, "sept."], NZD: [5.6, 5.4, "T2"] } },
     { k: "wage", l: "Salaires a/a", u: " %", d: 1, dir: 1, v: { USD: [4.17, 4.18, "août"], EUR: [3.0, 3.4, "T2"], GBP: [3.7, 3.9, "août"], JPY: [3.8, 4.3, "août"], CHF: null, AUD: [3.2, 3.2, "T2"], CAD: [3.2, 3.39, "juil."], NZD: [2.1, 2.0, "T2"] } },
     { k: "nfp", l: "Emplois créés (NFP, milliers)", u: " k", d: 0, dir: 1, v: { USD: [29, 133, "sept."], EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { g: "Courbe, crédit et conditions financières (États-Unis)" },
+    { k: "t10y2y", fid: "T10Y2Y", nt: 1, l: "Courbe 2s10s (T10Y2Y)", h: "Sous 0 : inversion ; désinversion : contraction proche", u: " pt", d: 2, dir: 0, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "hy", fid: "BAMLH0A0HYM2", nt: 1, l: "Spread high yield", h: "Voir Bloc 1, 1.4", u: " %", d: 2, dir: -1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
+    { k: "nfci", fid: "NFCI", nt: 1, l: "Conditions financières (NFCI)", h: "Sous 0 : conditions plus souples que la moyenne", u: "", d: 3, dir: -1, v: { USD: null, EUR: null, GBP: null, JPY: null, CHF: null, AUD: null, CAD: null, NZD: null } },
     { g: "Activité" },
     { k: "pmim", l: "PMI manufacturier", u: "", d: 1, dir: 1, v: { USD: [56.0, 55.9, "oct."], EUR: [52.4, 52.9, "oct."], GBP: [52.8, 51.9, "oct."], JPY: [53.3, 54.1, "oct."], CHF: [55.3, 57.1, "sept."], AUD: [49.7, 49.6, "oct."], CAD: [51.5, 53.0, "sept."], NZD: [56.5, 53.3, "sept."] } },
     { k: "pmis", l: "PMI services", u: "", d: 1, dir: 1, v: { USD: [57.9, 58.8, "oct."], EUR: [51.7, 53.0, "oct."], GBP: [53.1, 52.1, "oct."], JPY: [52.0, 51.3, "oct."], CHF: [59.8, 58.3, "sept."], AUD: [47.8, 51.9, "oct."], CAD: [48.3, 46.8, "sept."], NZD: [50.9, 51.0, "sept."] } },
@@ -1688,6 +1688,18 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     return v.toFixed(d).replace(".", ",").replace("-", "−");
   }
   /* Chiffre officiel récupéré par le robot pour une case du tableau (sinon null : la saisie manuelle reste). */
+  function sigLevel(k, v) {
+    if (k === "t10y2y") {
+      var S = AUTO && AUTO.signals && AUTO.signals.curve, inv = S && S.inversions || [], li = inv.length ? inv[inv.length - 1] : null;
+      var m = li && li.sortie ? (Date.now() - Date.parse(li.sortie)) / (30.44 * 864e5) : null;
+      if (v < 0) return ["inversée", "u"];
+      if (m !== null && m <= 24) return ["désinversion récente", "u"];
+      return [v < 0.5 ? "positive, plate" : "positive", "z"];
+    }
+    if (k === "hy") return v < 3.5 ? ["détendu", "f"] : v < 5 ? ["prudence", "z"] : v < 8 ? ["stress", "u"] : ["crise", "u"]; /* mêmes repères que la fiche */
+    if (k === "nfci") return v < 0 ? ["souples", "f"] : ["tendues", "u"];
+    return null;
+  }
   function indAuto(k, c) {
     if (!AUTO) return null;
     var D = AUTO.derived || {}, N = AUTO.national || {}, cc = CCODE[c], x = null, src = "";
@@ -1699,6 +1711,13 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (c === "USD" || c === "EUR") { var f = fred(c === "USD" ? "DFEDTARU" : "ECBDFR"); if (f && f.hist) { for (var i = f.hist.length - 1; i >= 0; i--) if (f.hist[i][1] !== f.v) { prev = f.hist[i][1]; break; } if (prev === null) prev = f.v; } }
       else prev = N["rate_" + cc] && N["rate_" + cc].prev;
       return { v: p.v, p: prev === null || prev === undefined ? p.v : prev, per: shortD(String(p.d).slice(0, 10)), src: p.src + " du " + p.d };
+    }
+    /* Courbe, spread haut rendement, NFCI : séries quotidiennes / hebdomadaires du robot ; « précédent » = il y a environ 1 mois */
+    if (k === "t10y2y" || k === "hy" || k === "nfci") {
+      if (c !== "USD") return null;
+      var fid = { t10y2y: "T10Y2Y", hy: "BAMLH0A0HYM2", nfci: "NFCI" }[k], fs = fred(fid); if (!fs) return null;
+      var back = k === "nfci" ? 4 : 21, hh = fs.hist || [], pv = hh.length > back ? hh[hh.length - 1 - back] : null;
+      return { v: fs.v, p: pv ? pv[1] : fs.v, per: shortD(String(fs.asof).slice(0, 10)), src: (fs.via || "robot") + ", au " + fs.asof + " ; précédent = " + (pv ? pv[0] : fs.asof) + " (il y a environ 1 mois)", lvl: sigLevel(k, fs.v) };
     }
     /* OCDE (indicateurs clés) : dernière observation et la précédente */
     var K = AUTO.kei && AUTO.kei[c], kei = function (m, tr, fr) {
@@ -1739,7 +1758,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     }).join("") + "</tr></thead><tbody>";
     IND.forEach(function (row) {
       if (row.g) { h += '<tr class="grp"><td colspan="9">' + row.g + "</td></tr>"; return; }
-      h += '<tr data-det="ind:' + IND.indexOf(row) + '"><td class="lab">' + row.l + ' <span class="more">›</span></td>';
+      h += '<tr data-det="' + (row.fid ? "fred:" + row.fid : "ind:" + IND.indexOf(row)) + '"><td class="lab">' + row.l + ' <span class="more">›</span>' + (row.h ? '<small class="ih">' + row.h + "</small>" : "") + "</td>";
       IND_C.forEach(function (c) {
         var x = row.v[c], au = row.k ? indAuto(row.k, c) : null;
         if (au && row.k === "rate" && x) {
@@ -1749,9 +1768,10 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         if (!x) { h += '<td class="c"><div class="cell"><b style="color:var(--muted)">–</b></div></td>'; return; }
         var dl = x[0] - x[1], flat = Math.abs(dl) < 1e-9, s = flat ? 0 : (dl > 0 ? 1 : -1) * row.dir;
         var cl = s > 0 ? "f" : s < 0 ? "u" : "z";
-        tally[c] += s; count[c] += 1;
+        if (au && au.lvl) cl = au.lvl[1];
+        if (!row.nt) { tally[c] += s; count[c] += 1; }
         var ar = flat ? "=" : dl > 0 ? "▲" : "▼";
-        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : "") + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + "</small></div></td>";
+        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : "") + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + (au && au.lvl ? '<br><i class="lvl">' + au.lvl[0] + "</i>" : "") + "</small></div></td>";
       });
       h += "</tr>";
     });
@@ -3382,7 +3402,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique sur 2 semaines (chiffres réels et analyse), surprises, réactions du marché, cycle, indicateurs, déficits et dettes publics, projections Fed et BCE", p: ["calendrier", "semaine", "surprises", "reactions", "cycle", "indicateurs", "deficits", "dotplot", "bceproj", "lecture"], g: { calendrier: "Calendrier", surprises: "Surprises et réactions du marché", cycle: "Économie : cycle, indicateurs, finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
     { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique avec fiche détaillée au clic, moniteur de risque (crises, alertes, prédictions, énergie, calendrier), détroits, réserves", p: ["monde", "geopol", "maritime", "reserves"], g: { monde: "Carte", geopol: "Risque géopolitique", maritime: "Commerce et réserves" } },
     { id: "devises", t: "Devises", ic: "⇄", d: "Force des devises multi-horizons, paires, graphique, appétit pour le risque, carte thermique, corrélations, volatilité", p: ["fstr", "force", "heat", "paires", "selPanel", "~duo", "correl", "vola"], g: { fstr: "Force des devises", paires: "Paires et graphique", correl: "Corrélations et volatilité" } },
-    { id: "marches", t: "Marchés & risque", ic: "≈", d: "Courbe 2s10s, spread haut rendement, conditions financières NFCI, graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["signaux", "marches", "multi", "sessions"], g: { signaux: "Signaux de cycle et de crédit", marches: "En direct", multi: "Multi-actifs et sessions" } },
+    { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["marches", "multi", "sessions"], g: { marches: "En direct", multi: "Multi-actifs et sessions" } },
     { id: "position", t: "Positionnement", ic: "⚖", d: "Positions des fonds (COT), sentiment des particuliers", p: ["cot", "sentiment"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Consensus des banques, notes sur le dollar, l'euro et les taux, vidéos", p: ["consensus", "analyses", "videos"] },
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"], g: { calc: "Avant d'entrer", outils: "Outils, notes et liens" } },
