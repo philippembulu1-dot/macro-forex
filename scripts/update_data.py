@@ -1648,14 +1648,17 @@ def do_ecb_proj_table(data):
         note("proj.ecb.tbl", "Projections de la BCE, tableau lu automatiquement", "quarterly", False, err=e, url=P["url"])
 
 
-BANKS = ["Goldman Sachs", "JPMorgan", "J.P. Morgan", "Morgan Stanley", "Citi", "UBS", "Bank of America", "BofA", "HSBC", "Deutsche Bank", "Commerzbank", "ING", "Wells Fargo", "Macquarie", "BNP Paribas", "Société Générale", "Barclays"]
+BANKS = ["BlackRock", "Goldman Sachs", "JPMorgan", "J.P. Morgan", "Morgan Stanley", "Citi", "UBS", "Bank of America", "BofA", "HSBC", "Deutsche Bank", "Commerzbank", "ING", "Wells Fargo", "Macquarie", "BNP Paribas", "Société Générale", "Barclays"]
 
 
 def do_consensus_news(data):
     """Prévisions publiées par les banques, relevées automatiquement dans les titres de presse (Google Actualités, RSS public)."""
     out, seen, nfeed = [], set(), 0
     for asset, q in (("gold", "bank raises OR cuts gold price forecast"), ("gold", "gold price forecast Goldman OR JPMorgan OR UBS OR Citi"),
-                     ("eurusd", "EUR/USD forecast bank Goldman OR ING OR Citi OR UBS"), ("fed", "Fed rate cut forecast Goldman OR JPMorgan OR Morgan Stanley")):
+                     ("eurusd", "EUR/USD forecast bank Goldman OR ING OR Citi OR UBS"), ("fed", "Fed rate cut forecast Goldman OR JPMorgan OR Morgan Stanley"),
+                     ("dxy", "dollar index DXY forecast Goldman OR JPMorgan OR Morgan Stanley OR UBS OR Citi"),
+                     ("ecb", "ECB rate forecast Goldman OR JPMorgan OR Morgan Stanley OR BofA OR Barclays"),
+                     ("brii", "BlackRock Investment Institute outlook"), ("gold", "BlackRock gold outlook")):
         url = "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q + " when:60d", "hl": "en-US", "gl": "US", "ceid": "US:en"})
         try:
             root = ET.fromstring(http("gnews_%d.xml" % nfeed, url, tries=2, timeout=25).encode("utf-8"))
@@ -1690,8 +1693,21 @@ def do_consensus_news(data):
                 m = re.search(r"\b(one|two|three|four|no|\d)\s+(?:more\s+)?(?:rate\s+)?(cuts?|hikes?)\b", t, re.I)
                 if m:
                     val = m.group(0)
+            elif asset == "dxy" and re.search(r"DXY|dollar index", t, re.I):
+                m = re.search(r"\b(9\d|1[01]\d)(?:\.\d{1,2})?\b", t)
+                if m:
+                    val = num(m.group(0))
+            elif asset == "ecb" and re.search(r"ECB", t):
+                m = re.search(r"\b([0-4](?:\.\d{1,2})?)\s?%", t)
+                val = num(m.group(1)) if m else (re.search(r"\b(one|two|three|no|\d)\s+(?:more\s+)?(?:rate\s+)?(cuts?|hikes?)\b", t, re.I) or [None])[0]
+            elif asset == "brii" and re.search(r"BlackRock", t):
+                val = "vue"  # pas de chiffre : direction et date (titre de l'article)
             if val is None:
                 continue
+            tl = t.lower()
+            rev = "hausse" if re.search(r"\b(raises?|lifts?|ups|boosts?|hikes? (?:its|their) (?:gold )?(?:price )?(?:forecast|target))\b", tl) else \
+                "baisse" if re.search(r"\b(cuts?|trims?|lowers?|slashes?|reduces?|downgrades?)\b", tl) and re.search(r"forecast|target|outlook|view", tl) else \
+                "maintien" if re.search(r"\b(keeps?|maintains?|holds?|reiterates?|sticks? (?:to|with))\b", tl) and re.search(r"forecast|target|outlook|view", tl) else None
             try:
                 d = datetime.strptime(pub[:25], "%a, %d %b %Y %H:%M:%S").strftime("%Y-%m-%d")
             except Exception:
@@ -1700,10 +1716,10 @@ def do_consensus_news(data):
             if key in seen:
                 continue
             seen.add(key)
-            out.append({"bank": key[0], "asset": asset, "v": val, "t": t[:160], "l": link, "d": d})
+            out.append({"bank": key[0], "asset": asset, "v": val, "t": t[:160], "l": link, "d": d, "rev": rev})
     out.sort(key=lambda x: x["d"], reverse=True)
     if out:
-        data["consensus_auto"] = out[:40]
+        data["consensus_auto"] = out[:70]
     elif (PREVIOUS.get("consensus_auto")):
         data["consensus_auto"] = PREVIOUS["consensus_auto"]
     note("news.consensus", "Prévisions des banques relevées dans la presse (%d)" % len(out), "daily", bool(out), TODAY if out else None,
@@ -2464,7 +2480,7 @@ ANALYSIS_FEEDS = [
     # FXStreet retiré le 31 oct. 2026 : refuse les serveurs de GitHub (403).
     ("investingLive", ["https://investinglive.com/feed/news", "https://investinglive.com/feed/", "https://investinglive.com/rss"]),
 ]
-BANKS = ["ING", "Goldman", "JPMorgan", "JP Morgan", "Morgan Stanley", "Citi", "UBS", "BofA", "Bank of America", "HSBC", "Barclays", "Commerzbank",
+BANKS = ["BlackRock", "ING", "Goldman", "JPMorgan", "JP Morgan", "Morgan Stanley", "Citi", "UBS", "BofA", "Bank of America", "HSBC", "Barclays", "Commerzbank",
          "Danske", "MUFG", "Rabobank", "Nomura", "Deutsche Bank", "BNP", "Societe Generale", "Société Générale", "SocGen", "Wells Fargo", "Scotiabank",
          "RBC", "TD Securities", "Credit Agricole", "Crédit Agricole", "Natixis", "Nordea", "SEB", "Standard Chartered", "Westpac", "ANZ", "NAB",
          "Mizuho", "Julius Baer", "Pictet", "BBH", "Saxo", "Capital Economics", "Pantheon", "Macquarie", "Jefferies", "Bank of Montreal", "BMO"]

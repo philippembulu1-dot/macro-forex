@@ -941,7 +941,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     </section>
 
     <section class="panel" id="consensus">
-      <div class="ph"><h2>Consensus des banques</h2><span class="meta">relevé automatique de la presse · à vérifier</span></div>
+      <div class="ph"><h2>Projections des grandes banques et gestionnaires</h2><span class="meta">relevé automatique de la presse · à vérifier</span></div>
       <div class="tbl"><table id="consTbl"></table></div>
       <div id="consMan"></div>
       <p class="note">Prévisions publiées dans la presse financière, avec la date et le lien de l'article. Les notes de recherche complètes sont réservées aux clients des banques : rien n'est simulé ici. Une prévision de banque se trompe souvent : c'est un repère d'opinion, pas un niveau à trader.</p>
@@ -3281,15 +3281,41 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function renderCons() {
     var A = AUTO && AUTO.consensus_auto;
     if (A && A.length) {
+      /* Étape 1.14 du guide : cibles des grandes banques (date, révision), médiane, dispersion, unanimité, écart avec le marché */
       var latest = {}; A.forEach(function (c) { var k = c.bank + "|" + c.asset; if (!latest[k] || latest[k].d < c.d) latest[k] = c; });
-      var L = Object.keys(latest).map(function (k) { return latest[k]; }).sort(function (a, b) { return a.asset < b.asset ? -1 : a.asset > b.asset ? 1 : b.d < a.d ? -1 : 1; });
-      var g = L.filter(function (c) { return c.asset === "gold" && typeof c.v === "number" && ageDays(c.d) <= 75; }).map(function (c) { return c.v; }).sort(function (a, b) { return a - b; });
-      var med = g.length ? g[Math.floor(g.length / 2)] : null;
-      $("consTbl").innerHTML = '<thead><tr><th>Banque</th><th>Actif</th><th class="r">Chiffre</th><th>Titre de l\'article</th><th>Date</th></tr></thead><tbody>' + L.map(function (c) {
-        var a = ageDays(c.d), q = a <= 30 ? "ok" : a <= 75 ? "old" : "ko";
-        return "<tr><td><b>" + esc(c.bank) + "</b></td><td>" + (CONS_ASSET[c.asset] || c.asset) + '</td><td class="r num">' + (typeof c.v === "number" ? (c.asset === "gold" ? fmtN(c.v, 0) + " $" : fmt(c.v, c.v < 10 ? 4 : 2)) : esc(c.v)) + '</td><td style="white-space:normal"><a href="' + esc(c.l) + '" target="_blank" rel="noopener">' + esc(c.t) + "</a></td><td>" + shortD(c.d) + " " + badge(q, q === "ok" ? "récent" : "ancien") + "</td></tr>";
-      }).join("") + "</tbody>";
-      $("consMan").innerHTML = '<p class="hint" style="max-width:none;padding:8px 12px">' + (med ? "Médiane des derniers chiffres sur l'or (" + g.length + " banques, 75 derniers jours) : <b>" + fmtN(med, 0) + " $</b>. " : "") + 'Relevé <b>automatique</b> dans les titres de presse (Google Actualités), mis à jour à chaque passage du robot. Un titre peut citer un <b>support</b> ou une cible à court terme plutôt que la prévision de fin d\'année : ouvrez l\'article pour le contexte. <span class="pill warn">à vérifier</span></p>';
+      var L = Object.keys(latest).map(function (k) { return latest[k]; });
+      var lq = function (sym) { var q = typeof LIVE !== "undefined" && LIVE.q[sym]; return q ? q.v : null; };
+      var gnow = lq("XAU=") || (dSeries("gold") ? dSeries("gold").last[1] : null), enow = lq("EUR=") || (dSeries("eur") ? dSeries("eur").last[1] : null), dnow = lq(".DXY") || (dSeries("dxy") ? dSeries("dxy").last[1] : null);
+      var revTag = function (r) { return r === "hausse" ? '<span class="up">▲ relevée</span>' : r === "baisse" ? '<span class="down">▼ abaissée</span>' : r === "maintien" ? "= maintenue" : "–"; };
+      var block = function (asset, title, now, dec, unit) {
+        var rows = L.filter(function (c) { return c.asset === asset && typeof c.v === "number" && ageDays(c.d) <= 120; }).sort(function (x, y) { return y.d < x.d ? -1 : 1; });
+        if (!rows.length) return '<h3 class="subh">' + title + '</h3><p class="hint" style="padding:0 12px">Aucune cible datée relevée dans la presse ces 4 derniers mois.</p>';
+        var vals = rows.filter(function (c) { return ageDays(c.d) <= 75; }).map(function (c) { return c.v; }).sort(function (x, y) { return x - y; });
+        var med = vals.length ? (vals.length % 2 ? vals[(vals.length - 1) / 2] : (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2) : null;
+        var lo = vals[0], hi = vals[vals.length - 1], disp = med ? (hi - lo) / med * 100 : null;
+        var up = A.filter(function (c) { return c.asset === asset && c.rev === "hausse" && ageDays(c.d) <= 60; }).length, dn = A.filter(function (c) { return c.asset === asset && c.rev === "baisse" && ageDays(c.d) <= 60; }).length;
+        var h = '<h3 class="subh">' + title + '</h3><div class="tbl"><table><thead><tr><th>Banque</th><th class="r">Cible</th><th>Révision</th><th class="r">Écart avec le cours</th><th>Date</th><th>Article</th></tr></thead><tbody>' + rows.map(function (c) {
+          var a = ageDays(c.d), q = a <= 30 ? "ok" : a <= 75 ? "old" : "ko", gap = now ? (c.v / now - 1) * 100 : null;
+          return "<tr><td><b>" + esc(c.bank) + '</b></td><td class="r num">' + fmtN(c.v, dec) + unit + "</td><td>" + revTag(c.rev) + '</td><td class="r num">' + (gap === null ? "–" : '<span class="' + cls(gap) + '">' + pct(gap) + "</span>") + "</td><td>" + shortD(c.d) + " " + badge(q, q === "ok" ? "récent" : q === "old" ? "ancien" : "périmé") + '</td><td style="white-space:normal"><a href="' + esc(c.l) + '" target="_blank" rel="noopener">' + esc(c.t) + "</a></td></tr>";
+        }).join("") + "</tbody></table></div>";
+        h += '<p class="hint" style="max-width:none;padding:6px 12px 0">' + (med !== null ? "Médiane (" + vals.length + " banques, 75 derniers jours) : <b>" + fmtN(med, dec) + unit + "</b>" + (now ? " (" + pct((med / now - 1) * 100) + " par rapport au cours actuel de " + fmtN(now, dec) + unit + ")" : "") + " · fourchette " + fmtN(lo, dec) + " à " + fmtN(hi, dec) + unit + (disp !== null && vals.length >= 2 ? " · dispersion " + fmt(disp, 1) + " %" : "") + ". " : "") +
+          "Révisions relevées sur 60 jours : " + up + " à la hausse, " + dn + " à la baisse" + (up + dn ? " → <b>" + (up > dn ? "direction à la hausse" : dn > up ? "direction à la baisse" : "partagée") + "</b> (la direction compte plus que le niveau)" : "") + "." +
+          (vals.length >= 4 && disp !== null && disp < 8 ? ' <b class="down">Consensus très unanime</b> (moins de 8 % d\'écart) : risque de positionnement chargé.' : vals.length >= 4 ? " Consensus partagé : pas d'unanimité excessive." : "") + "</p>";
+        return h;
+      };
+      var h = '<p class="hint" style="max-width:none;padding:8px 12px 0">Étape 1.14 du guide : ce sont des <b>opinions</b>, pas des données. Relevé automatique des titres de presse (Google Actualités), avec la date et le lien ; vérifiez la cible et son horizon dans l\'article. Les notes complètes sont réservées aux clients des banques : rien n\'est simulé.</p>';
+      h += block("gold", "Or (XAU/USD) : cibles des banques", gnow, 0, " $") + block("eurusd", "EUR/USD : prévisions des banques", enow, enow && enow < 10 ? 4 : 2, "") + block("dxy", "Dollar (DXY) : prévisions des banques", dnow, 1, "");
+      /* Taux : banques contre ce que le marché price */
+      var FW = typeof fedWatchCalc === "function" ? fedWatchCalc() : null, endY = new Date().getFullYear() + "-12", fwE = FW ? FW.res.filter(function (r) { return r.d.slice(0, 7) <= endY; }).pop() : null;
+      var tx = L.filter(function (c) { return (c.asset === "fed" || c.asset === "ecb") && ageDays(c.d) <= 90; }).sort(function (x, y) { return y.d < x.d ? -1 : 1; });
+      h += '<h3 class="subh">Taux de la Fed et de la BCE : banques contre marché</h3><p class="hint" style="max-width:none;padding:0 12px">' + (fwE ? "Le marché (contrats à terme, méthode CME) price un taux effectif de la Fed de <b>" + fmt(fwE.rate, 2) + " %</b> après la réunion du " + longD(fwE.d) + ", soit " + (FW.effr !== undefined ? (fwE.rate - FW.effr >= 0 ? "+" : "−") + Math.round(Math.abs(fwE.rate - FW.effr) * 100) + " pb par rapport à aujourd'hui" : "") + ". " : "Pricing du marché : voir « Probabilités de taux ». ") + "</p>" +
+        (tx.length ? '<div class="tbl"><table><thead><tr><th>Banque</th><th>Banque centrale</th><th>Prévision</th><th>Date</th><th>Article</th></tr></thead><tbody>' + tx.map(function (c) { return "<tr><td><b>" + esc(c.bank) + "</b></td><td>" + (c.asset === "fed" ? "Fed" : "BCE") + "</td><td>" + (typeof c.v === "number" ? fmt(c.v, 2) + " %" : esc(String(c.v))) + "</td><td>" + shortD(c.d) + '</td><td style="white-space:normal"><a href="' + esc(c.l) + '" target="_blank" rel="noopener">' + esc(c.t) + "</a></td></tr>"; }).join("") + "</tbody></table></div>" : '<p class="hint" style="padding:0 12px">Aucune prévision de taux datée relevée ces 90 derniers jours.</p>');
+      /* BlackRock */
+      var br = A.filter(function (c) { return c.bank === "BlackRock"; }).sort(function (x, y) { return y.d < x.d ? -1 : 1; }).slice(0, 3);
+      h += '<h3 class="subh">BlackRock Investment Institute : vue macro</h3>' + (br.length ? "<ul class=\"hint\" style=\"max-width:none;padding:0 12px 0 28px\">" + br.map(function (c) { return "<li>" + shortD(c.d) + ' : <a href="' + esc(c.l) + '" target="_blank" rel="noopener">' + esc(c.t) + "</a></li>"; }).join("") + "</ul>" : '<p class="hint" style="padding:0 12px">Pas d\'article récent relevé. Source directe : <a href="https://www.blackrock.com/corporate/insights/blackrock-investment-institute/outlook" target="_blank" rel="noopener">BlackRock Investment Institute</a>.</p>');
+      h += '<p class="hint" style="max-width:none;padding:8px 12px">Prévisions d\'inflation et de croissance : comparez avec les projections officielles de la Fed (dot plot) et de la BCE, branche « Macro & calendrier ». Enquêtes de consensus Bloomberg et Reuters : réservées aux abonnés ; la médiane ci-dessus (banques relevées) les remplace, sans les simuler.</p>';
+      $("consTbl").innerHTML = "";
+      $("consMan").innerHTML = h;
       return;
     }
     $("consTbl").innerHTML = '<thead><tr><th>Banque</th><th>Actif</th><th>Prévision publiée</th><th>Date</th><th>Source</th></tr></thead><tbody>' + CONS.map(function (c) {
