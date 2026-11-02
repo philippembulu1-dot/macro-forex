@@ -604,6 +604,65 @@ tbody tr:hover { background: rgba(242,176,30,.035); box-shadow: inset 2px 0 0 va
 .rbar .l { background: var(--up); } .rbar .s { background: var(--down); }
 details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--font-mono); color: var(--amber); border-top: 1px solid var(--line2); }
 .cfg { padding: 12px; } .cfg ol { margin: 6px 0 0; padding-left: 20px; font-size: 13px; } .cfg li { margin: 4px 0; }
+/* ================= Version « Ultra » (2 nov. 2026) : profondeur, verre, lumière, écrans 2K / 4K ================= */
+:root { --glass: rgba(16,15,13,.78); --edge: rgba(242,176,30,.22); --edge2: rgba(255,255,255,.05); --glow: 0 0 0 1px rgba(242,176,30,.06), 0 18px 50px -28px rgba(0,0,0,.9), 0 2px 0 rgba(255,255,255,.025) inset; }
+body {
+  background:
+    radial-gradient(1200px 600px at 12% -10%, rgba(242,176,30,.10), transparent 60%),
+    radial-gradient(900px 600px at 105% 10%, rgba(61,140,220,.07), transparent 60%),
+    radial-gradient(1000px 700px at 50% 120%, rgba(242,176,30,.06), transparent 60%),
+    linear-gradient(180deg, #07070a 0%, #050506 100%);
+  background-attachment: fixed;
+}
+body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: linear-gradient(rgba(242,176,30,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(242,176,30,.035) 1px, transparent 1px);
+  background-size: 48px 48px; mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 80%); -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 80%); }
+.shell { position: relative; z-index: 1; }
+.panel, .tape, .pcard {
+  background: linear-gradient(180deg, rgba(22,20,16,.86), rgba(12,12,13,.86)); border-color: rgba(242,176,30,.14); border-radius: 6px;
+  box-shadow: var(--glow); backdrop-filter: blur(10px) saturate(120%); -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+.panel > .ph { position: relative; background: linear-gradient(90deg, rgba(242,176,30,.07), transparent 60%); }
+.panel > .ph::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, rgba(242,176,30,.55), rgba(242,176,30,.08) 45%, transparent); }
+.panel.fold > .ph::after { opacity: .35; }
+.ph h2 { text-shadow: 0 0 18px rgba(242,176,30,.25); }
+.panel:hover { border-color: rgba(242,176,30,.32); box-shadow: 0 0 0 1px rgba(242,176,30,.10), 0 24px 60px -30px rgba(242,176,30,.30), 0 2px 0 rgba(255,255,255,.03) inset; }
+.tilecard { border-radius: 10px; transform-style: preserve-3d; background: linear-gradient(155deg, rgba(34,30,20,.95), rgba(12,12,13,.95) 70%); box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 20px 40px -26px rgba(0,0,0,.95); }
+.tilecard .big, .tilecard .tk { transform: translateZ(28px); }
+.tilecard .desc, .tilecard .go { transform: translateZ(14px); }
+.tilecard::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.06) 45%, transparent 60%); background-size: 250% 100%; background-position: 120% 0; transition: background-position .8s ease; }
+.tilecard:hover::before { background-position: -40% 0; }
+.tile, .stat { border-radius: 4px; }
+.bnav a, .seg button, .copybtn, .foldbtn { border-radius: 4px; }
+.bnav a[aria-current="page"] { box-shadow: 0 6px 22px -8px rgba(242,176,30,.65); }
+.bhead h1 { background: linear-gradient(90deg, #fff4d6, #f2b01e 60%, #c98a10); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.status.live i, .lv { animation: pulseLive 2s ease-in-out infinite; }
+@keyframes pulseLive { 0%, 100% { box-shadow: 0 0 0 0 rgba(61,220,151,.55); } 50% { box-shadow: 0 0 0 6px rgba(61,220,151,0); } }
+table tbody tr { transition: background .2s; }
+.drawer { background: linear-gradient(180deg, rgba(20,18,14,.97), rgba(10,10,11,.98)); box-shadow: -30px 0 80px -20px rgba(0,0,0,.9), -1px 0 0 rgba(242,176,30,.2); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+::-webkit-scrollbar { width: 10px; height: 10px; } ::-webkit-scrollbar-thumb { background: #2a2618; border-radius: 8px; border: 2px solid #0a0a0b; } ::-webkit-scrollbar-thumb:hover { background: #4a4430; } ::-webkit-scrollbar-track { background: transparent; }
+/* Grands écrans : texte et grilles plus amples, net en 2K et 4K */
+@media (min-width: 1900px) {
+  body { font-size: 14px; }
+  .ph h2 { font-size: 12px; } .ph .meta, .tape .t { font-size: 12.5px; }
+  .tile b { font-size: 21px; } .tilecard .big { font-size: 28px; } .tilecard { min-height: 170px; }
+  .branch.on { grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; }
+  .hub { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .main { gap: 16px; }
+}
+@media (min-width: 2600px) {
+  body { font-size: 16px; }
+  .ph h2 { font-size: 14px; } .ph .meta, .tape .t, .clocks, .status { font-size: 14px; }
+  .tile b { font-size: 26px; } .tile small { font-size: 12px; } .tilecard .big { font-size: 34px; } .tilecard { min-height: 200px; padding: 22px; }
+  .branch.on { grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr)); gap: 22px; }
+  .hub { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 22px; }
+  .bhead h1 { font-size: 28px; } .enclair { font-size: 16px; max-width: 1400px; }
+  .main { gap: 22px; padding-left: 32px; padding-right: 32px; }
+}
+@media (min-width: 1900px) { .panel svg[viewBox] { max-height: 520px; } }
+@media (min-width: 3400px) { body { font-size: 19px; } .branch.on { grid-template-columns: repeat(auto-fit, minmax(min(100%, 860px), 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .status.live i, .lv { animation: none; } .tilecard::before { transition: none; } }
+@media (max-width: 760px) { body::before { background-size: 32px 32px; } .panel, .tape, .pcard { backdrop-filter: none; -webkit-backdrop-filter: none; } }
 </style>
 
 </head><body><div class="shell">

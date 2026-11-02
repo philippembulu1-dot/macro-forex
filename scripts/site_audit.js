@@ -27,6 +27,7 @@ require('fs').mkdirSync('audit-out', { recursive: true });
         list.forEach((el, i) => {
           const pid = panels[i];
           if (!el) { res.push(pid + ' : introuvable'); return; }
+          el.classList.remove('fold'); // panneaux repliés : on les ouvre pour contrôler leur contenu
           const st = getComputedStyle(el); const vis = el.offsetParent !== null || st.position === 'fixed';
           const txt = el.innerText || '';
           if (!vis) res.push(pid + ' : caché');
