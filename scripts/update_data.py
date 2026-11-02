@@ -1270,6 +1270,40 @@ def do_signals(data):
     data["signals"] = out
 
 
+def do_ism(data):
+    """Indices ISM (États-Unis) : chiffres réels, prévus et précédents sur ~13 mois, lus dans le calendrier TradingView
+    (même adresse que le calendrier, en-tête Origin obligatoire). Demande du 2 nov. 2026."""
+    d0, d1 = (NOW - timedelta(days=400)).strftime("%Y-%m-%d"), (NOW + timedelta(days=12)).strftime("%Y-%m-%d")
+    url = "https://economic-calendar.tradingview.com/events?from=%sT00:00:00.000Z&to=%sT23:59:59.000Z&countries=US" % (d0, d1)
+    try:
+        j = json.loads(http("tv_ism.json", url, tries=2, timeout=40, headers={"Origin": "https://www.tradingview.com", "Referer": "https://www.tradingview.com/"}))
+        series, titles = {}, set()
+        for e in j.get("result") or []:
+            t = (e.get("title") or "").strip()
+            if not re.match(r"^ISM\b", t, re.I):
+                continue
+            titles.add(t)
+            low = t.lower()
+            kind = "serv" if ("non-manufacturing" in low or "services" in low) else "manuf" if "manufacturing" in low else None
+            if not kind:
+                continue
+            sub = "pmi"
+            for k, rx in (("prix", r"price"), ("commandes", r"new orders"), ("emploi", r"employment"), ("activite", r"business activity")):
+                if re.search(rx, low):
+                    sub = k
+            series.setdefault(kind + "." + sub, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous"), "t": t})
+        for k in series:
+            series[k].sort(key=lambda x: x["d"])
+        DIAG["ism_titres"] = sorted(titles)[:20]
+        if not series.get("manuf.pmi") and not series.get("serv.pmi"):
+            raise ValueError("aucun indice ISM trouvé")
+        data["ism"] = {"series": series, "asof": NOW.isoformat(timespec="seconds")}
+        last = [x for x in series.get("manuf.pmi", []) if x["a"] is not None]
+        note("ism", "Indices ISM manufacturier et services (calendrier TradingView, chiffres réels)", "monthly", True, last[-1]["d"][:10] if last else TODAY, url="https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/")
+    except Exception as e:
+        note("ism", "Indices ISM manufacturier et services (calendrier TradingView)", "monthly", False, err=e, url="https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/")
+
+
 def probe_credit(data):
     """Écarts de crédit ICE (HY, IG) : n'existent gratuitement que chez la Fed de St. Louis ; on essaie ses autres adresses."""
     for key, url in (("api", "https://api.stlouisfed.org/fred/series/observations?series_id=BAMLH0A0HYM2&file_type=json"),
@@ -4029,7 +4063,7 @@ def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
-             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move)]
+             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
