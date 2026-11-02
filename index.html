@@ -124,6 +124,9 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .ck.ok { color: var(--up); } .ck.bad { color: var(--amber); }
 table.ind td.lab .ih { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; margin-top: 2px; white-space: normal; }
 table.ind .cell .lvl { font-style: normal; text-transform: uppercase; letter-spacing: .05em; font-size: 9.5px; }
+.gtbl td:last-child { white-space: normal; min-width: 240px; }
+.gtbl td.lab small { display: block; font-size: 10.5px; color: var(--muted); }
+.copybtn { font: 500 11px var(--font-mono); background: transparent; color: var(--amber); border: 1px solid var(--line); padding: 4px 10px; min-height: 30px; cursor: pointer; }
 #e19Tbl td:last-child { white-space: normal; min-width: 260px; }
 #e19 td small.ih, #consensus td small.ih { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; margin-top: 2px; }
 .subh { margin: 14px 12px 6px; font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--amber); }
@@ -580,6 +583,7 @@ tbody tr:hover { background: rgba(242,176,30,.035); box-shadow: inset 2px 0 0 va
 .inview { animation: benter .55s cubic-bezier(.2,.8,.2,1) both; }
 @media (prefers-reduced-motion: reduce) { .pcard, .tile, .stat, .panel, button, input, select, tbody tr, .tilecard { transition: none !important; } .rip, .bump, .inview, .chart path.dr, .chart path.fd, .chart circle { animation: none !important; } .chart path.dr { stroke-dasharray: none; stroke-dashoffset: 0; } }
 .drawer .dtop { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.drawer .dtop .copybtn { margin-left: auto; flex: none; }
 .drawer h2 { margin: 0; font: 600 15px var(--font-mono); letter-spacing: .06em; color: var(--amber); }
 .drawer .x { background: transparent; border: 1px solid var(--line); color: var(--fg); font: 600 13px var(--font-mono); padding: 4px 10px; cursor: pointer; }
 .drawer .dval { font: 500 34px/1.1 var(--font-mono); margin: 12px 0 2px; font-variant-numeric: tabular-nums; }
@@ -942,6 +946,11 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <p class="note">Carte en temps réel fournie gratuitement par VesselFinder (positions AIS). Elle ne se charge que lorsque vous choisissez une zone.</p>
     </section>
 
+    <section class="panel" id="bce">
+      <div class="ph"><h2>Zone euro et BCE : économie, taux, discours</h2><span class="meta" id="bceMeta">robot</span></div>
+      <p class="hint" style="max-width:none;padding:8px 12px 0">Étapes 3.4, 3.5 et 3.7 du guide. Chiffres réels, précédents et consensus : calendrier économique (TradingView) et BCE ; rendements : CNBC et Bundesbank. Touchez une ligne pour la fiche détaillée (historique, source, bouton « Copier »).</p>
+      <div id="bceBody"></div>
+    </section>
     <section class="panel" id="consensus">
       <div class="ph"><h2>Projections des grandes banques et gestionnaires</h2><span class="meta">relevé automatique de la presse · à vérifier</span></div>
       <div class="tbl"><table id="consTbl"></table></div>
@@ -2652,6 +2661,119 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       }).join("") + '</tbody><caption style="caption-side:bottom;text-align:left;padding:6px 12px;font-size:11px;color:var(--muted)">Positions au ' + longD(dl) + " " + badge(ageDays(dl) <= 45 ? "ok" : "old") + "</caption>";
   }
 
+
+  /* ---------- Tableaux du guide (zone euro, étapes 3.4 / 3.5 / 3.7) : une ligne = un indicateur, fiche au clic, copie ---------- */
+  var GT = {};
+  function tvEU(cc, rx) {
+    /* séries du calendrier (pays|titre) : dernier chiffre réel, sinon le « précédent » de la prochaine publication */
+    var T = (AUTO && AUTO.eu_guide && AUTO.eu_guide.tv) || {}, all = [];
+    Object.keys(T).forEach(function (k) { var p = k.split("|"); if (p[0] === cc && rx.test(p.slice(1).join("|"))) T[k].forEach(function (e) { all.push({ d: e.d, a: e.a, f: e.f, p: e.p, t: p.slice(1).join("|") }); }); });
+    if (!all.length) return null;
+    all.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+    var done = all.filter(function (e) { return e.a !== null && e.a !== undefined; }), hist = [];
+    done.forEach(function (e) { var m = String(e.d).slice(0, 10); if (!hist.length || hist[hist.length - 1][0] !== m) hist.push([m, e.a]); else hist[hist.length - 1][1] = e.a; });
+    var nx = all.filter(function (e) { return (e.a === null || e.a === undefined) && Date.parse(e.d) > Date.now() - 864e5; })[0];
+    if (done.length) { var l = done[done.length - 1]; return { v: l.a, prev: l.p, f: l.f, d: String(l.d).slice(0, 10), t: l.t, hist: hist, next: nx }; }
+    if (nx && nx.p !== null && nx.p !== undefined) return { v: nx.p, prev: null, f: null, d: null, t: nx.t, hist: hist, next: nx, fromPrev: true };
+    return null;
+  }
+  var CCN = { EU: "zone euro", DE: "Allemagne", FR: "France", IT: "Italie", ES: "Espagne" };
+  function gtRows() {
+    var G = (AUTO && AUTO.eu_guide) || {}, E = G.ecb || {}, EZ = AUTO && AUTO.ezspread, R = [];
+    var tvSrc = "https://www.tradingview.com/economic-calendar/";
+    var add = function (sec, id, l, r, o) { R.push({ sec: sec, id: id, l: l, r: r, o: o }); };
+    var tvo = function (x, dec, unit, read, src) { if (!x) return null; return { v: x.v, prev: x.prev, f: x.f, d: x.d, dec: dec, unit: unit, hist: x.hist, read: read ? read(x.v) : "", src: src || "calendrier économique (TradingView), « " + x.t + " »", url: tvSrc, next: x.next, fromPrev: x.fromPrev }; };
+    var cible = function (v) { return v < 1.8 ? ["sous la cible (2 %)", "f"] : v <= 2.2 ? ["proche de la cible", "z"] : v < 3 ? ["au-dessus de la cible", "z"] : ["nettement au-dessus (3 % et plus)", "u"]; };
+    var S1 = "3.4 · Situation économique, côté BCE", S2 = "3.5 · Taux obligataires européens et taux directeurs", S3 = "3.7 · Discours, mesures et projections de la BCE";
+    var h = tvEU("EU", /^Inflation Rate YoY (Flash|Final)$/), c = tvEU("EU", /^Core Inflation Rate YoY (Flash|Final)$/);
+    add(S1, "hicp", "IPCH flash : globale", "Cible de 2 % symétrique", tvo(h, 1, " %", function (v) { return cible(v)[0]; }));
+    add(S1, "hicpc", "IPCH flash : sous-jacente", "Inflation sous-jacente", tvo(c, 1, " %", function (v) { return cible(v)[0]; }));
+    var pc = tvEU("EU", /Composite PMI/i);
+    add(S1, "pmic", "PMI composite (zone euro)", "Activité manufacturière et services combinée ; seuil de 50", tvo(pc, 1, "", function (v) { return v >= 50 ? "expansion" : "contraction"; }));
+    var wt = tvEU("EU", /^ECB Wage Tracker$/), ng = tvEU("EU", /^Negotiated Wage Growth$/);
+    add(S1, "wage", "Wage tracker de la BCE", "Risque de boucle prix-salaires", tvo(wt, 2, " %", function (v) { return v > 3.5 ? "salaires encore trop dynamiques pour 2 %" : v > 3 ? "un peu élevé" : "compatible avec 2 % d'inflation"; }));
+    add(S1, "negw", "Salaires négociés (BCE)", "Risque de boucle prix-salaires", tvo(ng, 2, " %", function (v) { return v > 3.5 ? "trop dynamique pour 2 %" : v > 3 ? "un peu élevé" : "compatible avec 2 % d'inflation"; }));
+    ["DE", "FR", "IT", "ES"].forEach(function (cc) {
+      var x = tvEU(cc, /Composite PMI/i) || tvEU(cc, /Manufacturing PMI/i);
+      add(S1, "pmi" + cc, "PMI " + (x && /Manufacturing/.test(x.t) ? "manufacturier" : "composite") + " : " + CCN[cc], "Hétérogénéité de la zone", tvo(x, 1, "", function (v) { return v >= 50 ? "expansion" : "contraction"; }));
+    });
+    ["DE", "FR", "IT", "ES"].forEach(function (cc) {
+      var x = tvEU(cc, /^Harmonised Inflation Rate YoY (Prel|Final|Flash)$/);
+      add(S1, "hicp" + cc, "IPCH : " + CCN[cc], "Hétérogénéité de la zone (cible 2 %)", tvo(x, 1, " %", function (v) { return cible(v)[0]; }));
+    });
+    add(S1, "unemp", "Chômage de la zone euro", "Solidité du marché du travail", tvo(tvEU("EU", /^Unemployment Rate$/), 1, " %", function (v) { return v <= 6.5 ? "proche des plus bas historiques : marché du travail solide" : v <= 7.5 ? "marché du travail correct" : "marché du travail qui se dégrade"; }));
+    var gq = tvEU("EU", /^GDP Growth Rate YoY (Flash|2nd Est|3rd Est)$/);
+    add(S1, "gdp", "PIB flash (sur 1 an)", "Croissance : repère de 0,8 à 1,5 %", tvo(gq, 1, " %", function (v) { return v < 0.8 ? "sous le repère (faible)" : v <= 1.5 ? "dans le repère" : "au-dessus du repère (solide)"; }));
+    add(S1, "gdpq", "PIB flash (sur 1 trimestre)", "Croissance trimestrielle", tvo(tvEU("EU", /^GDP Growth Rate QoQ (Flash|2nd Est|3rd Est)$/), 1, " %"));
+    add(S1, "retail", "Ventes au détail (sur 1 an)", "Consommation des ménages", tvo(tvEU("EU", /^Retail Sales YoY$/), 1, " %"));
+    add(S1, "ifo", "Ifo (climat des affaires, Allemagne)", "Confiance, indicateur avancé allemand", tvo(tvEU("DE", /^Ifo Business Climate$/), 1, "", function () { return "comparer au précédent et au consensus"; }));
+    add(S1, "zew", "ZEW (anticipations, Allemagne)", "Confiance des investisseurs", tvo(tvEU("DE", /^ZEW Economic Sentiment Index$/), 1, "", function (v) { return v > 0 ? "optimisme" : "pessimisme"; }));
+    add(S1, "zeweu", "ZEW (anticipations, zone euro)", "Confiance des investisseurs", tvo(tvEU("EU", /^ZEW Economic Sentiment Index$/), 1, "", function (v) { return v > 0 ? "optimisme" : "pessimisme"; }));
+    add(S1, "sentix", "Sentix", "Confiance des investisseurs", null);
+    var ttf = AUTO && AUTO.geo && AUTO.geo.mkt && AUTO.geo.mkt["TTF=F"];
+    add(S1, "ttf", "Prix du gaz TTF (€/MWh)", "Choc d'énergie européen", ttf ? { v: ttf.c, prev: ttf.sp && ttf.sp.length > 21 ? ttf.sp[ttf.sp.length - 22] : null, d: ttf.d, dec: 2, unit: " €", hist: null, read: (ttf.c20 >= 0 ? "+" : "−") + fmt(Math.abs(ttf.c20 || 0), 1) + " % sur 20 séances", src: "contrat à terme TTF (Yahoo Finance)", url: "https://finance.yahoo.com/quote/TTF%3DF/" } : null);
+    /* 3.5 */
+    var cc = function (k) { return EZ && EZ.cc ? EZ.cc.filter(function (x) { return x.cc === k; })[0] : null; }, fr = cc("FR"), it = cc("IT"), de = EZ && EZ.de;
+    var lq = function (s) { var q = typeof LIVE !== "undefined" && LIVE.q[s]; return q && liveFresh(q) ? q.v : null; };
+    var bund = lq("DE10Y-DE") || (de ? de.y : null), oat = lq("FR10Y-FR") || (fr ? fr.y : null), btp = lq("IT10Y-IT") || (it ? it.y : null);
+    add(S2, "bund", "Bund allemand 10 ans", "Référence sans risque de la zone", bund !== null ? { v: bund, d: de ? String(de.t).slice(0, 10) : null, dec: 3, unit: " %", read: "", src: "CNBC (direct, 60 s) ; contrôle Bundesbank", url: "https://www.bundesbank.de/" } : null);
+    add(S2, "oat", "OAT française 10 ans", "Écart avec le Bund", oat !== null ? { v: oat, d: fr ? String(fr.t).slice(0, 10) : null, dec: 3, unit: " %", read: bund !== null ? "écart " + Math.round((oat - bund) * 100) + " pb" : "", src: "CNBC", url: "https://www.cnbc.com/quotes/FR10Y-FR" } : null);
+    add(S2, "btp", "BTP italien 10 ans", "Écart avec le Bund : fragmentation", btp !== null ? { v: btp, d: it ? String(it.t).slice(0, 10) : null, dec: 3, unit: " %", read: bund !== null ? "écart " + Math.round((btp - bund) * 100) + " pb" : "", src: "CNBC", url: "https://www.cnbc.com/quotes/IT10Y-IT" } : null);
+    if (fr) add(S2, "oatsp", "Écart OAT − Bund", "Prime de risque de la France", { v: fr.bp, d: String(fr.t).slice(0, 10), dec: 0, unit: " pb", prev: fr.d20 !== undefined ? fr.bp - fr.d20 : null, hist: fr.hist, read: "précédent = il y a 20 séances · " + (fr.p1y !== undefined ? fr.p1y + "e centile sur 1 an" : "") + (fr.d20 > 15 ? " · s'élargit vite" : ""), src: "CNBC (rendements), calcul du terminal", url: "https://www.cnbc.com/quotes/FR10Y-FR" });
+    if (it) add(S2, "btpsp", "Écart BTP − Bund", "S'il s'élargit vite : stress dans la zone", { v: it.bp, d: String(it.t).slice(0, 10), dec: 0, unit: " pb", prev: it.d20 !== undefined ? it.bp - it.d20 : null, hist: it.hist, read: "précédent = il y a 20 séances · " + (it.p1y !== undefined ? it.p1y + "e centile sur 1 an" : "") + (it.d20 > 25 ? " · <b>élargissement rapide</b> (stress)" : ""), src: "CNBC (rendements), calcul du terminal", url: "https://www.cnbc.com/quotes/IT10Y-IT" });
+    var dfr = fred("ECBDFR");
+    add(S2, "dfr", "Taux de dépôt (taux directeur)", "Taux principal de la politique monétaire", dfr ? { v: dfr.v, d: String(dfr.asof).slice(0, 10), dec: 2, unit: " %", hist: dfr.hist, read: "c'est LE taux directeur de la BCE", src: "BCE", url: "https://data.ecb.europa.eu/" } : null);
+    var ecbo = function (k, read) { var x = E[k]; return x ? { v: x.v, prev: x.prev, d: String(x.asof).slice(0, 10), dec: 2, unit: " %", hist: x.hist ? x.hist.map(function (p) { return [String(p[0]).slice(0, 10), p[1]]; }) : null, read: read || "", src: "BCE (API officielle)", url: "https://data.ecb.europa.eu/" } : null; };
+    add(S2, "mro", "Taux de refinancement (opérations principales)", "Décision de la réunion (ne pas confondre avec le taux de dépôt)", ecbo("mro", dfr && E.mro ? "écart avec le taux de dépôt : " + Math.round((E.mro.v - dfr.v) * 100) + " pb" : ""));
+    add(S2, "mlf", "Facilité de prêt marginal", "Plafond du corridor de taux", ecbo("mlf"));
+    add(S2, "estr", "€STR (taux au jour le jour)", "Attentes de marché sur la BCE : le contrat OIS sur l'€STR n'est pas gratuit", ecbo("estr", dfr && E.estr ? "€STR − taux de dépôt : " + Math.round((E.estr.v - dfr.v) * 100) + " pb" : ""));
+    var eur = lq("EUR=") || (typeof dSeries === "function" && dSeries("eur") ? dSeries("eur").last[1] : null);
+    add(S2, "eurusd", "EUR/USD", "Où l'écart se matérialise", eur !== null ? { v: eur, d: iso(new Date()), dec: 4, unit: "", read: "", src: "CNBC (direct)", url: "https://www.cnbc.com/quotes/EUR=" } : null);
+    /* 3.7 */
+    var N = ((AUTO && AUTO.news) || []).filter(function (x) { return x.src === "BCE"; });
+    var sp = N.filter(function (x) { return /:/.test(x.t) && /\/key\//.test(x.l); })[0], pc2 = N.filter(function (x) { return /press conference|monetary policy statement/i.test(x.t); })[0], acc = N.filter(function (x) { return /account/i.test(x.t); })[0];
+    var txt = function (x, read) { return x ? { text: '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>", d: x.d, read: read, src: "BCE (flux officiel)", url: x.l } : null; };
+    add(S3, "speech", "Discours de la présidente ou d'un membre", "Changement de vocabulaire", txt(sp, "dernier discours publié"));
+    add(S3, "conf", "Conférence de presse", "Réponses sur la prochaine réunion", txt(pc2, "") || { text: '<a href="https://www.ecb.europa.eu/press/press_conference/html/index.en.html" target="_blank" rel="noopener">conférences de presse de la BCE</a>', d: null, read: "lien officiel", src: "BCE", url: "https://www.ecb.europa.eu/press/press_conference/html/index.en.html" });
+    add(S3, "app", "Interventions quantitatives (APP, PEPP)", "Réduction ou réinvestissement du bilan", { text: "Portefeuilles en réduction : réinvestissements de l'APP arrêtés depuis juillet 2023, ceux du PEPP depuis fin 2024 (décisions de la BCE).", d: null, read: "", src: "BCE", url: "https://www.ecb.europa.eu/mopo/implement/app/html/index.en.html" });
+    var F = AUTO && AUTO.frag;
+    add(S3, "tpi", "Instrument de protection TPI", "Réponse à la fragmentation", { text: "Créé le 21 juillet 2022. État de la fragmentation mesuré ici : " + (F && F.rule && F.rule.score !== undefined ? "<b>" + (F.rule.score >= 5 ? "fragmentation" : F.rule.score >= 3 ? "tension" : "calme") + "</b> (" + F.rule.score + " points sur " + F.rule.max + ")" : "voir « Zone euro : écarts et fragmentation »") + ".", d: null, read: "", src: "BCE", url: "https://www.ecb.europa.eu/press/pr/date/2022/html/ecb.pr220721~973e6e7273.en.html" });
+    add(S3, "proj", "Projections des services de la BCE", "Publiées chaque trimestre : inflation, croissance", { text: "Voir « Projections de la BCE » (branche Macro & calendrier), lues automatiquement à chaque publication.", d: null, read: "", src: "BCE", url: "https://www.ecb.europa.eu/press/projections/html/index.en.html" });
+    add(S3, "acc", "Comptes rendus des réunions", "Publiés environ 4 semaines après", txt(acc, "") || { text: '<a href="https://www.ecb.europa.eu/press/accounts/html/index.en.html" target="_blank" rel="noopener">comptes rendus de la BCE</a>', d: null, read: "lien officiel", src: "BCE", url: "https://www.ecb.europa.eu/press/accounts/html/index.en.html" });
+    return R;
+  }
+  function gtVal(o) { return o ? (o.text !== undefined ? o.text : fmtN(o.v, o.dec) + o.unit) : "–"; }
+  function renderBce() {
+    var B = $("bceBody"); if (!B || !AUTO) return;
+    var R = gtRows(), secs = [], h = "";
+    R.forEach(function (r) { GT[r.id] = r; if (secs.indexOf(r.sec) < 0) secs.push(r.sec); });
+    secs.forEach(function (sec, si) {
+      var rows = R.filter(function (r) { return r.sec === sec; });
+      h += '<div class="subh" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>' + sec + '</span><button type="button" class="copybtn" data-copy-sec="' + si + '">Copier le tableau</button></div><div class="tbl"><table class="gtbl"><thead><tr><th>Quoi regarder</th><th class="r">Valeur</th><th class="r">Précédent</th><th class="r">Consensus</th><th>Date</th><th>Lecture</th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          var o = r.o, a = o && o.d ? ageDays(o.d) : null;
+          return '<tr data-det="eg:' + r.id + '"><td class="lab"><b>' + r.l + ' <span class="more">›</span></b><small>' + r.r + '</small></td><td class="r num"' + (o && o.text !== undefined ? ' style="white-space:normal;text-align:left" colspan="3"' : "") + ">" + (o ? gtVal(o) : '<span class="pill">non disponible gratuitement</span>') + "</td>" +
+            (o && o.text !== undefined ? "" : '<td class="r num">' + (o && o.prev !== null && o.prev !== undefined ? fmtN(o.prev, o.dec) + o.unit : "–") + '</td><td class="r num">' + (o && o.f !== null && o.f !== undefined ? fmtN(o.f, o.dec) + o.unit + (o.v !== undefined ? ' <small class="' + (o.v - o.f > 0 ? "up" : o.v - o.f < 0 ? "down" : "") + '">(' + (o.v - o.f >= 0 ? "+" : "−") + fmt(Math.abs(o.v - o.f), o.dec) + ")</small>" : "") : "–") + "</td>") +
+            "<td>" + (o && o.d ? shortD(o.d) + " " + (a <= 45 ? badge("ok") : badge("old", "ancien")) : o && o.fromPrev ? "<small>dernier publié</small>" : "–") + "</td><td><small>" + (o ? (o.read || "") + (o.next ? (o.read ? " · " : "") + "prochain : " + new Date(o.next.d).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + (o.next.f !== null && o.next.f !== undefined ? ", prévu " + fmt(o.next.f, o.dec) : "") : "") : r.id === "sentix" ? 'Pas de source gratuite automatisable. <a href="https://www.sentix.de/index.php/en/" target="_blank" rel="noopener">sentix.de</a>' : "Source pas encore relevée par le robot.") + "</small></td></tr>";
+        }).join("") + "</tbody></table></div>";
+    });
+    B.innerHTML = h;
+    var G = AUTO.eu_guide; $("bceMeta").innerHTML = G ? "robot · calendrier relu le " + shortD(G.full_day || iso(new Date())) + " " + badge("ok") : "robot";
+  }
+  function gtText(r) { var o = r.o; return r.l + " : " + (o ? (o.text !== undefined ? o.text.replace(/<[^>]+>/g, "") : fmtN(o.v, o.dec) + o.unit) : "non disponible") + (o && o.prev !== null && o.prev !== undefined ? " (précédent " + fmtN(o.prev, o.dec) + o.unit + ")" : "") + (o && o.f !== null && o.f !== undefined ? " (consensus " + fmtN(o.f, o.dec) + o.unit + ")" : "") + (o && o.d ? " · " + o.d : "") + (o && o.src ? " · source : " + o.src : ""); }
+  function copyText(t, btn) {
+    var done = function () { if (btn) { var old = btn.textContent; btn.textContent = "Copié ✓"; setTimeout(function () { btn.textContent = old; }, 1500); } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () { fallbackCopy(t); done(); }); else { fallbackCopy(t); done(); }
+  }
+  function fallbackCopy(t) { var a = document.createElement("textarea"); a.value = t; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); try { document.execCommand("copy"); } catch (e) { /* copie impossible */ } document.body.removeChild(a); }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-copy-sec]"); if (!b) return;
+    e.stopPropagation();
+    var R = gtRows(), secs = []; R.forEach(function (r) { if (secs.indexOf(r.sec) < 0) secs.push(r.sec); });
+    var sec = secs[+b.getAttribute("data-copy-sec")];
+    copyText(sec + "\n" + R.filter(function (r) { return r.sec === sec; }).map(gtText).join("\n"), b);
+  });
+
   /* ---------- Indicateurs des desks (recherche du 30 oct. 2026) ---------- */
   var DESK = [
     ["T10YIE", "Inflation anticipée 10 ans", 2, " %", "Breakeven : l'inflation que le marché obligataire anticipe. En hausse = soutien pour l'or."],
@@ -3573,7 +3695,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "matin", t: "Ce matin", ic: "☀", d: "Résumé de la veille, alertes géopolitiques, publications du jour à l'heure de Kinshasa, biais par actif, scénarios, régime et moteurs du marché", p: ["matin", "scenarios", "regime", "moteurs"], g: { matin: "Résumé du jour", scenarios: "Lecture du marché" } },
     { id: "or", t: "Or", ic: "◆", d: "XAU/USD, tableau de bord à 6 piliers, flux de l'or (ETF, banques centrales), volatilité, saisonnalité 20 ans", p: ["or", "scorecard", "flux", "orvol", "saison"], g: { or: "Cours", scorecard: "Analyse fondamentale", orvol: "Volatilité et saisonnalité" } },
     { id: "taux", t: "Taux & pricing", ic: "%", d: "Anticipations de la Fed, courbes US et zone euro, écarts France/Italie/Espagne − Allemagne et fragmentation, MOVE, taux réels, indicateurs des desks, règle de Taylor", p: ["pricing", "taylor", "courbe", "taux", "desk", "ezone", "ecarts"], g: { pricing: "Fed : où vont les taux", courbe: "Courbes, taux réels et volatilité", ezone: "Zone euro et écarts entre pays" } },
-    { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, communiqués", p: ["banques", "probas", "agenda", "comite", "actus"], g: { banques: "Taux et probabilités", agenda: "Réunions, comités, communiqués" } },
+    { id: "banques", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, communiqués", p: ["bce", "banques", "probas", "agenda", "comite", "actus"], g: { banques: "Taux et probabilités", agenda: "Réunions, comités, communiqués" } },
     { id: "macro", t: "Macro & calendrier", ic: "▦", d: "Calendrier économique sur 2 semaines (chiffres réels et analyse), surprises, réactions du marché, cycle, indicateurs, déficits et dettes publics, projections Fed et BCE", p: ["calendrier", "semaine", "surprises", "reactions", "cycle", "indicateurs", "deficits", "dotplot", "bceproj", "lecture"], g: { calendrier: "Calendrier", surprises: "Surprises et réactions du marché", cycle: "Économie : cycle, indicateurs, finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
     { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique avec fiche détaillée au clic, moniteur de risque (crises, alertes, prédictions, énergie, calendrier), détroits, réserves", p: ["monde", "geopol", "maritime", "reserves"], g: { monde: "Carte", geopol: "Risque géopolitique", maritime: "Commerce et réserves" } },
     { id: "devises", t: "Devises", ic: "⇄", d: "Force des devises multi-horizons, paires, graphique, appétit pour le risque, carte thermique, corrélations, volatilité", p: ["fstr", "force", "heat", "paires", "selPanel", "~duo", "correl", "vola"], g: { fstr: "Force des devises", paires: "Paires et graphique", correl: "Corrélations et volatilité" } },
@@ -3583,7 +3705,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"], g: { calc: "Avant d'entrer", outils: "Outils, notes et liens" } },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source (robot) et liens", p: ["robot"] }
   ];;
-  var WIDE = { e19: 1, consensus: 1, ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { bce: 1, e19: 1, consensus: 1, ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   /* Nature des données de chaque panneau (demandée par l'audit) : EN DIRECT, DIFFÉRÉ, QUOTIDIEN, HEBDO, MENSUEL, ANNUEL, MANUEL, CALCUL */
   var NATURE = {
@@ -3601,7 +3723,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     bceproj: ["TRIMESTRIEL", "tableau lu automatiquement sur la page officielle de la BCE à chaque nouvelle publication"], regime: ["CALCUL", "règles fixes sur données officielles"], moteurs: ["CALCUL", "données quotidiennes du robot"], cycle: ["MENSUEL", "chiffres officiels BLS"],
     matin: ["DIFFÉRÉ", "clôtures de la veille et dernier passage du robot"], reactions: ["DIFFÉRÉ", "bougies 1 à 60 min (Yahoo) autour de chaque publication"], marches: ["EN DIRECT", "graphiques maison : historique et cotation CNBC relue toutes les 60 s ; peur et avidité CNN"], taux: ["QUOTIDIEN", "Trésor US, CBOE, BCE"],
     cot: ["HEBDO", "CFTC : positions du mardi, publiées le vendredi"], actus: ["DIFFÉRÉ", "communiqués RSS relus par le robot"], videos: ["DIFFÉRÉ", "flux YouTube relus par le robot"], robot: ["DIFFÉRÉ", "état du dernier passage du robot"],
-    flux: ["QUOTIDIEN", "ETF GLD (émetteur), CFTC, Banque mondiale"], multi: ["QUOTIDIEN", "clôtures quotidiennes (Yahoo, Trésor)"], e19: ["HEBDO", "CFTC (COT détaillé du mardi, rapport mensuel des banques), ETF GLD/IAU, World Gold Council"], signaux: ["QUOTIDIEN", "Trésor US (courbe), ICE BofA via l'API FRED (crédit), Fed de Chicago (NFCI, hebdo)"], scenarios: ["CALCUL", "règles fixes sur les données du robot"], fstr: ["DIFFÉRÉ", "cotations heure par heure (robot) et fixings BCE"]
+    flux: ["QUOTIDIEN", "ETF GLD (émetteur), CFTC, Banque mondiale"], multi: ["QUOTIDIEN", "clôtures quotidiennes (Yahoo, Trésor)"], bce: ["QUOTIDIEN", "calendrier économique (chiffres réels et consensus), BCE (taux, €STR), CNBC et Bundesbank (rendements), communiqués BCE"], e19: ["HEBDO", "CFTC (COT détaillé du mardi, rapport mensuel des banques), ETF GLD/IAU, World Gold Council"], signaux: ["QUOTIDIEN", "Trésor US (courbe), ICE BofA via l'API FRED (crédit), Fed de Chicago (NFCI, hebdo)"], scenarios: ["CALCUL", "règles fixes sur les données du robot"], fstr: ["DIFFÉRÉ", "cotations heure par heure (robot) et fixings BCE"]
   };
   function tagNature() {
     Object.keys(NATURE).forEach(function (id) {
@@ -3917,7 +4039,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   }
   function openDetail(o) {
     var back = $("dback"), dr = $("drawer");
-    dr.innerHTML = '<div class="dtop"><h2>' + esc(o.t) + '</h2><button type="button" class="x" id="dclose" aria-label="Fermer">✕</button></div>' +
+    dr.innerHTML = '<div class="dtop"><h2>' + esc(o.t) + '</h2><button type="button" class="copybtn" id="dcopy" aria-label="Copier les données de la fiche">Copier</button><button type="button" class="x" id="dclose" aria-label="Fermer">✕</button></div>' +
       '<div class="dval">' + o.val + '</div><div class="dsub">' + (o.sub || "") + "</div>" +
       (o.chart ? '<h3>Historique</h3><svg id="dchart" class="chart" viewBox="0 0 520 210" role="img" aria-label="Historique"></svg>' : "") +
       (o.extra || "") +
@@ -3926,6 +4048,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       (o.src ? '<h3>Source</h3><p><a href="' + esc(o.src) + '" target="_blank" rel="noopener">' + esc(o.src.replace(/^https?:\/\//, "").split("/")[0]) + "</a>" + (o.srcTxt ? " · " + o.srcTxt : "") + "</p>" : "") +
       '<p class="fine" style="padding:12px 0 0">Lecture automatique et éducative, pas un conseil d\'investissement.</p>';
     if (o.chart) lineChart($("dchart"), 520, 210, [{ pts: o.chart.map(function (p, i) { return [i, p[1]]; }), c: "#f2b01e" }], { n: o.chart.length, zero: o.zero, xl: o.chart.map(function (p, i) { return i === 0 || i === o.chart.length - 1 || i === Math.floor(o.chart.length / 2) ? (/^\d{4}-\d{2}/.test(p[0]) ? shortD(String(p[0]).slice(0, 10)) : String(p[0])) : ""; }), lab: o.chart.map(function (p) { return /^\d{4}-\d{2}-\d{2}/.test(p[0]) ? longD(String(p[0]).slice(0, 10)) : String(p[0]); }) });
+    var ctext = o.copy || [o.t, String(o.val || "").replace(/<[^>]+>/g, ""), String(o.sub || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(), String(o.now || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(), o.src ? "Source : " + o.src : ""].filter(Boolean).join("\n");
+    $("dcopy").onclick = function () { copyText(ctext, $("dcopy")); };
     countUp(dr);
     back.classList.add("on"); dr.classList.add("on"); dr.setAttribute("aria-hidden", "false");
     lastFocus = document.activeElement; $("dclose").focus();
@@ -3934,6 +4058,13 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function closeDetail() { $("dback").classList.remove("on"); $("drawer").classList.remove("on"); $("drawer").setAttribute("aria-hidden", "true"); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
   function detFor(key) {
     var k = key.split(":"), type = k[0], id = k.slice(1).join(":");
+    if (type === "eg") {
+      var r = GT[id]; if (!r) return; var o = r.o;
+      return openDetail({ t: r.l, val: o ? gtVal(o) : "–", sub: (o && o.d ? "au " + shortD(o.d) + " " + badge(ageDays(o.d) <= 45 ? "ok" : "old") : "") + (o && o.src ? " · " + esc(o.src) : ""),
+        chart: o && o.hist && o.hist.length > 3 ? o.hist : null,
+        now: o ? [(o.prev !== null && o.prev !== undefined ? "Précédent : <b>" + fmtN(o.prev, o.dec) + o.unit + "</b>" : ""), (o.f !== null && o.f !== undefined ? "Consensus : <b>" + fmtN(o.f, o.dec) + o.unit + "</b>" + (o.v !== undefined ? " (écart " + (o.v - o.f >= 0 ? "+" : "−") + fmt(Math.abs(o.v - o.f), o.dec) + ")" : "") : ""), o.read || "", (o.next ? "Prochaine publication : " + new Date(o.next.d).toLocaleString("fr-FR", { timeZone: KIN, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "")].filter(Boolean).join(" · ") : "Pas encore relevé par le robot.",
+        what: r.r, how: "Étape du guide : " + r.sec + ".", src: o && o.url ? o.url : "", srcTxt: o ? o.src : "", copy: gtText(r) });
+    }
     if (type === "fred") {
       var d = DET[id] || [id, "", 2, "", "", ""], f = fred(id), s = srcOf("fred." + id);
       if (!f) return openDetail({ t: d[0], val: "–", sub: s && s.kind === "nofree" ? "Non disponible gratuitement en automatique" : "Indisponible pour l'instant", what: d[3], how: d[4], src: d[5],
@@ -5361,7 +5492,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       '<span class="bs">Sources : ' + (tot ? (tot - bad) + "/" + tot + " OK" : "–") + "</span>" + '<span class="bs">Site relu toutes les 5 min</span>';
     Array.prototype.forEach.call(document.querySelectorAll(".bstat"), function (e) { e.innerHTML = txt; });
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderSignaux(); renderE19(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderSignaux(); renderE19(); renderBce(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
