@@ -1293,9 +1293,13 @@ def do_ism(data):
                 series[k] = [x for x in v if x["d"] < (NOW - timedelta(days=45)).strftime("%Y-%m-%d")]
         for e in rows:
             t = (e.get("title") or "").strip()
+            titles.add(t)
+            # Autres publications d'inflation (guide de l'utilisateur, étape 1.3) : chiffre réel ET consensus
+            if re.search(r"inflation|\bcpi\b|\bpce\b|\bppi\b|producer price|michigan|import price|export price|average hourly|employment cost|core price", t, re.I) and not re.match(r"^ISM\b", t, re.I):
+                series.setdefault("tv." + t, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous"), "t": t})
+                continue
             if not re.match(r"^ISM\b", t, re.I):
                 continue
-            titles.add(t)
             low = t.lower()
             kind = "serv" if ("non-manufacturing" in low or "services" in low) else "manuf" if "manufacturing" in low else None
             if not kind:
@@ -1310,7 +1314,8 @@ def do_ism(data):
             for x in series[k]:
                 uniq[x["d"][:10]] = x
             series[k] = sorted(uniq.values(), key=lambda x: x["d"])
-        DIAG["ism_titres"] = sorted(titles)[:20]
+        DIAG["ism_titres"] = sorted(x for x in titles if x.upper().startswith("ISM"))[:20]
+        DIAG["tv_us_inflation"] = sorted(k[3:] for k in series if k.startswith("tv."))
         if not series.get("manuf.pmi") and not series.get("serv.pmi"):
             raise ValueError("aucun indice ISM trouvé")
         data["ism"] = {"series": series, "asof": NOW.isoformat(timespec="seconds"), "full_day": TODAY if full else old.get("full_day")}
@@ -1318,6 +1323,53 @@ def do_ism(data):
         note("ism", "Indices ISM manufacturier et services (calendrier TradingView, chiffres réels)", "monthly", True, last[-1]["d"][:10] if last else TODAY, url="https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/")
     except Exception as e:
         note("ism", "Indices ISM manufacturier et services (calendrier TradingView)", "monthly", False, err=e, url="https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/")
+
+
+def do_bls_infl(data):
+    """Composantes de l'inflation américaine (guide de l'utilisateur, étape 1.3), BLS API v1 sans clé, une fois par jour :
+    logement (shelter), services hors loyers du logement (supercore), prix à la production (demande finale),
+    salaire horaire moyen, coût de l'emploi (ECI), prix à l'importation. Variations sur 1 an calculées ici."""
+    old = PREVIOUS.get("infl_us") or {}
+    if old.get("day") == TODAY and old.get("s"):
+        data["infl_us"] = old
+        return
+    ids = {"CUSR0000SAH1": "shelter", "CUSR0000SASL2RS": "supercore", "WPSFD4": "ppi", "WPSFD49116": "ppi_core",
+           "CES0500000003": "ahe", "CIU1010000000000I": "eci", "EIUIR": "import"}
+    y0 = NOW.year - 3
+    body = json.dumps({"seriesid": list(ids), "startyear": str(y0), "endyear": str(NOW.year)}).encode()
+    url = "https://api.bls.gov/publicAPI/v1/timeseries/data/"
+    try:
+        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json", "User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=40) as r:
+            j = json.loads(r.read().decode("utf-8"))
+        if j.get("status") != "REQUEST_SUCCEEDED":
+            raise ValueError("BLS : " + " ".join(j.get("message") or [])[:120])
+        out = {}
+        for x in j["Results"]["series"]:
+            key = ids.get(x["seriesID"])
+            obs = []
+            for o in x["data"]:
+                per, v = o["period"], num(o["value"])
+                if v is None:
+                    continue
+                if per.startswith("M") and per != "M13":
+                    obs.append(("%s-%s-01" % (o["year"], per[1:]), v))
+                elif per in ("Q01", "Q02", "Q03", "Q04"):
+                    obs.append(("%s-%02d-01" % (o["year"], int(per[2]) * 3), v))
+            obs.sort()
+            step = 4 if key == "eci" else 12
+            yy = [(obs[i][0], round((obs[i][1] / obs[i - step][1] - 1) * 100, 2)) for i in range(step, len(obs)) if obs[i - step][1]]
+            if len(yy) >= 2:
+                out[key] = {"v": yy[-1][1], "prev": yy[-2][1], "asof": yy[-1][0], "hist": yy[-24:]}
+        if not out:
+            raise ValueError("aucune série reçue")
+        data["infl_us"] = {"day": TODAY, "s": out}
+        note("bls.infl", "Composantes de l'inflation US : logement, supercore, PPI, salaires, ECI, prix à l'import (BLS, %d séries)" % len(out), "monthly",
+             True, max(v["asof"] for v in out.values()), url="https://www.bls.gov/cpi/")
+    except Exception as e:
+        if old.get("s"):
+            data["infl_us"] = old
+        note("bls.infl", "Composantes de l'inflation US (BLS)", "monthly", False, err=e, url="https://www.bls.gov/cpi/")
 
 
 def probe_credit(data):
@@ -4079,7 +4131,7 @@ def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
-             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism)]
+             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step
