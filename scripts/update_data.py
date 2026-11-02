@@ -1023,9 +1023,9 @@ def cot_detail(dataset, codes, groups, key):
     """Rapports COT détaillés : « Disaggregated » (or : gestionnaires de fonds, producteurs, banques de swap)
     et « Traders in Financial Futures » (devises : gestionnaires d'actifs, fonds à levier, intermédiaires)."""
     url = "https://publicreporting.cftc.gov/resource/%s.json" % dataset
-    since = (NOW - timedelta(days=400)).strftime("%Y-%m-%dT00:00:00")
+    since = (NOW - timedelta(days=1110)).strftime("%Y-%m-%dT00:00:00")  # 3 ans : percentile demandé par le guide (étape 1.9)
     where = "cftc_contract_market_code in(%s) AND report_date_as_yyyy_mm_dd >= '%s'" % (",".join("'%s'" % c for c in codes), since)
-    q = urllib.parse.urlencode({"$where": where, "$order": "report_date_as_yyyy_mm_dd DESC", "$limit": "1200"})
+    q = urllib.parse.urlencode({"$where": where, "$order": "report_date_as_yyyy_mm_dd DESC", "$limit": "6000"})
     rows = json.loads(http("cot_%s.json" % key, url + "?" + q, timeout=40))
     if isinstance(rows, dict):
         raise ValueError(rows.get("message", "réponse inattendue"))
@@ -1054,9 +1054,12 @@ def cot_detail(dataset, codes, groups, key):
         for g, (lk, sk) in cols.items():
             if lk and sk:
                 nets = [I(r, lk) - I(r, sk) for r in lst]
-                lo, hi = min(nets), max(nets)
+                y1 = nets[:52]
+                lo, hi = min(y1), max(y1)
+                pct3 = round(sum(1 for x in nets if x <= nets[0]) / len(nets) * 100) if len(nets) >= 52 else None
                 o["g"][g] = {"long": I(lst[0], lk), "short": I(lst[0], sk), "net": nets[0], "prev": nets[1] if len(nets) > 1 else None,
-                             "hist": nets[:26][::-1], "idx1y": round((nets[0] - lo) / (hi - lo) * 100) if hi > lo else None}
+                             "hist": nets[:26][::-1], "idx1y": round((nets[0] - lo) / (hi - lo) * 100) if hi > lo else None,
+                             "pct3y": pct3, "weeks": len(nets), "net4": nets[4] if len(nets) > 4 else None}
         out[c] = o
     return out
 
@@ -1066,7 +1069,7 @@ def do_cot_detail(data):
     for dataset, codes, groups, key, lab in (
             ("72hh-3qpy", {"088691": "XAU", "084691": "XAG"}, [("mm", "m_money_positions"), ("prod", "prod_merc_positions"), ("swap", "swap")], "disagg",
              "COT détaillé or et argent (gestionnaires de fonds, producteurs, banques de swap)"),
-            ("gpe5-46if", {v: k for k, v in (("EUR", "099741"), ("GBP", "096742"), ("JPY", "097741"), ("CHF", "092741"), ("AUD", "232741"), ("CAD", "090741"), ("NZD", "112741"))},
+            ("gpe5-46if", {v: k for k, v in (("EUR", "099741"), ("GBP", "096742"), ("JPY", "097741"), ("CHF", "092741"), ("AUD", "232741"), ("CAD", "090741"), ("NZD", "112741"), ("USD", "098662"))},
              [("am", "asset_mgr_positions"), ("lev", "lev_money_positions"), ("dealer", "dealer_positions")], "tff",
              "COT détaillé devises (gestionnaires d'actifs, fonds à levier, intermédiaires)")):
         try:

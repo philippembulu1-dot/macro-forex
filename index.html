@@ -124,6 +124,7 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .ck.ok { color: var(--up); } .ck.bad { color: var(--amber); }
 table.ind td.lab .ih { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; margin-top: 2px; white-space: normal; }
 table.ind .cell .lvl { font-style: normal; text-transform: uppercase; letter-spacing: .05em; font-size: 9.5px; }
+.subh { margin: 14px 12px 6px; font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--amber); }
 .sggrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
 .sgc { background: var(--panel); padding: 12px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .sgc h3 { margin: 0; font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
@@ -1171,6 +1172,15 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       <div id="tauxBody"></div>
     </section>
 
+    <section class="panel" id="e19">
+      <div class="ph"><h2>COT et flux : les institutions sur l'or, le dollar et l'euro</h2><span class="meta" id="e19Meta">robot · CFTC</span></div>
+      <p class="hint" style="max-width:none;padding:8px 12px 0">Étape 1.9 du guide. Percentile = rang de la position nette actuelle parmi les 3 dernières années (0 = la plus vendeuse, 100 = la plus acheteuse). Positions du mardi, publiées le vendredi.</p>
+      <div class="tbl"><table id="e19Tbl"></table></div>
+      <p class="hint" id="e19Coh" style="max-width:none;padding:8px 12px 0"></p>
+      <h3 class="subh">COT des banques (rapport mensuel de la CFTC)</h3>
+      <div class="tbl"><table id="bankTbl"></table></div>
+      <p class="note">Rapport « Bank Participation » de la CFTC : positions sur les contrats à terme des banques américaines et étrangères, au premier mardi de chaque mois. Net = acheteurs − vendeurs ; % = part de l'intérêt ouvert. Les banques sont souvent contreparties de leurs clients : leur position se lit plutôt à contre-courant. <b>Banques centrales</b> : il n'existe aucun rapport COT public sur leurs positions ; leurs achats d'or déclarés (World Gold Council, Gold Demand Trends) sont dans le tableau ci-dessus.</p>
+    </section>
     <section class="panel" id="cot">
       <div class="ph"><h2>Positions des fonds (COT)</h2><span class="meta" id="cotMeta">robot</span></div>
       <div id="cotBody"></div>
@@ -2589,6 +2599,57 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     SGP = +t.getAttribute("data-p"); [].forEach.call($("sgPer").children, function (x) { x.classList.toggle("on", x === t); }); renderSignaux();
   });
 
+
+  /* ---------- Étape 1.9 du guide : COT et flux ; COT des banques ---------- */
+  function renderE19() {
+    var T = $("e19Tbl"); if (!T || !AUTO) return;
+    var C2 = AUTO.cot2 || {}, C1 = AUTO.cot || {}, rows = [], dates = [];
+    var nn = function (v) { return v === null || v === undefined ? "–" : (v >= 0 ? "+" : "−") + Math.abs(Math.round(v)).toLocaleString("fr-FR"); };
+    var pc = function (g) { return g && g.pct3y !== null && g.pct3y !== undefined ? g.pct3y : null; };
+    var pcell = function (p) { return p === null ? "–" : '<span class="' + (p >= 90 ? "down" : p <= 20 ? "up" : "") + '">' + p + "<sup>e</sup></span>"; };
+    var row = function (lab, g, read, src, d) {
+      if (d) dates.push(d);
+      rows.push("<tr><td><b>" + lab + "</b><small class=\"ih\">" + src + '</small></td><td class="r num">' + (g ? nn(g.net) + (g.prev !== null && g.prev !== undefined ? '<br><small>' + nn(g.net - g.prev) + " sur 1 sem.</small>" : "") : "–") + '</td><td class="r num">' + (g ? pcell(pc(g)) : "–") + "</td><td><small>" + read + "</small></td></tr>");
+    };
+    var X = C2.XAU && C2.XAU.g, E = C2.EUR && C2.EUR.g, U = C2.USD && C2.USD.g;
+    var mm = X && X.mm, p1 = pc(mm);
+    row("Or (COMEX) : gestionnaires de fonds (managed money)", mm, p1 === null ? "Percentile en cours de calcul." : p1 <= 20 ? "Sous le 20<sup>e</sup> percentile : <b class=\"up\">soutien</b> (peu de vendeurs restants)." : p1 >= 90 ? "Au-dessus du 90<sup>e</sup> percentile : <b class=\"down\">pression</b> (positionnement chargé, risque de retournement)." : "Entre le 20<sup>e</sup> et le 90<sup>e</sup> percentile : pas d'extrême.", "CFTC, rapport désagrégé", C2.XAU && C2.XAU.date);
+    var pr = X && X.prod, sw = X && X.swap, com = pr && sw ? { net: pr.net + sw.net, prev: pr.prev !== null && sw.prev !== null ? pr.prev + sw.prev : null, pct3y: null } : null;
+    row("Or : commerciaux (producteurs, négociants et banques de swap)", com, "Lecture inverse des spéculateurs : ils couvrent leur activité et vendent quand le prix monte." + (pr ? " Producteurs et négociants seuls : " + nn(pr.net) + "." : ""), "CFTC, rapport désagrégé", C2.XAU && C2.XAU.date);
+    var ul = U && U.lev;
+    row("Dollar (contrats DXY, ICE) : fonds spéculatifs à effet de levier", ul, ul ? (pc(ul) !== null && (pc(ul) >= 90 || pc(ul) <= 10) ? "<b>Extrême</b> " + (pc(ul) >= 90 ? "acheteur" : "vendeur") + " en percentile : risque de retournement du dollar." : "Pas d'extrême en percentile.") : "Disponible au prochain passage du robot (ajouté le 2 nov.).", "CFTC, rapport des contrats financiers (TFF)", C2.USD && C2.USD.date);
+    var el = E && E.lev, ea = E && E.am;
+    row("Euro (CME) : fonds à effet de levier", el, el && pc(el) !== null && (pc(el) >= 90 || pc(el) <= 10) ? "<b>Extrême</b> " + (pc(el) >= 90 ? "acheteur" : "vendeur") + " en percentile." : "Pas d'extrême en percentile.", "CFTC, TFF", C2.EUR && C2.EUR.date);
+    row("Euro : gérants d'actifs (asset managers)", ea, "Positionnement de fond, plus lent : il donne la tendance de long terme.", "CFTC, TFF", null);
+    /* ETF */
+    var ef = function (t) { var f = typeof etfFlows === "function" ? etfFlows(t) : null; if (!f) return null; var lim = new Date(Date.now() - 28 * 864e5).toISOString().slice(0, 10), sum = 0, n = 0; f.flows.forEach(function (x) { if (x[0] >= lim) { sum += x[1]; n++; } }); return { sum: sum, days: f.days, since: (AUTO.goldetf.snap[t + "_nq"][0] || {}).d }; };
+    var g1 = ef("GLD"), g2 = ef("IAU");
+    rows.push("<tr><td><b>ETF d'or GLD et IAU : entrées ou sorties sur 4 semaines</b><small class=\"ih\">encours relevés chaque jour (Nasdaq)</small></td><td class=\"r num\">" + (g1 || g2 ? ((g1 ? g1.sum : 0) + (g2 ? g2.sum : 0) >= 0 ? "+" : "−") + fmt(Math.abs((g1 ? g1.sum : 0) + (g2 ? g2.sum : 0)), 2) + " Md $" : "–") + '</td><td class="r">–</td><td><small>' + (g1 && g1.since && ageDays(g1.since) < 28 ? "Historique relevé depuis le " + longD(g1.since) + " seulement : le cumul sur 4 semaines complètes sera disponible vers le " + longD(new Date(Date.parse(g1.since) + 28 * 864e5).toISOString().slice(0, 10)) + "." : "Entrées = demande d'investissement (soutien) ; sorties = pression.") + "</small></td></tr>");
+    /* Banques centrales */
+    var W = typeof WGC !== "undefined" ? WGC : [], w0 = W[0], avg = W.length > 1 ? mean(W.map(function (x) { return x.cb; }).filter(function (v) { return v; })) : null;
+    rows.push("<tr><td><b>Achats d'or des banques centrales</b><small class=\"ih\">série nommée : World Gold Council, Gold Demand Trends</small></td><td class=\"r num\">" + (w0 ? fmt(w0.cb, 0) + " t" : "–") + '</td><td class="r">–</td><td><small>' + (w0 ? w0.q + ", publié le " + longD(w0.pub) + (avg ? " ; moyenne des " + W.length + " derniers trimestres relevés : " + fmt(avg, 0) + " t, soit " + (w0.cb >= avg ? "<b class=\"up\">au-dessus</b>" : "<b class=\"down\">en dessous</b>") + " de la moyenne." : "") + ' <a href="' + esc(w0.src) + '" target="_blank" rel="noopener">source</a>' : "") + "</small></td></tr>");
+    rows.push('<tr><td><b>Prime de Shanghai contre Londres</b><small class="ih">demande physique chinoise</small></td><td class="r">–</td><td class="r">–</td><td><small><span class="pill">non disponible gratuitement en automatique</span> Lecture mensuelle : <a href="https://www.gold.org/goldhub/gold-focus" target="_blank" rel="noopener">WGC, mises à jour du marché chinois</a>.</small></td></tr>');
+    rows.push('<tr><td><b>Décote ou prime en Inde</b><small class="ih">demande physique indienne</small></td><td class="r">–</td><td class="r">–</td><td><small><span class="pill">non disponible gratuitement en automatique</span> Lecture mensuelle : <a href="https://www.gold.org/goldhub/gold-focus" target="_blank" rel="noopener">WGC, marché indien</a>.</small></td></tr>');
+    T.innerHTML = '<thead><tr><th>Quoi regarder</th><th class="r">Position nette</th><th class="r">Percentile 3 ans</th><th>Lecture</th></tr></thead><tbody>' + rows.join("") + "</tbody>";
+    /* Cohérence or / dollar / euro */
+    var sg = function (g) { return g ? (g.net > 0 ? 1 : g.net < 0 ? -1 : 0) : null; };
+    var o = sg(mm), e = el && ea ? (el.net + ea.net > 0 ? 1 : -1) : sg(el), d = sg(ul), parts = [];
+    if (o !== null) parts.push("or " + (o > 0 ? "acheteur" : "vendeur")); if (e !== null) parts.push("euro " + (e > 0 ? "acheteur" : "vendeur")); if (d !== null) parts.push("dollar " + (d > 0 ? "acheteur" : "vendeur"));
+    var coh = o !== null && e !== null && d !== null ? (o > 0 && e > 0 && d < 0 ? "<b class=\"up\">cohérent</b> (or acheteur + euro acheteur + dollar vendeur)" : o < 0 && e < 0 && d > 0 ? "<b>cohérent dans l'autre sens</b> (dollar fort)" : "<b class=\"down\">pas cohérent</b> : cherchez la cause (taux, géopolitique, flux propres à l'or)") : "incomplet (dollar disponible au prochain passage du robot)";
+    $("e19Coh").innerHTML = "Cohérence or / dollar / euro : " + (parts.length ? parts.join(", ") + " → " : "") + coh + ". Euro = fonds à levier + gérants d'actifs.";
+    dates.sort(); $("e19Meta").innerHTML = dates.length ? "COT du " + longD(dates[dates.length - 1]) + " " + badge(fresh(dates[dates.length - 1], "weekly")) : "robot";
+    /* COT des banques */
+    var B = AUTO.bank_cot && AUTO.bank_cot.m, bt = $("bankTbl");
+    if (!B || !Object.keys(B).length) { bt.innerHTML = '<tbody><tr><td>Rapport des banques pas encore relevé par le robot (ajouté le 2 nov., lu une fois par jour).</td></tr></tbody>'; return; }
+    var ds = Object.keys(B).sort(), dl = ds[ds.length - 1], dp = ds.length > 1 ? ds[ds.length - 2] : null;
+    var NAMES = { or: "Or (COMEX)", argent: "Argent (COMEX)", EUR: "Euro", JPY: "Yen", GBP: "Livre", CHF: "Franc suisse", AUD: "Dollar australien", CAD: "Dollar canadien", NZD: "Dollar néo-zélandais", UST10: "T-Note 10 ans", UST2: "T-Note 2 ans" };
+    bt.innerHTML = '<thead><tr><th>Marché</th><th class="r">Banques US (net)</th><th class="r">Banques étrangères (net)</th><th class="r">Toutes banques (net)</th><th class="r">% de l\'intérêt ouvert</th><th class="r">Sur 1 mois</th></tr></thead><tbody>' +
+      Object.keys(NAMES).filter(function (k) { return B[dl][k]; }).map(function (k) {
+        var x = B[dl][k], pv = dp && B[dp][k] ? B[dp][k].net : null;
+        return "<tr><td><b>" + NAMES[k] + '</b></td><td class="r num">' + nn(x.us_l - x.us_s) + '</td><td class="r num">' + nn(x.nus_l - x.nus_s) + '</td><td class="r num"><b>' + nn(x.net) + '</b></td><td class="r num">' + (x.net_pct === null ? "–" : fmt(x.net_pct, 1) + " %") + '</td><td class="r num">' + (pv === null ? "–" : nn(x.net - pv)) + "</td></tr>";
+      }).join("") + '</tbody><caption style="caption-side:bottom;text-align:left;padding:6px 12px;font-size:11px;color:var(--muted)">Positions au ' + longD(dl) + " " + badge(ageDays(dl) <= 45 ? "ok" : "old") + "</caption>";
+  }
+
   /* ---------- Indicateurs des desks (recherche du 30 oct. 2026) ---------- */
   var DESK = [
     ["T10YIE", "Inflation anticipée 10 ans", 2, " %", "Breakeven : l'inflation que le marché obligataire anticipe. En hausse = soutien pour l'or."],
@@ -3489,7 +3550,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "monde", t: "Monde & géopolitique", ic: "◍", d: "Carte géopolitique avec fiche détaillée au clic, moniteur de risque (crises, alertes, prédictions, énergie, calendrier), détroits, réserves", p: ["monde", "geopol", "maritime", "reserves"], g: { monde: "Carte", geopol: "Risque géopolitique", maritime: "Commerce et réserves" } },
     { id: "devises", t: "Devises", ic: "⇄", d: "Force des devises multi-horizons, paires, graphique, appétit pour le risque, carte thermique, corrélations, volatilité", p: ["fstr", "force", "heat", "paires", "selPanel", "~duo", "correl", "vola"], g: { fstr: "Force des devises", paires: "Paires et graphique", correl: "Corrélations et volatilité" } },
     { id: "marches", t: "Marchés & risque", ic: "≈", d: "Graphiques en direct, moniteur multi-actifs, peur et avidité, sessions de marché", p: ["marches", "multi", "sessions"], g: { marches: "En direct", multi: "Multi-actifs et sessions" } },
-    { id: "position", t: "Positionnement", ic: "⚖", d: "Positions des fonds (COT), sentiment des particuliers", p: ["cot", "sentiment"] },
+    { id: "position", t: "Positionnement", ic: "⚖", d: "COT et flux (or, dollar, euro), COT des banques, achats d'or des banques centrales, positions des fonds, sentiment des particuliers", p: ["e19", "cot", "sentiment"] },
     { id: "analyses", t: "Analyses de banques", ic: "✎", d: "Consensus des banques, notes sur le dollar, l'euro et les taux, vidéos", p: ["consensus", "analyses", "videos"] },
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"], g: { calc: "Avant d'entrer", outils: "Outils, notes et liens" } },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source (robot) et liens", p: ["robot"] }
@@ -3512,7 +3573,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     bceproj: ["TRIMESTRIEL", "tableau lu automatiquement sur la page officielle de la BCE à chaque nouvelle publication"], regime: ["CALCUL", "règles fixes sur données officielles"], moteurs: ["CALCUL", "données quotidiennes du robot"], cycle: ["MENSUEL", "chiffres officiels BLS"],
     matin: ["DIFFÉRÉ", "clôtures de la veille et dernier passage du robot"], reactions: ["DIFFÉRÉ", "bougies 1 à 60 min (Yahoo) autour de chaque publication"], marches: ["EN DIRECT", "graphiques maison : historique et cotation CNBC relue toutes les 60 s ; peur et avidité CNN"], taux: ["QUOTIDIEN", "Trésor US, CBOE, BCE"],
     cot: ["HEBDO", "CFTC : positions du mardi, publiées le vendredi"], actus: ["DIFFÉRÉ", "communiqués RSS relus par le robot"], videos: ["DIFFÉRÉ", "flux YouTube relus par le robot"], robot: ["DIFFÉRÉ", "état du dernier passage du robot"],
-    flux: ["QUOTIDIEN", "ETF GLD (émetteur), CFTC, Banque mondiale"], multi: ["QUOTIDIEN", "clôtures quotidiennes (Yahoo, Trésor)"], signaux: ["QUOTIDIEN", "Trésor US (courbe), ICE BofA via l'API FRED (crédit), Fed de Chicago (NFCI, hebdo)"], scenarios: ["CALCUL", "règles fixes sur les données du robot"], fstr: ["DIFFÉRÉ", "cotations heure par heure (robot) et fixings BCE"]
+    flux: ["QUOTIDIEN", "ETF GLD (émetteur), CFTC, Banque mondiale"], multi: ["QUOTIDIEN", "clôtures quotidiennes (Yahoo, Trésor)"], e19: ["HEBDO", "CFTC (COT détaillé du mardi, rapport mensuel des banques), ETF GLD/IAU, World Gold Council"], signaux: ["QUOTIDIEN", "Trésor US (courbe), ICE BofA via l'API FRED (crédit), Fed de Chicago (NFCI, hebdo)"], scenarios: ["CALCUL", "règles fixes sur les données du robot"], fstr: ["DIFFÉRÉ", "cotations heure par heure (robot) et fixings BCE"]
   };
   function tagNature() {
     Object.keys(NATURE).forEach(function (id) {
@@ -4944,8 +5005,9 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var s = AUTO && AUTO.goldetf && AUTO.goldetf.snap && AUTO.goldetf.snap[tick + "_nq"]; if (!s || !s.length) return null;
     var fl = [];
     for (var i = 1; i < s.length; i++) {
-      var a = s[i - 1], b = s[i]; if (!a.mcap || !b.mcap || !a.px || !b.px) continue;
-      var f = (b.mcap - a.mcap * (b.px / a.px)) / 1e9; if (Math.abs(f) > 1e-6) fl.push([b.d, f]);
+      var a = s[i - 1], b = s[i]; if (!b.mcap) continue;
+      /* flux = variation des parts en circulation × valeur ; parts inchangées = aucun flux (évite les faux flux dus au décalage prix / capitalisation) */
+      var f = a.aum && b.aum ? (b.aum / a.aum - 1) * b.mcap / 1e9 : (a.mcap && a.px && b.px ? (b.mcap - a.mcap * (b.px / a.px)) / 1e9 : 0); if (Math.abs(f) > 1e-6) fl.push([b.d, f]);
     }
     return { last: s[s.length - 1], flows: fl, days: s.length };
   }
@@ -5271,7 +5333,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       '<span class="bs">Sources : ' + (tot ? (tot - bad) + "/" + tot + " OK" : "–") + "</span>" + '<span class="bs">Site relu toutes les 5 min</span>';
     Array.prototype.forEach.call(document.querySelectorAll(".bstat"), function (e) { e.innerHTML = txt; });
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderSignaux(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderSignaux(); renderE19(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
