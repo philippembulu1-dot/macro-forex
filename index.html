@@ -3952,15 +3952,29 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     if (core.length < 7) return null;
     var cNow = core[core.length - 1][1], c6p = core.filter(function (p) { return mIdx(p[0]) === mIdx(core[core.length - 1][0]) - 6; })[0];
     if (!c6p) return null; var c6 = c6p[1];
+    /* valeur d'une série annuelle n mois avant son dernier point */
+    var ago = function (a, n) { if (!a.length) return null; var m = mIdx(a[a.length - 1][0]) - n, f = a.filter(function (p) { return mIdx(p[0]) === m; })[0]; return f ? f[1] : null; };
+    var hNow = head.length ? head[head.length - 1][1] : null, h6 = ago(head, 6), h3 = ago(head, 3), c3 = ago(core, 3);
     var clamp = function (x) { return Math.max(-1, Math.min(1, x)); };
-    var g = clamp((a3 - a12) / 100) * 0.6 + clamp(-(u3now - u3_6) / 0.5) * 0.4, inf = clamp((cNow - c6) / 0.5);
-    return { a3: a3, a12: a12, u3: u3now, u3_6: u3_6, sahm: sahm, cNow: cNow, c6: c6, hNow: head.length ? head[head.length - 1][1] : null, g: g, i: inf, asof: c.nfp[c.nfp.length - 1][0], nfpCh: nfpCh, core: core };
+    /* Inflation : globale ET sous-jacente, sur 6 mois et sur 3 mois (la globale seule ou la sous-jacente seule peut tromper) */
+    var dI6 = h6 !== null && hNow !== null ? ((hNow - h6) + (cNow - c6)) / 2 : cNow - c6;
+    var dI3 = h3 !== null && c3 !== null && hNow !== null ? ((hNow - h3) + (cNow - c3)) / 2 : dI6;
+    var g = clamp((a3 - a12) / 100) * 0.6 + clamp(-(u3now - u3_6) / 0.5) * 0.4, inf = clamp((dI6 * 0.5 + dI3 * 0.5) / 0.4);
+    return { a3: a3, a12: a12, u3: u3now, u3_6: u3_6, sahm: sahm, cNow: cNow, c6: c6, c3: c3, hNow: hNow, h6: h6, h3: h3, g: g, i: inf, asof: c.nfp[c.nfp.length - 1][0], nfpCh: nfpCh, core: core };
   }
   var QUAD = {
     rep: ["Reprise", "croissance qui accélère, inflation qui ralentit", "Phase souvent favorable aux actions ; banques centrales encore souples ; dollar mitigé ; or neutre."],
     sur: ["Expansion / surchauffe", "croissance et inflation qui accélèrent", "Banques centrales qui durcissent (taux en hausse) ; dollar soutenu si la Fed est plus ferme que les autres ; matières premières fortes ; l'or résiste si l'inflation inquiète."],
     sta: ["Ralentissement avec inflation (stagflation)", "croissance qui ralentit, inflation qui accélère", "Phase la plus difficile : actions sous pression ; or souvent recherché comme refuge ; banques centrales coincées entre inflation et croissance."],
     rec: ["Désinflation / ralentissement", "croissance et inflation qui ralentissent", "Baisses de taux attendues : obligations en hausse (taux en baisse) ; or soutenu par la baisse des taux réels ; yen et franc suisse recherchés ; dollar souvent en baisse si la Fed coupe plus que les autres."] };
+  /* Sens réel de chaque variable (avec zone « stable »), pour ne jamais affirmer « l'inflation ralentit » quand elle accélère */
+  function trendW(d, band) { return d > band ? "en hausse" : d < -band ? "en baisse" : "stable"; }
+  function cyDesc(x) {
+    var gw = x.g > 0.15 ? "croissance qui accélère" : x.g < -0.15 ? "croissance qui ralentit" : "croissance stable";
+    var iw = x.i > 0.15 ? "inflation qui accélère" : x.i < -0.15 ? "inflation qui ralentit" : "inflation stable";
+    var det = x.hNow !== null && x.h6 !== null ? " (inflation globale " + fmt(x.hNow, 1) + " % contre " + fmt(x.h6, 1) + " % il y a 6 mois ; sous-jacente " + fmt(x.cNow, 1) + " % contre " + fmt(x.c6, 1) + " %)" : "";
+    return gw + ", " + iw + det;
+  }
   function renderCycle() {
     if (!$("cyClock")) return;
     var x = cycleCalc();
@@ -3977,15 +3991,15 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     h += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="8" class="pulse" fill="#f2b01e" stroke="#0d0d0f" stroke-width="2"><title>Position actuelle</title></circle>';
     $("cyClock").innerHTML = h;
     var curve = fred("T10Y2Y");
-    $("cyDiag").innerHTML = '<div class="now"><b style="color:var(--amber);font-family:var(--font-mono)">' + Q[0].toUpperCase() + "</b><br>" + Q[1] + ".</div><h3 style=\"margin:12px 0 4px;font:600 11px var(--font-mono);letter-spacing:.12em\">CE QUE ÇA IMPLIQUE D'HABITUDE</h3><p class=\"hint\" style=\"max-width:none\">" + Q[2] + "</p>" +
+    $("cyDiag").innerHTML = '<div class="now"><b style="color:var(--amber);font-family:var(--font-mono)">' + Q[0].toUpperCase() + "</b><br>" + cyDesc(x) + ".</div><h3 style=\"margin:12px 0 4px;font:600 11px var(--font-mono);letter-spacing:.12em\">CE QUE ÇA IMPLIQUE D'HABITUDE</h3><p class=\"hint\" style=\"max-width:none\">" + Q[2] + "</p>" +
       '<p class="hint" style="max-width:none">' + (x.sahm >= 0.5 ? "<b class=\"down\">Règle de Sahm déclenchée (" + fmt(x.sahm, 2) + " pt)</b> : historiquement, un signal de récession." : "Règle de Sahm : " + fmt(x.sahm, 2) + " pt (seuil de récession 0,50) : pas de signal.") + (curve ? " Courbe des taux " + (curve.v < 0 ? "<b>inversée</b>" : "positive") + " (" + fmt(curve.v, 2) + " pt)." : "") + "</p>";
     var row = function (l, v, t) { return "<tr><td>" + l + '</td><td class="r num">' + v + "</td><td><small>" + t + "</small></td></tr>"; };
     $("cyTbl").innerHTML = '<thead><tr><th>Indicateur</th><th class="r">Valeur</th><th>Lecture</th></tr></thead><tbody>' +
       row("Emplois créés, moyenne 3 mois", Math.round(x.a3).toLocaleString("fr-FR") + " k", x.a3 > x.a12 ? "au-dessus de la moyenne 12 mois (" + Math.round(x.a12) + " k) : l'emploi accélère" : "sous la moyenne 12 mois (" + Math.round(x.a12) + " k) : l'emploi ralentit") +
       row("Chômage, moyenne 3 mois", fmt(x.u3, 2) + " %", x.u3 > x.u3_6 + 0.05 ? "en hausse sur 6 mois (" + fmt(x.u3_6, 2) + " %)" : x.u3 < x.u3_6 - 0.05 ? "en baisse sur 6 mois (" + fmt(x.u3_6, 2) + " %)" : "stable sur 6 mois") +
       row("Règle de Sahm", fmt(x.sahm, 2) + " pt", x.sahm >= 0.5 ? "signal de récession" : "pas de signal (seuil 0,50)") +
-      row("Inflation sous-jacente (IPC)", fmt(x.cNow, 2) + " %", x.cNow > x.c6 ? "en hausse depuis 6 mois (" + fmt(x.c6, 2) + " %)" : "en baisse depuis 6 mois (" + fmt(x.c6, 2) + " %)") +
-      (x.hNow !== null ? row("Inflation globale (IPC)", fmt(x.hNow, 2) + " %", "y compris énergie et alimentation") : "") +
+      row("Inflation sous-jacente (IPC)", fmt(x.cNow, 2) + " %", trendW(x.cNow - x.c6, 0.1) + " sur 6 mois (" + fmt(x.c6, 2) + " %)" + (x.c3 !== null ? ", " + trendW(x.cNow - x.c3, 0.1) + " sur 3 mois (" + fmt(x.c3, 2) + " %)" : "")) +
+      (x.hNow !== null ? row("Inflation globale (IPC)", fmt(x.hNow, 2) + " %", (x.h6 !== null ? trendW(x.hNow - x.h6, 0.1) + " sur 6 mois (" + fmt(x.h6, 2) + " %)" : "") + (x.h3 !== null ? ", " + trendW(x.hNow - x.h3, 0.1) + " sur 3 mois (" + fmt(x.h3, 2) + " %)" : "") + " ; y compris énergie et alimentation") : "") +
       (curve ? row("Pente de la courbe (10 ans − 2 ans)", fmt(curve.v, 2) + " pt", curve.v < 0 ? "inversée : annonce souvent un ralentissement" : "positive") : "") + "</tbody>";
     $("cyMeta").innerHTML = "données jusqu'à " + MOIS[parseInt(x.asof.slice(5, 7), 10) - 1] + " " + x.asof.slice(0, 4) + " " + badge(ageDays(x.asof) <= 70 ? "ok" : "old");
   }
@@ -4306,24 +4320,24 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var curve = fred("T10Y2Y"), cv = curve ? curve.v : null, cur = fred("DFEDTARU"), mid = cur ? cur.v - 0.125 : null;
     var L = typeof sepLR === "function" ? sepLR() : null, f0 = L ? L.ffr0 : null;
     var pol = mid !== null && f0 !== null ? f0 - mid : null; /* > 0 : la Fed prévoit de monter ; < 0 : de baisser */
-    var du = x.u3 - x.u3_6, dc = x.cNow - x.c6, head = x.hNow;
+    var du = x.u3 - x.u3_6, dc = x.h6 !== null && x.hNow !== null ? ((x.hNow - x.h6) + (x.cNow - x.c6)) / 2 : x.cNow - x.c6, head = x.hNow; /* globale + sous-jacente, sur 6 mois */
     var Y = function (ok, txt) { return { ok: !!ok, t: txt }; };
     var P = {
       early: { n: "Début de cycle", en: "Early", c: [
         Y(recentSahm && x.sahm < 0.5, "sortie récente d'un signal de récession (règle de Sahm sur 18 mois)"),
         Y(x.u3 - uMin >= 0.5 && du < 0, "chômage encore élevé mais en baisse"),
         Y(x.a3 > x.a12, "créations d'emplois qui accélèrent"),
-        Y(dc < 0, "inflation sous-jacente en baisse"),
+        Y(dc < -0.1, "inflation en baisse (moyenne globale et sous-jacente, 6 mois)"),
         Y(pol !== null && pol < -0.1, "Fed qui prévoit de baisser ses taux")] },
       mid: { n: "Milieu de cycle", en: "Mid", c: [
         Y(x.a3 > 0 && x.a3 >= x.a12 * 0.8, "créations d'emplois positives et stables"),
         Y(Math.abs(du) < 0.2, "chômage stable sur 6 mois"),
-        Y(x.cNow >= 1.5 && x.cNow <= 3 && Math.abs(dc) < 0.3, "inflation sous-jacente modérée et stable (1,5 à 3 %)"),
+        Y(x.cNow >= 1.5 && x.cNow <= 3 && Math.abs(dc) < 0.2, "inflation modérée et stable (sous-jacente 1,5 à 3 %)"),
         Y(cv !== null && cv > 0.5, "courbe des taux nettement positive (> 0,5 pt)"),
         Y(pol !== null && Math.abs(pol) <= 0.1, "Fed qui ne prévoit ni hausse ni baisse")] },
       late: { n: "Fin de cycle", en: "Late", c: [
         Y(x.u3 - uMin <= 0.2, "chômage proche de son plus bas du cycle"),
-        Y(dc > 0 || (head !== null && head > 3), "inflation qui accélère ou inflation globale au-dessus de 3 %"),
+        Y(dc > 0.1 || (head !== null && head > 3), "inflation qui accélère ou inflation globale au-dessus de 3 %"),
         Y(pol !== null && pol > 0.1, "Fed qui prévoit de monter ses taux"),
         Y(cv !== null && cv < 0.5, "courbe des taux plate ou inversée (< 0,5 pt)"),
         Y(x.a3 < x.a12, "créations d'emplois qui ralentissent")] },
@@ -4449,7 +4463,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       add("Croissance", x.a3 >= 150 ? "forte" : x.a3 >= 50 ? "modérée" : x.a3 >= 0 ? "faible" : "en recul", x.a3 >= 50 ? "up" : "down",
         "emplois créés : " + Math.round(x.a3) + " k par mois (moyenne 3 mois), " + (x.a3 > x.a12 ? "en accélération" : "en ralentissement") + " ; chômage " + fmt(x.u3, 1) + " %", x.asof);
       add("Inflation", x.cNow >= 3 ? "haute" : x.cNow >= 2.3 ? "au-dessus de la cible" : x.cNow >= 1.7 ? "proche de la cible" : "basse", x.cNow >= 2.3 ? "down" : "up",
-        "sous-jacente " + fmt(x.cNow, 2) + " % sur 1 an (" + (x.cNow > x.c6 ? "en hausse" : "en baisse") + " sur 6 mois) ; globale " + (x.hNow !== null ? fmt(x.hNow, 2) + " %" : "–"), x.asof);
+        "sous-jacente " + fmt(x.cNow, 2) + " % sur 1 an (" + trendW(x.cNow - x.c6, 0.1) + " sur 6 mois) ; globale " + (x.hNow !== null ? fmt(x.hNow, 2) + " %" : "–"), x.asof);
     }
     var cur = fred("DFEDTARU"), L = typeof sepLR === "function" ? sepLR() : null;
     if (cur && x) {
@@ -4624,7 +4638,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var x = typeof cycleCalc === "function" ? cycleCalc() : null;
     var d20 = function (id) { var f = fred(id); if (!f || !f.hist || f.hist.length < 22) return null; return f.v - f.hist[f.hist.length - 21][1]; };
     var g = function (v, gold, usd) { return asset === "gold" ? gold * v : usd * v; };
-    if (x) { var di = x.cNow - x.c6; add("Inflation américaine", g(di > 0.1 ? 1 : di < -0.1 ? -1 : 0, asset === "gold" ? 1 : 1, 1), "sous-jacente " + fmt(x.cNow, 2) + " %, " + (di > 0.1 ? "en hausse" : di < -0.1 ? "en baisse" : "stable") + " sur 6 mois" + (asset === "gold" ? " (protection contre l'inflation, mais pousse la Fed à durcir)" : " (oblige la Fed à rester ferme)")); } else miss.push("inflation");
+    if (x) { var di = x.h6 !== null && x.hNow !== null ? ((x.hNow - x.h6) + (x.cNow - x.c6)) / 2 : x.cNow - x.c6; add("Inflation américaine", g(di > 0.1 ? 1 : di < -0.1 ? -1 : 0, asset === "gold" ? 1 : 1, 1), (x.hNow !== null ? "globale " + fmt(x.hNow, 2) + " % (" + trendW(x.hNow - (x.h6 === null ? x.hNow : x.h6), 0.1) + "), " : "") + "sous-jacente " + fmt(x.cNow, 2) + " % (" + trendW(x.cNow - x.c6, 0.1) + ") sur 6 mois" + (asset === "gold" ? " (protection contre l'inflation, mais pousse la Fed à durcir)" : " (oblige la Fed à rester ferme)")); } else miss.push("inflation");
     var y2 = d20("DGS2"); if (y2 !== null) add("Anticipations sur la Fed", y2 > 0.1 ? (asset === "gold" ? -1 : 1) : y2 < -0.1 ? (asset === "gold" ? 1 : -1) : 0, "taux à 2 ans " + (y2 >= 0 ? "+" : "−") + fmt(Math.abs(y2) * 100, 0) + " pb en 20 séances : le marché " + (y2 > 0.1 ? "repousse les baisses de taux" : y2 < -0.1 ? "anticipe davantage de baisses de taux" : "ne change guère ses anticipations"), 1.5); else miss.push("taux à 2 ans");
     var rr = d20("DFII10"); if (rr !== null) add("Taux réels", rr > 0.1 ? -1 : rr < -0.1 ? 1 : 0, "taux réel 10 ans " + (rr >= 0 ? "+" : "−") + fmt(Math.abs(rr) * 100, 0) + " pb en 20 séances" + (asset === "gold" ? " : coût d'opportunité de l'or " + (rr > 0 ? "en hausse" : "en baisse") : " : rendement réel offert par le dollar " + (rr > 0 ? "en hausse" : "en baisse")), asset === "gold" ? 2 : 1); else miss.push("taux réels");
     if (asset === "usd" && rr !== null) F[F.length - 1].s = -F[F.length - 1].s;
