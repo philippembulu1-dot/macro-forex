@@ -2227,6 +2227,8 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     var m = box.__m, rows = (CHARTS[m.s] || {}).rows, q = LIVE.q[m.s];
     var head = box.querySelector(".mh");
     var v = q ? q.v : rows ? rows[rows.length - 1][1] : null, base = q && q.p ? q.p : rows && rows.length > 1 ? rows[rows.length - 2][1] : null;
+    /* marché fermé : CNBC renvoie parfois la même valeur comme clôture précédente (+0,00 %) ; on montre alors la variation de la dernière séance */
+    if (v !== null && rows && rows.length > 1 && (!q || !liveFresh(q)) && (base === null || Math.abs(v - base) < 1e-9)) { var lr = rows[rows.length - 1][1]; base = Math.abs(lr - v) < 1e-9 ? rows[rows.length - 2][1] : lr; }
     var ch = v !== null && base ? (m.u === " %" ? (v - base) * 100 : (v / base - 1) * 100) : null;
     head.innerHTML = "<b>" + esc(m.t) + '</b><span class="mv">' + (v !== null ? fmtN(v, m.d) + m.u : "–") + "</span>" + (ch !== null ? '<small class="' + (ch > 0 ? "up" : ch < 0 ? "down" : "") + '">' + (m.u === " %" ? (ch >= 0 ? "+" : "−") + Math.abs(Math.round(ch)) + " pb" : pct(ch)) + "</small>" : "") +
       '<em>' + (q && q.t ? (liveFresh(q) ? '<span class="lv">●</span> direct ' : "dernière cotation ") + new Date(q.t).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "CNBC") + "</em>";
@@ -4997,7 +4999,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     ["US2Y", "US 2 ans", 3, "%"], ["US5Y", "US 5 ans", 3, "%"], ["US10Y", "US 10 ans", 3, "%"], ["US30Y", "US 30 ans", 3, "%"], ["DE10Y-DE", "Bund 10 ans", 3, "%"], ["DE2Y-DE", "Schatz 2 ans", 3, "%"],
     ["FR10Y-FR", "OAT 10 ans", 3, "%"], ["IT10Y-IT", "BTP 10 ans", 3, "%"], ["ES10Y-ES", "Bonos 10 ans", 3, "%"], ["GB10Y-GB", "Gilt 10 ans", 3, "%"],
     [".VIX", "VIX", 2, ""], [".MOVE", "MOVE", 1, ""], [".GVZ", "GVZ (vol. or)", 2, ""], ["@LCO.1", "Brent", 2, "$"], ["@CL.1", "WTI", 2, "$"], ["@NG.1", "Gaz US", 3, "$"],
-    [".SPX", "S&P 500", 0, ""], ["@SP.1", "S&P fut.", 0, ""], [".NDX", "Nasdaq 100", 0, ""], ["@ND.1", "Nasdaq fut.", 0, ""], ["BTC.CM=", "Bitcoin", 0, "$"]
+    [".SPX", "S&P 500", 0, ""], ["@SP.1", "S&P fut.", 0, ""], [".NDX", "Nasdaq 100", 0, ""], ["@ND.1", "Nasdaq fut.", 0, ""], ["BTC.CM=", "Bitcoin", 0, "$"], ["AUDJPY=", "AUD/JPY", 3, ""]
   ];
   var LIVE_BAR = ["XAU=", "US10Y", "US2Y", ".DXY", "EUR=", ".VIX", ".MOVE", "~FRDE", "@LCO.1", "@ND.1"];
   function liveNum(s) { if (s === undefined || s === null || s === "UNCH") return s === "UNCH" ? 0 : null; var v = parseFloat(String(s).replace(/[%,\s]/g, "")); return isNaN(v) ? null : v; }
