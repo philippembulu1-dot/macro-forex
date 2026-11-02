@@ -10,6 +10,7 @@ on:
       - ".github/workflows/update-data.yml"
 permissions:
   contents: write
+  actions: write  # relancer la boucle suivante (workflow_dispatch est autorisé avec le jeton du robot)
 concurrency:
   group: update-data
   cancel-in-progress: false
@@ -31,7 +32,8 @@ jobs:
           MYFXBOOK_EMAIL: ${{ secrets.MYFXBOOK_EMAIL }}
           MYFXBOOK_PASSWORD: ${{ secrets.MYFXBOOK_PASSWORD }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-          CYCLES: ${{ github.event_name == 'schedule' && '5' || '1' }}
+          CYCLES: ${{ github.event_name == 'push' && '1' || '5' }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "macro-forex-robot"
           git config user.email "actions@users.noreply.github.com"
@@ -56,6 +58,9 @@ jobs:
             # le robot part de la dernière version publiée (mémoires et historiques à jour)
             git fetch -q origin main && git reset -q --hard origin/main
             if python scripts/update_data.py && publish; then ok=1; else echo "Passage $c en échec"; fi
-            [ "$c" -lt "$CYCLES" ] && sleep $(( 720 - ($(date +%s) - start) > 30 ? 720 - ($(date +%s) - start) : 30 ))
+            [ "$CYCLES" -gt 1 ] && sleep $(( 720 - ($(date +%s) - start) > 30 ? 720 - ($(date +%s) - start) : 30 ))
           done
+          # Chaîne : en fin de boucle, on relance le robot tout de suite (sans attendre l'horaire GitHub, souvent en retard).
+          # Le groupe « concurrency » garde au plus un passage en attente : pas d'emballement possible.
+          if [ "$CYCLES" -gt 1 ]; then gh workflow run update-data.yml --ref main -R "$GITHUB_REPOSITORY" && echo "Boucle suivante lancée" || echo "Relance impossible : l'horaire GitHub prendra le relais"; fi
           [ $ok = 1 ]
