@@ -1273,12 +1273,25 @@ def do_signals(data):
 def do_ism(data):
     """Indices ISM (États-Unis) : chiffres réels, prévus et précédents sur ~13 mois, lus dans le calendrier TradingView
     (même adresse que le calendrier, en-tête Origin obligatoire). Demande du 2 nov. 2026."""
-    d0, d1 = (NOW - timedelta(days=400)).strftime("%Y-%m-%d"), (NOW + timedelta(days=12)).strftime("%Y-%m-%d")
-    url = "https://economic-calendar.tradingview.com/events?from=%sT00:00:00.000Z&to=%sT23:59:59.000Z&countries=US" % (d0, d1)
+    # L'API renvoie un nombre limité d'événements par requête : fenêtres de 40 jours. Historique complet une fois par jour,
+    # sinon seulement la fenêtre récente (les anciens chiffres viennent du passage précédent).
+    old = PREVIOUS.get("ism") or {}
+    full = old.get("full_day") != TODAY or not old.get("series")
+    start = NOW - timedelta(days=400 if full else 45)
+    url = "https://economic-calendar.tradingview.com/events?countries=US"
     try:
-        j = json.loads(http("tv_ism.json", url, tries=2, timeout=40, headers={"Origin": "https://www.tradingview.com", "Referer": "https://www.tradingview.com/"}))
+        rows = []
+        while start < NOW + timedelta(days=12):
+            end = min(start + timedelta(days=40), NOW + timedelta(days=12))
+            u = "https://economic-calendar.tradingview.com/events?from=%sT00:00:00.000Z&to=%sT23:59:59.000Z&countries=US" % (start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
+            j = json.loads(http("tv_ism_%s.json" % start.strftime("%Y%m%d"), u, tries=2, timeout=40, headers={"Origin": "https://www.tradingview.com", "Referer": "https://www.tradingview.com/"}))
+            rows += j.get("result") or []
+            start = end + timedelta(days=1)
         series, titles = {}, set()
-        for e in j.get("result") or []:
+        if not full:  # on repart des séries du passage précédent
+            for k, v in (old.get("series") or {}).items():
+                series[k] = [x for x in v if x["d"] < (NOW - timedelta(days=45)).strftime("%Y-%m-%d")]
+        for e in rows:
             t = (e.get("title") or "").strip()
             if not re.match(r"^ISM\b", t, re.I):
                 continue
@@ -1293,11 +1306,14 @@ def do_ism(data):
                     sub = k
             series.setdefault(kind + "." + sub, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous"), "t": t})
         for k in series:
-            series[k].sort(key=lambda x: x["d"])
+            uniq = {}
+            for x in series[k]:
+                uniq[x["d"][:10]] = x
+            series[k] = sorted(uniq.values(), key=lambda x: x["d"])
         DIAG["ism_titres"] = sorted(titles)[:20]
         if not series.get("manuf.pmi") and not series.get("serv.pmi"):
             raise ValueError("aucun indice ISM trouvé")
-        data["ism"] = {"series": series, "asof": NOW.isoformat(timespec="seconds")}
+        data["ism"] = {"series": series, "asof": NOW.isoformat(timespec="seconds"), "full_day": TODAY if full else old.get("full_day")}
         last = [x for x in series.get("manuf.pmi", []) if x["a"] is not None]
         note("ism", "Indices ISM manufacturier et services (calendrier TradingView, chiffres réels)", "monthly", True, last[-1]["d"][:10] if last else TODAY, url="https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/")
     except Exception as e:
