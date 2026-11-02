@@ -1446,7 +1446,7 @@ def do_bank_cot(data):
              url="https://www.cftc.gov/MarketReports/BankParticipationReports/index.htm")
 
 
-EU_TV_RX = re.compile(r"pmi|ifo|zew|sentix|gdp|retail sales|unemployment rate|inflation rate|core inflation|\bcpi\b|harmoni[sz]ed|wage|negotiated|deposit|refinanc|lending facility", re.I)
+EU_TV_RX = re.compile(r"pmi|ifo|zew|sentix|gdp|retail sales|unemployment rate|inflation rate|core inflation|\bcpi\b|harmoni[sz]ed|wage|negotiated|deposit|refinanc|lending facility|balance of trade|trade balance|consumer confidence|consumer sentiment|consumer climate|westpac|gfk|tankan|interest rate decision", re.I)
 
 
 def do_euro_guide(data):
@@ -1455,28 +1455,30 @@ def do_euro_guide(data):
        (IPCH flash, PMI par pays, chômage, PIB, ventes au détail, Ifo, ZEW, Sentix, salaires négociés…), 13 mois une fois par jour.
     2) BCE (API officielle) : taux de refinancement, facilité de prêt marginal, €STR, salaires négociés."""
     old = PREVIOUS.get("eu_guide") or {}
-    full = old.get("full_day") != TODAY or not old.get("tv")
+    full = old.get("full_day") != TODAY or not old.get("tv") or not any(k.startswith("JP|") for k in (old.get("tv") or {}))
     tv = {} if full else {k: [x for x in v if x["d"] < (NOW - timedelta(days=45)).strftime("%Y-%m-%d")] for k, v in (old.get("tv") or {}).items()}
-    start = NOW - timedelta(days=400 if full else 45)
+    t0 = NOW - timedelta(days=400 if full else 45)
     try:
-        while start < NOW + timedelta(days=12):
-            end = min(start + timedelta(days=40), NOW + timedelta(days=12))
-            u = "https://economic-calendar.tradingview.com/events?from=%sT00:00:00.000Z&to=%sT23:59:59.000Z&countries=EU,DE,FR,IT,ES" % (start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
-            j = json.loads(http("tv_eu_%s.json" % start.strftime("%Y%m%d"), u, tries=2, timeout=40, headers={"Origin": "https://www.tradingview.com", "Referer": "https://www.tradingview.com/"}))
-            for e in j.get("result") or []:
-                t = (e.get("title") or "").strip()
-                if not EU_TV_RX.search(t):
-                    continue
-                k = (e.get("country") or "") + "|" + t
-                tv.setdefault(k, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous")})
-            start = end + timedelta(days=1)
+        for grp in ("EU,DE,FR,IT,ES", "GB,JP,CH", "AU,CA,NZ"):  # 8 économies : un groupe de pays par requête (nombre d'événements limité par réponse)
+            start = t0
+            while start < NOW + timedelta(days=12):
+                end = min(start + timedelta(days=40), NOW + timedelta(days=12))
+                u = "https://economic-calendar.tradingview.com/events?from=%sT00:00:00.000Z&to=%sT23:59:59.000Z&countries=%s" % (start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"), grp)
+                j = json.loads(http("tv_eu_%s_%s.json" % (grp[:2], start.strftime("%Y%m%d")), u, tries=2, timeout=40, headers={"Origin": "https://www.tradingview.com", "Referer": "https://www.tradingview.com/"}))
+                for e in j.get("result") or []:
+                    t = (e.get("title") or "").strip()
+                    if not EU_TV_RX.search(t):
+                        continue
+                    k = (e.get("country") or "") + "|" + t
+                    tv.setdefault(k, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous")})
+                start = end + timedelta(days=1)
         for k in tv:
             uniq = {}
             for x in tv[k]:
                 uniq[x["d"][:10]] = x
             tv[k] = sorted(uniq.values(), key=lambda x: x["d"])[-16:]
         last = max((x["d"][:10] for v in tv.values() for x in v if x["a"] is not None), default=None)
-        note("eu.tv", "Zone euro : IPCH flash, PMI par pays, chômage, PIB, Ifo, ZEW, Sentix… (calendrier TradingView, %d séries)" % len(tv), "daily", bool(tv), last,
+        note("eu.tv", "8 économies : inflation, PMI, chômage, PIB, ventes, commerce, confiance, Ifo, ZEW… (calendrier TradingView, %d séries)" % len(tv), "daily", bool(tv), last,
              url="https://www.tradingview.com/economic-calendar/")
     except Exception as e:
         tv = old.get("tv") or {}
