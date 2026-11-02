@@ -129,6 +129,13 @@ table.ind .cell .lvl { font-style: normal; text-transform: uppercase; letter-spa
 .copybtn { font: 500 11px var(--font-mono); background: transparent; color: var(--amber); border: 1px solid var(--line); padding: 4px 10px; min-height: 30px; cursor: pointer; }
 #e19Tbl td:last-child { white-space: normal; min-width: 260px; }
 #e19 td small.ih, #consensus td small.ih { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+.panel.fold > :not(.ph) { display: none !important; }
+.panel.fold > .ph { border-bottom: 0; cursor: pointer; }
+.branch.on > .panel.fold.wide { grid-column: auto; }
+.foldbtn { margin-left: auto; font: 500 10.5px var(--font-mono); background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 3px 9px; min-height: 28px; cursor: pointer; white-space: nowrap; }
+.foldbtn:hover, .foldbtn:focus-visible { color: var(--amber); border-color: var(--amber); }
+.enclair { margin: 2px 0 0; font-size: 13px; color: var(--fg); max-width: 900px; line-height: 1.5; }
+.enclair b { color: var(--amber); }
 .subh { margin: 14px 12px 6px; font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--amber); }
 .sggrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1px; background: var(--line2); border-top: 1px solid var(--line2); }
 .sgc { background: var(--panel); padding: 12px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -2460,7 +2467,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
       if (!c) { msg.textContent = "Commande inconnue : " + code + ". Essayez OR, CAL, COT, SEAS, MAP, FED…"; return; }
       msg.textContent = c[0] + " → " + c[1];
       if (typeof PANEL_BR !== "undefined" && PANEL_BR[c[2]]) openPanel(c[2]);
-      else { var t = $(c[2]); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      else { var t = $(c[2]); if (t && t.classList.contains("fold")) setFold(t, false); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }
       inp.value = "";
     }
     inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(inp.value); } if (e.key === "Escape") inp.blur(); });
@@ -3705,6 +3712,34 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     { id: "outils", t: "Outils", ic: "⚙", d: "Calcul de lots, checklist, gestion du risque, pivots et convertisseur, notes, liens", p: ["calc", "check", "conseils", "outils", "notes", "liens"], g: { calc: "Avant d'entrer", outils: "Outils, notes et liens" } },
     { id: "donnees", t: "Données", ic: "✓", d: "Fraîcheur de chaque source (robot) et liens", p: ["robot"] }
   ];;
+  /* Une phrase simple par branche : la question à laquelle elle répond et par où commencer */
+  var EN_CLAIR = {
+    matin: "le résumé à lire en premier chaque matin : ce qui a bougé, les publications du jour à l'heure de Kinshasa et le sens probable de l'or et des devises.",
+    or: "l'or est-il soutenu ou sous pression ? Commencez par le cours, puis le tableau à 6 piliers (vert = soutien, rouge = pression).",
+    taux: "que va faire la Fed et que disent les taux ? Des taux réels en hausse pèsent souvent sur l'or ; en baisse, ils le soutiennent.",
+    banques: "les banques centrales : leurs taux, leurs prochaines réunions, et la zone euro (BCE) en un seul tableau.",
+    macro: "l'économie en chiffres : le calendrier des publications et le tableau des indicateurs. Une case verte aide la devise, une case rouge la pénalise.",
+    monde: "les risques dans le monde : conflits, routes maritimes, sanctions. Une forte tension soutient en général l'or et le dollar.",
+    devises: "quelles devises sont fortes ou faibles maintenant ? Les écarts de force les plus nets se trouvent entre la devise la plus forte et la plus faible.",
+    marches: "l'humeur des marchés en direct : peur ou confiance (VIX, actions, or).",
+    position: "comment les gros acteurs sont placés (fonds, banques). Une position extrême peut annoncer un retournement.",
+    analyses: "ce que pensent les grandes banques : ce sont des opinions, pas des données. La direction de leurs révisions compte plus que le chiffre.",
+    outils: "calculer la taille de vos positions et vérifier votre checklist avant d'entrer.",
+    donnees: "l'état du robot : la date de chaque source et ce qui est en panne."
+  };
+  /* Panneaux ouverts d'office dans chaque branche (les autres sont repliés) */
+  var ESS = { matin: ["matin", "scenarios"], or: ["or", "scorecard"], taux: ["pricing", "courbe"], banques: ["bce", "banques"], macro: ["calendrier", "indicateurs"],
+    monde: ["monde"], devises: ["fstr", "force", "selPanel", "~duo"], marches: ["marches"], position: ["e19", "cot"], analyses: ["consensus", "analyses"], outils: ["calc", "check"], donnees: ["robot"] };
+  function setFold(el, folded) {
+    el.classList.toggle("fold", folded);
+    var b = el.querySelector(":scope > .ph > .foldbtn"); if (b) { b.textContent = folded ? "Afficher ▾" : "Replier ▴"; b.setAttribute("aria-expanded", folded ? "false" : "true"); }
+    try { localStorage.setItem("fold:" + el.id, folded ? "closed" : "open"); } catch (e) { /* stockage indisponible */ }
+    if (!folded) setTimeout(function () { window.dispatchEvent(new Event("resize")); if (typeof refreshMinis === "function") refreshMinis(); }, 30);
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".foldbtn"); if (b) { var el = b.closest(".panel"); setFold(el, !el.classList.contains("fold")); return; }
+    var h = e.target.closest && e.target.closest(".panel.fold > .ph"); if (h && !e.target.closest("a,button,select,input")) setFold(h.parentNode, false);
+  });
   var WIDE = { bce: 1, e19: 1, consensus: 1, ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   /* Nature des données de chaque panneau (demandée par l'audit) : EN DIRECT, DIFFÉRÉ, QUOTIDIEN, HEBDO, MENSUEL, ANNUEL, MANUEL, CALCUL */
@@ -3740,7 +3775,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
     main.insertBefore(hub, anchor);
     BR.forEach(function (b) {
       var box = document.createElement("div"); box.className = "branch"; box.id = "br-" + b.id; box.setAttribute("role", "region"); box.setAttribute("aria-label", b.t);
-      box.innerHTML = '<div class="bhead"><a href="#/">← Accueil</a><h1>' + b.t + "</h1><p>" + b.d + '</p><div class="bstat" aria-label="Fraîcheur"></div></div>';
+      box.innerHTML = '<div class="bhead"><a href="#/">← Accueil</a><h1>' + b.t + "</h1><p>" + b.d + '</p>' + (EN_CLAIR[b.id] ? '<p class="enclair"><b>En clair :</b> ' + EN_CLAIR[b.id] + "</p>" : "") + '<div class="bstat" aria-label="Fraîcheur"></div></div>';
       b.p.forEach(function (id) {
         var el = id === "~duo" ? document.querySelector(".duo.o-duo") : $(id);
         if (!el) return;
@@ -3750,6 +3785,16 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
         if (id === "~duo") { PANEL_BR.risque = b.id; PANEL_BR.rang = b.id; el.classList.add("wide"); }
       });
       main.insertBefore(box, anchor);
+      /* Branche allégée : seuls les panneaux essentiels sont ouverts ; les autres sont repliés (titre seul), ouverts au clic */
+      var ess = ESS[b.id] || b.p.slice(0, 2);
+      b.p.forEach(function (id) {
+        var el = $(id); if (!el || ess.indexOf(id) >= 0) return;
+        var ph = el.querySelector(":scope > .ph"); if (!ph) return;
+        var btn = document.createElement("button"); btn.type = "button"; btn.className = "foldbtn"; btn.setAttribute("aria-expanded", "false"); btn.setAttribute("aria-controls", id);
+        ph.appendChild(btn);
+        var st = null; try { st = localStorage.getItem("fold:" + id); } catch (e) { /* stockage indisponible */ }
+        setFold(el, st !== "open");
+      });
     });
     Array.prototype.forEach.call(document.querySelectorAll(".main > .grid, .main > .tools, .main > .duo2"), function (x) { x.classList.add("oldwrap"); });
     var side = document.querySelector(".side-in");
@@ -3786,7 +3831,7 @@ details.mansent summary { cursor: pointer; padding: 8px 12px; font: 11px var(--f
   function openPanel(id) {
     var b = PANEL_BR[id]; if (!b) return;
     goBranch(b);
-    setTimeout(function () { var el = $(id); if (!el) return; el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }, 380);
+    setTimeout(function () { var el = $(id); if (!el) return; if (el.classList.contains("fold")) setFold(el, false); el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }, 380);
   }
 
   /* ---------- Tuiles de l'accueil (chiffres vivants) ---------- */
