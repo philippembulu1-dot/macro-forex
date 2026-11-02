@@ -1810,7 +1810,24 @@ table tbody tr { transition: background .2s; }
     if (k === "nfci") return v < 0 ? ["souples", "f"] : ["tendues", "u"];
     return null;
   }
+  /* Repli automatique : calendrier des 8 économies (chiffre réel, sinon dernier publié) quand aucune source officielle n'a répondu */
+  var IND_CC = { EUR: "EU", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" };
+  function tvInd(k, c) {
+    var cc = IND_CC[c]; if (!cc || typeof tvEU !== "function") return null;
+    var RX = { pmim: /(^|\s)Manufacturing PMI( Final)?$|^Business NZ PMI$/, pmis: /Services PMI( Final)?$/, trade: /^Balance of Trade$/,
+      conf: /^(GfK|Gfk) Consumer Confidence$|^Consumer Confidence( Flash| Final)?$|^Westpac Consumer Confidence Index$|^ANZ Roy Morgan Consumer Confidence$/,
+      retail: c === "CHF" ? /^Retail Sales YoY$/ : c === "NZD" ? /^Retail Sales QoQ$/ : /^Retail Sales MoM( Final)?$/, core: /^Core Inflation Rate YoY$/ }[k];
+    if (!RX) return null;
+    var x = tvEU(cc, RX); if (!x || (x.d && ageDays(x.d) > 120)) return null;
+    return { v: x.v, p: x.prev !== null && x.prev !== undefined ? x.prev : x.v, per: x.d ? shortD(x.d) : "dernier publié", src: "calendrier économique (TradingView), « " + x.t + " »" + (x.d ? ", publié le " + x.d : ", dernier chiffre publié") };
+  }
   function indAuto(k, c) {
+    /* chiffre réel du calendrier en priorité (le plus récent), puis sources officielles, puis dernier chiffre publié */
+    var t = c !== "USD" && ["pmim", "pmis", "retail", "trade", "conf"].indexOf(k) >= 0 ? tvInd(k, c) : null;
+    if (t && t.per !== "dernier publié") return t;
+    return indAuto0(k, c) || t || (c !== "USD" ? tvInd(k, c) : null);
+  }
+  function indAuto0(k, c) {
     if (!AUTO) return null;
     var D = AUTO.derived || {}, N = AUTO.national || {}, cc = CCODE[c], x = null, src = "";
     var per = function (asof) { return MOIS[parseInt(String(asof).slice(5, 7), 10) - 1]; };
@@ -1891,7 +1908,7 @@ table tbody tr { transition: background .2s; }
     };
     /* Calendrier : dernier chiffre publié mémorisé par le robot (champ « précédent » de Forex Factory) */
     var M = AUTO.ffmem || {}, ff = function (rx) {
-      var best = null; Object.keys(M).forEach(function (key) { var p = key.split("|"); if (p[0] === c && rx.test(p.slice(1).join("|")) && (!best || M[key].d > best.d)) best = { d: M[key].d, p: M[key].p, t: p.slice(1).join("|") }; });
+      var best = null; Object.keys(M).forEach(function (key) { var p = key.split("|"); if (p[0] === c && !/^\[/.test(p.slice(1).join("|")) && rx.test(p.slice(1).join("|")) && (!best || M[key].d > best.d)) best = { d: M[key].d, p: M[key].p, t: p.slice(1).join("|") }; });
       if (!best || ageDays(best.d) > 75) return null; var v = numOf(best.p); if (v === null) return null;
       return { v: v, p: v, per: "avant le " + shortD(best.d), src: "dernier chiffre publié avant le " + best.d + " (« " + best.t + " », calendrier Forex Factory)" };
     };
@@ -1944,7 +1961,7 @@ table tbody tr { transition: background .2s; }
         if (au && au.lvl) cl = au.lvl[1];
         if (!row.nt) { tally[c] += s; count[c] += 1; }
         var ar = flat ? "=" : dl > 0 ? "▲" : "▼";
-        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : "") + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + (au && au.lvl ? '<br><i class="lvl">' + au.lvl[0] + "</i>" : "") + "</small></div></td>";
+        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : ' <span class="ck" title="Aucune source gratuite automatique : relevé manuel du 25 oct. 2026, à vérifier">saisie</span>') + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + (au && au.lvl ? '<br><i class="lvl">' + au.lvl[0] + "</i>" : "") + "</small></div></td>";
       });
       h += "</tr>";
     });
