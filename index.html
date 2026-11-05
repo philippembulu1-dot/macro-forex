@@ -4161,11 +4161,21 @@ ul.cfl b { font: 600 11px var(--font-mono); }
     var ga = AUTO && AUTO.geo && AUTO.geo.alerts; if (ga && ga.length) out.push("<li>Géopolitique : " + esc(ga[0][2]) + ".</li>");
     return '<ul class="brief">' + out.join("") + '</ul><p class="hint">Résumé calculé à partir des données du robot (au ' + (AUTO && AUTO.generated ? new Date(AUTO.generated).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "–") + ' Kinshasa). Détail : branche <a href="#/matin">Ce matin</a>.</p>';
   }
+  var fHz = "24";
   function forceHtml() {
-    var s = str24(); if (!s) return '<p class="hint">Cotations horaires en attente du robot.</p>';
-    var mx = Math.max.apply(null, s.r.map(function (x) { return Math.abs(x[1]); })) || 1;
-    return '<div class="dbars">' + s.r.map(function (x, i) { return '<div class="dbar"><span class="dn">' + (i + 1) + ". " + x[0] + '</span><span class="dt ctr"><i class="' + cls(x[1]) + '" style="width:' + (Math.abs(x[1]) / mx * 50).toFixed(0) + "%;" + (x[1] >= 0 ? "left:50%" : "right:50%") + '"></i></span><span class="dw num ' + cls(x[1]) + '">' + (x[1] >= 0 ? "+" : "−") + Math.abs(x[1]).toFixed(2).replace(".", ",") + " %</span></div>"; }).join("") +
-      '</div><p class="hint">Force sur 24 h contre la moyenne des 8 devises (cotations horaires, dernière : ' + kinTimeStr(Date.parse(s.at)) + '). Autres horizons : <a href="#fstr">Force des devises</a>.</p>';
+    var seg = '<div class="seg" role="group" aria-label="Horizon">' + [["24", "24 h"], ["120", "5 jours"], ["m", "1 mois"]].map(function (h) { return '<button type="button" data-fhz="' + h[0] + '" aria-pressed="' + (fHz === h[0]) + '">' + h[1] + "</button>"; }).join("") + "</div>";
+    var r = null, note = "";
+    if (fHz === "m") {
+      var w = windowDates(31), so = strengthOver(w); r = Object.keys(so).map(function (k) { var a = so[k]; return [k, a[a.length - 1]]; }).sort(function (a, b) { return b[1] - a[1]; });
+      note = "Force sur 1 mois contre les 7 autres devises (fixings BCE du " + shortD(w[0]) + " au " + shortD(w[w.length - 1]) + ").";
+    } else {
+      var h = hStr("USD", +fHz), I = AUTO && AUTO.intraday && AUTO.intraday.EURUSD;
+      if (h) { r = Object.keys(h).map(function (k) { return [k, h[k]]; }).sort(function (a, b) { return b[1] - a[1]; }); note = "Force sur " + (fHz === "24" ? "24 h" : "5 jours (120 h)") + " contre la moyenne des 8 devises (cotations horaires, dernière : " + kinTimeStr(Date.parse(I.c[I.c.length - 1][0])) + ")."; }
+    }
+    if (!r) return seg + '<p class="hint">Cotations en attente du robot.</p>';
+    var mx = Math.max.apply(null, r.map(function (x) { return Math.abs(x[1]); })) || 1;
+    return seg + '<div class="dbars">' + r.map(function (x, i) { return '<div class="dbar"><span class="dn">' + (i + 1) + ". " + x[0] + '</span><span class="dt ctr"><i class="' + cls(x[1]) + '" style="width:' + (Math.abs(x[1]) / mx * 50).toFixed(0) + "%;" + (x[1] >= 0 ? "left:50%" : "right:50%;left:auto") + '"></i></span><span class="dw num ' + cls(x[1]) + '">' + (x[1] >= 0 ? "+" : "−") + Math.abs(x[1]).toFixed(2).replace(".", ",") + " %</span></div>"; }).join("") +
+      '</div><p class="hint">' + note + ' Autres horizons : <a href="#fstr">Force des devises</a>.</p>';
   }
   function banksHtml() {
     var t0 = new Date(); t0.setHours(0, 0, 0, 0);
@@ -4265,7 +4275,7 @@ ul.cfl b { font: 600 11px var(--font-mono); }
     { id: "cours", t: "Cours en direct", f: coursHtml, w: 1 },
     { id: "drivers", t: "Drivers et biais par marché", f: function () { return drvHtml(true); }, w: 1 },
     { id: "conf", t: "Confluences", f: confHtml, w: 1 },
-    { id: "force", t: "Force des devises (24 h)", f: forceHtml },
+    { id: "force", t: "Force et performance des devises", f: forceHtml },
     { id: "cot", t: "COT : fonds spéculatifs", f: cotHtml },
     { id: "risque", t: "Sentiment de risque", f: riskHtml },
     { id: "banques", t: "Banques centrales : prochaines réunions", f: banksHtml },
@@ -4295,7 +4305,8 @@ ul.cfl b { font: 600 11px var(--font-mono); }
       '<div class="dgrid">' + ord.filter(function (id) { return !dashHidden(id); }).map(function (id) { var b = DASH.filter(function (x) { return x.id === id; })[0]; var body; try { body = b.f(); } catch (e) { body = '<p class="hint">Bloc indisponible pour le moment.</p>'; } return '<section class="dblk' + (b.w ? " dw2" : "") + '" data-blk="' + id + '"><h2>' + b.t + '</h2><div class="dbody">' + body + "</div></section>"; }).join("") + "</div>";
   }
   document.addEventListener("click", function (e) {
-    var t = e.target.closest && e.target.closest("[data-drvtab],[data-flf],[data-tvgo],[data-dedit],[data-dshow],[data-dmv],[data-dreset],[data-aldel],[data-alperm]"); if (!t) return;
+    var t = e.target.closest && e.target.closest("[data-fhz],[data-drvtab],[data-flf],[data-tvgo],[data-dedit],[data-dshow],[data-dmv],[data-dreset],[data-aldel],[data-alperm]"); if (!t) return;
+    if (t.dataset.fhz) { fHz = t.dataset.fhz; renderDashBlock("force"); return; }
     if (t.dataset.drvtab) { drvTab = t.dataset.drvtab; try { localStorage.setItem("mf-drvtab", drvTab); } catch (x) { } renderDashBlock("drivers"); }
     else if (t.dataset.flf) { flashF = t.dataset.flf; renderDashBlock("flash"); }
     else if (t.dataset.tvgo) { tvOn = t.dataset.tvgo === "1"; renderDashBlock("tv"); }
