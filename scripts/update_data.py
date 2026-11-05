@@ -1987,8 +1987,23 @@ def parse_feed(txt):
         if t is None or not (t.text or "").strip():
             continue
         link = (l.text or "").strip() if (l is not None and (l.text or "").strip()) else (l.get("href") if l is not None else "")
-        out.append({"t": re.sub(r"\s+", " ", t.text).strip()[:200], "l": link or "", "d": parse_date((dt.text or "").strip() if dt is not None else "")})
+        raw = (dt.text or "").strip() if dt is not None else ""
+        out.append({"t": re.sub(r"\s+", " ", t.text).strip()[:200], "l": link or "", "d": parse_date(raw), "ts": parse_ts(raw)})
     return out
+
+
+def parse_ts(s):
+    """Horodatage complet (UTC, ISO) d'un article : sert au fil « flash » trié à la minute."""
+    if not s:
+        return None
+    from email.utils import parsedate_to_datetime
+    try:
+        return parsedate_to_datetime(s).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
+    except Exception:
+        try:
+            return datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
+        except Exception:
+            return None
 
 
 def do_rss(data):
@@ -2598,6 +2613,61 @@ def do_analyses(data):
             seen.add(k)
             out.append(it)
     data["analyses"] = out[:80]
+
+
+# ---------------------------------------------------------------- Fil d'actualités « flash » (marchés + monde), avec repérage des urgences
+# Ajouté le 6 nov. 2026 (demande : outils de type FXOS). Chaque flux est isolé : une panne n'empêche pas les autres.
+FLASH_FEEDS = [
+    ("investingLive", "marchés", ["https://investinglive.com/feed/news", "https://investinglive.com/feed/"]),
+    ("FinancialJuice", "marchés", ["https://www.financialjuice.com/feed.ashx?xy=rss"]),
+    ("BBC Business", "marchés", ["https://feeds.bbci.co.uk/news/business/rss.xml"]),
+    ("BBC Monde", "monde", ["https://feeds.bbci.co.uk/news/world/rss.xml"]),
+    ("Al Jazeera", "monde", ["https://www.aljazeera.com/xml/rss/all.xml"]),
+]
+RX_URGENT = re.compile(r"\b(breaking|urgent|flash|alert|emergency|surprise[sd]?|unexpected(ly)?|shock|plunge[sd]?|soar(s|ed)?|surge[sd]?|crash(es|ed)?|tumble[sd]?|"
+                       r"rate (cut|hike)|cuts? rates?|hikes? rates?|FOMC|Powell|Lagarde|Ueda|Bailey|intervention|"
+                       r"war|attack(s|ed)?|missile|strike[sd]?|invasion|ceasefire|sanction(s|ed)?|tariff(s)?|default|downgrade[sd]?|"
+                       r"NFP|non-?farm|CPI|PCE|GDP|payrolls|OPEC\+?|Hormuz|Red Sea|explosion|coup|martial law)\b", re.I)
+RX_ASSET = [("XAU", re.compile(r"\b(gold|XAU|bullion|precious)\b", re.I)), ("USD", re.compile(r"\b(dollar|USD|Fed|FOMC|Powell|Treasur\w*|US yields?|DXY)\b", re.I)),
+            ("EUR", re.compile(r"\b(euro|EUR|ECB|Lagarde|eurozone|Bund)\b", re.I)), ("GBP", re.compile(r"\b(sterling|pound|GBP|BoE|Bank of England)\b", re.I)),
+            ("JPY", re.compile(r"\b(yen|JPY|BoJ|Bank of Japan|Ueda)\b", re.I)), ("OIL", re.compile(r"\b(oil|crude|WTI|Brent|OPEC\+?)\b", re.I)),
+            ("NAS", re.compile(r"\b(Nasdaq|S&P|stocks?|equities|Wall Street|tech shares)\b", re.I))]
+
+
+def do_flash(data):
+    items = []
+
+    def one(feed):
+        name, kind, urls = feed
+        err = None
+        for k, url in enumerate(urls):
+            try:
+                got = parse_feed(http("fl_%s_%d.xml" % (re.sub(r"\W", "", name), k), url, tries=1, timeout=20))[:40]
+                if not got:
+                    raise ValueError("flux vide")
+                for g in got:
+                    g.update({"src": name, "k": kind, "u": bool(RX_URGENT.search(g["t"])),
+                              "a": [code for code, rx in RX_ASSET if rx.search(g["t"])]})
+                with LOCK:
+                    items.extend(got)
+                note("fl." + re.sub(r"\W", "", name).lower(), "Fil flash : " + name, "news", True,
+                     max((g["d"] for g in got if g["d"]), default=TODAY), url=url)
+                return
+            except Exception as e:
+                err = "%s (%s)" % (fr_err(e), url)
+        note("fl." + re.sub(r"\W", "", name).lower(), "Fil flash : " + name, "news", False, err=err, url=urls[0])
+    with ThreadPoolExecutor(5) as ex:
+        list(ex.map(one, FLASH_FEEDS))
+    seen, out = set(), []
+    for it in sorted(items, key=lambda i: i.get("ts") or (i["d"] or "") + "T00:00Z", reverse=True):
+        key = re.sub(r"\W", "", it["t"].lower())[:70]
+        if key and key not in seen:
+            seen.add(key)
+            out.append(it)
+    if out:
+        data["flash"] = out[:150]
+    elif PREVIOUS.get("flash"):
+        data["flash"] = PREVIOUS["flash"]
 
 
 # ---------------------------------------------------------------- Sentiment des particuliers : API officielle Myfxbook (compte gratuit)
@@ -4278,7 +4348,7 @@ def do_move(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("flash", do_flash), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
              ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl), ("bankcot", do_bank_cot), ("euguide", do_euro_guide)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
