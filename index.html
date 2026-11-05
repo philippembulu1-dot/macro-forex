@@ -693,7 +693,8 @@ table tbody tr { transition: background .2s; }
 .qt small { color: var(--muted); font-size: 11px; } .qt b { font-size: 14px; } .qt span { font-size: 11.5px; }
 .nextbig { display: grid; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--amber-soft); margin-bottom: 8px; }
 .nextbig small { color: var(--muted); } .nextbig span { font: 700 22px var(--font-mono); color: var(--amber); }
-table.mini { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: auto; word-break: break-word; }
+table.mini { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.mini td:first-child, table.mini td:nth-child(2) { white-space: nowrap; }
 table.mini td { padding: 4px 6px 4px 0; border-top: 1px solid var(--line2); vertical-align: top; white-space: normal; }
 .dblk { overflow: hidden; }
 .imp { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
@@ -722,6 +723,15 @@ ul.flash .ub { color: var(--down); font: 700 10px var(--font-mono); letter-spaci
 .dedit li span { display: flex; gap: 4px; }
 .dtoast { position: fixed; right: 14px; bottom: 14px; z-index: 90; max-width: min(360px, calc(100vw - 28px)); background: var(--panel2); border: 1px solid var(--amber); border-radius: 10px; padding: 10px 14px; display: none; gap: 2px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 .dtoast.on { display: grid; } .dtoast b { color: var(--amber); }
+
+.cfhead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; font: 600 12px var(--font-mono); }
+.cfhead select { background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; }
+ul.cfl { list-style: none; margin: 0; padding: 0; display: grid; }
+ul.cfl li { display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line2); font-size: 12.5px; align-items: baseline; }
+ul.cfl .cfc { color: var(--muted); font: 600 10.5px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; }
+ul.cfl b { font: 600 11px var(--font-mono); }
+@media (max-width: 480px) { ul.cfl li { grid-template-columns: 1fr auto; } ul.cfl .cfc { grid-column: 1 / -1; } }
+.cotb .dt { display: block; } .cotb .dt i.down { left: auto; }
 </style>
 
 </head><body><div class="shell">
@@ -2973,7 +2983,7 @@ ul.flash .ub { color: var(--down); font: 700 10px var(--font-mono); letter-spaci
   function loadSeas() {
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "seasonal.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.series) throw new Error("format"); return j; }); }); });
-    return p.then(function (j) { SEAS = j; }).catch(function (e) { seasErr = String(e && e.message || e); }).then(function () { renderSeas(); renderReserves(); });
+    return p.then(function (j) { SEAS = j; }).catch(function (e) { seasErr = String(e && e.message || e); }).then(function () { renderSeas(); renderReserves(); if (!curBr) renderDashBlock("conf"); });
   }
   function renderSeas() {
     var sel = $("seasSel");
@@ -4174,12 +4184,89 @@ ul.flash .ub { color: var(--down); font: 700 10px var(--font-mono); letter-spaci
     var al = (g.alerts || []).slice(0, 4), gp = g.gpr && g.gpr.d && g.gpr.d[g.gpr.d.length - 1];
     return '<ul class="brief">' + (al.length ? al.map(function (a) { return "<li>⚠ " + esc(a[2]) + "</li>"; }).join("") : "<li>Pas d'alerte géopolitique particulière.</li>") + "</ul>" + (gp ? '<p class="hint">Indice de risque géopolitique (GPR) : <b>' + Math.round(gp[1]) + "</b> au " + shortD(gp[0]) + " (100 = moyenne historique).</p>" : "") + '<p class="hint">Carte, crises et détroits : <a href="#/monde">Monde & géopolitique</a>.</p>';
   }
+  /* ---------- Confluences : faits haussiers / baissiers tirés des outils, sans opinion (6 nov. 2026) ---------- */
+  var CF_PAIRS = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF", "NZDUSD", "XAUUSD"];
+  var cfPair = "EURUSD";
+  try { cfPair = localStorage.getItem("mf-cfpair") || "EURUSD"; } catch (e) { /* stockage indisponible */ }
+  var CF_CB = { USD: "Fed", EUR: "BCE", GBP: "BoE", JPY: "BoJ", CHF: "BNS", AUD: "RBA", CAD: "BoC", NZD: "RBNZ" };
+  function cfNum(s) { var m = /-?\d+(?:[.,]\d+)?/.exec(String(s || "").replace(/\s/g, "")); return m ? parseFloat(m[0].replace(",", ".")) : null; }
+  function hStr(base, n) { /* force d'une devise sur n heures contre la moyenne des 8 */
+    var I = AUTO && AUTO.intraday; if (!I) return null;
+    var P = { EUR: ["EURUSD", 1], GBP: ["GBPUSD", 1], AUD: ["AUDUSD", 1], NZD: ["NZDUSD", 1], JPY: ["USDJPY", -1], CHF: ["USDCHF", -1], CAD: ["USDCAD", -1] }, vs = { USD: 0 };
+    for (var c in P) { var s = I[P[c][0]] && I[P[c][0]].c; if (!s || s.length < n + 1) return null; vs[c] = P[c][1] * (s[s.length - 1][1] / s[s.length - 1 - n][1] - 1) * 100; }
+    var m = mean(Object.keys(vs).map(function (k) { return vs[k]; })); var o = {}; Object.keys(vs).forEach(function (k) { o[k] = vs[k] - m; }); return o;
+  }
+  function confluences(pair) {
+    var gold = pair === "XAUUSD", base = pair.slice(0, 3), quote = pair.slice(3), F = [];
+    var add = function (cat, txt, dir, w) { F.push({ c: cat, t: txt, d: dir, w: w || 1 }); };
+    var nm = gold ? "l'or" : base + "/" + quote;
+    /* 1. Sentiment des particuliers (lecture contrarienne) */
+    var rt = AUTO && AUTO.retail && AUTO.retail.s && AUTO.retail.s[pair];
+    if (rt) add("Particuliers", "Particuliers (Myfxbook) : " + Math.round(rt.long) + " % acheteurs, " + Math.round(rt.short) + " % vendeurs." + (rt.long >= 70 || rt.short >= 70 ? " Niveau extrême." : ""), rt.long >= 60 ? -1 : rt.short >= 60 ? 1 : 0);
+    /* 2. Taux directeurs */
+    var P = AUTO && AUTO.policy;
+    if (!gold && P && P[base] && P[quote]) {
+      var gap = P[base].v - P[quote].v;
+      add("Taux", "Taux directeurs : " + CF_CB[base] + " " + fmt(P[base].v, 2) + " %, " + CF_CB[quote] + " " + fmt(P[quote].v, 2) + " %. Écart de " + fmt(Math.abs(gap), 2) + " pt en faveur de " + (gap >= 0 ? base : quote) + ".", gap > 0.25 ? 1 : gap < -0.25 ? -1 : 0);
+      [base, quote].forEach(function (c, k) {
+        var x = P[c]; if (!x || x.prev === null || x.prev === undefined || !x.since || ageDays(x.since) > 120) return;
+        var mv = x.v - x.prev; if (!mv) return;
+        add("Taux", CF_CB[c] + " : " + (mv > 0 ? "hausse" : "baisse") + " de taux le " + shortD(x.since) + " (" + fmt(x.prev, 2) + " → " + fmt(x.v, 2) + " %).", (mv > 0 ? 1 : -1) * (k ? -1 : 1));
+      });
+    }
+    if (gold) {
+      var ry = chgN("DFII10", 5); if (ry) add("Taux", "Taux réel US 10 ans : " + (ry.d >= 0 ? "+" : "−") + Math.abs(ry.d * 100).toFixed(0) + " pb sur 5 séances (" + fmt(fred("DFII10").v, 2) + " %).", ry.d < -0.03 ? 1 : ry.d > 0.03 ? -1 : 0);
+      var dx = dSeries("dxy"); if (dx) { var dxc = (dx.last[1] / dx.c[dx.c.length - 6][1] - 1) * 100; add("Dollar", "Dollar (DXY) : " + pct(dxc) + " sur 5 séances.", dxc < -0.3 ? 1 : dxc > 0.3 ? -1 : 0); }
+    }
+    /* 3. Chiffres officiels récents contre prévision (mémoire des surprises, 14 jours) */
+    var cur = gold ? ["USD"] : [base, quote];
+    ((typeof SURP !== "undefined" && SURP && SURP.results) || []).filter(function (r) { return cur.indexOf(r.c) >= 0 && r.d && ageDays(r.d) >= 0 && ageDays(r.d) <= 14 && r.s; }).slice(-5).forEach(function (r) {
+      var side = gold ? -1 : r.c === base ? 1 : -1;
+      add("Macro", esc(r.lab) + " (" + r.c + ", " + shortD(r.d) + ") : " + fmt(r.a, 1) + (r.u || "") + " publié, " + fmt(r.f, 1) + (r.u || "") + " attendu.", (r.good ? 1 : -1) * side);
+    });
+    /* 4. Annonces à venir (48 h) */
+    var up = nextEvents(30).filter(function (e) { return e.i === "High" && cur.indexOf(e.c) >= 0 && Date.parse(e.d) - Date.now() < 48 * 36e5; }).slice(0, 3);
+    if (up.length) add("À venir", up.map(function (e) { return esc(e.t) + " (" + e.c + ", " + new Date(e.d).toLocaleString("fr-FR", { timeZone: KIN, weekday: "short", hour: "2-digit", minute: "2-digit" }) + ")"; }).join(" · ") + ".", 0);
+    /* 5. Saisonnalité 20 ans */
+    var SE = typeof SEAS !== "undefined" && SEAS && SEAS.series && SEAS.series[pair];
+    if (SE && SE.monthly) { var mo = new Date().getMonth(), sm = SE.monthly[mo]; if (sm) add("Saisonnalité", new Date().toLocaleDateString("fr-FR", { month: "long" }).replace(/^./, function (c) { return c.toUpperCase(); }) + " : " + nm + " a monté " + Math.round(sm.win) + " % des années (" + (SEAS.years ? SEAS.years.join("–") : "20 ans") + "), en moyenne " + pct(sm.avg) + ".", sm.win >= 60 ? 1 : sm.win <= 40 ? -1 : 0); }
+    /* 6. Force sur 5 séances */
+    if (!gold) { var h = hStr(base, 120); if (h) { var dd = h[base] - h[quote]; add("Force", "Force sur 5 séances : " + base + " " + pct(h[base]) + ", " + quote + " " + pct(h[quote]) + ".", dd > 0.3 ? 1 : dd < -0.3 ? -1 : 0); } }
+    /* 7. Prix contre sa moyenne 20 jours */
+    var key = { EURUSD: "eur", GBPUSD: "gbp", USDJPY: "jpy", XAUUSD: "gold" }[pair], ds = key && dSeries(key);
+    if (ds) { var dev = (ds.last[1] / ds.m20 - 1) * 100, c5 = (ds.last[1] / ds.c[ds.c.length - 6][1] - 1) * 100; add("Prix", nm.replace(/^./, function (c) { return c.toUpperCase(); }) + " : " + pct(c5) + " sur 5 séances, " + (dev >= 0 ? "au-dessus" : "sous") + " de sa moyenne 20 jours (" + pct(dev) + ").", dev > 0.3 ? 1 : dev < -0.3 ? -1 : 0); }
+    else { var pp = pairOf(pair); if (pp) { var ss = series(pp); if (ss.length > 21) { var m20 = mean(ss.slice(-20).map(function (x) { return x.v; })), dv = (ss[ss.length - 1].v / m20 - 1) * 100; add("Prix", base + "/" + quote + " (fixing BCE du " + shortD(ss[ss.length - 1].d) + ") " + (dv >= 0 ? "au-dessus" : "sous") + " de sa moyenne 20 jours (" + pct(dv) + ").", dv > 0.3 ? 1 : dv < -0.3 ? -1 : 0); } } }
+    /* 8. Positionnement des fonds (COT) */
+    var CO = AUTO && AUTO.cot, one = function (c, sgn) { var x = CO && CO[c]; if (!x) return; var ch = x.net - x.prev_net, pl = Math.round(x.long / (x.long + x.short) * 100); add("COT", "Fonds spéculatifs sur " + (c === "XAU" ? "l'or" : c) + " : " + pl + " % acheteurs, position nette " + (x.net >= 0 ? "+" : "−") + Math.abs(x.net).toLocaleString("fr-FR") + " (" + (ch >= 0 ? "+" : "−") + Math.abs(ch).toLocaleString("fr-FR") + " sur la semaine, rapport du " + shortD(x.date) + ").", (ch > 0 ? 1 : ch < 0 ? -1 : 0) * sgn); };
+    if (gold) one("XAU", 1); else { if (base !== "USD") one(base, 1); if (quote !== "USD") one(quote, -1); }
+    /* 9. Drivers (or, EUR/USD) */
+    var dk = { XAUUSD: "xau", EURUSD: "eur" }[pair]; if (dk) { var r = mkDrv(DRV_MK.filter(function (m) { return m.id === dk; })[0]); if (r) add("Drivers", "Drivers : biais " + r.bias.toLowerCase() + " (confiance " + r.conf + " %), premier moteur : " + r.parts[0].n.toLowerCase() + ".", r.bias === "Haussier" ? 1 : r.bias === "Baissier" ? -1 : 0); }
+    return F;
+  }
+  function confHtml() {
+    var F = confluences(cfPair), up = F.filter(function (f) { return f.d > 0; }).length, dn = F.filter(function (f) { return f.d < 0; }).length;
+    var sel = '<select data-cfpair="1" aria-label="Actif">' + CF_PAIRS.map(function (p) { return '<option value="' + p + '"' + (p === cfPair ? " selected" : "") + ">" + (p === "XAUUSD" ? "Or XAU/USD" : p.slice(0, 3) + "/" + p.slice(3)) + "</option>"; }).join("") + "</select>";
+    return '<div class="cfhead">' + sel + '<span class="up">' + up + " haussier" + (up > 1 ? "s" : "") + '</span><span class="down">' + dn + " baissier" + (dn > 1 ? "s" : "") + "</span><span>" + (F.length - up - dn) + " neutre" + (F.length - up - dn > 1 ? "s" : "") + "</span></div>" +
+      '<ul class="cfl">' + F.map(function (f) { return '<li><span class="cfc">' + f.c + "</span><span>" + f.t + '</span><b class="' + (f.d > 0 ? "up" : f.d < 0 ? "down" : "") + '">' + (f.d > 0 ? "Haussier" : f.d < 0 ? "Baissier" : "Neutre") + "</b></li>"; }).join("") + "</ul>" +
+      '<p class="hint">Faits tirés des outils du terminal (sens pour ' + (cfPair === "XAUUSD" ? "l'or" : "la paire " + cfPair.slice(0, 3) + "/" + cfPair.slice(3)) + "), sans opinion. Particuliers : lecture contrarienne (la foule a souvent tort aux extrêmes). Ce n'est pas un signal d'achat ou de vente.</p>";
+  }
+  /* ---------- COT : vue d'ensemble des fonds spéculatifs ---------- */
+  function cotHtml() {
+    var CO = AUTO && AUTO.cot; if (!CO) return '<p class="hint">Rapport COT en attente du robot.</p>';
+    var L = Object.keys(CO).map(function (k) { var x = CO[k]; return { k: k, pl: x.long / (x.long + x.short) * 100, ch: x.net - x.prev_net, x: x }; }).sort(function (a, b) { return b.pl - a.pl; });
+    var dt = L[0] && L[0].x.date;
+    return '<div class="dbars">' + L.map(function (r) { return '<div class="dbar cotb"><span class="dn">' + (r.k === "XAU" ? "Or" : r.k) + '</span><span class="dt"><i class="up" style="width:' + r.pl.toFixed(0) + '%"></i><i class="down" style="left:auto;right:0;width:' + (100 - r.pl).toFixed(0) + '%"></i></span><span class="dw num">' + Math.round(r.pl) + ' %</span><span class="dd num ' + cls(r.ch) + '">' + (r.ch >= 0 ? "+" : "−") + Math.abs(r.ch).toLocaleString("fr-FR") + "</span></div>"; }).join("") +
+      '</div><p class="hint">Part d\'acheteurs chez les fonds spéculatifs (non commerciaux, CFTC), vert = acheteurs, rouge = vendeurs ; dernière colonne = variation de la position nette sur la semaine. Rapport du ' + (dt ? shortD(dt) : "–") + ' (positions du mardi, publiées le vendredi). Détail : <a href="#e19">COT et flux</a>.</p>';
+  }
+  document.addEventListener("change", function (e) { if (e.target.dataset && e.target.dataset.cfpair) { cfPair = e.target.value; try { localStorage.setItem("mf-cfpair", cfPair); } catch (x) { } renderDashBlock("conf"); } });
   var DASH = [
     { id: "brief", t: "Briefing du jour", f: briefHtml, w: 1 },
     { id: "next", t: "Prochaines annonces", f: nextHtml },
     { id: "cours", t: "Cours en direct", f: coursHtml, w: 1 },
     { id: "drivers", t: "Drivers et biais par marché", f: function () { return drvHtml(true); }, w: 1 },
+    { id: "conf", t: "Confluences", f: confHtml, w: 1 },
     { id: "force", t: "Force des devises (24 h)", f: forceHtml },
+    { id: "cot", t: "COT : fonds spéculatifs", f: cotHtml },
     { id: "risque", t: "Sentiment de risque", f: riskHtml },
     { id: "banques", t: "Banques centrales : prochaines réunions", f: banksHtml },
     { id: "geo", t: "Géopolitique", f: geoHtml },
@@ -4672,7 +4759,7 @@ ul.flash .ub { color: var(--down); font: 700 10px var(--font-mono); letter-spaci
   function loadSurp() {
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "surprises.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.forecasts) throw new Error("format"); return j; }); }); });
-    return p.then(function (j) { SURP = j; }).catch(function () { SURP = null; }).then(renderSurp);
+    return p.then(function (j) { SURP = j; }).catch(function () { SURP = null; }).then(function () { renderSurp(); if (!curBr) renderDashBlock("conf"); });
   }
   function renderSurp() {
     if (!$("spTbl")) return;
