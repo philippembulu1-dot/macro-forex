@@ -4680,7 +4680,7 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
       return { d: r.d, t: r.t, rate: r.rate, cum: (r.rate - F.effr) * 100, pu: pu, ph: ph, pd: pd, d1: rp === null ? null : (r.rate - rp) * 100, w1: rw === null ? null : (r.rate - rw) * 100, prev: rp, wk: rw, kal: k ? k.exp - 0.125 : null };
     });
     /* graphique */
-    var W = Math.round(Math.max(340, Math.min(1100, (($("fedRep") && $("fedRep").clientWidth) || (window.innerWidth - 60))))), H = 300, L = 46, R = 16, T = 34, B = 46;
+    var W = Math.round(Math.max(340, Math.min(1100, (($("fedRep") && $("fedRep").clientWidth) || (window.innerWidth - 60))))), H = 330, L = 46, R = 22, T = 48, B = 62;
     var t0 = Date.now(), t1 = parseD(rows[rows.length - 1].d).getTime(), X = function (t) { return L + (t - t0) / (t1 - t0) * (W - L - R); };
     var vals = [F.effr, up ? up.v : F.effr, up ? up.v - 0.25 : F.effr]; rows.forEach(function (r) { vals.push(r.rate); if (r.prev !== null) vals.push(r.prev); if (r.wk !== null) vals.push(r.wk); if (r.kal !== null) vals.push(r.kal); });
     var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), pad = Math.max(0.08, (hi - lo) * 0.15); lo -= pad; hi += pad;
@@ -4692,13 +4692,16 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     if (up) g += '<rect x="' + L + '" y="' + Y(up.v).toFixed(1) + '" width="' + (W - L - R) + '" height="' + (Y(up.v - 0.25) - Y(up.v)).toFixed(1) + '" fill="rgba(141,136,120,.10)"/><text x="' + (W - R - 4) + '" y="' + (Y(up.v) - 4).toFixed(1) + '" class="tax" text-anchor="end">fourchette actuelle ' + fmt(up.v - 0.25, 2) + "–" + fmt(up.v, 2) + " %</text>";
     var area = frSmooth(Pn) + "L" + Pn[Pn.length - 1][0].toFixed(1) + " " + (H - B) + "L" + Pn[0][0].toFixed(1) + " " + (H - B) + "Z";
     var dots = rows.map(function (r, i) {
-      var x = X(parseD(r.d).getTime()), y = Y(r.rate), lab = (r.cum >= 0 ? "+" : "−") + Math.round(Math.abs(r.cum)) + " pb", dom = r.pu >= r.ph && r.pu >= r.pd ? ["Hausse", r.pu, "#3ddc97"] : r.pd >= r.ph ? ["Baisse", r.pd, "#ff5c4f"] : ["Maintien", r.ph, "#c9c3b3"];
+      var x = X(parseD(r.d).getTime()), y = Y(r.rate), lab = (r.cum >= 0 ? "+" : "−") + Math.round(Math.abs(r.cum)) + " pb";
+      /* les deux issues les plus probables de la réunion, toujours affichées en % */
+      var iss = [["H", r.pu, "#3ddc97"], ["M", r.ph, "#c9c3b3"], ["B", r.pd, "#ff5c4f"]].sort(function (a, b) { return b[1] - a[1]; });
       return '<g class="frm" data-fri="' + i + '"><line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + (y + 6).toFixed(1) + '" y2="' + (H - B) + '" stroke="#2a2822" stroke-dasharray="2 3"/>' +
         (r.kal !== null ? '<rect x="' + (x - 4).toFixed(1) + '" y="' + (Y(r.kal) - 4).toFixed(1) + '" width="8" height="8" transform="rotate(45 ' + x.toFixed(1) + " " + Y(r.kal).toFixed(1) + ')" fill="#4da3ff"/>' : "") +
         '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="5" fill="#14130f" stroke="#f2b01e" stroke-width="2.2"/>' +
-        '<text x="' + x.toFixed(1) + '" y="' + (y - 11).toFixed(1) + '" class="tax frl" text-anchor="middle">' + lab + "</text>" +
-        '<text x="' + x.toFixed(1) + '" y="' + (H - B + 16) + '" class="tax" text-anchor="middle">' + parseD(r.d).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }) + "</text>" +
-        '<text x="' + x.toFixed(1) + '" y="' + (H - B + 30) + '" class="tax" text-anchor="middle" style="fill:' + dom[2] + '">' + dom[0].slice(0, 1) + " " + Math.round(dom[1] * 100) + " %</text></g>";
+        '<text x="' + x.toFixed(1) + '" y="' + (y - 24).toFixed(1) + '" class="tax frl" text-anchor="middle">' + fmt(r.rate, 2) + " %</text>" +
+        '<text x="' + x.toFixed(1) + '" y="' + (y - 11).toFixed(1) + '" class="tax" text-anchor="middle" style="fill:' + (r.cum > 0 ? "#3ddc97" : r.cum < 0 ? "#ff8a7f" : "#c9c3b3") + '">' + lab + "</text>" +
+        '<text x="' + x.toFixed(1) + '" y="' + (H - B + 15) + '" class="tax" text-anchor="middle">' + parseD(r.d).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }) + "</text>" +
+        iss.slice(0, 2).map(function (q, j) { return '<text x="' + x.toFixed(1) + '" y="' + (H - B + 30 + j * 13) + '" class="tax" text-anchor="middle" style="fill:' + q[2] + (j ? ";opacity:.75" : ";font-weight:700") + '">' + q[0] + " " + Math.round(q[1] * 100) + " %</text>"; }).join("") + "</g>";
     }).join("");
     var svg = '<svg class="frsvg" data-frsvg="1" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Trajectoire anticipée du taux de la Fed"><defs><linearGradient id="frg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2b01e" stop-opacity=".28"/><stop offset="1" stop-color="#f2b01e" stop-opacity="0"/></linearGradient></defs>' + g +
       '<path d="' + area + '" fill="url(#frg)"/>' + (Pw ? '<path d="' + frSmooth(Pw) + '" fill="none" stroke="#5f5a4c" stroke-width="1.4" stroke-dasharray="2 4"/>' : "") + (Pp ? '<path d="' + frSmooth(Pp) + '" fill="none" stroke="#a8a294" stroke-width="1.6" stroke-dasharray="6 4"/>' : "") +
@@ -4738,7 +4741,7 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     }
     FR_LAST = { rows: rows, X: X, Y: Y, W: W, H: H, F: F };
     return sum + svg + lg + tbl + mini +
-      '<p class="hint">Courbe = taux des fonds fédéraux attendu après chaque réunion, calculé avec la méthode CME FedWatch à partir des contrats à terme fed funds (CBOT, via Yahoo, différé). Au-dessus de chaque point : variation totale attendue depuis aujourd\'hui ; en bas : issue la plus probable de la réunion (H = hausse, M = maintien, B = baisse). Repricing = combien le marché a changé d\'avis depuis la veille ou une semaine (en points de base, 100 pb = 1 %). Dates 2027 en partie provisoires. Ce ne sont pas des prévisions de la Fed.</p>';
+      '<p class="hint">Courbe = taux des fonds fédéraux attendu après chaque réunion, calculé avec la méthode CME FedWatch à partir des contrats à terme fed funds (CBOT, via Yahoo, différé). Au-dessus de chaque point : taux attendu en % et variation totale depuis aujourd\'hui ; en bas : les deux issues les plus probables de la réunion en % (H = hausse, M = maintien, B = baisse). Repricing = combien le marché a changé d\'avis depuis la veille ou une semaine (en points de base, 100 pb = 1 %). Dates 2027 en partie provisoires. Ce ne sont pas des prévisions de la Fed.</p>';
   }
   document.addEventListener("pointermove", function (e) {
     var sv = e.target.closest && e.target.closest("[data-frsvg]"); if (!sv || !FR_LAST) return;
