@@ -4830,9 +4830,10 @@ body.rdon{overflow:hidden}
   var TR_FR = /\b(le|la|les|des|du|de|une|est|sur|pour|avec|dans|aux|et|ou|en|un|au|ce|qui|que|par|pas|plus|ven|jeu|mer|mar|lun|sam|dim)\b/i;
   var TR_FN = /\b(the|and|of|to|in|for|on|with|is|are|at|by|from|after|over|as|its|says|said|vs|will|than|amid|ahead|could|may|into|about|this|that|has|have|was|were|be)\b/i;
   function trWanted(s) {
-    var t = s.trim(); if (t.length < 10 || !/[a-z]{3}/i.test(t) || TR_FR.test(t) || /[éèàùçêâîôû]/i.test(t) || /^https?:/i.test(t) || TRX.out[t]) return false;
+    var t = s.trim(); if (t.length < 10 || !/[a-z]{3}/i.test(t) || TR_FR.test(t) || /[éèàùçêâîôû]/i.test(t) || /\s[:;!?»]/.test(t) || /\d\s%/.test(t) || /^https?:/i.test(t) || TRX.out[t]) return false;
     if (TR_FN.test(t)) return true;
-    var m = t.match(new RegExp(TR_EN.source, "gi")); return !!(m && m.length >= 2);
+    var m = t.match(new RegExp(TR_EN.source, "gi")); if (m && m.length >= 2) return true;
+    var w = t.split(/\s+/); return w.length >= 5 && w.filter(function (x) { return /^[a-z]{3,}$/.test(x); }).length >= 2 && /^[\x20-\x7e‘’“”]+$/.test(t); /* phrase anglaise sans mot outil reconnu */
   }
   function trSkip(el) { for (var e = el; e && e !== document.body; e = e.parentNode) { if (e.nodeType !== 1) continue; var tg = e.tagName; if (tg === "SCRIPT" || tg === "STYLE" || tg === "TEXTAREA" || tg === "INPUT" || tg === "SELECT" || tg === "OPTION" || tg === "svg" || tg === "SVG" || tg === "CODE" || tg === "IFRAME") return true; if (e.hasAttribute("data-notr") || (e.classList && (e.classList.contains("num") || e.classList.contains("tradingview-widget-container")))) return true; } return false; }
   function trApply(node) {
