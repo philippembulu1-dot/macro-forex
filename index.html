@@ -6942,7 +6942,7 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
       }); });
       if (!n) throw new Error("aucune cotation");
       LIVE.at = Date.now(); LIVE.err = "";
-      renderLive(); renderDashBlock("wlive"); renderDashBlock("recap"); renderDashBlock("ta");
+      renderLive(); renderDashBlock("wlive"); renderDashBlock("recap"); renderDashBlock("ta"); MINI_BOXES.forEach(function (b) { if (b.offsetParent) drawMini(b); });
     }).catch(function (e) { LIVE.err = String(e && e.message || e); renderLive(); });
   }
   function fxWeekend() { var d = new Date(), w = d.getUTCDay(), h = d.getUTCHours(); return w === 6 || (w === 0 && h < 21) || (w === 5 && h >= 21); }

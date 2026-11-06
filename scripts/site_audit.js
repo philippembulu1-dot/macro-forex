@@ -10,7 +10,7 @@ require('fs').mkdirSync('audit-out', { recursive: true });
     const fails = []; p.on('requestfailed', r => fails.push(r.url().slice(0, 90) + ' → ' + (r.failure() || {}).errorText)); p.on('response', r => { if (r.status() >= 400) fails.push(r.url().slice(0, 90) + ' → ' + r.status()); });
     await p.goto('' + BASE + '#/'); await p.waitForTimeout(6000);
     const src = require('fs').readFileSync('index.html', 'utf8'); const blk = src.slice(src.indexOf('var BR = ['), src.indexOf('];', src.indexOf('var BR = [')));
-    const brs = [...blk.matchAll(/id: "(\w+)", t: "([^"]+)".*?p: \[([^\]]*)\]/g)].map(m => [m[1], m[2], [...m[3].matchAll(/"([^"]+)"/g)].map(x => x[1])]);
+    const brs = [...blk.matchAll(/id: "(\w+)", (?:grp: "[^"]*", )?t: "([^"]+)".*?p: \[([^\]]*)\]/g)].map(m => [m[1], m[2], [...m[3].matchAll(/"([^"]+)"/g)].map(x => x[1])]);
     await p.waitForTimeout(6000);
     const st = await p.evaluate(() => ({ live: (document.getElementById('liveBar') || {}).innerText, gen: window.AUTO_GEN || null, bstat: (document.querySelector('.bstat') || {}).innerText, tape: (document.getElementById('tape') || {}).innerText, tv: document.querySelectorAll('#tv iframe').length }));
     console.log(name, 'DIRECT :', (st.live || '').replace(/\n/g, ' '));
@@ -55,21 +55,29 @@ require('fs').mkdirSync('audit-out', { recursive: true });
       if (r.res.length || r.ow > 2 || detErr) problems.push(id);
     }
     // graphiques maison (CNBC)
-    for (const br of ['marches', 'taux']) { await p.goto(BASE + '#/' + br); await p.waitForTimeout(9000);
+    for (const br of ['direct', 'taux']) { await p.goto(BASE + '#/' + br); await p.waitForTimeout(9000);
       console.log(name, 'graphiques ' + br + ' :', await p.evaluate((g) => [...document.querySelectorAll('#' + g + ' .cmini')].map(b => b.querySelector('.mh').innerText.replace(/\n/g, ' ') + ' [' + b.querySelectorAll('svg path').length + ' courbe] ' + b.querySelector('.mfb').innerText).join(' || '), br === 'marches' ? 'miniGrid' : 'rateMinis'));
       await p.evaluate((g) => document.getElementById(g).scrollIntoView(), br === 'marches' ? 'miniGrid' : 'rateMinis'); await p.screenshot({ path: 'audit-out/' + name + '_graph_' + br + '.png' }); }
     // calendrier : vues
-    await p.goto('' + BASE + '#/macro'); await p.waitForTimeout(1200);
-    await p.click('#calTabs [data-calv="term"]'); await p.waitForTimeout(300);
+    await p.goto('' + BASE + '#/calendrier'); await p.waitForTimeout(1200);
+    await p.evaluate(() => { const c = document.getElementById('calendrier'); if (c) c.classList.remove('fold'); const b = document.querySelector('#calTabs [data-calv="term"]'); if (b) b.click(); }); await p.waitForTimeout(300);
     console.log(name, 'calendrier : lignes', await p.evaluate(() => document.querySelectorAll('#calTbl tr.calrow').length), '| iframe externe', await p.evaluate(() => !!document.querySelector('#calPro iframe')), '| vue terminal visible', await p.evaluate(() => !document.getElementById('calTerm').hidden));
     // carte : mini-fenêtre
-    await p.goto('' + BASE + '#/monde'); await p.waitForTimeout(1500);
+    await p.goto('' + BASE + '#/carte'); await p.waitForTimeout(1500);
     await p.evaluate(() => { const e = document.querySelector('#mapBox path[data-c="BRA"]'); e.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 300, clientY: 300 })); });
     await p.waitForTimeout(400);
     console.log(name, 'carte : mini-fenêtre', await p.evaluate(() => !document.getElementById('mapPop').hidden), (await p.locator('#mapPop').innerText()).slice(0, 80).replace(/\n/g, ' | '));
     // recherche
     await p.fill('#cmdIn', 'ormuz'); await p.waitForTimeout(400);
     console.log(name, 'recherche « ormuz » :', (await p.evaluate(() => (document.getElementById('sres') || {}).innerText || '')).slice(0, 160).replace(/\n/g, ' | '));
+    for (const br of ['analyse', 'carte', 'matin', 'actus']) { await p.goto(BASE + '#/' + br); await p.waitForTimeout(br === 'analyse' ? 4000 : 2500);
+      console.log(name, 'blocs ' + br + ' :', await p.evaluate(() => [...document.querySelectorAll('.branch.on .dblk')].map(d => d.dataset.blk + ' ' + (/Bloc indisponible|undefined|NaN|\[object/.test(d.innerText) ? 'CASSÉ' : d.innerText.length + ' car.') + (d.querySelector('.talv') ? ' (bougie en direct)' : '') + (d.querySelector('.tachart rect') ? ' ' + d.querySelectorAll('.tachart rect').length + ' bougies' : '')).join(' | ')));
+      if (br === 'carte') console.log(name, 'carte en direct :', await p.evaluate(() => [...document.querySelectorAll('.branch.on .wltbl tbody tr')].map(r => r.innerText.replace(/\s+/g, ' ')).join(' || ')));
+      await p.screenshot({ path: 'audit-out/' + name + '_bloc_' + br + '.png' }); }
+    await p.evaluate(() => { const a = document.querySelector('.branch.on ul.flash a'); if (a) a.click(); }); await p.waitForTimeout(2500);
+    console.log(name, 'lecteur :', await p.evaluate(() => { const r = document.getElementById('reader'); return r.hidden ? 'FERMÉ' : 'ouvert dans le site · ' + location.hash + ' · ' + r.innerText.replace(/\s+/g, ' ').slice(0, 220); }));
+    await p.keyboard.press('Escape');
+    console.log(name, 'traduction :', await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('mf-trc') || '{}')).length + ' titres traduits ; exemple : ' + ((document.querySelector('#nTicker .ntrow a') || {}).innerText || '').slice(0, 120)));
     console.log(name, 'REQUÊTES EN ÉCHEC :', JSON.stringify([...new Set(fails)].slice(0, 40)));
     console.log(name, 'ERREURS :', errs.length ? JSON.stringify([...new Set(errs)]) : 'aucune', '| branches à revoir :', problems.join(', ') || 'aucune');
     await p.close();
