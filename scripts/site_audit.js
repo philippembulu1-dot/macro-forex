@@ -14,6 +14,8 @@ require('fs').mkdirSync('audit-out', { recursive: true });
     await p.waitForTimeout(6000);
     const st = await p.evaluate(() => ({ live: (document.getElementById('liveBar') || {}).innerText, gen: window.AUTO_GEN || null, bstat: (document.querySelector('.bstat') || {}).innerText, tape: (document.getElementById('tape') || {}).innerText, tv: document.querySelectorAll('#tv iframe').length }));
     console.log(name, 'DIRECT :', (st.live || '').replace(/\n/g, ' '));
+    if (name === 'PC') console.log('TEST CNBC :', await p.evaluate(async () => { try { const r = await fetch('https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=EUR%3D%7C.GDAXI%7CJP10Y-JP%7CAU10Y-AU&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json', { cache: 'no-store' }); const j = await r.json(); return r.status + ' ' + JSON.stringify((j.FormattedQuoteResult.FormattedQuote || []).map(q => [q.symbol, q.code, q.last, q.last_time])); } catch (e) { return 'ÉCHEC ' + e; } }));
+    console.log(name, 'NEWS :', await p.evaluate(() => { const t = document.getElementById('nTicker'); return t ? (t.querySelector('.ntlab') || {}).innerText + ' | ' + t.title : 'absent'; }));
     console.log(name, 'BANDEAU :', (st.tape || '').replace(/\n/g, ' ').slice(0, 200), '| widgets TradingView :', st.tv);
     await p.screenshot({ path: 'audit-out/' + name + '_accueil.png' });
     const hub = await p.evaluate(() => document.getElementById('hub').innerText.length);
