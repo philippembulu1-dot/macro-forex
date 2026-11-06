@@ -4654,7 +4654,11 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
   function lnGet(u, ms) { var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, ms || 9000); return fetch(u, c ? { signal: c.signal, cache: "no-store" } : { cache: "no-store" }).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); }); }
   function pollNews() {
     if (document.hidden) return;
-    var jobs = LN_SRC.map(function (s) { return lnGet(s[1]).then(function (x) { LN.ok[s[0]] = 1; return lnParse(x, s[0], s[2]); }).catch(function () { LN.ok[s[0]] = 0; return null; }); });
+    LN.wait = LN.wait || {};
+    var jobs = LN_SRC.map(function (s) {
+      if (LN.wait[s[0]] && Date.now() < LN.wait[s[0]]) return Promise.resolve(LN.cache && LN.cache[s[0]] || null);
+      return lnGet(s[1]).then(function (x) { LN.ok[s[0]] = 1; LN.wait[s[0]] = 0; var L = lnParse(x, s[0], s[2]); LN.cache = LN.cache || {}; LN.cache[s[0]] = L; return L; }).catch(function () { LN.ok[s[0]] = 0; LN.wait[s[0]] = Date.now() + 5 * 6e4; return LN.cache && LN.cache[s[0]] || null; });
+    });
     if (Date.now() - LN.il > 5 * 6e4) {
       LN.il = Date.now();
       jobs.push(lnGet("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://investinglive.com/feed/news")).then(function (x) {
@@ -4824,7 +4828,16 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
   var WL_MODE = [["fx", "Devise aujourd'hui"], ["ix", "Bourse aujourd'hui"], ["y", "Taux 10 ans"], ["cpi", "Inflation"], ["rate", "Taux directeur"]];
   var wlMode = "fx", wlSel = "USD";
   try { var wls = JSON.parse(localStorage.getItem("mf-wl") || "null"); if (wls) { wlMode = wls.m || wlMode; wlSel = wls.s || wlSel; } } catch (e) { /* stockage indisponible */ }
-  function wlQ(sym) { var q = LIVE.q[sym]; if (!q || q.p === null || q.p === undefined) return null; return { v: q.v, ch: q.v - q.p, pc: (q.v / q.p - 1) * 100, fresh: liveFresh(q), t: q.t }; }
+  var WL_D = { ".DXY": "dxy", "EUR=": "eur", "GBP=": "gbp", "JPY=": "jpy", "CHF=": "chf", "AUD=": "aud", "CAD=": "cad", "NZD=": "nzd", ".SPX": "es", ".GDAXI": "dax", ".N225": "nikkei", "US10Y": "us10" };
+  function wlQ(sym) {
+    var q = LIVE.q[sym], dk = WL_D[sym], D = dk && AUTO && AUTO.daily && AUTO.daily[dk] && AUTO.daily[dk].c;
+    /* marché fermé (CNBC renvoie souvent une variation nulle) : variation de la dernière séance d'après les clôtures du robot */
+    if ((!q || q.p === null || q.p === undefined || (!liveFresh(q) && Math.abs(q.v - q.p) < 1e-12)) && D && D.length > 1) {
+      var a = D[D.length - 2][1], b = D[D.length - 1][1], v = q ? q.v : b;
+      return { v: v, ch: sym === "US10Y" ? (b - a) : (b - a), pc: (b / a - 1) * 100, fresh: false, t: q ? q.t : null, seance: D[D.length - 1][0] };
+    }
+    if (!q || q.p === null || q.p === undefined) return null; return { v: q.v, ch: q.v - q.p, pc: (q.v / q.p - 1) * 100, fresh: liveFresh(q), t: q.t };
+  }
   function wlRow(x) {
     var f = wlQ(x.fx[0]), i = wlQ(x.ix[0]), y = wlQ(x.y), cpi = g8Now(x.c, "cpi"), rate = g8Now(x.c, "rate"), gdp = g8Now(x.c, "gdp"), un = g8Now(x.c, "unemp");
     return { x: x, fx: f ? f.pc * x.fx[1] : null, fxv: f, ix: i ? i.pc : null, ixv: i, y: y ? y.ch * 100 : null, yv: y, cpi: cpi, rate: rate, gdp: gdp, un: un };
@@ -4851,7 +4864,7 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     var line = function (k, v, cl, sub) { return '<div class="wlk"><small>' + k + '</small><b class="num ' + (cl || "") + '">' + v + "</b>" + (sub ? "<span>" + sub + "</span>" : "") + "</div>"; };
     var fq = s.fxv, iq = s.ixv, yq = s.yv;
     var card = '<div class="wlcard"><h3>' + s.x.n + " <small>" + s.x.c + "</small></h3>" + '<div class="wlgrid">' +
-      line(s.x.c === "USD" ? "Dollar (DXY)" : s.x.c + " contre dollar", fq ? pct(s.fx) : "–", fq ? cls(s.fx) : "", fq ? (fq.fresh ? "en direct" : "dernier cours") + " · " + fmtN(fq.v, s.x.c === "JPY" ? 2 : 4) : "") +
+      line(s.x.c === "USD" ? "Dollar (DXY)" : s.x.c + " contre dollar", fq ? pct(s.fx) : "–", fq ? cls(s.fx) : "", fq ? (fq.fresh ? "en direct" : fq.seance ? "séance du " + shortD(fq.seance) : "dernier cours") + " · " + fmtN(fq.v, s.x.c === "JPY" ? 2 : 4) : "") +
       line(s.x.ix[1], iq ? pct(s.ix) : "–", iq ? cls(s.ix) : "", iq ? fmtN(iq.v, 0) + (iq.fresh ? " · en direct" : " · clôture") : "non disponible") +
       line("Taux à 10 ans", yq ? fmt(yq.v, 2) + " %" : "–", yq ? (s.y >= 0 ? "down" : "up") : "", yq ? (s.y >= 0 ? "+" : "−") + fmt(Math.abs(s.y), 1) + " pb aujourd'hui" : "non disponible") +
       line("Taux directeur", s.rate ? fmt(s.rate.v, 2) + " %" : "–", "", s.rate ? s.rate.d : "") +
@@ -4864,7 +4877,7 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     var tbl = '<div class="tbl"><table class="mini wltbl"><thead><tr><th>Pays</th><th>Devise</th><th>Bourse</th><th>10 ans</th><th>Taux dir.</th><th>Inflation</th></tr></thead><tbody>' + R.map(function (r) { return '<tr data-wlc="' + r.x.c + '"' + (r.x.c === sel.x.c ? ' class="on"' : "") + "><td><b>" + r.x.c + "</b> " + r.x.n + '</td><td class="num ' + (r.fx === null ? "" : cls(r.fx)) + '">' + fmtV(r, "fx") + '</td><td class="num ' + (r.ix === null ? "" : cls(r.ix)) + '">' + fmtV(r, "ix") + '</td><td class="num">' + (r.yv ? fmt(r.yv.v, 2) + " %" : "–") + '</td><td class="num">' + fmtV(r, "rate") + '</td><td class="num">' + fmtV(r, "cpi") + "</td></tr>"; }).join("") + "</tbody></table></div>";
     var hot = AUTO && AUTO.geo && AUTO.geo.alerts && AUTO.geo.alerts.length ? '<p class="hint">Alertes géopolitiques : ' + AUTO.geo.alerts.slice(0, 3).map(function (a) { return esc(a[2]); }).join(" · ") + ' (<a href="#/geo">Géopolitique</a>).</p>' : "";
     return seg + '<div class="wlwrap"><div class="wlmapbox">' + map + "</div>" + card + "</div>" + tbl + hot +
-      '<p class="hint">Touchez un pays (carte ou tableau) pour sa fiche. Devise, bourse et taux à 10 ans : variation depuis la clôture d\'hier, cotations CNBC relues toutes les 60 s (différé possible, « – » si la cotation n\'est pas disponible). Taux directeurs (BRI et banques centrales), inflation, croissance et chômage : dernier chiffre publié, avec sa date. News : fil en direct et robot.</p>';
+      '<p class="hint">Touchez un pays (carte ou tableau) pour sa fiche. Devise, bourse et taux à 10 ans : variation depuis la clôture précédente, cotations CNBC relues toutes les 60 s ; marché fermé : variation de la dernière séance (différé possible, « – » si la cotation n\'est pas disponible). Taux directeurs (BRI et banques centrales), inflation, croissance et chômage : dernier chiffre publié, avec sa date. News : fil en direct et robot.</p>';
   }
   document.addEventListener("click", function (e) {
     var t = e.target.closest && e.target.closest("[data-wlm],[data-wlc],[data-rcs]"); if (!t) return;
@@ -4990,7 +5003,7 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
   function trRun() {
     if (TRX.busy || !TRX.q.length) return;
     var batch = [], len = 0;
-    while (TRX.q.length && batch.length < 30 && len + TRX.q[0].length < 1800) { var x = TRX.q.shift().replace(/\n/g, " "); batch.push(x); len += x.length + 1; }
+    while (TRX.q.length && batch.length < 25 && len + TRX.q[0].length < 1500) { var x = TRX.q.shift().replace(/\n/g, " "); batch.push(x); len += x.length + 1; }
     if (!batch.length) batch.push(TRX.q.shift().slice(0, 1800));
     TRX.busy = true;
     lnGet("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=" + encodeURIComponent(batch.join("\n")), 10000).then(function (r) {
@@ -4998,10 +5011,12 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
       if (parts.length !== batch.length) { if (batch.length > 1) { batch.forEach(function (b) { TRX.q.unshift(b); }); TRX.q._solo = (TRX.q._solo || 0) + batch.length; } return; }
       batch.forEach(function (b, i) { var f = parts[i].trim(); if (f) { TRX.c[b] = f; TRX.out[f] = 1; } });
       trSave();
-    }).catch(function () { batch.forEach(function (b) { delete TRX.qs[b]; }); TRX.fail = (TRX.fail || 0) + 1; }).then(function () {
+      TRX.fail = 0;
+    }).catch(function () { batch.forEach(function (b) { TRX.q.push(b); }); TRX.fail = (TRX.fail || 0) + 1; }).then(function () {
       TRX.busy = false;
       TRX.nodes = TRX.nodes.filter(function (n) { return n.isConnected && !trApply(n); });
-      if (TRX.q.length && (TRX.fail || 0) < 5) setTimeout(trRun, TRX.q._solo ? 150 : 250);
+      /* service saturé : pause de 4 s, 8 s, 16 s… (2 min au plus), puis on reprend ; sinon un lot toutes les 0,6 s */
+      if (TRX.q.length) setTimeout(trRun, TRX.fail ? Math.min(120000, 2000 * Math.pow(2, TRX.fail)) : 600);
     });
   }
   /* lots qui ne se découpent pas proprement : on retraduit un par un */
@@ -5634,8 +5649,9 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     d.addEventListener("click", function (e) { if (e.target.id === "dclose") closeDetail(); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && d.classList.contains("on")) closeDetail(); });
     document.addEventListener("click", function (e) {
-      if (e.target.closest("a, button, input, select, label")) return;
-      var t = e.target.closest && e.target.closest("[data-det]"); if (t) detFor(t.getAttribute("data-det"));
+      var t = e.target.closest && e.target.closest("[data-det]"), ctl = e.target.closest("a, button, input, select, label");
+      if (ctl && ctl !== t) return; /* un bouton porteur de data-det (cours en direct) ouvre aussi sa fiche */
+      if (t) detFor(t.getAttribute("data-det"));
     });
     document.addEventListener("keydown", function (e) { var t = e.target; if ((e.key === "Enter" || e.key === " ") && t && t.getAttribute && t.getAttribute("data-det")) { e.preventDefault(); detFor(t.getAttribute("data-det")); } });
     new MutationObserver(function () { Array.prototype.forEach.call(document.querySelectorAll("[data-det]:not([tabindex])"), function (x) { x.setAttribute("tabindex", "0"); x.setAttribute("role", "button"); }); }).observe(document.body, { childList: true, subtree: true });
