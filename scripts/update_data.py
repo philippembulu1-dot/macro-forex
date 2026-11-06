@@ -2146,6 +2146,53 @@ def do_calendar(data):
     data["calendar"] = {"fetched": NOW.strftime("%Y-%m-%dT%H:%MZ"), "events": out}
 
 
+# ---------------------------------------------------------------- G8 : historique annuel (Banque mondiale) pour la carte et la comparaison des pays
+# Ajouté le 6 nov. 2026 (carte du G8 façon terminal pro). Une requête par indicateur, les 8 économies d'un coup ; une fois par jour suffit.
+G8_ISO = {"USA": "USD", "EMU": "EUR", "GBR": "GBP", "JPN": "JPY", "CHE": "CHF", "AUS": "AUD", "CAN": "CAD", "NZL": "NZD"}
+G8_IND = [("FP.CPI.TOTL.ZG", "cpi", "Inflation (moyenne annuelle)"), ("NY.GDP.MKTP.KD.ZG", "gdp", "Croissance du PIB réel"),
+          ("SL.UEM.TOTL.ZS", "unemp", "Chômage (OIT)"), ("GC.DOD.TOTL.GD.ZS", "debt", "Dette de l'État central (% du PIB)")]
+
+
+def do_g8(data):
+    prev = PREVIOUS.get("g8") or {}
+    if prev.get("day") == TODAY and prev.get("s"):
+        data["g8"] = prev
+        for code, key, label in G8_IND:
+            if prev["s"].get(key):
+                newest = max(v[-1][0] for v in prev["s"][key].values())
+                note("g8." + key, "G8 : " + label + " (Banque mondiale, 2010-%d)" % newest, "annual", True, "%d-12-31" % newest, url="https://data.worldbank.org/indicator/" + code)
+        return
+    out = {"day": TODAY, "s": {}}
+
+    def one(ind):
+        code, key, label = ind
+        url = "https://api.worldbank.org/v2/country/%s/indicator/%s?format=json&date=2010:%d&per_page=400" % (";".join(G8_ISO), code, NOW.year)
+        try:
+            j = json.loads(http("g8_%s.json" % key, url, tries=2, timeout=40))
+            rows = j[1] if isinstance(j, list) and len(j) > 1 else []
+            ser = {}
+            for r in rows or []:
+                iso, v = r.get("countryiso3code"), num(r.get("value"))
+                if iso in G8_ISO and v is not None:
+                    ser.setdefault(G8_ISO[iso], []).append([int(r["date"]), round(v, 2)])
+            if not ser:
+                raise ValueError("aucune valeur")
+            for c in ser:
+                ser[c].sort()
+            with LOCK:
+                out["s"][key] = ser
+            newest = max(v[-1][0] for v in ser.values())
+            note("g8." + key, "G8 : " + label + " (Banque mondiale, 2010-%d)" % newest, "annual", True, "%d-12-31" % newest, url="https://data.worldbank.org/indicator/" + code)
+        except Exception as e:
+            if prev.get("s", {}).get(key):
+                with LOCK:
+                    out["s"][key] = prev["s"][key]
+            note("g8." + key, "G8 : " + label + " (Banque mondiale)", "annual", False, err=e, url="https://data.worldbank.org/indicator/" + code)
+    with ThreadPoolExecutor(4) as ex:
+        list(ex.map(one, G8_IND))
+    data["g8"] = out
+
+
 # ---------------------------------------------------------------- Probabilités de taux (marchés de prédiction publics)
 def kalshi_price(m, f):
     v = m.get(f + "_dollars")
@@ -4396,7 +4443,7 @@ def do_move(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("flash", do_flash), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("g8", do_g8), ("flash", do_flash), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
              ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl), ("bankcot", do_bank_cot), ("euguide", do_euro_guide)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
