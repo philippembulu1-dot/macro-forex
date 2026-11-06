@@ -837,7 +837,7 @@ def do_zq(data):
         yy, mm = y + (m - 1 + i) // 12, (m - 1 + i) % 12 + 1
         sym = "ZQ%s%02d.CBT" % (ZQ_M[mm - 1], yy % 100)
         try:
-            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=5d" % urllib.parse.quote(sym)
+            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=1mo" % urllib.parse.quote(sym)
             r = json.loads(http("zq_%s.json" % sym, url, tries=2, timeout=15))["chart"]["result"][0]
             meta = r.get("meta") or {}
             closes = [c for c in (r["indicators"]["quote"][0].get("close") or []) if c]
@@ -845,7 +845,9 @@ def do_zq(data):
             if not p_ or not (80 < p_ < 101):
                 raise ValueError("prix absent")
             t_ = meta.get("regularMarketTime")
-            out["%d-%02d" % (yy, mm)] = {"p": p_, "sym": sym, "t": datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%dT%H:%MZ") if t_ else None}
+            # 7 nov. 2026 : clôtures quotidiennes du mois écoulé, pour le « repricing » (veille, il y a une semaine)
+            hist = [[datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), round(c, 4)] for t, c in zip(r.get("timestamp") or [], r["indicators"]["quote"][0].get("close") or []) if c and 80 < c < 101]
+            out["%d-%02d" % (yy, mm)] = {"p": p_, "sym": sym, "t": datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%dT%H:%MZ") if t_ else None, "h": hist[-25:]}
         except Exception as e:
             bad.append(sym)
             DIAG["zq_" + sym] = fr_err(e)[:80]
