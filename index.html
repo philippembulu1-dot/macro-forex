@@ -732,6 +732,20 @@ ul.cfl .cfc { color: var(--muted); font: 600 10.5px var(--font-mono); text-trans
 ul.cfl b { font: 600 11px var(--font-mono); }
 @media (max-width: 480px) { ul.cfl li { grid-template-columns: 1fr auto; } ul.cfl .cfc { grid-column: 1 / -1; } }
 .cotb .dt { display: block; } .cotb .dt i.down { left: auto; }
+
+.kwrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: -4px 0 8px; }
+.kw { background: var(--panel2); color: var(--fg); border: 1px solid var(--line2); border-radius: 999px; padding: 3px 9px; font: 12px var(--font-body); cursor: pointer; }
+.kw[aria-pressed="true"] { background: var(--amber); color: #111; } .kw small { color: var(--muted); } .kw[aria-pressed="true"] small { color: #333; }
+.cotwrap { overflow-x: auto; } table.cott th { text-align: left; font: 600 10.5px var(--font-mono); color: var(--muted); padding: 4px 6px 4px 0; white-space: nowrap; }
+table.cott tr { cursor: pointer; } table.cott tr.ext td { background: rgba(242,176,30,.08); } table.cott tr.on td { box-shadow: inset 0 -1px 0 var(--amber); } table.cott td.num { text-align: right; }
+.cotsel h3, .cth { font: 600 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin: 14px 0 8px; }
+.cotcat { display: grid; gap: 3px; margin-bottom: 8px; font-size: 12px; } .cotcat small { color: var(--muted); }
+.cotbar { height: 8px; border-radius: 4px; background: var(--down); overflow: hidden; } .cotbar i { display: block; height: 100%; background: var(--up); }
+.cotsp { width: 100%; height: 70px; display: block; background: var(--panel2); border-radius: 6px; }
+.relbig { display: grid; gap: 4px; padding: 10px; background: var(--panel2); border-radius: 8px; margin-bottom: 8px; } .relbig small { color: var(--muted); } .relbig p { margin: 0; font-size: 12px; }
+.relv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } .relv span { display: grid; color: var(--muted); font-size: 11px; } .relv b { color: var(--fg); font-size: 17px; } .relv b.up { color: var(--up); } .relv b.down { color: var(--down); }
+.corrg { display: grid; gap: 5px; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+.crc { display: flex; justify-content: space-between; gap: 6px; padding: 6px 8px; border-radius: 6px; font-size: 12px; }
 </style>
 
 </head><body><div class="shell">
@@ -4061,7 +4075,8 @@ ul.cfl b { font: 600 11px var(--font-mono); }
   function flashList(max) {
     var F = (AUTO && AUTO.flash) || [];
     var cb = ((AUTO && AUTO.news) || []).map(function (n) { return { t: n.t, l: n.l, d: n.d, src: n.src, k: "banques", u: false, a: n.c ? [n.c] : [] }; });
-    var all = F.concat(cb).filter(function (x) { return flashF === "all" || (flashF === "u" ? x.u : x.k === flashF); });
+    var kw = flKw && FL_KW.filter(function (k) { return k[0] === flKw; })[0];
+    var all = F.concat(cb).filter(function (x) { return (flashF === "all" || (flashF === "u" ? x.u : x.k === flashF)) && (!kw || kw[1].test(x.t)); });
     all.sort(function (a, b) { return (flashTime(b) || 0) - (flashTime(a) || 0); });
     return all.slice(0, max);
   }
@@ -4069,6 +4084,8 @@ ul.cfl b { font: 600 11px var(--font-mono); }
     var L = flashList(max);
     var seg = '<div class="seg" role="group" aria-label="Filtre des actualités">' + [["all", "Tout"], ["u", "Urgent"], ["marchés", "Marchés"], ["monde", "Monde"], ["banques", "Banques centrales"]].map(function (f) { return '<button type="button" data-flf="' + f[0] + '" aria-pressed="' + (flashF === f[0]) + '">' + f[1] + "</button>"; }).join("") + "</div>";
     if (!AUTO || !AUTO.flash) seg += '<p class="hint">Le fil flash arrive au prochain passage du robot (moins de 30 min).</p>';
+    var pool = ((AUTO && AUTO.flash) || []), nu = pool.filter(function (x) { return x.u; }).length;
+    seg += '<div class="kwrow"><span class="hint">' + nu + " urgentes sur " + pool.length + ' · mots-clés :</span>' + FL_KW.map(function (k) { var n = pool.filter(function (x) { return k[1].test(x.t); }).length; return n ? '<button type="button" class="kw" data-flkw="' + k[0] + '" aria-pressed="' + (flKw === k[0]) + '">' + k[0] + " <small>" + n + "</small></button>" : ""; }).join("") + "</div>";
     return seg + '<ul class="flash">' + (L.length ? L.map(function (x) {
       var t = flashTime(x), when = isNaN(t) ? "" : x.ts ? new Date(t).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : shortD(x.d);
       return '<li class="' + (x.u ? "urg" : "") + '"><span class="ft num">' + when + "</span>" + (x.u ? '<b class="ub">URGENT</b>' : "") + '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + '</a><span class="fs">' + esc(x.src) + (x.a && x.a.length ? " · " + x.a.join(" ") : "") + "</span></li>";
@@ -4260,15 +4277,101 @@ ul.cfl b { font: 600 11px var(--font-mono); }
       '<ul class="cfl">' + F.map(function (f) { return '<li><span class="cfc">' + f.c + "</span><span>" + f.t + '</span><b class="' + (f.d > 0 ? "up" : f.d < 0 ? "down" : "") + '">' + (f.d > 0 ? "Haussier" : f.d < 0 ? "Baissier" : "Neutre") + "</b></li>"; }).join("") + "</ul>" +
       '<p class="hint">Faits tirés des outils du terminal (sens pour ' + (cfPair === "XAUUSD" ? "l'or" : "la paire " + cfPair.slice(0, 3) + "/" + cfPair.slice(3)) + "), sans opinion. Particuliers : lecture contrarienne (la foule a souvent tort aux extrêmes). Ce n'est pas un signal d'achat ou de vente.</p>";
   }
-  /* ---------- COT : vue d'ensemble des fonds spéculatifs ---------- */
-  function cotHtml() {
-    var CO = AUTO && AUTO.cot; if (!CO) return '<p class="hint">Rapport COT en attente du robot.</p>';
-    var L = Object.keys(CO).map(function (k) { var x = CO[k]; return { k: k, pl: x.long / (x.long + x.short) * 100, ch: x.net - x.prev_net, x: x }; }).sort(function (a, b) { return b.pl - a.pl; });
-    var dt = L[0] && L[0].x.date;
-    return '<div class="dbars">' + L.map(function (r) { return '<div class="dbar cotb"><span class="dn">' + (r.k === "XAU" ? "Or" : r.k) + '</span><span class="dt"><i class="up" style="width:' + r.pl.toFixed(0) + '%"></i><i class="down" style="left:auto;right:0;width:' + (100 - r.pl).toFixed(0) + '%"></i></span><span class="dw num">' + Math.round(r.pl) + ' %</span><span class="dd num ' + cls(r.ch) + '">' + (r.ch >= 0 ? "+" : "−") + Math.abs(r.ch).toLocaleString("fr-FR") + "</span></div>"; }).join("") +
-      '</div><p class="hint">Part d\'acheteurs chez les fonds spéculatifs (non commerciaux, CFTC), vert = acheteurs, rouge = vendeurs ; dernière colonne = variation de la position nette sur la semaine. Rapport du ' + (dt ? shortD(dt) : "–") + ' (positions du mardi, publiées le vendredi). Détail : <a href="#e19">COT et flux</a>.</p>';
-  }
+  document.addEventListener("change", function (e) { if (e.target.dataset && e.target.dataset.corra) { corrA = e.target.value; try { localStorage.setItem("mf-corra", corrA); } catch (x) { } renderDashBlock("corr"); } });
   document.addEventListener("change", function (e) { if (e.target.dataset && e.target.dataset.cfpair) { cfPair = e.target.value; try { localStorage.setItem("mf-cfpair", cfPair); } catch (x) { } renderDashBlock("conf"); } });
+  /* ---------- COT élargi : extrêmes sur 3 ans, résumé factuel, direction par catégorie (6 nov. 2026) ---------- */
+  var COTN = { XAU: "Or", XAG: "Argent", WTI: "Pétrole WTI", EUR: "Euro", GBP: "Livre sterling", JPY: "Yen", CHF: "Franc suisse", AUD: "Dollar australien", CAD: "Dollar canadien", NZD: "Dollar néo-zélandais", DXY: "Dollar (DXY)", NAS: "Nasdaq 100", DOW: "Dow Jones", SPX: "S&P 500", US10: "Taux US 10 ans (T-Note)", BTC: "Bitcoin" };
+  var cotSel = "XAU", cotThr = 80;
+  try { cotSel = localStorage.getItem("mf-cotsel") || "XAU"; } catch (e) { /* stockage indisponible */ }
+  function cotRows() { var CO = (AUTO && AUTO.cot) || {}; return Object.keys(CO).map(function (k) { var x = CO[k]; return { k: k, n: COTN[k] || k, x: x, pl: x.long / Math.max(1, x.long + x.short) * 100, ch: x.prev_net === null || x.prev_net === undefined ? 0 : x.net - x.prev_net }; }); }
+  function cotBrief(L) {
+    if (!L.length) return "";
+    var big = L.slice().sort(function (a, b) { return Math.abs(b.ch) - Math.abs(a.ch); })[0];
+    var hi = L.filter(function (r) { return r.x.idx3y !== null && r.x.idx3y >= 90; }).map(function (r) { return r.n; }), lo = L.filter(function (r) { return r.x.idx3y !== null && r.x.idx3y <= 10; }).map(function (r) { return r.n; });
+    var fx = L.filter(function (r) { return ["EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"].indexOf(r.k) >= 0; }).sort(function (a, b) { return b.pl - a.pl; });
+    var st = L.filter(function (r) { return r.x.streak; }).sort(function (a, b) { return Math.abs(b.x.streak) - Math.abs(a.x.streak); })[0];
+    var li = ["<li>Plus gros mouvement de la semaine : <b>" + big.n + "</b>, position nette " + (big.ch >= 0 ? "+" : "−") + Math.abs(big.ch).toLocaleString("fr-FR") + " contrats.</li>"];
+    if (hi.length || lo.length) li.push("<li>Positions extrêmes sur 3 ans : " + (hi.length ? "au plus haut : <b>" + hi.join(", ") + "</b>" : "") + (hi.length && lo.length ? " ; " : "") + (lo.length ? "au plus bas : <b>" + lo.join(", ") + "</b>" : "") + ".</li>");
+    if (fx.length) li.push("<li>Devises : la plus achetée est <b>" + fx[0].n.toLowerCase() + "</b> (" + Math.round(fx[0].pl) + " % acheteurs), la plus vendue <b>" + fx[fx.length - 1].n.toLowerCase() + "</b> (" + Math.round(fx[fx.length - 1].pl) + " %).</li>");
+    if (st && Math.abs(st.x.streak) >= 3) li.push("<li>Plus longue série : <b>" + st.n + "</b>, position nette en " + (st.x.streak > 0 ? "hausse" : "baisse") + " depuis " + Math.abs(st.x.streak) + " semaines.</li>");
+    return '<ul class="brief">' + li.join("") + "</ul>";
+  }
+  function cotHtml() {
+    var L = cotRows(); if (!L.length) return '<p class="hint">Rapport COT en attente du robot.</p>';
+    var dt = L[0].x.date, sel = L.filter(function (r) { return r.k === cotSel; })[0] || L[0];
+    var seg = '<div class="seg" role="group" aria-label="Seuil des extrêmes">' + [[80, "80 / 20"], [90, "90 / 10"]].map(function (t) { return '<button type="button" data-cotthr="' + t[0] + '" aria-pressed="' + (cotThr === t[0]) + '">Extrêmes ' + t[1] + "</button>"; }).join("") + "</div>";
+    var rows = L.slice().sort(function (a, b) { return (b.x.idx3y || 0) - (a.x.idx3y || 0); }).map(function (r) {
+      var ix = r.x.idx3y, ext = ix !== null && (ix >= cotThr || ix <= 100 - cotThr), dIx = ix !== null && r.x.idx_prev !== null && r.x.idx_prev !== undefined ? ix - r.x.idx_prev : null;
+      return '<tr class="' + (ext ? "ext" : "") + (r.k === sel.k ? " on" : "") + '" data-cotsel="' + r.k + '"><td><b>' + r.n + '</b></td><td class="num">' + Math.round(r.pl) + ' %</td><td class="num">' + (ix === null ? "–" : ix) + '</td><td class="num">' + (r.x.pctl === undefined ? "–" : r.x.pctl + "e") + '</td><td class="num ' + (dIx === null ? "" : cls(dIx)) + '">' + (dIx === null ? "–" : (dIx >= 0 ? "+" : "−") + Math.abs(dIx) + " pt") + '</td><td class="num ' + cls(r.ch) + '">' + (r.ch >= 0 ? "+" : "−") + Math.abs(r.ch).toLocaleString("fr-FR") + "</td></tr>";
+    }).join("");
+    var g = sel.x.g, cats = g ? [["spec", "Spéculateurs (non commerciaux)"], ["comm", "Couverture (producteurs, banques)"], ["small", "Petits porteurs (non déclarés)"]].map(function (c) {
+      var x = g[c[0]]; if (!x) return ""; var p = x.long / Math.max(1, x.long + x.short) * 100;
+      return '<div class="cotcat"><small>' + c[1] + '</small><div class="cotbar"><i class="up" style="width:' + p.toFixed(0) + '%"></i></div><span><b class="num">' + Math.round(p) + " %</b> acheteurs · achats " + x.long.toLocaleString("fr-FR") + (x.dl !== null ? ' (<span class="' + cls(x.dl) + '">' + (x.dl >= 0 ? "+" : "−") + Math.abs(x.dl).toLocaleString("fr-FR") + "</span>)" : "") + " · ventes " + x.short.toLocaleString("fr-FR") + (x.ds !== null ? ' (<span class="' + cls(-x.ds) + '">' + (x.ds >= 0 ? "+" : "−") + Math.abs(x.ds).toLocaleString("fr-FR") + "</span>)" : "") + (x.p4 !== null ? " · il y a 4 semaines : " + fmt(x.p4, 0) + " %" : "") + "</span></div>";
+    }).join("") : "";
+    var spark = "";
+    if (sel.x.h52 && sel.x.h52.length > 4) {
+      var H = sel.x.h52, W = 320, Hh = 70, mx = Math.max.apply(null, H.map(function (r) { return Math.max(r[1], r[2]); })), mn = Math.min.apply(null, H.map(function (r) { return Math.min(r[1], r[2]); })), sc = function (v) { return (Hh - 4 - (v - mn) / Math.max(1, mx - mn) * (Hh - 8)).toFixed(1); }, xs = function (i) { return (i / (H.length - 1) * W).toFixed(1); };
+      spark = '<svg class="cotsp" viewBox="0 0 ' + W + " " + Hh + '" preserveAspectRatio="none" role="img" aria-label="Acheteurs et vendeurs sur 52 semaines"><polyline fill="none" stroke="var(--up)" stroke-width="1.6" points="' + H.map(function (r, i) { return xs(i) + "," + sc(r[1]); }).join(" ") + '"/><polyline fill="none" stroke="var(--down)" stroke-width="1.6" points="' + H.map(function (r, i) { return xs(i) + "," + sc(r[2]); }).join(" ") + '"/></svg><p class="hint">Achats (vert) et ventes (rouge) des spéculateurs sur ' + H.length + " semaines, du " + shortD(H[0][0]) + " au " + shortD(H[H.length - 1][0]) + ".</p>";
+    }
+    return seg + '<div class="cotwrap"><table class="mini cott"><thead><tr><th>Actif</th><th>Acheteurs</th><th title="Indice COT 3 ans : 0 = position nette la plus basse, 100 = la plus haute">Indice 3 ans</th><th>Centile</th><th>Indice sem.</th><th>Net sem.</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      '<div class="cotsel"><h3>' + sel.n + " : direction</h3>" + cats + spark + "</div>" +
+      "<h3 class=\"cth\">COT en bref</h3>" + cotBrief(L) +
+      '<p class="hint">Rapport CFTC du ' + shortD(dt) + " (positions du mardi, publiées le vendredi). Lignes en surbrillance = extrêmes (indice ≥ " + cotThr + " ou ≤ " + (100 - cotThr) + "). Touchez un actif pour sa direction. Résumé factuel, sans opinion d'achat ou de vente.</p>";
+  }
+
+  /* ---------- Dernière publication majeure (chiffre réel contre prévision) ---------- */
+  var INV_RX = /Unemployment|Jobless|Claims|U6/i;
+  function lastRelease() {
+    var E = (AUTO && AUTO.calendar && AUTO.calendar.events) || [], now = Date.now();
+    var done = E.filter(function (e) { return e.a && Date.parse(e.d) <= now && (e.i === "High" || e.i === "Medium"); }).sort(function (a, b) { return Date.parse(b.d) - Date.parse(a.d) || (b.i === "High") - (a.i === "High"); });
+    return done.slice(0, 6);
+  }
+  function relHtml() {
+    var L = lastRelease(); if (!L.length) return '<p class="hint">Les chiffres réels arrivent avec le robot (TradingView).</p>';
+    var tone = function (e) { var a = cfNum(e.a), f = cfNum(e.f || e.p); if (a === null || f === null || a === f) return ""; return ((a > f) !== INV_RX.test(e.t)) ? "up" : "down"; };
+    var e = L[0], t = tone(e);
+    return '<div class="relbig"><small>' + esc(e.c) + " · " + new Date(e.d).toLocaleString("fr-FR", { timeZone: KIN, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + " (Kinshasa)</small><b>" + esc(e.t) + '</b><div class="relv"><span>Réel<b class="num ' + t + '">' + esc(e.a) + "</b></span><span>Prévu<b class=\"num\">" + (e.f ? esc(e.f) : "–") + "</b></span><span>Précédent<b class=\"num\">" + (e.p ? esc(e.p) : "–") + "</b></span></div>" + (t ? '<p class="' + t + '">' + (t === "up" ? "Meilleur que prévu pour " : "Moins bon que prévu pour ") + esc(e.c) + "</p>" : "") + "</div>" +
+      '<table class="mini"><tbody>' + L.slice(1).map(function (x) { var tt = tone(x); return '<tr><td class="num">' + new Date(x.d).toLocaleString("fr-FR", { timeZone: KIN, weekday: "short", hour: "2-digit", minute: "2-digit" }) + "</td><td>" + esc(x.c) + "</td><td>" + esc(x.t) + '</td><td class="num ' + tt + '">' + esc(x.a) + '</td><td class="num">' + (x.f ? "prévu " + esc(x.f) : "") + "</td></tr>"; }).join("") + '</tbody></table><p class="hint">Vert = meilleur que prévu pour la devise, rouge = moins bon (chômage et inscriptions : inversé). Calendrier complet : <a href="#calendrier">Calendrier économique</a>.</p>';
+  }
+
+  /* ---------- Corrélations d'un actif avec tous les autres (clôtures quotidiennes) ---------- */
+  var CORR_W = 60, corrA = "eur";
+  try { corrA = localStorage.getItem("mf-corra") || "eur"; } catch (e) { /* stockage indisponible */ }
+  var CORR_N = { gold: "Or", silver: "Argent", plat: "Platine", copper: "Cuivre", oil: "WTI", brent: "Brent", nq: "Nasdaq 100", es: "S&P 500", dow: "Dow Jones", dax: "DAX", nikkei: "Nikkei 225", dxy: "Dollar (DXY)", us10: "US 10 ans", vix: "VIX", btc: "Bitcoin", eur: "EUR/USD", gbp: "GBP/USD", aud: "AUD/USD", nzd: "NZD/USD", jpy: "USD/JPY", cad: "USD/CAD", chf: "USD/CHF" };
+  function corrSeries() {
+    var D = (AUTO && AUTO.daily) || {}, S = {};
+    Object.keys(CORR_N).forEach(function (k) { if (D[k] && D[k].c) { var m = {}; D[k].c.forEach(function (p) { m[p[0]] = p[1]; }); S[k] = m; } });
+    /* paires croisées calculées à partir des paires contre le dollar */
+    var usd = { eur: 1, gbp: 1, aud: 1, nzd: 1, jpy: -1, cad: -1, chf: -1 }, nmC = { eur: "EUR", gbp: "GBP", aud: "AUD", nzd: "NZD", jpy: "JPY", cad: "CAD", chf: "CHF" };
+    var xs = [["eur", "jpy"], ["gbp", "jpy"], ["aud", "jpy"], ["eur", "gbp"], ["eur", "chf"], ["gbp", "chf"], ["aud", "nzd"], ["eur", "aud"], ["nzd", "jpy"], ["cad", "jpy"], ["chf", "jpy"], ["eur", "cad"]];
+    xs.forEach(function (x) {
+      var a = S[x[0]], b = S[x[1]]; if (!a || !b) return; var k = x[0] + x[1], m = {};
+      Object.keys(a).forEach(function (d) { if (b[d] === undefined) return; var va = usd[x[0]] > 0 ? a[d] : 1 / a[d], vb = usd[x[1]] > 0 ? b[d] : 1 / b[d]; m[d] = va / vb; });
+      S[k] = m; CORR_N[k] = nmC[x[0]] + "/" + nmC[x[1]];
+    });
+    return S;
+  }
+  function corrHtml() {
+    var S = corrSeries(), base = S[corrA]; if (!base) return '<p class="hint">Clôtures quotidiennes en attente du robot.</p>';
+    var ret = function (m, days) { var r = []; for (var i = 1; i < days.length; i++) r.push(Math.log(m[days[i]] / m[days[i - 1]])); return r; };
+    var cc = function (a, b) { var ma = mean(a), mb = mean(b), sa = 0, sb = 0, s = 0; for (var i = 0; i < a.length; i++) { s += (a[i] - ma) * (b[i] - mb); sa += (a[i] - ma) * (a[i] - ma); sb += (b[i] - mb) * (b[i] - mb); } return sa && sb ? s / Math.sqrt(sa * sb) : null; };
+    var out = [], last = "";
+    Object.keys(S).forEach(function (k) {
+      if (k === corrA) return; var m = S[k];
+      var days = Object.keys(base).filter(function (d) { return m[d] !== undefined; }).sort().slice(-(CORR_W + 1)); if (days.length < Math.min(CORR_W, 20) + 1) return;
+      if (days[days.length - 1] > last) last = days[days.length - 1];
+      var c = cc(ret(base, days), ret(m, days)); if (c !== null) out.push([k, c]);
+    });
+    out.sort(function (a, b) { return b[1] - a[1]; });
+    var opts = Object.keys(S).sort(function (a, b) { return CORR_N[a].localeCompare(CORR_N[b]); }).map(function (k) { return '<option value="' + k + '"' + (k === corrA ? " selected" : "") + ">" + CORR_N[k] + "</option>"; }).join("");
+    var seg = '<div class="cfhead"><select data-corra="1" aria-label="Actif de référence">' + opts + '</select><div class="seg" role="group" aria-label="Fenêtre">' + [20, 60, 120].map(function (w) { return '<button type="button" data-corrw="' + w + '" aria-pressed="' + (CORR_W === w) + '">' + w + " séances</button>"; }).join("") + "</div></div>";
+    return seg + '<div class="corrg">' + out.map(function (x) { var v = x[1]; return '<div class="crc" style="background:' + (v >= 0 ? "rgba(61,220,151," : "rgba(255,92,79,") + (Math.abs(v) * 0.55 + 0.05).toFixed(2) + ')"><span>' + CORR_N[x[0]] + '</span><b class="num">' + (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2).replace(".", ",") + "</b></div>"; }).join("") +
+      '</div><p class="hint">Corrélation des variations quotidiennes avec ' + CORR_N[corrA] + " sur " + CORR_W + " séances (dernière : " + (last ? shortD(last) : "–") + "). +1 = bougent ensemble, −1 = en sens inverse, 0 = sans lien. " + out.length + " actifs (Yahoo Finance, non officiel ; paires croisées recalculées).</p>";
+  }
+
+  /* ---------- Mots-clés des actualités ---------- */
+  var FL_KW = [["Fed", /\b(Fed|FOMC|Powell)\b/i], ["BCE", /\b(ECB|Lagarde|BCE)\b/i], ["BoE", /\b(BoE|Bank of England|Bailey)\b/i], ["BoJ", /\b(BoJ|Bank of Japan|Ueda)\b/i], ["Inflation", /\b(CPI|PCE|inflation|PPI)\b/i], ["Emploi", /\b(jobs?|payrolls?|NFP|employment|unemployment|jobless)\b/i], ["Croissance", /\b(GDP|growth|recession|PMI)\b/i], ["Taux", /\b(rates?|yields?|bonds?|Treasur\w*)\b/i], ["Géopolitique", /\b(war|Iran|Israel|Russia|Ukraine|China|missile|attack|sanction\w*|Gaza|Taiwan|military)\b/i], ["Droits de douane", /\b(tariffs?|trade war|trade deal)\b/i], ["Pétrole", /\b(oil|crude|OPEC|Brent|WTI)\b/i], ["Or", /\b(gold|XAU|bullion)\b/i], ["Actions", /\b(stocks?|Nasdaq|S&P|Wall Street|equities)\b/i]];
+  var flKw = "";
   var DASH = [
     { id: "brief", t: "Briefing du jour", f: briefHtml, w: 1 },
     { id: "next", t: "Prochaines annonces", f: nextHtml },
@@ -4276,7 +4379,9 @@ ul.cfl b { font: 600 11px var(--font-mono); }
     { id: "drivers", t: "Drivers et biais par marché", f: function () { return drvHtml(true); }, w: 1 },
     { id: "conf", t: "Confluences", f: confHtml, w: 1 },
     { id: "force", t: "Force et performance des devises", f: forceHtml },
-    { id: "cot", t: "COT : fonds spéculatifs", f: cotHtml },
+    { id: "cot", t: "COT : positions et extrêmes", f: cotHtml, w: 1 },
+    { id: "rel", t: "Dernières publications", f: relHtml },
+    { id: "corr", t: "Corrélations", f: corrHtml, w: 1 },
     { id: "risque", t: "Sentiment de risque", f: riskHtml },
     { id: "banques", t: "Banques centrales : prochaines réunions", f: banksHtml },
     { id: "geo", t: "Géopolitique", f: geoHtml },
@@ -4305,8 +4410,12 @@ ul.cfl b { font: 600 11px var(--font-mono); }
       '<div class="dgrid">' + ord.filter(function (id) { return !dashHidden(id); }).map(function (id) { var b = DASH.filter(function (x) { return x.id === id; })[0]; var body; try { body = b.f(); } catch (e) { body = '<p class="hint">Bloc indisponible pour le moment.</p>'; } return '<section class="dblk' + (b.w ? " dw2" : "") + '" data-blk="' + id + '"><h2>' + b.t + '</h2><div class="dbody">' + body + "</div></section>"; }).join("") + "</div>";
   }
   document.addEventListener("click", function (e) {
-    var t = e.target.closest && e.target.closest("[data-fhz],[data-drvtab],[data-flf],[data-tvgo],[data-dedit],[data-dshow],[data-dmv],[data-dreset],[data-aldel],[data-alperm]"); if (!t) return;
+    var t = e.target.closest && e.target.closest("[data-cotthr],[data-cotsel],[data-corrw],[data-flkw],[data-fhz],[data-drvtab],[data-flf],[data-tvgo],[data-dedit],[data-dshow],[data-dmv],[data-dreset],[data-aldel],[data-alperm]"); if (!t) return;
     if (t.dataset.fhz) { fHz = t.dataset.fhz; renderDashBlock("force"); return; }
+    if (t.dataset.cotthr) { cotThr = +t.dataset.cotthr; renderDashBlock("cot"); return; }
+    if (t.dataset.cotsel) { cotSel = t.dataset.cotsel; try { localStorage.setItem("mf-cotsel", cotSel); } catch (x) { } renderDashBlock("cot"); return; }
+    if (t.dataset.corrw) { CORR_W = +t.dataset.corrw; renderDashBlock("corr"); return; }
+    if (t.dataset.flkw) { flKw = flKw === t.dataset.flkw ? "" : t.dataset.flkw; renderDashBlock("flash"); return; }
     if (t.dataset.drvtab) { drvTab = t.dataset.drvtab; try { localStorage.setItem("mf-drvtab", drvTab); } catch (x) { } renderDashBlock("drivers"); }
     else if (t.dataset.flf) { flashF = t.dataset.flf; renderDashBlock("flash"); }
     else if (t.dataset.tvgo) { tvOn = t.dataset.tvgo === "1"; renderDashBlock("tv"); }
@@ -4326,7 +4435,8 @@ ul.cfl b { font: 600 11px var(--font-mono); }
     saveAlerts(); checkAlerts(); renderDashBlock("alertes");
   });
   setInterval(function () { Array.prototype.forEach.call(document.querySelectorAll("[data-cd]"), function (x) { x.textContent = cd(+x.dataset.cd - Date.now()); }); }, 1000);
-  setInterval(function () { if (!document.hidden && !curBr) renderDashBlock("cours"); checkAlerts(); }, 30000);
+  setInterval(function () { if (!document.hidden && !curBr) renderDashBlock("cours"); }, 15000);
+  setInterval(function () { if (!document.hidden && !curBr) { renderDashBlock("next"); renderDashBlock("rel"); } checkAlerts(); }, 30000);
 
   /* ---------- Tuiles de l'accueil (chiffres vivants) ---------- */
   function renderHub() {
