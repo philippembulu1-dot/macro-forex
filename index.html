@@ -782,8 +782,8 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
 .tatop b{font-size:1.05rem}.tatop .num{font-size:1.05rem}
 .tatip{flex-basis:100%;font-size:.8rem;color:#c9c3b3;min-height:1.1em}
 .tabox{position:relative}
-.tachart{width:100%;height:260px;display:block;touch-action:pan-y}
-.tasub{width:100%;height:84px;display:block}
+.tachart{width:100%;height:auto;display:block;touch-action:pan-y;cursor:crosshair}
+.tasub{width:100%;height:auto;display:block}
 .tax{font-size:10px;fill:#8a8577;font-variant-numeric:tabular-nums}
 .tachart .tax,.tasub .tax{vector-effect:non-scaling-stroke}
 .talab{font-size:.75rem;color:#8a8577;margin-top:6px}
@@ -791,7 +791,8 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
 .taidxg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
 .taidx svg{width:100%;height:110px;display:block}
 .tih{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:.88rem}
-@media (max-width:600px){.taidxg{grid-template-columns:1fr}.tachart{height:220px}}
+@media (max-width:600px){.taidxg{grid-template-columns:1fr}}
+.talv{font-size:.72rem;color:#3ddc97;font-weight:700}.talive{animation:ntblink 1.4s infinite}.tapx{font-size:1.2rem!important}
 
 /* Fil de news en direct, récap des sessions, carte du monde en direct, réponse au toucher (6 nov. 2026) */
 .nticker{display:flex;align-items:stretch;gap:0;border-bottom:1px solid rgba(242,176,30,.18);background:rgba(10,10,9,.92);font-size:.82rem;overflow:hidden;position:relative;z-index:5}
@@ -861,6 +862,46 @@ body.rdon{overflow:hidden}
 
 .trbtn{position:fixed;left:12px;bottom:12px;z-index:8000;min-width:44px;min-height:44px;border-radius:999px;border:1px solid rgba(242,176,30,.5);background:rgba(20,19,15,.92);color:#f2b01e;font-weight:700;letter-spacing:.04em;box-shadow:0 6px 20px rgba(0,0,0,.45);cursor:pointer}
 .trbtn[aria-pressed="false"]{color:#a8a294;border-color:rgba(255,255,255,.2)}
+
+/* Rapport de session */
+.rctabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.rctab{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);color:#c9c3b3;cursor:pointer;font:inherit;text-align:left}
+.rctab b{font-size:.92rem}.rctab small{font-size:.72rem;color:#8a8577}
+.rctab.on{border-color:#f2b01e;background:linear-gradient(180deg,rgba(242,176,30,.16),rgba(242,176,30,.04));color:#f6e3b0}
+.rcrep{margin-top:10px;border:1px solid rgba(242,176,30,.18);border-radius:16px;padding:16px;background:radial-gradient(120% 80% at 0 0,rgba(242,176,30,.07),transparent 60%),rgba(255,255,255,.015);animation:swapin .3s ease-out}
+.rchead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.rchead h3{margin:0;font-size:1.3rem;letter-spacing:.01em}.rchead span{color:#a8a294;font-size:.86rem}
+.rcchips{display:flex;gap:6px;flex-wrap:wrap}
+.rcst,.rcmood{padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700;border:1px solid rgba(255,255,255,.12)}
+.rcst.on{color:#3ddc97;border-color:rgba(61,220,151,.5)}
+.rcmood.on{color:#3ddc97;background:rgba(61,220,151,.08)}.rcmood.off{color:#ff8a7f;background:rgba(255,92,79,.08)}.rcmood.mix{color:#f2b01e;background:rgba(242,176,30,.08)}
+.rckey{margin:14px 0}.rckey h4,.rcbox h4{margin:0 0 8px;font-size:.9rem;color:#f2b01e}
+.rckey ul{margin:0;padding-left:18px;line-height:1.65}.rckey li{margin-bottom:4px}
+.rcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0 14px}
+.rccell{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06)}
+.rccell>div{display:flex;justify-content:space-between;align-items:baseline;gap:6px}.rccell small{color:#a8a294;font-size:.76rem}.rccell b{font-size:.98rem}
+.rcsp{width:100%;height:34px;display:block}
+.rccols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+.rcbox{padding:12px;border-radius:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.06)}
+.rcstr{width:100%;height:auto;display:block}
+.rctl{list-style:none;margin:0;padding:0;position:relative}
+.rctl:before{content:"";position:absolute;left:44px;top:4px;bottom:4px;width:1px;background:rgba(242,176,30,.25)}
+.rctl li{display:grid;grid-template-columns:40px 1fr;gap:14px;padding:6px 0;font-size:.86rem;line-height:1.45;position:relative}
+.rctl li:before{content:"";position:absolute;left:41px;top:12px;width:7px;height:7px;border-radius:50%;background:#f2b01e}
+.rctl li.news:before{background:#ff5c4f}.rctl li.move:before{background:#4da3ff}
+.rctl time{color:#f2b01e;font-variant-numeric:tabular-nums;font-size:.8rem;padding-top:1px}
+.rctl a{color:#ece8dc}
+.rcmore{margin-top:12px}.rcmore summary{cursor:pointer;color:#f2b01e;font-size:.88rem}
+@media (max-width:820px){.rccols{grid-template-columns:1fr}}
+
+/* Entrée des rubriques, résumés d'articles */
+.enter .brblk,.enter .panel,.enter .pcard,.enter .dblk,.enter .tile,.enter .hubt{animation:enterUp .45s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,14) * 45ms)}
+@keyframes enterUp{from{opacity:0;transform:translateY(14px) scale(.985);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+@media (prefers-reduced-motion:reduce){.enter .brblk,.enter .panel,.enter .pcard,.enter .dblk,.enter .tile,.enter .hubt{animation:none}}
+ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:.84rem;line-height:1.5}
+.rdrel{margin-top:16px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px}.rdrel h4{margin:0 0 6px;color:#f2b01e;font-size:.9rem}
+.dblk,.panel,.pcard{transition:border-color .2s ease,box-shadow .25s ease,transform .2s ease}
+.dblk:hover{border-color:rgba(242,176,30,.32);box-shadow:0 10px 30px rgba(0,0,0,.35)}
 </style>
 
 </head><body><div class="shell">
@@ -3909,7 +3950,8 @@ body.rdon{overflow:hidden}
     Object.keys(MONTHS_EN).forEach(function (k) { t = t.replace(new RegExp("\\b" + k + "\\b", "g"), MONTHS_EN[k]); });
     return t;
   }
-  function trLink(u) { return /^https?:\/\//i.test(u || "") ? ' <a href="https://translate.google.com/translate?sl=auto&tl=fr&u=' + encodeURIComponent(u) + '" target="_blank" rel="noopener" title="Ouvrir la page traduite en français"><small>traduire</small></a>' : ""; }
+  function trLink(u) { return ""; } /* 6 nov. 2026 : tout est traduit automatiquement et lu dans le lecteur intégré */
+  function trLinkOld(u) { return /^https?:\/\//i.test(u || "") ? ' <a href="https://translate.google.com/translate?sl=auto&tl=fr&u=' + encodeURIComponent(u) + '" target="_blank" rel="noopener" title="Ouvrir la page traduite en français"><small>traduire</small></a>' : ""; }
 
   /* ---------- Trafic maritime ---------- */
   var SHIPFR = [["Hormuz", "Détroit d'Ormuz"], ["Bab el-Mandeb", "Bab el-Mandeb (mer Rouge)"], ["Suez", "Canal de Suez"], ["Malacca", "Détroit de Malacca"],
@@ -4125,6 +4167,8 @@ body.rdon{overflow:hidden}
       if (!id) renderHub();
       setTimeout(function () { window.dispatchEvent(new Event("resize")); }, 60); /* redessine les graphiques qui étaient cachés */
       countUp(id ? $("br-" + id) : $("hub"));
+      var en = id ? $("br-" + id) : $("hub");
+      if (en && !matchMedia("(prefers-reduced-motion: reduce)").matches) { var kids = en.querySelectorAll(".brblk, .panel, .pcard, .dblk, .tile, .hubt"), k = 0; Array.prototype.forEach.call(kids, function (x) { if (k < 14 && x.offsetParent !== null) { x.style.setProperty("--i", k++); } else x.style.removeProperty("--i"); }); en.classList.remove("enter"); void en.offsetWidth; en.classList.add("enter"); clearTimeout(en._enT); en._enT = setTimeout(function () { en.classList.remove("enter"); }, 1200); }
     };
     if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) { var vt = document.startViewTransition(apply), q_ = function () {}; if (vt) { if (vt.ready) vt.ready.catch(q_); if (vt.finished) vt.finished.catch(q_); if (vt.updateCallbackDone) vt.updateCallbackDone.catch(q_); } } else apply();
   }
@@ -4229,7 +4273,7 @@ body.rdon{overflow:hidden}
     seg += '<div class="kwrow"><span class="hint">' + nu + " urgentes sur " + pool.length + ' · mots-clés :</span>' + FL_KW.map(function (k) { var n = pool.filter(function (x) { return k[1].test(x.t); }).length; return n ? '<button type="button" class="kw" data-flkw="' + k[0] + '" aria-pressed="' + (flKw === k[0]) + '">' + k[0] + " <small>" + n + "</small></button>" : ""; }).join("") + "</div>";
     return seg + '<ul class="flash">' + (L.length ? L.map(function (x) {
       var t = flashTime(x), when = isNaN(t) ? "" : x.ts ? new Date(t).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : shortD(x.d);
-      return '<li class="' + (x.u ? "urg" : "") + '"><span class="ft num">' + when + "</span>" + (x.u ? '<b class="ub">URGENT</b>' : "") + '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + '</a><span class="fs">' + esc(x.src) + (x.a && x.a.length ? " · " + x.a.join(" ") : "") + "</span></li>";
+      return '<li class="' + (x.u ? "urg" : "") + '"><span class="ft num">' + when + "</span>" + (x.u ? '<b class="ub">URGENT</b>' : "") + '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" + (x.x ? '<p class="fx">' + esc(x.x.length > 220 ? x.x.slice(0, 217).replace(/\s+\S*$/, "") + "…" : x.x) + "</p>" : "") + '<span class="fs">' + esc(x.src) + (x.a && x.a.length ? " · " + x.a.join(" ") : "") + "</span></li>";
     }).join("") : '<li class="hint">Aucune actualité pour ce filtre.</li>') + "</ul>";
   }
 
@@ -4443,28 +4487,39 @@ body.rdon{overflow:hidden}
     var keys = Object.keys(M.EUR).filter(function (t) { return TA_CUR.every(function (c) { return c === "USD" || M[c][t] !== undefined; }); }).sort();
     return { M: M, t: keys, v: function (c, t) { return c === "USD" ? 1 : M[c][t]; } };
   }
-  function taGroup(rows, tf) { /* regroupe en bougies 4 h ou hebdomadaires (dernière cotation de la période) */
-    if (tf !== "H4" && tf !== "W") return rows;
+  function taGroup(rows, tf, ohl) { /* bougies : 1 h et jour telles quelles ; 4 h et semaine regroupées (ouverture = 1re, haut = max, bas = min, clôture = dernière) */
+    var K = rows.map(function (r, i) { var x = ohl && ohl[i]; return x ? [x[0], x[1], x[2], r[1]] : [i ? rows[i - 1][1] : r[1], Math.max(r[1], i ? rows[i - 1][1] : r[1]), Math.min(r[1], i ? rows[i - 1][1] : r[1]), r[1]]; });
+    if (tf !== "H4" && tf !== "W") return { c: rows, k: K };
     var out = [], key = function (t) { var d = new Date(t.length > 10 ? t : t + "T00:00:00Z"); if (tf === "H4") return t.slice(0, 11) + String(Math.floor(d.getUTCHours() / 4) * 4).padStart(2, "0"); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
-    rows.forEach(function (r) { var k = key(r[0]); if (out.length && out[out.length - 1].k === k) out[out.length - 1].r = r; else out.push({ k: k, r: r }); });
-    return out.map(function (x) { return x.r; });
+    rows.forEach(function (r, i) { var k = key(r[0]), b = K[i], L = out[out.length - 1]; if (L && L.key === k) { L.r = [L.r[0], r[1]]; L.k = [L.k[0], Math.max(L.k[1], b[1]), Math.min(L.k[2], b[2]), b[3]]; } else out.push({ key: k, r: [r[0], r[1]], k: b.slice() }); });
+    return { c: out.map(function (x) { return x.r; }), k: out.map(function (x) { return x.k; }) };
   }
+  var TA_MAJ = { EURUSD: ["eur", "EURUSD", "EUR="], GBPUSD: ["gbp", "GBPUSD", "GBP="], USDJPY: ["jpy", "USDJPY", "JPY="], AUDUSD: ["aud", "AUDUSD", "AUD="], USDCAD: ["cad", "USDCAD", "CAD="], USDCHF: ["chf", "USDCHF", "CHF="], NZDUSD: ["nzd", "NZDUSD", "NZD="] };
+  var TA_LIVE = { XAUUSD: "@GC.1", DXY: ".DXY", XAGUSD: "@SI.1", NAS100: "@ND.1", SPX500: "@SP.1", WTI: "@CL.1", BTCUSD: "BTC.CM=", US10Y: "US10Y", AUDJPY: "AUDJPY=" };
   function taSeries(sym, tf) {
-    var intra = tf === "H1" || tf === "H4", rows = null, src = "";
-    if (TA_OTHER[sym]) {
-      var k = TA_OTHER[sym][intra ? 1 : 0], S = intra ? AUTO && AUTO.intraday : AUTO && AUTO.daily, s = k && S && S[k] && S[k].c;
-      if (s) { rows = s.map(function (r) { return [r[0], r[1]]; }); src = (S[k].sym || "") + " · Yahoo Finance, non officiel"; }
-    } else {
+    var intra = tf === "H1" || tf === "H4", rows = null, ohl = null, src = "", node = null;
+    if (TA_OTHER[sym]) { var k = TA_OTHER[sym][intra ? 1 : 0], S = intra ? AUTO && AUTO.intraday : AUTO && AUTO.daily; node = k && S && S[k]; }
+    else if (TA_MAJ[sym]) { var S2 = intra ? AUTO && AUTO.intraday : AUTO && AUTO.daily; node = S2 && S2[TA_MAJ[sym][intra ? 1 : 0]]; }
+    else { var X = AUTO && AUTO.crosses && AUTO.crosses[intra ? "h" : "d"]; node = X && X[sym]; }
+    if (node && node.c && node.c.length >= 10) { rows = node.c.map(function (r) { return [r[0], r[1]]; }); ohl = node.ohl && node.ohl.length === node.c.length ? node.ohl : null; src = (node.sym || "") + " · Yahoo Finance, non officiel" + (ohl ? "" : " (clôtures seules : bougies sans mèches)"); }
+    else if (!TA_OTHER[sym]) {
       var U = taUsdMaps(intra), b = sym.slice(0, 3), q = sym.slice(3);
-      if (U) { rows = U.t.map(function (t) { return [t, U.v(b, t) / U.v(q, t)]; }); src = (TA_USDK[b] && TA_USDK[q] ? "paire croisée recalculée depuis les paires contre dollar" : "Yahoo Finance, non officiel"); }
+      if (U) { rows = U.t.map(function (t) { return [t, U.v(b, t) / U.v(q, t)]; }); src = "paire croisée recalculée depuis les paires contre dollar (bougies sans mèches)"; }
     }
     if (!rows || rows.length < 10) return null;
-    return { c: taGroup(rows, tf), src: src, intra: intra };
+    var G = taGroup(rows, tf, ohl), live = null;
+    /* dernier prix en direct (CNBC, 60 s) sur la dernière bougie */
+    var ls = TA_LIVE[sym] || (TA_MAJ[sym] && TA_MAJ[sym][2]), lq = ls && LIVE.q[ls];
+    if (lq && liveFresh(lq) && lq.t > Date.parse(G.c[G.c.length - 1][0].length > 10 ? G.c[G.c.length - 1][0] : G.c[G.c.length - 1][0] + "T00:00:00Z")) {
+      var lk = G.k[G.k.length - 1], lv = lq.v;
+      if (Math.abs(lv / lk[3] - 1) < 0.03) { G.k[G.k.length - 1] = [lk[0], Math.max(lk[1], lv), Math.min(lk[2], lv), lv]; G.c[G.c.length - 1] = [G.c[G.c.length - 1][0], lv]; live = lq.t; }
+    }
+    return { c: G.c, k: G.k, src: src, intra: intra, live: live, wick: !!ohl };
   }
   function taIndex(cur, tf) { /* indice d'une devise : valeur contre la moyenne géométrique des 8, base 100 au début */
     var intra = tf === "H1" || tf === "H4", U = taUsdMaps(intra); if (!U) return null;
     var rows = U.t.map(function (t) { var g = 0; TA_CUR.forEach(function (c) { g += Math.log(U.v(c, t)); }); return [t, Math.exp(Math.log(U.v(cur, t)) - g / 8)]; });
-    rows = taGroup(rows, tf); var b0 = rows[0][1]; return rows.map(function (r) { return [r[0], r[1] / b0 * 100]; });
+    rows = taGroup(rows, tf, null).c; var b0 = rows[0][1]; return rows.map(function (r) { return [r[0], r[1] / b0 * 100]; });
   }
   function taSma(v, n) { var o = [], s = 0; for (var i = 0; i < v.length; i++) { s += v[i]; if (i >= n) s -= v[i - n]; o.push(i >= n - 1 ? s / n : null); } return o; }
   function taEma(v, n) { var o = [], k = 2 / (n + 1), e = null; for (var i = 0; i < v.length; i++) { if (i === n - 1) { var s = 0; for (var j = 0; j < n; j++) s += v[j]; e = s / n; } else if (i >= n) e = v[i] * k + e * (1 - k); o.push(i >= n - 1 ? e : null); } return o; }
@@ -4478,35 +4533,45 @@ body.rdon{overflow:hidden}
   }
   function taDec(sym, x) { return /JPY$/.test(sym) ? 3 : TA_OTHER[sym] ? (x > 1000 ? 0 : x > 50 ? 2 : 3) : 5; }
   function taLbl(t, tf) { var d = new Date(t.length > 10 ? t : t + "T12:00:00Z"); return tf === "H1" || tf === "H4" ? d.toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", year: "2-digit" }); }
-  var TA_LAST = null;
+  var TA_LAST = null, taZoom = "120";
+  try { taZoom = localStorage.getItem("mf-tazoom") || "120"; } catch (e) { /* stockage indisponible */ }
+  function taGeom(R, W, H, top, bot) { var n = R.v.length, s0 = taZoom === "all" ? 0 : Math.max(0, n - +taZoom), cnt = n - s0, pl = 6, pr = 64, w = W - pl - pr, step = w / cnt; return { n: n, s0: s0, cnt: cnt, pl: pl, pr: pr, w: w, step: step, X: function (i) { return pl + (i - s0 + 0.5) * step; }, top: top, h: H - top - bot }; }
   function taChart(R, W) {
-    var n = R.v.length, H = 250, pl = 6, pr = 62, top = 10, bot = 22, w = W - pl - pr, h = H - top - bot;
-    var vals = R.v.slice();
-    ["ma20", "ma50", "ma100"].forEach(function (k) { if (taOn[k]) R[k].forEach(function (x) { if (x !== null) vals.push(x); }); });
-    if (taOn.bb) R.bb.up.concat(R.bb.lo).forEach(function (x) { if (x !== null) vals.push(x); });
+    var H = 300, G = taGeom(R, W, H, 10, 22), K = R.S.k, s0 = G.s0, n = G.n;
+    var vals = []; for (var i = s0; i < n; i++) { vals.push(K[i][1], K[i][2]); }
+    ["ma20", "ma50", "ma100"].forEach(function (k) { if (taOn[k]) for (var i = s0; i < n; i++) if (R[k][i] !== null) vals.push(R[k][i]); });
+    if (taOn.bb) for (var j = s0; j < n; j++) if (R.bb.up[j] !== null) vals.push(R.bb.up[j], R.bb.lo[j]);
     var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), pad = (mx - mn) * 0.06 || mx * 0.001; mn -= pad; mx += pad;
-    var X = function (i) { return pl + (n < 2 ? 0 : i / (n - 1) * w); }, Y = function (y) { return top + (mx - y) / (mx - mn) * h; };
-    var line = function (arr, col, wd, dash) { var p = "", s = false; arr.forEach(function (y, i) { if (y === null) { s = false; return; } p += (s ? "L" : "M") + X(i).toFixed(1) + " " + Y(y).toFixed(1); s = true; }); return p ? '<path d="' + p + '" fill="none" stroke="' + col + '" stroke-width="' + wd + '"' + (dash ? ' stroke-dasharray="4 3"' : "") + ' vector-effect="non-scaling-stroke"/>' : ""; };
+    var X = G.X, Y = function (y) { return G.top + (mx - y) / (mx - mn) * G.h; };
+    var line = function (arr, col, wd, dash) { var p = "", s = false; for (var i = s0; i < n; i++) { var y = arr[i]; if (y === null) { s = false; continue; } p += (s ? "L" : "M") + X(i).toFixed(1) + " " + Y(y).toFixed(1); s = true; } return p ? '<path d="' + p + '" fill="none" stroke="' + col + '" stroke-width="' + wd + '"' + (dash ? ' stroke-dasharray="4 3"' : "") + ' vector-effect="non-scaling-stroke"/>' : ""; };
     var dec = taDec(taSym, R.v[n - 1]), g = "";
-    for (var k = 0; k <= 4; k++) { var yv = mn + (mx - mn) * k / 4; g += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(yv).toFixed(1) + '" y2="' + Y(yv).toFixed(1) + '" stroke="#2a2822" stroke-width="1"/><text x="' + (W - pr + 6) + '" y="' + (Y(yv) + 4).toFixed(1) + '" class="tax">' + fmtN(yv, dec) + "</text>"; }
+    for (var k = 0; k <= 5; k++) { var yv = mn + (mx - mn) * k / 5; g += '<line x1="' + G.pl + '" x2="' + (W - G.pr) + '" y1="' + Y(yv).toFixed(1) + '" y2="' + Y(yv).toFixed(1) + '" stroke="#24221c" stroke-width="1"/><text x="' + (W - G.pr + 6) + '" y="' + (Y(yv) + 4).toFixed(1) + '" class="tax">' + fmtN(yv, dec) + "</text>"; }
     var band = "";
-    if (taOn.bb) { var up = [], lo = []; R.bb.up.forEach(function (y, i) { if (y !== null) { up.push(X(i).toFixed(1) + "," + Y(y).toFixed(1)); lo.unshift(X(i).toFixed(1) + "," + Y(R.bb.lo[i]).toFixed(1)); } }); if (up.length) band = '<polygon points="' + up.concat(lo).join(" ") + '" fill="rgba(138,133,119,.14)"/>' + line(R.bb.up, "#8a8577", 1, 1) + line(R.bb.lo, "#8a8577", 1, 1); }
-    var last = R.v[n - 1], first = R.v[0], col = last >= first ? "#3ddc97" : "#ff5c4f";
-    var xl = [0, Math.floor(n / 2), n - 1].map(function (i, j) { return '<text x="' + X(i).toFixed(1) + '" y="' + (H - 6) + '" class="tax" text-anchor="' + (j === 0 ? "start" : j === 2 ? "end" : "middle") + '">' + taLbl(R.S.c[i][0], taTf) + "</text>"; }).join("");
-    return '<svg class="tachart" data-tachart="1" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" role="img" aria-label="' + taName(taSym) + ' avec indicateurs">' + g + band +
-      line(R.v, "#ece8dc", 1.6) + (taOn.ma20 ? line(R.ma20, "#f2b01e", 1.3) : "") + (taOn.ma50 ? line(R.ma50, "#4da3ff", 1.3) : "") + (taOn.ma100 ? line(R.ma100, "#c77dff", 1.3) : "") +
-      '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(last).toFixed(1) + '" y2="' + Y(last).toFixed(1) + '" stroke="' + col + '" stroke-dasharray="2 3" stroke-width="1"/><rect x="' + (W - pr + 2) + '" y="' + (Y(last) - 9).toFixed(1) + '" width="' + (pr - 4) + '" height="18" rx="3" fill="' + col + '"/><text x="' + (W - pr + 6) + '" y="' + (Y(last) + 4).toFixed(1) + '" class="tax" fill="#111" style="fill:#14130f;font-weight:700">' + fmtN(last, dec) + "</text>" + xl +
-      '<line class="tacross" x1="0" x2="0" y1="' + top + '" y2="' + (H - bot) + '" stroke="#f2b01e" stroke-width="1" style="display:none"/></svg>';
+    if (taOn.bb) { var up = [], lo = []; for (var b = s0; b < n; b++) if (R.bb.up[b] !== null) { up.push(X(b).toFixed(1) + "," + Y(R.bb.up[b]).toFixed(1)); lo.unshift(X(b).toFixed(1) + "," + Y(R.bb.lo[b]).toFixed(1)); } if (up.length) band = '<polygon points="' + up.concat(lo).join(" ") + '" fill="rgba(138,133,119,.12)"/>' + line(R.bb.up, "#8a8577", 1, 1) + line(R.bb.lo, "#8a8577", 1, 1); }
+    /* chandeliers */
+    var bw = Math.max(1, Math.min(14, G.step * 0.66)), cs = "";
+    for (var c = s0; c < n; c++) {
+      var q = K[c], upc = q[3] >= q[0], col = upc ? "#3ddc97" : "#ff5c4f", x = X(c), y1 = Y(Math.max(q[0], q[3])), y2 = Y(Math.min(q[0], q[3]));
+      cs += '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + Y(q[1]).toFixed(1) + '" y2="' + Y(q[2]).toFixed(1) + '" stroke="' + col + '" stroke-width="1"/>' +
+        '<rect x="' + (x - bw / 2).toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(1, y2 - y1).toFixed(1) + '" fill="' + (upc ? col : col) + '"' + (upc ? ' fill-opacity=".9"' : "") + (c === n - 1 && R.S.live ? ' class="talive"' : "") + "/>";
+    }
+    var last = R.v[n - 1], lc = K[n - 1][3] >= K[n - 1][0] ? "#3ddc97" : "#ff5c4f";
+    var xl = [s0, Math.floor((s0 + n - 1) / 2), n - 1].map(function (i, j) { return '<text x="' + X(i).toFixed(1) + '" y="' + (H - 6) + '" class="tax" text-anchor="' + (j === 0 ? "start" : j === 2 ? "end" : "middle") + '">' + taLbl(R.S.c[i][0], taTf) + "</text>"; }).join("");
+    return '<svg class="tachart" data-tachart="1" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + taName(taSym) + ' en chandeliers">' + g + band + cs +
+      (taOn.ma20 ? line(R.ma20, "#f2b01e", 1.4) : "") + (taOn.ma50 ? line(R.ma50, "#4da3ff", 1.4) : "") + (taOn.ma100 ? line(R.ma100, "#c77dff", 1.4) : "") +
+      '<line x1="' + G.pl + '" x2="' + (W - G.pr) + '" y1="' + Y(last).toFixed(1) + '" y2="' + Y(last).toFixed(1) + '" stroke="' + lc + '" stroke-dasharray="2 3" stroke-width="1"/><rect x="' + (W - G.pr + 2) + '" y="' + (Y(last) - 10).toFixed(1) + '" width="' + (G.pr - 4) + '" height="20" rx="4" fill="' + lc + '"/><text x="' + (W - G.pr + 6) + '" y="' + (Y(last) + 4).toFixed(1) + '" class="tax" style="fill:#14130f;font-weight:700">' + fmtN(last, dec) + "</text>" + xl +
+      '<line class="tacross" x1="0" x2="0" y1="' + G.top + '" y2="' + (H - 22) + '" stroke="#f2b01e" stroke-width="1" stroke-dasharray="3 3" style="display:none"/></svg>';
   }
-  function taSub(arr, W, kind, extra) {
-    var n = arr.length, H = 84, pl = 6, pr = 62, top = 6, bot = 6, w = W - pl - pr, h = H - top - bot, xs = arr.concat(extra ? extra.s.concat(extra.h) : []).filter(function (x) { return x !== null; });
+  function taSub(arr, W, kind, extra, R) {
+    var H = 84, G = taGeom(R, W, H, 6, 6), s0 = G.s0, n = G.n, xs = [];
+    for (var i = s0; i < n; i++) { if (arr[i] !== null) xs.push(arr[i]); if (extra) { if (extra.s[i] !== null) xs.push(extra.s[i]); if (extra.h[i] !== null) xs.push(extra.h[i]); } }
     if (!xs.length) return "";
     var mn = kind === "rsi" ? 0 : Math.min.apply(null, xs), mx = kind === "rsi" ? 100 : Math.max.apply(null, xs); if (kind !== "rsi") { var a = Math.max(Math.abs(mn), Math.abs(mx)) || 1; mn = -a; mx = a; }
-    var X = function (i) { return pl + i / (n - 1) * w; }, Y = function (y) { return top + (mx - y) / (mx - mn) * h; };
-    var path = function (v, col) { var p = "", s = false; v.forEach(function (y, i) { if (y === null) { s = false; return; } p += (s ? "L" : "M") + X(i).toFixed(1) + " " + Y(y).toFixed(1); s = true; }); return '<path d="' + p + '" fill="none" stroke="' + col + '" stroke-width="1.3" vector-effect="non-scaling-stroke"/>'; };
-    var o = '<svg class="tasub" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-hidden="true">';
-    if (kind === "rsi") { o += '<rect x="' + pl + '" y="' + Y(70) + '" width="' + w + '" height="' + (Y(30) - Y(70)) + '" fill="rgba(242,176,30,.07)"/>' + [30, 50, 70].map(function (l) { return '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(l) + '" y2="' + Y(l) + '" stroke="#2a2822"/><text x="' + (W - pr + 6) + '" y="' + (Y(l) + 4) + '" class="tax">' + l + "</text>"; }).join("") + path(arr, "#f2b01e"); }
-    else { var bw = Math.max(1, w / n * 0.7); o += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#2a2822"/>' + extra.h.map(function (y, i) { return y === null ? "" : '<rect x="' + (X(i) - bw / 2).toFixed(1) + '" y="' + Math.min(Y(0), Y(y)).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.abs(Y(y) - Y(0)).toFixed(1) + '" fill="' + (y >= 0 ? "rgba(61,220,151,.55)" : "rgba(255,92,79,.55)") + '"/>'; }).join("") + path(arr, "#4da3ff") + path(extra.s, "#f2b01e"); }
+    var X = G.X, Y = function (y) { return G.top + (mx - y) / (mx - mn) * G.h; };
+    var path = function (v, col) { var p = "", s = false; for (var i = s0; i < n; i++) { var y = v[i]; if (y === null) { s = false; continue; } p += (s ? "L" : "M") + X(i).toFixed(1) + " " + Y(y).toFixed(1); s = true; } return '<path d="' + p + '" fill="none" stroke="' + col + '" stroke-width="1.3" vector-effect="non-scaling-stroke"/>'; };
+    var o = '<svg class="tasub" viewBox="0 0 ' + W + " " + H + '" aria-hidden="true">';
+    if (kind === "rsi") { o += '<rect x="' + G.pl + '" y="' + Y(70) + '" width="' + G.w + '" height="' + (Y(30) - Y(70)) + '" fill="rgba(242,176,30,.07)"/>' + [30, 50, 70].map(function (l) { return '<line x1="' + G.pl + '" x2="' + (W - G.pr) + '" y1="' + Y(l) + '" y2="' + Y(l) + '" stroke="#24221c"/><text x="' + (W - G.pr + 6) + '" y="' + (Y(l) + 4) + '" class="tax">' + l + "</text>"; }).join("") + path(arr, "#f2b01e"); }
+    else { var bw = Math.max(1, G.step * 0.66), hs = ""; for (var j = s0; j < n; j++) { var y = extra.h[j]; if (y !== null) hs += '<rect x="' + (X(j) - bw / 2).toFixed(1) + '" y="' + Math.min(Y(0), Y(y)).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.abs(Y(y) - Y(0)).toFixed(1) + '" fill="' + (y >= 0 ? "rgba(61,220,151,.55)" : "rgba(255,92,79,.55)") + '"/>'; } o += '<line x1="' + G.pl + '" x2="' + (W - G.pr) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#24221c"/>' + hs + path(arr, "#4da3ff") + path(extra.s, "#f2b01e"); }
     return o + "</svg>";
   }
   function taRead(R) { /* lecture factuelle des indicateurs */
@@ -4515,6 +4580,8 @@ body.rdon{overflow:hidden}
     var r = R.rsi[n - 1]; if (r !== null) out.push({ t: "RSI 14 à " + Math.round(r) + (r >= 70 ? " : zone de surachat (le prix a beaucoup monté, risque de pause)." : r <= 30 ? " : zone de survente (le prix a beaucoup baissé, risque de rebond)." : r >= 50 ? " : élan plutôt acheteur." : " : élan plutôt vendeur."), d: r >= 70 ? -1 : r <= 30 ? 1 : r >= 55 ? 1 : r <= 45 ? -1 : 0, k: "rsi" });
     var bu = R.bb.up[n - 1], bl = R.bb.lo[n - 1]; if (bu !== null) { var pb = (p - bl) / (bu - bl) * 100; out.push({ t: "Bollinger : prix à " + Math.round(pb) + " % de la bande (0 = bande basse, 100 = bande haute)" + (pb > 100 ? ", sorti par le haut." : pb < 0 ? ", sorti par le bas." : ".") + " Largeur " + fmtN((bu - bl) / R.bb.m[n - 1] * 100, 2) + " % du prix.", d: pb > 100 ? -1 : pb < 0 ? 1 : 0, k: "bb" }); }
     var M = R.macd, mh = M.h[n - 1], mp = M.h[n - 2]; if (mh !== null && mp !== null) out.push({ t: "MACD " + (mh >= 0 ? "au-dessus" : "sous") + " de son signal" + ((mh >= 0) !== (mp >= 0) ? " (croisement sur la dernière bougie)" : "") + (Math.abs(mh) > Math.abs(mp) ? ", écart qui grandit." : ", écart qui se réduit."), d: mh > 0 ? 1 : mh < 0 ? -1 : 0, k: "macd" });
+    var K = R.S.k[n - 1], body = Math.abs(K[3] - K[0]), rng = K[1] - K[2];
+    if (rng > 0) out.push({ t: "Dernière bougie " + (K[3] >= K[0] ? "verte (hausse)" : "rouge (baisse)") + " : corps = " + Math.round(body / rng * 100) + " % de l'amplitude" + (body / rng < 0.25 ? ", indécision (mèches longues)." : body / rng > 0.7 ? ", mouvement net." : "."), d: body / rng < 0.25 ? 0 : K[3] >= K[0] ? 1 : -1 });
     return out;
   }
   function taIdxHtml(cur, W) {
@@ -4528,13 +4595,14 @@ body.rdon{overflow:hidden}
   function taHtml() {
     var R = taCalc(taSym, taTf);
     var opts = '<optgroup label="Devises">' + TA_PAIRS.map(function (p) { return '<option value="' + p + '"' + (p === taSym ? " selected" : "") + ">" + taName(p) + "</option>"; }).join("") + '</optgroup><optgroup label="Autres marchés">' + Object.keys(TA_OTHER).map(function (p) { return '<option value="' + p + '"' + (p === taSym ? " selected" : "") + ">" + TA_OTHER[p][2] + "</option>"; }).join("") + "</optgroup>";
-    var head = '<div class="cfhead"><select data-tasym="1" aria-label="Marché">' + opts + '</select><div class="seg" role="group" aria-label="Unité de temps">' + TA_TF.map(function (t) { return '<button type="button" data-tatf="' + t[0] + '" aria-pressed="' + (taTf === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div></div>" +
+    var head = '<div class="cfhead"><select data-tasym="1" aria-label="Marché">' + opts + '</select><div class="seg" role="group" aria-label="Unité de temps">' + TA_TF.map(function (t) { return '<button type="button" data-tatf="' + t[0] + '" aria-pressed="' + (taTf === t[0]) + '">' + t[1] + "</button>"; }).join("") + '</div><div class="seg" role="group" aria-label="Nombre de bougies">' + [["60", "60"], ["120", "120"], ["all", "Tout"]].map(function (z) { return '<button type="button" data-tazoom="' + z[0] + '" aria-pressed="' + (taZoom === z[0]) + '">' + z[1] + "</button>"; }).join("") + "</div></div>" +
       '<div class="tachips" role="group" aria-label="Indicateurs (graphique propre par défaut)"><small class="talab">Indicateurs (touchez pour afficher) :</small>' + TA_IND.map(function (i) { return '<button type="button" class="chip" data-taind="' + i[0] + '" title="' + i[3] + '" aria-pressed="' + !!taOn[i[0]] + '">' + (i[2] ? '<i style="background:' + i[2] + '"></i>' : "") + i[1] + "</button>"; }).join("") + "</div>";
     if (!R) return head + '<p class="hint">' + (TA_OTHER[taSym] && (taTf === "H1" || taTf === "H4") && !TA_OTHER[taSym][1] ? "Pas de cotations horaires gratuites pour " + taName(taSym) + " : choisissez Jour ou Semaine." : "Cotations en attente du robot.") + "</p>";
-    TA_LAST = { R: R, tf: taTf, sym: taSym };
-    var n = R.v.length, W = Math.round(Math.max(340, Math.min(1200, (window.innerWidth || 800) - 60))), c5 = n > 5 ? (R.v[n - 1] / R.v[n - 6] - 1) * 100 : null, ct = (R.v[n - 1] / R.v[0] - 1) * 100;
-    var top = '<div class="tatop"><b>' + taName(taSym) + '</b><span class="num">' + fmtN(R.v[n - 1], taDec(taSym, R.v[n - 1])) + "</span>" + (c5 !== null ? '<span class="num ' + cls(c5) + '">' + pct(c5) + "</span><small>sur 5 " + (taTf === "D" ? "séances" : taTf === "W" ? "semaines" : "bougies") + "</small>" : "") + '<small>· ' + pct(ct) + " sur la période affichée</small><span class=\"tatip\" aria-live=\"polite\"></span></div>";
-    var body = top + '<div class="tabox">' + taChart(R, W) + "</div>" + (taOn.rsi ? '<div class="talab">RSI 14 : <b>' + (R.rsi[n - 1] === null ? "–" : Math.round(R.rsi[n - 1])) + '</b> (au-dessus de 70 = surachat, sous 30 = survente)</div>' + taSub(R.rsi, W, "rsi") : "") + (taOn.macd ? '<div class="talab">MACD (12, 26, 9) : ligne bleue, signal ambre, histogramme vert / rouge = écart entre les deux</div>' + taSub(R.macd.m, W, "macd", R.macd) : "");
+    var n = R.v.length, W = Math.round(Math.max(340, Math.min(1200, (window.innerWidth || 800) - 60))), c5 = n > 5 ? (R.v[n - 1] / R.v[n - 6] - 1) * 100 : null, G = taGeom(R, W, 300, 10, 22), ct = (R.v[n - 1] / R.v[G.s0] - 1) * 100, K = R.S.k[n - 1], dec = taDec(taSym, R.v[n - 1]);
+    TA_LAST = { R: R, tf: taTf, sym: taSym, G: G };
+    var top = '<div class="tatop"><b>' + taName(taSym) + '</b><span class="num tapx">' + fmtN(R.v[n - 1], dec) + "</span>" + (R.S.live ? '<span class="talv">● direct</span>' : "") + (c5 !== null ? '<span class="num ' + cls(c5) + '">' + pct(c5) + "</span><small>sur 5 " + (taTf === "D" ? "séances" : taTf === "W" ? "semaines" : "bougies") + "</small>" : "") + '<small>· ' + pct(ct) + " sur les " + G.cnt + " bougies affichées</small>" +
+      '<span class="tatip" aria-live="polite">Dernière bougie : O ' + fmtN(K[0], dec) + " · H " + fmtN(K[1], dec) + " · B " + fmtN(K[2], dec) + " · C " + fmtN(K[3], dec) + "</span></div>";
+    var body = top + '<div class="tabox">' + taChart(R, W) + "</div>" + (taOn.rsi ? '<div class="talab">RSI 14 : <b>' + (R.rsi[n - 1] === null ? "–" : Math.round(R.rsi[n - 1])) + '</b> (au-dessus de 70 = surachat, sous 30 = survente)</div>' + taSub(R.rsi, W, "rsi", null, R) : "") + (taOn.macd ? '<div class="talab">MACD (12, 26, 9) : ligne bleue, signal ambre, histogramme vert / rouge = écart entre les deux</div>' + taSub(R.macd.m, W, "macd", R.macd, R) : "");
     var idx = "", why = "";
     if (!TA_OTHER[taSym]) {
       var b = taSym.slice(0, 3), q = taSym.slice(3), Ib = taIndex(b, taTf), Iq = taIndex(q, taTf);
@@ -4543,21 +4611,23 @@ body.rdon{overflow:hidden}
     }
     var rd = taRead(R).filter(function (f) { return !f.k || taOn[f.k] || /^ma/.test(f.k); });
     return head + body + why + idx + '<ul class="cfl">' + rd.map(function (f) { return '<li><span class="cfc">Technique</span><span>' + f.t + '</span><b class="' + (f.d > 0 ? "up" : f.d < 0 ? "down" : "") + '">' + (f.d > 0 ? "Haussier" : f.d < 0 ? "Baissier" : "Neutre") + "</b></li>"; }).join("") + "</ul>" +
-      '<p class="hint">' + n + " " + (taTf === "H1" ? "bougies d'1 h" : taTf === "H4" ? "bougies de 4 h" : taTf === "W" ? "semaines" : "séances") + " du " + taLbl(R.S.c[0][0], taTf) + " au " + taLbl(R.S.c[n - 1][0], taTf) + " (heure de Kinshasa), cours de clôture : " + R.S.src + ". Indicateurs calculés sur les clôtures. Indice d'une devise = sa valeur contre la moyenne des 8 grandes devises, base 100 au début de la période. Lecture technique, ce n'est pas un signal d'achat ou de vente.</p>";
+      '<p class="hint">Chandeliers : ' + G.cnt + " " + (taTf === "H1" ? "bougies d'1 h" : taTf === "H4" ? "bougies de 4 h" : taTf === "W" ? "semaines" : "séances") + " du " + taLbl(R.S.c[G.s0][0], taTf) + " au " + taLbl(R.S.c[n - 1][0], taTf) + " (heure de Kinshasa). Corps vert = clôture au-dessus de l'ouverture, rouge = en dessous ; mèches = plus haut et plus bas. Source : " + R.S.src + (R.S.live ? " ; dernière bougie mise à jour avec le cours en direct (CNBC, 60 s)" : "") + ". Indicateurs calculés sur les clôtures. Lecture technique, ce n'est pas un signal d'achat ou de vente.</p>";
   }
   document.addEventListener("click", function (e) {
-    var t = e.target.closest && e.target.closest("[data-tatf],[data-taind]"); if (!t) return;
-    if (t.dataset.tatf) taTf = t.dataset.tatf; else taOn[t.dataset.taind] = taOn[t.dataset.taind] ? 0 : 1;
+    var t = e.target.closest && e.target.closest("[data-tatf],[data-taind],[data-tazoom]"); if (!t) return;
+    if (t.dataset.tatf) taTf = t.dataset.tatf; else if (t.dataset.tazoom) { taZoom = t.dataset.tazoom; try { localStorage.setItem("mf-tazoom", taZoom); } catch (x) { /* stockage indisponible */ } } else taOn[t.dataset.taind] = taOn[t.dataset.taind] ? 0 : 1;
     taSave(); renderDashBlock("ta");
   });
   document.addEventListener("change", function (e) { if (e.target.dataset && e.target.dataset.tasym) { taSym = e.target.value; taSave(); renderDashBlock("ta"); } });
-  document.addEventListener("pointermove", function (e) {
+  function taPoint(e) {
     var sv = e.target.closest && e.target.closest("[data-tachart]"); if (!sv || !TA_LAST) return;
-    var r = sv.getBoundingClientRect(), vb = sv.viewBox.baseVal, x = (e.clientX - r.left) / r.width * vb.width, R = TA_LAST.R, n = R.v.length, i = Math.round((x - 6) / (vb.width - 68) * (n - 1));
-    if (i < 0 || i >= n) return; var ln = sv.querySelector(".tacross"), xx = 6 + i / (n - 1) * (vb.width - 68); ln.setAttribute("x1", xx); ln.setAttribute("x2", xx); ln.style.display = "";
-    var tip = sv.closest(".dbody").querySelector(".tatip"), d = taDec(TA_LAST.sym, R.v[i]);
-    if (tip) tip.textContent = taLbl(R.S.c[i][0], TA_LAST.tf) + " : " + fmtN(R.v[i], d) + (taOn.ma20 && R.ma20[i] !== null ? " · MM20 " + fmtN(R.ma20[i], d) : "") + (taOn.ma50 && R.ma50[i] !== null ? " · MM50 " + fmtN(R.ma50[i], d) : "") + (taOn.rsi && R.rsi[i] !== null ? " · RSI " + Math.round(R.rsi[i]) : "");
-  });
+    var r = sv.getBoundingClientRect(), vb = sv.viewBox.baseVal, x = (e.clientX - r.left) / r.width * vb.width, R = TA_LAST.R, G = TA_LAST.G, i = G.s0 + Math.floor((x - G.pl) / G.step);
+    if (i < G.s0 || i >= G.n) return; var ln = sv.querySelector(".tacross"), xx = G.X(i); ln.setAttribute("x1", xx); ln.setAttribute("x2", xx); ln.style.display = "";
+    var tip = sv.closest(".dbody").querySelector(".tatip"), d = taDec(TA_LAST.sym, R.v[i]), K = R.S.k[i];
+    if (tip) tip.textContent = taLbl(R.S.c[i][0], TA_LAST.tf) + " · O " + fmtN(K[0], d) + " · H " + fmtN(K[1], d) + " · B " + fmtN(K[2], d) + " · C " + fmtN(K[3], d) + " (" + pct((K[3] / K[0] - 1) * 100) + ")" + (taOn.ma20 && R.ma20[i] !== null ? " · MM20 " + fmtN(R.ma20[i], d) : "") + (taOn.ma50 && R.ma50[i] !== null ? " · MM50 " + fmtN(R.ma50[i], d) : "") + (taOn.rsi && R.rsi[i] !== null ? " · RSI " + Math.round(R.rsi[i]) : "");
+  }
+  document.addEventListener("pointermove", taPoint);
+  document.addEventListener("pointerdown", taPoint);
   /* ---------- Fil de news en direct dans le navigateur (6 nov. 2026) ----------
      Sources lues directement par le navigateur (CORS ouvert, vérifié depuis le site le 6 nov. 2026) :
      FinancialJuice (RSS), CNBC (2 flux RSS), MarketWatch (bulletins), investingLive (via rss2json, toutes les 5 min). */
@@ -4655,32 +4725,89 @@ body.rdon{overflow:hidden}
     var m = 0; Object.keys(vs).forEach(function (k) { m += vs[k] / 8; });
     return Object.keys(vs).map(function (k) { return [k, vs[k] - m]; }).sort(function (x, y) { return y[1] - x[1]; });
   }
+  function rcPath(key, w) { /* cotations de fin d'heure dans la session : [[fin, valeur]], la première = départ */
+    var s = AUTO && AUTO.intraday && AUTO.intraday[key] && AUTO.intraday[key].c; if (!s) return null;
+    var v0 = rcAt(key, w.a); if (v0 === null) return null;
+    var out = [[w.a, v0]];
+    s.forEach(function (r) { var te = Date.parse(r[0]) + 36e5; if (te > w.a && te <= w.b + 6e4) out.push([te, r[1]]); });
+    return out.length > 1 ? out : null;
+  }
+  var RC_COL = { USD: "#3ddc97", EUR: "#4da3ff", GBP: "#c77dff", JPY: "#f4f1e8", CHF: "#ff6fa5", AUD: "#f2b01e", CAD: "#ff7a45", NZD: "#22d3dd" };
+  function rcStrength(w) { /* force cumulée de chaque devise heure par heure depuis le début de la session */
+    var P = { EUR: ["EURUSD", 1], GBP: ["GBPUSD", 1], AUD: ["AUDUSD", 1], NZD: ["NZDUSD", 1], JPY: ["USDJPY", -1], CHF: ["USDCHF", -1], CAD: ["USDCAD", -1] }, S = {};
+    for (var c in P) { var p = rcPath(P[c][0], w); if (!p) return null; S[c] = p; }
+    var T = S.EUR.map(function (x) { return x[0]; }).filter(function (t) { return Object.keys(S).every(function (c) { return S[c].some(function (x) { return x[0] === t; }); }); });
+    if (T.length < 2) return null;
+    var val = function (c, t) { var r = S[c].filter(function (x) { return x[0] === t; })[0]; return r[1]; };
+    var L = {}; TA_CUR.forEach(function (c) { L[c] = []; });
+    T.forEach(function (t) {
+      var vs = { USD: 0 }; for (var c in P) vs[c] = P[c][1] * (val(c, t) / val(c, T[0]) - 1) * 100;
+      var m = 0; TA_CUR.forEach(function (c) { m += vs[c] / 8; }); TA_CUR.forEach(function (c) { L[c].push(vs[c] - m); });
+    });
+    return { t: T, L: L };
+  }
+  function rcStrSvg(ST) {
+    var W = 640, H = 210, pl = 6, pr = 84, top = 10, bot = 20, n = ST.t.length, all = [];
+    TA_CUR.forEach(function (c) { all = all.concat(ST.L[c]); });
+    var mx = Math.max(0.05, Math.max.apply(null, all.map(Math.abs))) * 1.1, X = function (i) { return pl + i / (n - 1) * (W - pl - pr); }, Y = function (v) { return top + (mx - v) / (2 * mx) * (H - top - bot); };
+    var ends = TA_CUR.map(function (c) { return [c, ST.L[c][n - 1]]; }).sort(function (a, b) { return b[1] - a[1]; }), lab = [], lastY = -99;
+    ends.forEach(function (e) { var y = Math.max(Y(e[1]), lastY + 12); lastY = y; lab.push([e[0], y, e[1]]); });
+    var hm = function (t) { return new Date(t).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }); };
+    return '<svg class="rcstr" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Force des devises pendant la session">' +
+      '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#2a2822" stroke-dasharray="3 3"/>' +
+      TA_CUR.map(function (c) { return '<polyline fill="none" stroke="' + RC_COL[c] + '" stroke-width="' + (c === ends[0][0] || c === ends[7][0] ? 2.4 : 1.3) + '" opacity="' + (c === ends[0][0] || c === ends[7][0] ? 1 : 0.55) + '" points="' + ST.L[c].map(function (v, i) { return X(i).toFixed(1) + "," + Y(v).toFixed(1); }).join(" ") + '"/>'; }).join("") +
+      lab.map(function (l) { return '<text x="' + (W - pr + 6) + '" y="' + (l[1] + 4).toFixed(1) + '" class="tax" style="fill:' + RC_COL[l[0]] + ';font-weight:700">' + l[0] + " " + (l[2] >= 0 ? "+" : "−") + fmt(Math.abs(l[2]), 2) + "</text>"; }).join("") +
+      '<text x="' + pl + '" y="' + (H - 4) + '" class="tax">' + hm(ST.t[0]) + '</text><text x="' + (W - pr) + '" y="' + (H - 4) + '" class="tax" text-anchor="end">' + hm(ST.t[n - 1]) + "</text></svg>";
+  }
+  function rcSpark(p, up) {
+    var W = 120, H = 34, v = p.map(function (x) { return x[1]; }), mn = Math.min.apply(null, v), mx = Math.max.apply(null, v), n = v.length;
+    return '<svg class="rcsp" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="' + (up ? "#3ddc97" : "#ff5c4f") + '" stroke-width="1.6" vector-effect="non-scaling-stroke" points="' + v.map(function (y, i) { return (i / (n - 1) * W).toFixed(1) + "," + (3 + (mx - y) / ((mx - mn) || 1) * (H - 6)).toFixed(1); }).join(" ") + '"/></svg>';
+  }
   function rcHtml() {
     var W = rcWindows(); if (!W.length) return '<p class="hint">Pas de session récente.</p>';
     var i = rcSel >= 0 && rcSel < W.length ? rcSel : 0, w = W[i];
-    var lbl = function (x) { var a = new Date(x.a); return x.n + " · " + a.toLocaleDateString("fr-FR", { timeZone: KIN, weekday: "short", day: "numeric" }); };
-    var tabs = '<div class="seg rctabs" role="group" aria-label="Session">' + W.map(function (x, j) { return '<button type="button" data-rcs="' + j + '" aria-pressed="' + (j === i) + '">' + lbl(x) + (x.on ? " ●" : "") + "</button>"; }).join("") + "</div>";
-    var hm = function (t) { return new Date(t).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }); };
-    var M = rcMoves(w), C = rcCur(w);
+    var day = function (t) { return new Date(t).toLocaleDateString("fr-FR", { timeZone: KIN, weekday: "long", day: "numeric", month: "long" }); }, hm = function (t) { return new Date(t).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }); };
+    var tabs = '<div class="rctabs" role="tablist" aria-label="Session">' + W.map(function (x, j) { return '<button type="button" role="tab" data-rcs="' + j + '" aria-selected="' + (j === i) + '" class="rctab' + (j === i ? " on" : "") + '"><b>' + x.n + "</b><small>" + new Date(x.a + 4 * 36e5).toLocaleDateString("fr-FR", { timeZone: KIN, weekday: "short", day: "numeric" }) + (x.on ? " · en cours" : "") + "</small></button>"; }).join("") + "</div>";
+    var M = RC_A.map(function (a) { var p = rcPath(a[0], w); if (!p) return null; var lq = LIVE.q[a[2]]; if (w.on && lq && liveFresh(lq)) p.push([Date.now(), lq.v]); var v0 = p[0][1], v1 = p[p.length - 1][1], vals = p.map(function (x) { return x[1]; }); return { k: a[0], n: a[1], p: p, ch: a[3] ? (v1 / v0 - 1) * 100 : (v1 - v0) * 100, pct: a[3], hi: Math.max.apply(null, vals), lo: Math.min.apply(null, vals), v: v1 }; }).filter(Boolean);
+    var get = function (k) { return M.filter(function (m) { return m.k === k; })[0]; };
+    var ST = rcStrength(w), C = ST ? TA_CUR.map(function (c) { return [c, ST.L[c][ST.L[c].length - 1]]; }).sort(function (a, b) { return b[1] - a[1]; }) : null;
     var E = ((AUTO && AUTO.calendar && AUTO.calendar.events) || []).filter(function (e) { var t = Date.parse(e.d); return t >= w.a && t < w.b && (e.i === "High" || e.i === "Medium"); }).sort(function (a, b) { return Date.parse(a.d) - Date.parse(b.d); });
+    var tone = function (e) { var a = cfNum(e.a), f = cfNum(e.f || e.p); return a === null || f === null || a === f ? 0 : ((a > f) !== INV_RX.test(e.t)) ? 1 : -1; };
     var N = allNews().filter(function (x) { var t = flashTime(x); return x.ts && t >= w.a && t < Math.min(w.b, Date.now() + 6e4); });
-    N = N.filter(function (x) { return x.u; }).concat(N.filter(function (x) { return !x.u; })).slice(0, 6);
-    /* phrase de synthèse, factuelle */
-    var g = M.filter(function (m) { return m.k === "gold"; })[0], dx = M.filter(function (m) { return m.k === "dxy"; })[0], nq = M.filter(function (m) { return m.k === "nq"; })[0], big = M.filter(function (m) { return m.pct; }).sort(function (a, b) { return Math.abs(b.ch) - Math.abs(a.ch); })[0];
-    var hiE = E.filter(function (e) { return e.i === "High" && e.a && (e.f || e.p) && cfNum(e.a) !== null; });
-    var sum = [];
-    if (dx) sum.push("dollar " + (Math.abs(dx.ch) < 0.05 ? "stable" : dx.ch > 0 ? "en hausse" : "en baisse") + " (DXY " + pct(dx.ch) + ")");
-    if (g) sum.push("or " + pct(g.ch));
-    if (nq) sum.push("Nasdaq " + pct(nq.ch));
-    if (C) sum.push("devise la plus forte : " + C[0][0] + ", la plus faible : " + C[C.length - 1][0]);
-    if (big && big.k !== "gold" && big.k !== "dxy" && big.k !== "nq") sum.push("plus gros mouvement : " + big.n + " " + pct(big.ch));
-    var head = '<p class="rcsum"><b>' + w.n + (w.on ? " (en cours)" : "") + "</b>, de " + hm(w.a) + " à " + hm(w.b) + " (Kinshasa) : " + (sum.length ? sum.join(" ; ") : "cotations horaires pas encore disponibles") + "." + (hiE.length ? " " + hiE.length + " annonce" + (hiE.length > 1 ? "s" : "") + " forte" + (hiE.length > 1 ? "s" : "") + " : " + hiE.slice(0, 3).map(function (e) { return esc(e.c) + " " + esc(e.t) + " " + esc(e.a) + (e.f ? " (prévu " + esc(e.f) + ")" : ""); }).join(", ") + "." : "") + "</p>";
-    var mv = M.length ? '<div class="rcmv">' + M.map(function (m) { return '<div><small>' + m.n + '</small><b class="num ' + cls(m.ch) + '">' + (m.pct ? pct(m.ch) : (m.ch >= 0 ? "+" : "−") + fmt(Math.abs(m.ch), 1) + " pb") + "</b></div>"; }).join("") + "</div>" : "";
-    var cur = C ? '<div class="rccur">' + C.map(function (c) { return '<span class="' + cls(c[1]) + '">' + c[0] + " " + (c[1] >= 0 ? "+" : "−") + fmt(Math.abs(c[1]), 2) + "</span>"; }).join("") + "</div>" : "";
-    var ev = E.length ? '<table class="mini rcev"><tbody>' + E.slice(0, 8).map(function (e) { var a = cfNum(e.a), f = cfNum(e.f || e.p), tone = a === null || f === null || a === f ? "" : ((a > f) !== INV_RX.test(e.t)) ? "up" : "down"; return '<tr><td class="num">' + hm(Date.parse(e.d)) + "</td><td>" + esc(e.c) + '</td><td><i class="imp ' + (e.i === "High" ? "hi" : "md") + '"></i>' + esc(e.t) + '</td><td class="num ' + tone + '">' + (e.a ? esc(e.a) : "–") + '</td><td class="num"><small>' + (e.f ? "prévu " + esc(e.f) : e.p ? "préc. " + esc(e.p) : "") + "</small></td></tr>"; }).join("") + "</tbody></table>" : '<p class="hint">Aucune annonce forte ou moyenne pendant cette session.</p>';
-    var nw = N.length ? '<ul class="flash">' + N.map(function (x) { return '<li class="' + (x.u ? "urg" : "") + '"><span class="ft num">' + hm(flashTime(x)) + '</span><a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + '</a><span class="fs">' + esc(x.src) + "</span></li>"; }).join("") + "</ul>" : '<p class="hint">Pas d\'actualité datée pendant cette session.</p>';
-    return tabs + head + mv + (cur ? '<h3 class="rch">Force des devises pendant la session</h3>' + cur : "") + '<h3 class="rch">Annonces publiées</h3>' + ev + '<h3 class="rch">News de la session</h3>' + nw +
-      '<p class="hint">Sessions à l\'heure de Kinshasa : Asie 23 h – 8 h, Europe 8 h – 14 h, New York 14 h – 22 h. Variations entre les cotations horaires de début et de fin (Yahoo Finance, différé)' + (w.on ? ", et cours en direct CNBC pour la session en cours" : "") + ". Taux en points de base (pb).</p>";
+    /* le plus gros mouvement horaire du dollar et de l'or, et ce qui tombait à ce moment-là */
+    var spike = function (m) { if (!m || m.p.length < 3) return null; var best = null; for (var j = 1; j < m.p.length; j++) { var d = m.pct ? (m.p[j][1] / m.p[j - 1][1] - 1) * 100 : (m.p[j][1] - m.p[j - 1][1]) * 100; if (!best || Math.abs(d) > Math.abs(best.d)) best = { d: d, t: m.p[j][0] }; } return best; };
+    var near = function (t) { /* annonce publiée dans l'heure de la bougie (dollar d'abord), sinon news urgente de la même heure sur le dollar ou l'or */
+      var sc = function (e) { return (e.c === "USD" ? 4 : 0) + (e.i === "High" ? 2 : 0) + Date.parse(e.d) / 1e13; };
+      var ev = E.filter(function (e) { var x = Date.parse(e.d); return e.a && (e.f || e.p) && cfNum(e.a) !== null && x <= t && x >= t - 65 * 6e4; }).sort(function (a, b) { return sc(b) - sc(a); })[0];
+      if (ev) return "juste après " + esc(ev.c) + " " + esc(ev.t) + " (" + esc(ev.a) + (ev.f ? " contre " + esc(ev.f) + " prévu" : "") + ")";
+      var nw = N.filter(function (x) { var y = flashTime(x); return x.u && y <= t && y >= t - 65 * 6e4 && (x.a || []).some(function (a) { return a === "USD" || a === "XAU"; }); })[0];
+      return nw ? "même heure que cette news : « " + esc(nw.t) + " »" : ""; };
+    var dx = get("dxy"), g = get("gold"), nq = get("nq"), oil = get("oil"), us = get("us10");
+    var pts = [];
+    if (dx) { var sd = spike(dx); pts.push("<b>Dollar " + (Math.abs(dx.ch) < 0.05 ? "stable" : dx.ch > 0 ? "en hausse" : "en baisse") + "</b> (DXY " + pct(dx.ch) + ")" + (sd && Math.abs(sd.d) >= 0.08 ? ", plus fort mouvement vers " + hm(sd.t - 36e5) + " – " + hm(sd.t) + " (" + pct(sd.d) + ")" + (near(sd.t) ? " " + near(sd.t) : "") : "") + "."); }
+    if (g) { var sg = spike(g); pts.push("<b>Or " + pct(g.ch) + "</b>, entre " + fmtN(g.lo, 1) + " et " + fmtN(g.hi, 1) + " $ (écart de " + fmtN(g.hi - g.lo, 1) + " $)" + (sg && Math.abs(sg.d) >= 0.25 ? " ; plus forte bougie horaire " + pct(sg.d) + " à " + hm(sg.t) + (near(sg.t) ? ", " + near(sg.t) : "") : "") + "."); }
+    if (C) pts.push("<b>Devise la plus forte : " + C[0][0] + "</b> (" + (C[0][1] >= 0 ? "+" : "−") + fmt(Math.abs(C[0][1]), 2) + " %), <b>la plus faible : " + C[7][0] + "</b> (" + (C[7][1] >= 0 ? "+" : "−") + fmt(Math.abs(C[7][1]), 2) + " %). L'écart le plus large de la session était donc " + C[0][0] + "/" + C[7][0] + ".");
+    if (nq || us || oil) pts.push([nq ? "Nasdaq " + pct(nq.ch) : "", us ? "taux US 10 ans " + (us.ch >= 0 ? "+" : "−") + fmt(Math.abs(us.ch), 1) + " pb" : "", oil ? "pétrole " + pct(oil.ch) : ""].filter(Boolean).join(", ").replace(/^./, function (c) { return c.toUpperCase(); }) + ".");
+    var sur = E.filter(function (e) { return e.a && tone(e); }), up = sur.filter(function (e) { return tone(e) > 0; }).length;
+    if (E.length) pts.push(E.length + " annonce" + (E.length > 1 ? "s" : "") + " importante" + (E.length > 1 ? "s" : "") + (sur.length ? " : " + up + " meilleure" + (up > 1 ? "s" : "") + " que prévu, " + (sur.length - up) + " moins bonne" + (sur.length - up > 1 ? "s" : "") : "") + ".");
+    var riskOn = (nq ? (nq.ch > 0.2 ? 1 : nq.ch < -0.2 ? -1 : 0) : 0) + (C ? (["AUD", "NZD", "CAD"].indexOf(C[0][0]) >= 0 ? 1 : ["JPY", "CHF", "USD"].indexOf(C[0][0]) >= 0 ? -1 : 0) : 0);
+    var mood = riskOn >= 1 ? ["Appétit pour le risque", "on"] : riskOn <= -1 ? ["Recherche de sécurité", "off"] : ["Ambiance mitigée", "mix"];
+    var head = '<div class="rchead"><div><h3>Session ' + (w.n === "Asie" ? "asiatique" : w.n === "Europe" ? "européenne" : "de New York") + "</h3><span>" + day(w.a + 4 * 36e5).replace(/^./, function (c) { return c.toUpperCase(); }) + " · " + hm(w.a) + " – " + hm(w.b) + " (Kinshasa)</span></div>" +
+      '<div class="rcchips"><span class="rcst ' + (w.on ? "on" : "") + '">' + (w.on ? "● En cours" : "Terminée") + '</span><span class="rcmood ' + mood[1] + '">' + mood[0] + "</span></div></div>";
+    var key = pts.length ? '<div class="rckey"><h4>Ce qu\'il faut retenir</h4><ul>' + pts.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ul></div>" : '<p class="hint">Cotations horaires pas encore disponibles pour cette session.</p>';
+    var grid = M.length ? '<div class="rcgrid">' + M.map(function (m) { return '<div class="rccell"><div><small>' + m.n + '</small><b class="num ' + cls(m.ch) + '">' + (m.pct ? pct(m.ch) : (m.ch >= 0 ? "+" : "−") + fmt(Math.abs(m.ch), 1) + " pb") + "</b></div>" + rcSpark(m.p, m.ch >= 0) + "</div>"; }).join("") + "</div>" : "";
+    var str = ST ? '<div class="rcbox"><h4>Force des 8 devises pendant la session</h4>' + rcStrSvg(ST) + "</div>" : "";
+    /* moments clés : annonces, news urgentes, grosses bougies, dans l'ordre */
+    var mom = [];
+    E.forEach(function (e) { var tn = tone(e); mom.push({ t: Date.parse(e.d), k: "ann", h: '<i class="imp ' + (e.i === "High" ? "hi" : "md") + '"></i><b>' + esc(e.c) + "</b> " + esc(e.t) + (e.a ? ' : <b class="num ' + (tn > 0 ? "up" : tn < 0 ? "down" : "") + '">' + esc(e.a) + "</b>" + (e.f ? " <small>prévu " + esc(e.f) + "</small>" : e.p ? " <small>préc. " + esc(e.p) + "</small>" : "") : " <small>(pas encore publié)</small>") }); });
+    N.filter(function (x) { return x.u; }).slice(0, 8).forEach(function (x) { mom.push({ t: flashTime(x), k: "news", h: '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a> <small>" + esc(x.src) + "</small>" }); });
+    [dx, g].forEach(function (m) { var sp = spike(m); if (sp && Math.abs(sp.d) >= (m.k === "gold" ? 0.3 : 0.12)) mom.push({ t: sp.t, k: "move", h: "<b>" + m.n + "</b> : plus forte bougie horaire de la session, " + '<b class="num ' + cls(sp.d) + '">' + pct(sp.d) + "</b>" }); });
+    mom.sort(function (a, b) { return a.t - b.t; });
+    var tl = '<div class="rcbox"><h4>Moments clés</h4>' + (mom.length ? '<ol class="rctl">' + mom.map(function (m) { return '<li class="' + m.k + '"><time>' + hm(m.t) + "</time><span>" + m.h + "</span></li>"; }).join("") + "</ol>" : '<p class="hint">Rien de marquant : pas d\'annonce importante ni de news urgente.</p>') + "</div>";
+    var more = N.filter(function (x) { return !x.u; }).slice(0, 12);
+    var nw = more.length ? '<details class="rcmore"><summary>Toutes les news de la session (' + N.length + ")</summary>" + '<ul class="flash">' + more.map(function (x) { return '<li><span class="ft num">' + hm(flashTime(x)) + '</span><a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + '</a><span class="fs">' + esc(x.src) + "</span></li>"; }).join("") + "</ul></details>" : "";
+    return tabs + '<div class="rcrep">' + head + key + grid + '<div class="rccols">' + str + tl + "</div>" + nw + "</div>" +
+      '<p class="hint">Rapport calculé automatiquement à partir des cotations horaires (Yahoo Finance, différé)' + (w.on ? " et des cours en direct CNBC" : "") + ", du calendrier économique et des fils d'actualité. Sessions à l'heure de Kinshasa : Asie 23 h – 8 h, Europe 8 h – 14 h, New York 14 h – 22 h. Force d'une devise = sa variation contre la moyenne des 8. Faits, pas des conseils.</p>";
   }
 
   /* ---------- Carte du monde en direct (6 nov. 2026) ---------- */
@@ -4794,7 +4921,7 @@ body.rdon{overflow:hidden}
       '<h2 class="rdt" id="rdT">' + esc(it.t) + "</h2>" + (it.a && it.a.length ? '<div class="rdtags">' + it.a.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") +
       '<p class="rdfr" id="rdFr" hidden></p>' + body +
       '<div class="rdact">' + '<a class="btn" data-ext="1" href="' + esc(orig) + '" target="_blank" rel="noopener">Ouvrir ' + (yt ? "sur YouTube" : "l'article complet") + " ↗</a></div>" +
-      '<p class="hint">' + (yt ? "Vidéo lue dans le terminal." : "Vous restez dans le terminal. Le bouton « Ouvrir » affiche la page d'origine dans un nouvel onglet ; revenez ici en fermant cet onglet.") + "</p></div>";
+      rdRelated(it) + '<p class="hint">' + (yt ? "Vidéo lue dans le terminal." : "Vous restez dans le terminal. Le bouton « Ouvrir » affiche la page d'origine dans un nouvel onglet ; revenez ici en fermant cet onglet.") + "</p></div>";
     box.hidden = false; document.body.classList.add("rdon");
     box._back = document.activeElement; var c = box.querySelector(".rdx-close"); if (c) c.focus();
     box._it = it;
@@ -4807,6 +4934,11 @@ body.rdon{overflow:hidden}
       fr.hidden = false; fr.innerHTML = '<small>En français (traduction automatique)</small>' + esc(r[0]) + (r[1] ? '<span class="rdxfr">' + esc(r[1]) + "</span>" : "");
       if (b) { b.textContent = "Traduit"; }
     }).catch(function () { if (b) { b.disabled = false; b.textContent = "Traduction indisponible, réessayer"; } });
+  }
+  function rdRelated(it) { /* autres news sur le même sujet (même devise ou mots communs), pour lire la suite sans quitter le terminal */
+    var words = String(it.t).toLowerCase().match(/[a-z]{5,}/g) || [], A = it.a || [];
+    var L = allNews().filter(function (x) { if (x.l === it.l) return false; var sc = 0; (x.a || []).forEach(function (a) { if (A.indexOf(a) >= 0) sc += 1; }); words.forEach(function (w) { if (String(x.t).toLowerCase().indexOf(w) >= 0) sc += 2; }); x._sc = sc; return sc >= 2; }).sort(function (a, b) { return b._sc - a._sc || flashTime(b) - flashTime(a); }).slice(0, 5);
+    return L.length ? '<div class="rdrel"><h4>Sur le même sujet</h4><ul class="flash">' + L.map(function (x) { return '<li><span class="ft num">' + new Date(flashTime(x)).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + '</span><a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" + (x.x ? '<p class="fx">' + esc(x.x.slice(0, 180)) + "</p>" : "") + '<span class="fs">' + esc(x.src) + "</span></li>"; }).join("") + "</ul></div>" : "";
   }
   function rdClose() { var box = $("reader"); if (!box || box.hidden) return; box.hidden = true; box.innerHTML = ""; document.body.classList.remove("rdon"); if (box._back && box._back.focus) try { box._back.focus(); } catch (e) { /* élément disparu */ } }
   document.addEventListener("click", function (e) {
@@ -5313,7 +5445,7 @@ body.rdon{overflow:hidden}
     var L = a.filter(function (x) { return (anF === "all" || (anF === "usd" && x.usd) || (anF === "eur" && x.eur) || (anF === "bank" && x.bank)) && (!q || (x.t + " " + (x.bank || "") + " " + x.src).toLowerCase().indexOf(q) >= 0); });
     $("anList").innerHTML = L.length ? L.slice(0, 40).map(function (x) {
       var ok = /^https?:\/\//.test(x.l || "");
-      return '<li><span class="d mono" style="font-size:11px;color:var(--muted)">' + (x.d ? shortD(x.d) : "–") + "</span><span>" + (ok ? '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" : esc(x.t)) + (ok ? trLink(x.l) : "") +
+      return '<li><span class="d mono" style="font-size:11px;color:var(--muted)">' + (x.d ? shortD(x.d) : "–") + "</span><span>" + (ok ? '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" : esc(x.t)) + (x.x ? '<p class="fx">' + esc(x.x.length > 240 ? x.x.slice(0, 237).replace(/\s+\S*$/, "") + "…" : x.x) + "</p>" : "") +
         '<span class="tags"><span class="pill">' + esc(x.src) + "</span>" + (x.bank ? '<span class="pill t-bank">' + esc(x.bank) + "</span>" : "") + (x.usd ? '<span class="pill t-usd">USD</span>' : "") + (x.eur ? '<span class="pill t-eur">EUR</span>' : "") + (x.rate ? '<span class="pill">taux</span>' : "") + "</span></span></li>";
     }).join("") : '<li><span></span><span>' + (a.length ? "Aucun article avec ce filtre." : "Pas encore d'articles du robot. Voir la branche « Données ».") + "</span></li>";
     var srcs = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return /^an\./.test(s.id); }) : [], okS = srcs.filter(function (s) { return s.ok; });
@@ -6810,7 +6942,7 @@ body.rdon{overflow:hidden}
       }); });
       if (!n) throw new Error("aucune cotation");
       LIVE.at = Date.now(); LIVE.err = "";
-      renderLive(); renderDashBlock("wlive"); renderDashBlock("recap");
+      renderLive(); renderDashBlock("wlive"); renderDashBlock("recap"); renderDashBlock("ta");
     }).catch(function (e) { LIVE.err = String(e && e.message || e); renderLive(); });
   }
   function fxWeekend() { var d = new Date(), w = d.getUTCDay(), h = d.getUTCHours(); return w === 6 || (w === 0 && h < 21) || (w === 5 && h >= 21); }
