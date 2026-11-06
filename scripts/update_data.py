@@ -600,27 +600,29 @@ def do_policy(data):
 
 # Cotations différées (Yahoo, bougies d'1 h sur 7 jours) : or, dollar et les 7 paires du G8
 INTRA = [("gold", "GC=F"), ("dxy", "DX-Y.NYB"), ("EURUSD", "EURUSD=X"), ("GBPUSD", "GBPUSD=X"), ("USDJPY", "JPY=X"), ("USDCHF", "CHF=X"),
-         ("USDCAD", "CAD=X"), ("AUDUSD", "AUDUSD=X"), ("NZDUSD", "NZDUSD=X")]
+         ("USDCAD", "CAD=X"), ("AUDUSD", "AUDUSD=X"), ("NZDUSD", "NZDUSD=X"),
+         # 6 nov. 2026 : analyse technique 1 h / 4 h sur les autres marchés
+         ("silver", "SI=F"), ("nq", "NQ=F"), ("es", "ES=F"), ("dow", "YM=F"), ("oil", "CL=F"), ("btc", "BTC-USD"), ("us10", "^TNX")]
 
 
 def do_intraday(data):
     out, bad = {}, []
     for key, sym in INTRA:
         try:
-            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=60m&range=8d" % urllib.parse.quote(sym)
+            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=60m&range=1mo" % urllib.parse.quote(sym)
             r = json.loads(http("yi_%s.json" % key, url, tries=2, timeout=20))["chart"]["result"][0]
             q, m = r["indicators"]["quote"][0], r.get("meta") or {}
             rows = [[datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), round(c, 6)] for t, c in zip(r.get("timestamp") or [], q.get("close") or []) if c is not None]
             if len(rows) < 20:
                 raise ValueError("trop peu de bougies")
             p_, t_ = m.get("regularMarketPrice"), m.get("regularMarketTime")
-            out[key] = {"sym": sym, "c": rows[-170:], "p": p_ if p_ else rows[-1][1],
+            out[key] = {"sym": sym, "c": rows[-520:], "p": p_ if p_ else rows[-1][1],
                         "t": datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%dT%H:%MZ") if t_ else rows[-1][0]}
         except Exception as e:
             bad.append(key)
             DIAG["intra_" + key] = fr_err(e)[:120]
     data["intraday"] = out
-    note("yahoo.intraday", "Cotations différées heure par heure : or, DXY, 7 paires (Yahoo Finance, non officiel) %d/%d" % (len(out), len(INTRA)),
+    note("yahoo.intraday", "Cotations différées heure par heure (1 mois) : or, DXY, 7 paires, indices, pétrole, argent, bitcoin, taux 10 ans (Yahoo Finance, non officiel) %d/%d" % (len(out), len(INTRA)),
          "daily", len(out) > 0, max((v["t"] for v in out.values()), default=None), err=("échec : " + ", ".join(bad)) if bad else None, url="https://finance.yahoo.com/")
 
 
@@ -3293,13 +3295,13 @@ def do_daily(data):
     out, bad = {}, []
     for key, sym, name in DAILY:
         try:
-            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=6mo" % urllib.parse.quote(sym)
+            url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=1y" % urllib.parse.quote(sym)
             r = json.loads(http("yd_%s.json" % key, url, tries=2, timeout=20))["chart"]["result"][0]
             q = r["indicators"]["quote"][0]
             rows = [[datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), round(c, 5)] for t, c in zip(r.get("timestamp") or [], q.get("close") or []) if c is not None]
             if len(rows) < 25:
                 raise ValueError("trop peu de clôtures")
-            out[key] = {"n": name, "sym": sym, "c": rows[-130:], "live": (r.get("meta") or {}).get("regularMarketPrice")}
+            out[key] = {"n": name, "sym": sym, "c": rows[-260:], "live": (r.get("meta") or {}).get("regularMarketPrice")}
             if key == "gold":  # bougies complètes de l'or (ouverture, plus haut, plus bas) pour les pivots quand Binance est injoignable
                 out[key]["ohlc"] = [[datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%d"), round(o, 2), round(h, 2), round(l, 2)]
                                     for t_, o, h, l in zip(r.get("timestamp") or [], q.get("open") or [], q.get("high") or [], q.get("low") or []) if o and h and l][-130:]

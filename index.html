@@ -772,6 +772,26 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
 .bnav .bgsep { font: 600 9.5px var(--font-mono); letter-spacing: .14em; color: var(--muted); padding: 0 4px 0 10px; align-self: center; white-space: nowrap; }
 .hubgrp { margin: 10px 0 0; font: 600 11px var(--font-mono); letter-spacing: .16em; color: var(--amber); }
 .branch .brblk { margin-bottom: 12px; }
+
+/* Analyse technique (6 nov. 2026) */
+.tachips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tachips .chip{display:inline-flex;flex-direction:row;line-height:1.2;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line,#2a2822);background:transparent;color:inherit;font:inherit;font-size:.82rem;cursor:pointer;min-height:32px}
+.tachips .chip[aria-pressed="true"]{background:rgba(242,176,30,.14);border-color:#f2b01e;color:#f2d38a}
+.tachips .chip i{width:10px;height:3px;border-radius:2px;display:inline-block}
+.tatop{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:4px 0 6px}
+.tatop b{font-size:1.05rem}.tatop .num{font-size:1.05rem}
+.tatip{flex-basis:100%;font-size:.8rem;color:#c9c3b3;min-height:1.1em}
+.tabox{position:relative}
+.tachart{width:100%;height:260px;display:block;touch-action:pan-y}
+.tasub{width:100%;height:84px;display:block}
+.tax{font-size:10px;fill:#8a8577;font-variant-numeric:tabular-nums}
+.tachart .tax,.tasub .tax{vector-effect:non-scaling-stroke}
+.talab{font-size:.75rem;color:#8a8577;margin-top:6px}
+.tawhy{margin:8px 0;padding:8px 10px;border-left:3px solid #f2b01e;background:rgba(242,176,30,.06)}
+.taidxg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.taidx svg{width:100%;height:110px;display:block}
+.tih{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:.88rem}
+@media (max-width:600px){.taidxg{grid-template-columns:1fr}.tachart{height:220px}}
 </style>
 
 </head><body><div class="shell">
@@ -3889,6 +3909,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     { id: "direct", grp: "MARCHÉ", t: "En direct", ic: "◉", d: "Cours en direct, Bloomberg TV, graphiques, moniteur multi-actifs, sessions", blocks: ["cours", "tv"], p: ["marches", "multi", "sessions"], g: { marches: "Graphiques", multi: "Multi-actifs et sessions" } },
     { id: "or", grp: "MARCHÉ", t: "Or", ic: "◆", d: "XAU/USD, tableau à 6 piliers, flux de l'or (ETF, banques centrales), volatilité", p: ["or", "scorecard", "flux", "orvol"], g: { or: "Cours", scorecard: "Analyse fondamentale", orvol: "Volatilité" } },
     { id: "drivers", grp: "MARCHÉ", t: "Drivers et devises", ic: "⇄", d: "Drivers et biais par marché, moteurs du marché, force des devises sur tous les horizons, paires, carte thermique", blocks: ["drivers", "force"], p: ["moteurs", "fstr", "force", "heat", "paires", "selPanel", "~duo"], g: { moteurs: "Moteurs", fstr: "Force des devises", paires: "Paires et graphique" } },
+    { id: "analyse", grp: "MARCHÉ", t: "Analyse technique", ic: "∿", d: "Graphique de chaque paire, de l'or et des indices avec moyennes mobiles 20/50/100, Bollinger, RSI, MACD ; indices des deux devises ; unités 1 h, 4 h, jour, semaine", blocks: ["ta"], p: [] },
     { id: "calendrier", grp: "MARCHÉ", t: "Calendrier économique", ic: "▦", d: "Prochaines annonces avec compte à rebours, chiffres réels contre prévus, semaine passée, surprises et réactions du marché", blocks: ["next", "rel"], p: ["calendrier", "semaine", "surprises", "reactions"], g: { calendrier: "Calendrier complet", surprises: "Surprises et réactions" } },
     { id: "actus", grp: "MARCHÉ", t: "Actualités et analyses", ic: "✎", d: "Fil d'actualités avec urgences et mots-clés, notes des banques, consensus, communiqués, vidéos", blocks: ["flash"], p: ["analyses", "consensus", "actus", "videos"], g: { analyses: "Recherche des banques", actus: "Communiqués et vidéos" } },
     { id: "geo", grp: "MARCHÉ", t: "Géopolitique", ic: "⚑", d: "Moniteur de risque (crises, alertes, prédictions, énergie), trafic maritime et détroits", blocks: ["geo"], p: ["geopol", "maritime"] },
@@ -3912,6 +3933,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     direct: "les prix qui bougent maintenant, Bloomberg TV et l'humeur des marchés (peur ou confiance).",
     or: "l'or est-il soutenu ou sous pression ? Commencez par le cours, puis le tableau à 6 piliers (vert = soutien, rouge = pression).",
     drivers: "ce qui fait bouger chaque marché et quelles devises sont fortes ou faibles. Les meilleurs écarts sont entre la plus forte et la plus faible.",
+    analyse: "le graphique d'une paire avec ses indicateurs (moyennes, RSI, Bollinger, MACD) et lequel des deux devises fait bouger la paire.",
     calendrier: "quand tombent les chiffres et s'ils sont meilleurs ou moins bons que prévu (vert / rouge).",
     actus: "les nouvelles qui comptent, filtrées. Touchez « Urgent » pour l'essentiel.",
     geo: "les risques dans le monde : conflits, routes maritimes, sanctions. Une forte tension soutient en général l'or et le dollar.",
@@ -3930,7 +3952,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
   };
 
   /* Panneaux ouverts d'office dans chaque branche (les autres sont repliés) */
-  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], calendrier: ["calendrier"], actus: ["analyses"], geo: ["geopol"], macro: ["indicateurs"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
+  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], calendrier: ["calendrier"], actus: ["analyses"], geo: ["geopol"], macro: ["indicateurs"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
   function setFold(el, folded) {
     el.classList.toggle("fold", folded);
     var b = el.querySelector(":scope > .ph > .foldbtn"); if (b) { b.textContent = folded ? "Afficher ▾" : "Replier ▴"; b.setAttribute("aria-expanded", folded ? "false" : "true"); }
@@ -4315,6 +4337,10 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     if (gold) one("XAU", 1); else { if (base !== "USD") one(base, 1); if (quote !== "USD") one(quote, -1); }
     /* 9. Drivers (or, EUR/USD) */
     var dk = { XAUUSD: "xau", EURUSD: "eur" }[pair]; if (dk) { var r = mkDrv(DRV_MK.filter(function (m) { return m.id === dk; })[0]); if (r) add("Drivers", "Drivers : biais " + r.bias.toLowerCase() + " (confiance " + r.conf + " %), premier moteur : " + r.parts[0].n.toLowerCase() + ".", r.bias === "Haussier" ? 1 : r.bias === "Baissier" ? -1 : 0); }
+    /* 10. Indicateurs techniques (journalier) */
+    var TR = typeof taCalc === "function" ? taCalc(pair, "D") : null;
+    if (TR) { var tn = TR.v.length, tp = TR.v[tn - 1], tl = []; [["ma20", 20], ["ma50", 50], ["ma100", 100]].forEach(function (m) { var x = TR[m[0]][tn - 1]; if (x !== null) tl.push((tp >= x ? "au-dessus" : "sous") + " MM" + m[1]); }); var trs = TR.rsi[tn - 1], ab = tl.filter(function (x) { return /dessus/.test(x); }).length;
+      if (tl.length) add("Technique", "Prix journalier " + tl.join(", ") + (trs !== null ? " ; RSI 14 à " + Math.round(trs) + (trs >= 70 ? " (surachat)" : trs <= 30 ? " (survente)" : "") : "") + ".", ab === tl.length ? 1 : ab === 0 ? -1 : 0); }
     return F;
   }
   function confHtml() {
@@ -4327,6 +4353,139 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
   document.addEventListener("change", function (e) { if (e.target.dataset && e.target.dataset.dmx) { dmxPair = e.target.value; try { localStorage.setItem("mf-dmx", dmxPair); } catch (x) { } renderDashBlock("dmx"); } });
   document.addEventListener("change", function (e) { if (e.target.dataset && e.target.dataset.corra) { corrA = e.target.value; try { localStorage.setItem("mf-corra", corrA); } catch (x) { } renderDashBlock("corr"); } });
   document.addEventListener("change", function (e) { if (e.target.dataset && e.target.dataset.cfpair) { cfPair = e.target.value; try { localStorage.setItem("mf-cfpair", cfPair); } catch (x) { } renderDashBlock("conf"); } });
+  /* ---------- Analyse technique : graphique, indices des devises et indicateurs (6 nov. 2026) ---------- */
+  var TA_CUR = ["USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
+  var TA_USDK = { EUR: ["eur", "EURUSD", 1], GBP: ["gbp", "GBPUSD", 1], AUD: ["aud", "AUDUSD", 1], NZD: ["nzd", "NZDUSD", 1], JPY: ["jpy", "USDJPY", -1], CHF: ["chf", "USDCHF", -1], CAD: ["cad", "USDCAD", -1] };
+  var TA_PAIRS = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF", "NZDUSD", "EURGBP", "EURJPY", "GBPJPY", "AUDJPY", "EURCHF", "EURAUD", "GBPAUD", "AUDNZD", "CADJPY", "CHFJPY", "NZDJPY"];
+  var TA_OTHER = { XAUUSD: ["gold", "gold", "Or XAU/USD"], DXY: ["dxy", "dxy", "Dollar (DXY)"], XAGUSD: ["silver", "silver", "Argent"], NAS100: ["nq", "nq", "Nasdaq 100"], SPX500: ["es", "es", "S&P 500"], US30: ["dow", "dow", "Dow Jones"], WTI: ["oil", "oil", "Pétrole WTI"], BTCUSD: ["btc", "btc", "Bitcoin"], US10Y: ["us10", "us10", "Taux US 10 ans"] };
+  var TA_IND = [["ma20", "MM 20", "#f2b01e", "Moyenne mobile 20"], ["ma50", "MM 50", "#4da3ff", "Moyenne mobile 50"], ["ma100", "MM 100", "#c77dff", "Moyenne mobile 100"], ["bb", "Bollinger", "#8a8577", "Bandes de Bollinger (20, 2)"], ["rsi", "RSI 14", "", "Indice de force relative sur 14 bougies"], ["macd", "MACD", "", "MACD (12, 26, 9)"]];
+  var TA_TF = [["H1", "1 h"], ["H4", "4 h"], ["D", "Jour"], ["W", "Semaine"]];
+  var taSym = "EURUSD", taTf = "D", taOn = { ma20: 0, ma50: 0, bb: 0, rsi: 0, macd: 0, ma100: 0 };
+  try { var tas = JSON.parse(localStorage.getItem("mf-ta2") || "null"); if (tas) { taSym = tas.s || taSym; taTf = tas.f || taTf; taOn = tas.o || taOn; } } catch (e) { /* stockage indisponible */ }
+  function taSave() { try { localStorage.setItem("mf-ta2", JSON.stringify({ s: taSym, f: taTf, o: taOn })); } catch (e) { /* stockage indisponible */ } }
+  function taName(s) { return TA_OTHER[s] ? TA_OTHER[s][2] : s.slice(0, 3) + "/" + s.slice(3); }
+  /* Valeur en dollars d'une unité de chaque devise, par date (jour) ou par heure */
+  function taUsdMaps(intra) {
+    var M = {}, src = intra ? AUTO && AUTO.intraday : AUTO && AUTO.daily; if (!src) return null;
+    for (var c in TA_USDK) { var k = TA_USDK[c][intra ? 1 : 0], s = src[k] && src[k].c; if (!s || s.length < 10) return null; var m = {}; s.forEach(function (r) { if (r[1] > 0) m[r[0]] = TA_USDK[c][2] > 0 ? r[1] : 1 / r[1]; }); M[c] = m; }
+    var keys = Object.keys(M.EUR).filter(function (t) { return TA_CUR.every(function (c) { return c === "USD" || M[c][t] !== undefined; }); }).sort();
+    return { M: M, t: keys, v: function (c, t) { return c === "USD" ? 1 : M[c][t]; } };
+  }
+  function taGroup(rows, tf) { /* regroupe en bougies 4 h ou hebdomadaires (dernière cotation de la période) */
+    if (tf !== "H4" && tf !== "W") return rows;
+    var out = [], key = function (t) { var d = new Date(t.length > 10 ? t : t + "T00:00:00Z"); if (tf === "H4") return t.slice(0, 11) + String(Math.floor(d.getUTCHours() / 4) * 4).padStart(2, "0"); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+    rows.forEach(function (r) { var k = key(r[0]); if (out.length && out[out.length - 1].k === k) out[out.length - 1].r = r; else out.push({ k: k, r: r }); });
+    return out.map(function (x) { return x.r; });
+  }
+  function taSeries(sym, tf) {
+    var intra = tf === "H1" || tf === "H4", rows = null, src = "";
+    if (TA_OTHER[sym]) {
+      var k = TA_OTHER[sym][intra ? 1 : 0], S = intra ? AUTO && AUTO.intraday : AUTO && AUTO.daily, s = k && S && S[k] && S[k].c;
+      if (s) { rows = s.map(function (r) { return [r[0], r[1]]; }); src = (S[k].sym || "") + " · Yahoo Finance, non officiel"; }
+    } else {
+      var U = taUsdMaps(intra), b = sym.slice(0, 3), q = sym.slice(3);
+      if (U) { rows = U.t.map(function (t) { return [t, U.v(b, t) / U.v(q, t)]; }); src = (TA_USDK[b] && TA_USDK[q] ? "paire croisée recalculée depuis les paires contre dollar" : "Yahoo Finance, non officiel"); }
+    }
+    if (!rows || rows.length < 10) return null;
+    return { c: taGroup(rows, tf), src: src, intra: intra };
+  }
+  function taIndex(cur, tf) { /* indice d'une devise : valeur contre la moyenne géométrique des 8, base 100 au début */
+    var intra = tf === "H1" || tf === "H4", U = taUsdMaps(intra); if (!U) return null;
+    var rows = U.t.map(function (t) { var g = 0; TA_CUR.forEach(function (c) { g += Math.log(U.v(c, t)); }); return [t, Math.exp(Math.log(U.v(cur, t)) - g / 8)]; });
+    rows = taGroup(rows, tf); var b0 = rows[0][1]; return rows.map(function (r) { return [r[0], r[1] / b0 * 100]; });
+  }
+  function taSma(v, n) { var o = [], s = 0; for (var i = 0; i < v.length; i++) { s += v[i]; if (i >= n) s -= v[i - n]; o.push(i >= n - 1 ? s / n : null); } return o; }
+  function taEma(v, n) { var o = [], k = 2 / (n + 1), e = null; for (var i = 0; i < v.length; i++) { if (i === n - 1) { var s = 0; for (var j = 0; j < n; j++) s += v[j]; e = s / n; } else if (i >= n) e = v[i] * k + e * (1 - k); o.push(i >= n - 1 ? e : null); } return o; }
+  function taBoll(v, n, k) { var m = taSma(v, n), up = [], lo = []; for (var i = 0; i < v.length; i++) { if (m[i] === null) { up.push(null); lo.push(null); continue; } var s = 0; for (var j = i - n + 1; j <= i; j++) s += (v[j] - m[i]) * (v[j] - m[i]); var sd = Math.sqrt(s / n); up.push(m[i] + k * sd); lo.push(m[i] - k * sd); } return { m: m, up: up, lo: lo }; }
+  function taRsi(v, n) { var o = [null], g = 0, l = 0; for (var i = 1; i < v.length; i++) { var d = v[i] - v[i - 1], gu = Math.max(d, 0), ld = Math.max(-d, 0); if (i <= n) { g += gu; l += ld; if (i === n) { g /= n; l /= n; o.push(l === 0 ? 100 : 100 - 100 / (1 + g / l)); } else o.push(null); } else { g = (g * (n - 1) + gu) / n; l = (l * (n - 1) + ld) / n; o.push(l === 0 ? 100 : 100 - 100 / (1 + g / l)); } } return o; }
+  function taMacd(v) { var a = taEma(v, 12), b = taEma(v, 26), m = v.map(function (_, i) { return a[i] !== null && b[i] !== null ? a[i] - b[i] : null; }), f = m.filter(function (x) { return x !== null; }), sg = taEma(f, 9), off = m.length - f.length, s = m.map(function (_, i) { return i < off ? null : sg[i - off]; }); return { m: m, s: s, h: m.map(function (x, i) { return x !== null && s[i] !== null ? x - s[i] : null; }) }; }
+  function taCalc(sym, tf) {
+    var S = taSeries(sym, tf); if (!S) return null;
+    var v = S.c.map(function (r) { return r[1]; });
+    return { S: S, v: v, ma20: taSma(v, 20), ma50: taSma(v, 50), ma100: taSma(v, 100), bb: taBoll(v, 20, 2), rsi: taRsi(v, 14), macd: taMacd(v) };
+  }
+  function taDec(sym, x) { return /JPY$/.test(sym) ? 3 : TA_OTHER[sym] ? (x > 1000 ? 0 : x > 50 ? 2 : 3) : 5; }
+  function taLbl(t, tf) { var d = new Date(t.length > 10 ? t : t + "T12:00:00Z"); return tf === "H1" || tf === "H4" ? d.toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", year: "2-digit" }); }
+  var TA_LAST = null;
+  function taChart(R, W) {
+    var n = R.v.length, H = 250, pl = 6, pr = 62, top = 10, bot = 22, w = W - pl - pr, h = H - top - bot;
+    var vals = R.v.slice();
+    ["ma20", "ma50", "ma100"].forEach(function (k) { if (taOn[k]) R[k].forEach(function (x) { if (x !== null) vals.push(x); }); });
+    if (taOn.bb) R.bb.up.concat(R.bb.lo).forEach(function (x) { if (x !== null) vals.push(x); });
+    var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), pad = (mx - mn) * 0.06 || mx * 0.001; mn -= pad; mx += pad;
+    var X = function (i) { return pl + (n < 2 ? 0 : i / (n - 1) * w); }, Y = function (y) { return top + (mx - y) / (mx - mn) * h; };
+    var line = function (arr, col, wd, dash) { var p = "", s = false; arr.forEach(function (y, i) { if (y === null) { s = false; return; } p += (s ? "L" : "M") + X(i).toFixed(1) + " " + Y(y).toFixed(1); s = true; }); return p ? '<path d="' + p + '" fill="none" stroke="' + col + '" stroke-width="' + wd + '"' + (dash ? ' stroke-dasharray="4 3"' : "") + ' vector-effect="non-scaling-stroke"/>' : ""; };
+    var dec = taDec(taSym, R.v[n - 1]), g = "";
+    for (var k = 0; k <= 4; k++) { var yv = mn + (mx - mn) * k / 4; g += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(yv).toFixed(1) + '" y2="' + Y(yv).toFixed(1) + '" stroke="#2a2822" stroke-width="1"/><text x="' + (W - pr + 6) + '" y="' + (Y(yv) + 4).toFixed(1) + '" class="tax">' + fmtN(yv, dec) + "</text>"; }
+    var band = "";
+    if (taOn.bb) { var up = [], lo = []; R.bb.up.forEach(function (y, i) { if (y !== null) { up.push(X(i).toFixed(1) + "," + Y(y).toFixed(1)); lo.unshift(X(i).toFixed(1) + "," + Y(R.bb.lo[i]).toFixed(1)); } }); if (up.length) band = '<polygon points="' + up.concat(lo).join(" ") + '" fill="rgba(138,133,119,.14)"/>' + line(R.bb.up, "#8a8577", 1, 1) + line(R.bb.lo, "#8a8577", 1, 1); }
+    var last = R.v[n - 1], first = R.v[0], col = last >= first ? "#3ddc97" : "#ff5c4f";
+    var xl = [0, Math.floor(n / 2), n - 1].map(function (i, j) { return '<text x="' + X(i).toFixed(1) + '" y="' + (H - 6) + '" class="tax" text-anchor="' + (j === 0 ? "start" : j === 2 ? "end" : "middle") + '">' + taLbl(R.S.c[i][0], taTf) + "</text>"; }).join("");
+    return '<svg class="tachart" data-tachart="1" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" role="img" aria-label="' + taName(taSym) + ' avec indicateurs">' + g + band +
+      line(R.v, "#ece8dc", 1.6) + (taOn.ma20 ? line(R.ma20, "#f2b01e", 1.3) : "") + (taOn.ma50 ? line(R.ma50, "#4da3ff", 1.3) : "") + (taOn.ma100 ? line(R.ma100, "#c77dff", 1.3) : "") +
+      '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(last).toFixed(1) + '" y2="' + Y(last).toFixed(1) + '" stroke="' + col + '" stroke-dasharray="2 3" stroke-width="1"/><rect x="' + (W - pr + 2) + '" y="' + (Y(last) - 9).toFixed(1) + '" width="' + (pr - 4) + '" height="18" rx="3" fill="' + col + '"/><text x="' + (W - pr + 6) + '" y="' + (Y(last) + 4).toFixed(1) + '" class="tax" fill="#111" style="fill:#14130f;font-weight:700">' + fmtN(last, dec) + "</text>" + xl +
+      '<line class="tacross" x1="0" x2="0" y1="' + top + '" y2="' + (H - bot) + '" stroke="#f2b01e" stroke-width="1" style="display:none"/></svg>';
+  }
+  function taSub(arr, W, kind, extra) {
+    var n = arr.length, H = 84, pl = 6, pr = 62, top = 6, bot = 6, w = W - pl - pr, h = H - top - bot, xs = arr.concat(extra ? extra.s.concat(extra.h) : []).filter(function (x) { return x !== null; });
+    if (!xs.length) return "";
+    var mn = kind === "rsi" ? 0 : Math.min.apply(null, xs), mx = kind === "rsi" ? 100 : Math.max.apply(null, xs); if (kind !== "rsi") { var a = Math.max(Math.abs(mn), Math.abs(mx)) || 1; mn = -a; mx = a; }
+    var X = function (i) { return pl + i / (n - 1) * w; }, Y = function (y) { return top + (mx - y) / (mx - mn) * h; };
+    var path = function (v, col) { var p = "", s = false; v.forEach(function (y, i) { if (y === null) { s = false; return; } p += (s ? "L" : "M") + X(i).toFixed(1) + " " + Y(y).toFixed(1); s = true; }); return '<path d="' + p + '" fill="none" stroke="' + col + '" stroke-width="1.3" vector-effect="non-scaling-stroke"/>'; };
+    var o = '<svg class="tasub" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-hidden="true">';
+    if (kind === "rsi") { o += '<rect x="' + pl + '" y="' + Y(70) + '" width="' + w + '" height="' + (Y(30) - Y(70)) + '" fill="rgba(242,176,30,.07)"/>' + [30, 50, 70].map(function (l) { return '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(l) + '" y2="' + Y(l) + '" stroke="#2a2822"/><text x="' + (W - pr + 6) + '" y="' + (Y(l) + 4) + '" class="tax">' + l + "</text>"; }).join("") + path(arr, "#f2b01e"); }
+    else { var bw = Math.max(1, w / n * 0.7); o += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#2a2822"/>' + extra.h.map(function (y, i) { return y === null ? "" : '<rect x="' + (X(i) - bw / 2).toFixed(1) + '" y="' + Math.min(Y(0), Y(y)).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.abs(Y(y) - Y(0)).toFixed(1) + '" fill="' + (y >= 0 ? "rgba(61,220,151,.55)" : "rgba(255,92,79,.55)") + '"/>'; }).join("") + path(arr, "#4da3ff") + path(extra.s, "#f2b01e"); }
+    return o + "</svg>";
+  }
+  function taRead(R) { /* lecture factuelle des indicateurs */
+    var n = R.v.length, p = R.v[n - 1], out = [], u = taTf === "H1" ? "bougies d'1 h" : taTf === "H4" ? "bougies de 4 h" : taTf === "W" ? "semaines" : "séances";
+    [["ma20", 20], ["ma50", 50], ["ma100", 100]].forEach(function (m) { var x = R[m[0]][n - 1]; if (x === null) out.push({ t: "Moyenne " + m[1] + " : historique trop court (" + n + " " + u + ").", d: 0 }); else { var dv = (p / x - 1) * 100; out.push({ t: "Prix " + (dv >= 0 ? "au-dessus" : "sous") + " de la moyenne " + m[1] + " (" + pct(dv) + ").", d: dv > 0.1 ? 1 : dv < -0.1 ? -1 : 0, k: m[0] }); } });
+    var r = R.rsi[n - 1]; if (r !== null) out.push({ t: "RSI 14 à " + Math.round(r) + (r >= 70 ? " : zone de surachat (le prix a beaucoup monté, risque de pause)." : r <= 30 ? " : zone de survente (le prix a beaucoup baissé, risque de rebond)." : r >= 50 ? " : élan plutôt acheteur." : " : élan plutôt vendeur."), d: r >= 70 ? -1 : r <= 30 ? 1 : r >= 55 ? 1 : r <= 45 ? -1 : 0, k: "rsi" });
+    var bu = R.bb.up[n - 1], bl = R.bb.lo[n - 1]; if (bu !== null) { var pb = (p - bl) / (bu - bl) * 100; out.push({ t: "Bollinger : prix à " + Math.round(pb) + " % de la bande (0 = bande basse, 100 = bande haute)" + (pb > 100 ? ", sorti par le haut." : pb < 0 ? ", sorti par le bas." : ".") + " Largeur " + fmtN((bu - bl) / R.bb.m[n - 1] * 100, 2) + " % du prix.", d: pb > 100 ? -1 : pb < 0 ? 1 : 0, k: "bb" }); }
+    var M = R.macd, mh = M.h[n - 1], mp = M.h[n - 2]; if (mh !== null && mp !== null) out.push({ t: "MACD " + (mh >= 0 ? "au-dessus" : "sous") + " de son signal" + ((mh >= 0) !== (mp >= 0) ? " (croisement sur la dernière bougie)" : "") + (Math.abs(mh) > Math.abs(mp) ? ", écart qui grandit." : ", écart qui se réduit."), d: mh > 0 ? 1 : mh < 0 ? -1 : 0, k: "macd" });
+    return out;
+  }
+  function taIdxHtml(cur, W) {
+    var I = taIndex(cur, taTf); if (!I || I.length < 6) return "";
+    var v = I.map(function (r) { return r[1]; }), n = v.length, c5 = (v[n - 1] / v[n - 6] - 1) * 100;
+    var mn = Math.min.apply(null, v), mx = Math.max.apply(null, v), H = 110, X = function (i) { return 4 + i / (n - 1) * (W - 8); }, Y = function (y) { return 6 + (mx - y) / ((mx - mn) || 1) * (H - 12); };
+    var pth = function (a, col) { var p = "", s = false; a.forEach(function (y, i) { if (y === null) { s = false; return; } p += (s ? "L" : "M") + X(i).toFixed(1) + " " + Y(y).toFixed(1); s = true; }); return '<path d="' + p + '" fill="none" stroke="' + col + '" stroke-width="1.4" vector-effect="non-scaling-stroke"/>'; };
+    return '<div class="taidx"><div class="tih"><b>Indice ' + cur + '</b><span class="num">' + fmtN(v[n - 1], 2) + '</span><span class="num ' + cls(c5) + '">' + pct(c5) + "</span><small>sur 5 " + (taTf === "D" ? "séances" : "bougies") + "</small></div>" +
+      '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-label="Indice ' + cur + '">' + (mn < 100 && mx > 100 ? '<line x1="0" x2="' + W + '" y1="' + Y(100) + '" y2="' + Y(100) + '" stroke="#2a2822" stroke-dasharray="3 3"/>' : "") + pth(v, c5 >= 0 ? "#3ddc97" : "#ff5c4f") + "</svg></div>";
+  }
+  function taHtml() {
+    var R = taCalc(taSym, taTf);
+    var opts = '<optgroup label="Devises">' + TA_PAIRS.map(function (p) { return '<option value="' + p + '"' + (p === taSym ? " selected" : "") + ">" + taName(p) + "</option>"; }).join("") + '</optgroup><optgroup label="Autres marchés">' + Object.keys(TA_OTHER).map(function (p) { return '<option value="' + p + '"' + (p === taSym ? " selected" : "") + ">" + TA_OTHER[p][2] + "</option>"; }).join("") + "</optgroup>";
+    var head = '<div class="cfhead"><select data-tasym="1" aria-label="Marché">' + opts + '</select><div class="seg" role="group" aria-label="Unité de temps">' + TA_TF.map(function (t) { return '<button type="button" data-tatf="' + t[0] + '" aria-pressed="' + (taTf === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div></div>" +
+      '<div class="tachips" role="group" aria-label="Indicateurs (graphique propre par défaut)"><small class="talab">Indicateurs (touchez pour afficher) :</small>' + TA_IND.map(function (i) { return '<button type="button" class="chip" data-taind="' + i[0] + '" title="' + i[3] + '" aria-pressed="' + !!taOn[i[0]] + '">' + (i[2] ? '<i style="background:' + i[2] + '"></i>' : "") + i[1] + "</button>"; }).join("") + "</div>";
+    if (!R) return head + '<p class="hint">' + (TA_OTHER[taSym] && (taTf === "H1" || taTf === "H4") && !TA_OTHER[taSym][1] ? "Pas de cotations horaires gratuites pour " + taName(taSym) + " : choisissez Jour ou Semaine." : "Cotations en attente du robot.") + "</p>";
+    TA_LAST = { R: R, tf: taTf, sym: taSym };
+    var n = R.v.length, W = Math.round(Math.max(340, Math.min(1200, (window.innerWidth || 800) - 60))), c5 = n > 5 ? (R.v[n - 1] / R.v[n - 6] - 1) * 100 : null, ct = (R.v[n - 1] / R.v[0] - 1) * 100;
+    var top = '<div class="tatop"><b>' + taName(taSym) + '</b><span class="num">' + fmtN(R.v[n - 1], taDec(taSym, R.v[n - 1])) + "</span>" + (c5 !== null ? '<span class="num ' + cls(c5) + '">' + pct(c5) + "</span><small>sur 5 " + (taTf === "D" ? "séances" : taTf === "W" ? "semaines" : "bougies") + "</small>" : "") + '<small>· ' + pct(ct) + " sur la période affichée</small><span class=\"tatip\" aria-live=\"polite\"></span></div>";
+    var body = top + '<div class="tabox">' + taChart(R, W) + "</div>" + (taOn.rsi ? '<div class="talab">RSI 14 : <b>' + (R.rsi[n - 1] === null ? "–" : Math.round(R.rsi[n - 1])) + '</b> (au-dessus de 70 = surachat, sous 30 = survente)</div>' + taSub(R.rsi, W, "rsi") : "") + (taOn.macd ? '<div class="talab">MACD (12, 26, 9) : ligne bleue, signal ambre, histogramme vert / rouge = écart entre les deux</div>' + taSub(R.macd.m, W, "macd", R.macd) : "");
+    var idx = "", why = "";
+    if (!TA_OTHER[taSym]) {
+      var b = taSym.slice(0, 3), q = taSym.slice(3), Ib = taIndex(b, taTf), Iq = taIndex(q, taTf);
+      idx = '<div class="taidxg">' + taIdxHtml(b, 360) + taIdxHtml(q, 360) + "</div>";
+      if (Ib && Iq && Ib.length > 5 && c5 !== null) { var nb = Ib.length, cb = (Ib[nb - 1][1] / Ib[nb - 6][1] - 1) * 100, cq = (Iq[nb - 1][1] / Iq[nb - 6][1] - 1) * 100; why = '<p class="tawhy">' + taName(taSym) + " " + (c5 >= 0 ? "gagne " : "perd ") + fmtN(Math.abs(c5), 2) + " % sur 5 " + (taTf === "D" ? "séances" : "bougies") + ". Indice " + b + " : " + pct(cb) + ", indice " + q + " : " + pct(cq) + ". " + (Math.abs(cb) > Math.abs(cq) * 1.2 ? "Le mouvement vient surtout de " + b + "." : Math.abs(cq) > Math.abs(cb) * 1.2 ? "Le mouvement vient surtout de " + q + "." : "Les deux devises y contribuent à parts proches.") + "</p>"; }
+    }
+    var rd = taRead(R).filter(function (f) { return !f.k || taOn[f.k] || /^ma/.test(f.k); });
+    return head + body + why + idx + '<ul class="cfl">' + rd.map(function (f) { return '<li><span class="cfc">Technique</span><span>' + f.t + '</span><b class="' + (f.d > 0 ? "up" : f.d < 0 ? "down" : "") + '">' + (f.d > 0 ? "Haussier" : f.d < 0 ? "Baissier" : "Neutre") + "</b></li>"; }).join("") + "</ul>" +
+      '<p class="hint">' + n + " " + (taTf === "H1" ? "bougies d'1 h" : taTf === "H4" ? "bougies de 4 h" : taTf === "W" ? "semaines" : "séances") + " du " + taLbl(R.S.c[0][0], taTf) + " au " + taLbl(R.S.c[n - 1][0], taTf) + " (heure de Kinshasa), cours de clôture : " + R.S.src + ". Indicateurs calculés sur les clôtures. Indice d'une devise = sa valeur contre la moyenne des 8 grandes devises, base 100 au début de la période. Lecture technique, ce n'est pas un signal d'achat ou de vente.</p>";
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("[data-tatf],[data-taind]"); if (!t) return;
+    if (t.dataset.tatf) taTf = t.dataset.tatf; else taOn[t.dataset.taind] = taOn[t.dataset.taind] ? 0 : 1;
+    taSave(); renderDashBlock("ta");
+  });
+  document.addEventListener("change", function (e) { if (e.target.dataset && e.target.dataset.tasym) { taSym = e.target.value; taSave(); renderDashBlock("ta"); } });
+  document.addEventListener("pointermove", function (e) {
+    var sv = e.target.closest && e.target.closest("[data-tachart]"); if (!sv || !TA_LAST) return;
+    var r = sv.getBoundingClientRect(), vb = sv.viewBox.baseVal, x = (e.clientX - r.left) / r.width * vb.width, R = TA_LAST.R, n = R.v.length, i = Math.round((x - 6) / (vb.width - 68) * (n - 1));
+    if (i < 0 || i >= n) return; var ln = sv.querySelector(".tacross"), xx = 6 + i / (n - 1) * (vb.width - 68); ln.setAttribute("x1", xx); ln.setAttribute("x2", xx); ln.style.display = "";
+    var tip = sv.closest(".dbody").querySelector(".tatip"), d = taDec(TA_LAST.sym, R.v[i]);
+    if (tip) tip.textContent = taLbl(R.S.c[i][0], TA_LAST.tf) + " : " + fmtN(R.v[i], d) + (taOn.ma20 && R.ma20[i] !== null ? " · MM20 " + fmtN(R.ma20[i], d) : "") + (taOn.ma50 && R.ma50[i] !== null ? " · MM50 " + fmtN(R.ma50[i], d) : "") + (taOn.rsi && R.rsi[i] !== null ? " · RSI " + Math.round(R.rsi[i]) : "");
+  });
   /* ---------- COT élargi : extrêmes sur 3 ans, résumé factuel, direction par catégorie (6 nov. 2026) ---------- */
   var COTN = { XAU: "Or", XAG: "Argent", WTI: "Pétrole WTI", EUR: "Euro", GBP: "Livre sterling", JPY: "Yen", CHF: "Franc suisse", AUD: "Dollar australien", CAD: "Dollar canadien", NZD: "Dollar néo-zélandais", DXY: "Dollar (DXY)", NAS: "Nasdaq 100", DOW: "Dow Jones", SPX: "S&P 500", US10: "Taux US 10 ans (T-Note)", BTC: "Bitcoin" };
   var cotSel = "XAU", cotThr = 80;
@@ -4526,6 +4685,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     { id: "cours", t: "Cours en direct", f: coursHtml, w: 1 },
     { id: "drivers", t: "Drivers et biais par marché", f: function () { return drvHtml(true); }, w: 1 },
     { id: "conf", t: "Confluences", f: confHtml, w: 1 },
+    { id: "ta", t: "Analyse technique : graphique et indicateurs", f: taHtml, w: 1 },
     { id: "force", t: "Force et performance des devises", f: forceHtml },
     { id: "cot", t: "COT : positions et extrêmes", f: cotHtml, w: 1 },
     { id: "rel", t: "Dernières publications", f: relHtml },
@@ -4612,6 +4772,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     var v = fred("VIXCLS"), fg = AUTO && AUTO.fng; if (v) T.direct = ["VIX " + fmt(v.v, 1), fg ? "Peur et avidité : " + Math.round(fg.score) : ""];
     var cg = AUTO && AUTO.cot && AUTO.cot.XAU; if (cg) T.cot = ["Or : " + (cg.net >= 0 ? "+" : "−") + Math.abs(cg.net).toLocaleString("fr-FR"), "positions nettes des fonds · " + shortD(cg.date)];
     T.outils = ["Lots, pivots", "calculs instantanés"];
+    try { var tR = taCalc("EURUSD", "D"); if (tR) { var tn = tR.v.length, trs = tR.rsi[tn - 1]; T.analyse = ["EUR/USD RSI " + (trs === null ? "–" : Math.round(trs)), (tR.ma50[tn - 1] !== null ? (tR.v[tn - 1] >= tR.ma50[tn - 1] ? "au-dessus" : "sous") + " de la MM50" : "moyennes mobiles") + " · 1 h à 1 sem."]; } } catch (e) { /* données absentes */ }
     var calE = (AUTO && AUTO.calendar && AUTO.calendar.events) || [], nT = calE.filter(function (e) { var d = new Date(e.d); return !isNaN(d) && kinDay(d) === kinDay() && e.i === "High"; }).length;
     var gS = dSeries("gold"); T.matin = [nT ? nT + " publication" + (nT > 1 ? "s" : "") + " forte" + (nT > 1 ? "s" : "") : "Pas de publication forte",  gS ? 'or hier <span class="' + cls(gS.last[1] - gS.prev[1]) + '">' + pct((gS.last[1] / gS.prev[1] - 1) * 100) + "</span> · résumé en un écran" : "résumé en un écran"];
     if (AUTO && AUTO.sources) { var ok = AUTO.sources.filter(function (x) { return x.ok; }).length; T.donnees = [ok + " / " + AUTO.sources.length, "sources à jour ou valides"]; }
