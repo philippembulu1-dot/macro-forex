@@ -599,6 +599,50 @@ def do_policy(data):
          err=None if out else "aucune réponse", url="https://data.bis.org/topics/CBPOL")
 
 
+def ohlc_rows(r, fmt_, nd):
+    """Clôtures [[date, c]] et bougies alignées [[o, h, l]] (6 nov. 2026 : graphiques en chandeliers).
+    Si l'ouverture, le plus haut ou le plus bas manquent, on retombe sur la clôture (bougie plate)."""
+    q = r["indicators"]["quote"][0]
+    rows, ohl = [], []
+    for t, o, h, l, c in zip(r.get("timestamp") or [], q.get("open") or [], q.get("high") or [], q.get("low") or [], q.get("close") or []):
+        if c is None:
+            continue
+        o = o if o is not None else c
+        h = max(x for x in (h, o, c) if x is not None)
+        l = min(x for x in (l, o, c) if x is not None)
+        rows.append([datetime.fromtimestamp(t, timezone.utc).strftime(fmt_), round(c, nd)])
+        ohl.append([round(o, nd), round(h, nd), round(l, nd)])
+    return rows, ohl
+
+
+# Paires croisées (6 nov. 2026) : cotées directement par Yahoo, pour de vraies bougies (jour et heure)
+CROSSES = ["EURGBP", "EURJPY", "GBPJPY", "AUDJPY", "EURCHF", "EURAUD", "GBPAUD", "AUDNZD", "CADJPY", "CHFJPY", "NZDJPY"]
+
+
+def do_crosses(data):
+    out, bad = {"d": {}, "h": {}}, []
+    for pair in CROSSES:
+        sym = pair + "=X"
+        for k, iv, rng, fmt_, n in (("d", "1d", "1y", "%Y-%m-%d", 260), ("h", "60m", "1mo", "%Y-%m-%dT%H:%MZ", 520)):
+            try:
+                url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=%s&range=%s" % (urllib.parse.quote(sym), iv, rng)
+                r = json.loads(http("yx_%s_%s.json" % (pair, k), url, tries=2, timeout=20))["chart"]["result"][0]
+                rows, ohl = ohlc_rows(r, fmt_, 6)
+                if len(rows) < 20:
+                    raise ValueError("trop peu de bougies")
+                out[k][pair] = {"sym": sym, "c": rows[-n:], "ohl": ohl[-n:]}
+            except Exception as e:
+                bad.append(pair + "/" + k)
+                DIAG["cross_" + pair + k] = fr_err(e)[:120]
+                old = ((PREVIOUS.get("crosses") or {}).get(k) or {}).get(pair)
+                if old:
+                    out[k][pair] = old
+    data["crosses"] = out
+    last = max((v["c"][-1][0] for v in out["h"].values()), default=None)
+    note("yahoo.crosses", "Paires croisées en bougies jour et heure : EUR/GBP, EUR/JPY, GBP/JPY… (Yahoo Finance, non officiel) %d/%d" % (2 * len(CROSSES) - len(bad), 2 * len(CROSSES)),
+         "daily", len(bad) < 2 * len(CROSSES), last, err=("échec : " + ", ".join(bad)) if bad else None, url="https://finance.yahoo.com/")
+
+
 # Cotations différées (Yahoo, bougies d'1 h sur 7 jours) : or, dollar et les 7 paires du G8
 INTRA = [("gold", "GC=F"), ("dxy", "DX-Y.NYB"), ("EURUSD", "EURUSD=X"), ("GBPUSD", "GBPUSD=X"), ("USDJPY", "JPY=X"), ("USDCHF", "CHF=X"),
          ("USDCAD", "CAD=X"), ("AUDUSD", "AUDUSD=X"), ("NZDUSD", "NZDUSD=X"),
@@ -613,11 +657,11 @@ def do_intraday(data):
             url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=60m&range=1mo" % urllib.parse.quote(sym)
             r = json.loads(http("yi_%s.json" % key, url, tries=2, timeout=20))["chart"]["result"][0]
             q, m = r["indicators"]["quote"][0], r.get("meta") or {}
-            rows = [[datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), round(c, 6)] for t, c in zip(r.get("timestamp") or [], q.get("close") or []) if c is not None]
+            rows, ohl = ohlc_rows(r, "%Y-%m-%dT%H:%MZ", 6)
             if len(rows) < 20:
                 raise ValueError("trop peu de bougies")
             p_, t_ = m.get("regularMarketPrice"), m.get("regularMarketTime")
-            out[key] = {"sym": sym, "c": rows[-520:], "p": p_ if p_ else rows[-1][1],
+            out[key] = {"sym": sym, "c": rows[-520:], "ohl": ohl[-520:], "p": p_ if p_ else rows[-1][1],
                         "t": datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%dT%H:%MZ") if t_ else rows[-1][0]}
         except Exception as e:
             bad.append(key)
@@ -3305,10 +3349,10 @@ def do_daily(data):
             url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=1y" % urllib.parse.quote(sym)
             r = json.loads(http("yd_%s.json" % key, url, tries=2, timeout=20))["chart"]["result"][0]
             q = r["indicators"]["quote"][0]
-            rows = [[datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), round(c, 5)] for t, c in zip(r.get("timestamp") or [], q.get("close") or []) if c is not None]
+            rows, ohl = ohlc_rows(r, "%Y-%m-%d", 5)
             if len(rows) < 25:
                 raise ValueError("trop peu de clôtures")
-            out[key] = {"n": name, "sym": sym, "c": rows[-260:], "live": (r.get("meta") or {}).get("regularMarketPrice")}
+            out[key] = {"n": name, "sym": sym, "c": rows[-260:], "ohl": ohl[-260:], "live": (r.get("meta") or {}).get("regularMarketPrice")}
             if key == "gold":  # bougies complètes de l'or (ouverture, plus haut, plus bas) pour les pivots quand Binance est injoignable
                 out[key]["ohlc"] = [[datetime.fromtimestamp(t_, timezone.utc).strftime("%Y-%m-%d"), round(o, 2), round(h, 2), round(l, 2)]
                                     for t_, o, h, l in zip(r.get("timestamp") or [], q.get("open") or [], q.get("high") or [], q.get("low") or []) if o and h and l][-130:]
@@ -4452,7 +4496,7 @@ def do_move(data):
 def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
-             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("g8", do_g8), ("flash", do_flash), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
+             ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("g8", do_g8), ("flash", do_flash), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("crosses", do_crosses), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
              ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl), ("bankcot", do_bank_cot), ("euguide", do_euro_guide)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
