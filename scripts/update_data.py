@@ -1017,6 +1017,8 @@ def do_national(data):
 
 # ---------------------------------------------------------------- COT (CFTC, « Legacy », futures seuls)
 COT_CODES = {"088691": "XAU", "099741": "EUR", "096742": "GBP", "097741": "JPY", "092741": "CHF", "232741": "AUD", "090741": "CAD", "112741": "NZD"}
+# 6 nov. 2026 : 8 actifs de plus (codes du rapport « Legacy », futures seuls)
+COT_CODES.update({"098662": "DXY", "209742": "NAS", "124603": "DOW", "13874A": "SPX", "084691": "XAG", "067651": "WTI", "043602": "US10", "133741": "BTC"})
 
 
 def cot_detail(dataset, codes, groups, key):
@@ -1906,8 +1908,8 @@ def do_cot(data):
     try:
         since = (NOW - timedelta(days=3 * 365 + 10)).strftime("%Y-%m-%dT00:00:00")
         where = "cftc_contract_market_code in(%s) AND report_date_as_yyyy_mm_dd >= '%s'" % (",".join("'%s'" % c for c in COT_CODES), since)
-        q = urllib.parse.urlencode({"$where": where, "$order": "report_date_as_yyyy_mm_dd DESC", "$limit": "2000",
-                                    "$select": "cftc_contract_market_code,report_date_as_yyyy_mm_dd,noncomm_positions_long_all,noncomm_positions_short_all,comm_positions_long_all,comm_positions_short_all,open_interest_all"})
+        q = urllib.parse.urlencode({"$where": where, "$order": "report_date_as_yyyy_mm_dd DESC", "$limit": "5000",
+                                    "$select": "cftc_contract_market_code,report_date_as_yyyy_mm_dd,noncomm_positions_long_all,noncomm_positions_short_all,comm_positions_long_all,comm_positions_short_all,nonrept_positions_long_all,nonrept_positions_short_all,open_interest_all"})
         rows = json.loads(http("cot.json", url + "?" + q))
         if isinstance(rows, dict):
             raise ValueError(rows.get("message", "réponse inattendue"))
@@ -1928,7 +1930,17 @@ def do_cot(data):
             data["cot"][k] = {"date": cur["report_date_as_yyyy_mm_dd"][:10], "long": I(cur, "noncomm_positions_long_all"),
                               "short": I(cur, "noncomm_positions_short_all"), "net": nets[0], "prev_net": nets[1] if len(nets) > 1 else None,
                               "oi": I(cur, "open_interest_all"), "comm_net": cnet(cur), "comm_prev": cnet(lst[1]) if len(lst) > 1 else None,
-                              "hist": nets[:12][::-1], "idx3y": round((nets[0] - lo) / (hi - lo) * 100) if hi > lo else None, "weeks": len(nets)}
+                              "hist": nets[:12][::-1], "idx3y": round((nets[0] - lo) / (hi - lo) * 100) if hi > lo else None, "weeks": len(nets),
+                              # 6 nov. 2026 : centile 3 ans, indice d'il y a 1 semaine, 3 catégories (spéculateurs, couverture, petits porteurs)
+                              "pctl": round(sum(1 for x in nets if x < nets[0]) / len(nets) * 100),
+                              "idx_prev": round((nets[1] - lo) / (hi - lo) * 100) if hi > lo and len(nets) > 1 else None,
+                              "h52": [[r["report_date_as_yyyy_mm_dd"][:10], I(r, "noncomm_positions_long_all"), I(r, "noncomm_positions_short_all")] for r in lst[:52]][::-1],
+                              "g": {kk: {"long": I(cur, f + "_positions_long_all"), "short": I(cur, f + "_positions_short_all"),
+                                         "dl": I(cur, f + "_positions_long_all") - I(lst[1], f + "_positions_long_all") if len(lst) > 1 else None,
+                                         "ds": I(cur, f + "_positions_short_all") - I(lst[1], f + "_positions_short_all") if len(lst) > 1 else None,
+                                         "p4": round(I(lst[4], f + "_positions_long_all") / max(1, I(lst[4], f + "_positions_long_all") + I(lst[4], f + "_positions_short_all")) * 100, 1) if len(lst) > 4 else None}
+                                    for kk, f in (("spec", "noncomm"), ("comm", "comm"), ("small", "nonrept"))},
+                              "streak": (next((i for i in range(1, len(nets)) if (nets[i - 1] - nets[i]) * (nets[0] - nets[1]) <= 0), len(nets)) - 1) * (1 if nets[0] >= nets[1] else -1) if len(nets) > 1 else 0}
             if not newest or data["cot"][k]["date"] > newest:
                 newest = data["cot"][k]["date"]
         if not data["cot"]:
@@ -2066,7 +2078,8 @@ def do_calendar(data):
     try:
         cur = {"US": "USD", "EU": "EUR", "DE": "EUR", "FR": "EUR", "IT": "EUR", "ES": "EUR", "GB": "GBP", "JP": "JPY", "CH": "CHF", "AU": "AUD", "CA": "CAD", "NZ": "NZD", "CN": "CNY"}
         imp = {1: "High", 0: "Medium", -1: "Low"}
-        d0, d1 = (NOW - timedelta(days=1)).strftime("%Y-%m-%d"), (NOW + timedelta(days=13)).strftime("%Y-%m-%d")
+        mon = NOW - timedelta(days=NOW.weekday())
+        d0, d1 = (mon - timedelta(days=7)).strftime("%Y-%m-%d"), (NOW + timedelta(days=13)).strftime("%Y-%m-%d")
         url = "https://economic-calendar.tradingview.com/events?from=%sT00:00:00.000Z&to=%sT23:59:59.000Z&countries=%s" % (d0, d1, ",".join(cur))
         j = json.loads(http("tv_cal.json", url, tries=2, timeout=40, headers={"Origin": "https://www.tradingview.com", "Referer": "https://www.tradingview.com/"}))
         def tvfmt(v, e):
@@ -2076,10 +2089,41 @@ def do_calendar(data):
             x = ("%g" % v) if isinstance(v, (int, float)) else str(v)
             return (u if u not in ("%",) and len(u) <= 2 and not u.isalpha() else "") + x + sc + ("%" if u == "%" else "")
         ff_end = max((e["d"][:10] for e in evs), default="")
-        tv, n_hi = [], 0
-        for e in j.get("result") or []:
+        ff_start = min((e["d"][:10] for e in evs), default="")
+        tv, n_hi, filled = [], 0, 0
+        # 6 nov. 2026 : chiffres réels de la semaine en cours repris de TradingView (Forex Factory ne les donne pas)
+        def utc(x):
+            try:
+                return datetime.fromisoformat(x.replace("Z", "+00:00")).astimezone(timezone.utc)
+            except Exception:
+                return None
+        def words(x):
+            return set(w for w in re.findall(r"[a-z]{3,}", x.lower()) if w not in ("the", "and", "final", "prel", "flash", "rate", "index", "change"))
+        tvrows = j.get("result") or []
+        for fe in evs:
+            if fe.get("a") or fe.get("src"):
+                continue
+            ft = utc(fe["d"])
+            if not ft:
+                continue
+            best = None
+            for e in tvrows:
+                if e.get("actual") is None or cur.get(e.get("country") or "", "") != fe["c"]:
+                    continue
+                et = utc(e.get("date") or "")
+                if not et or abs((et - ft).total_seconds()) > 360:
+                    continue
+                sc = len(words(fe["t"]) & words(e.get("title") or ""))
+                if sc and (not best or sc > best[0]):
+                    best = (sc, e)
+            if best:
+                fe["a"] = tvfmt(best[1].get("actual"), best[1])
+                fe["as"] = "TV"
+                filled += 1
+        DIAG["cal_actuals_tv"] = filled
+        for e in tvrows:
             d = e.get("date") or ""
-            if not d or d[:10] <= ff_end:
+            if not d or (ff_start <= d[:10] <= ff_end):
                 continue  # semaine déjà couverte par Forex Factory
             c = e.get("country") or ""
             t = (e.get("title") or "")[:80]
@@ -2090,7 +2134,7 @@ def do_calendar(data):
             tv.append({"t": t, "c": cur.get(c, c), "d": d.replace(".000Z", "Z"), "i": i, "f": tvfmt(e.get("forecast"), e),
                        "p": tvfmt(e.get("previous"), e), "a": tvfmt(e.get("actual"), e), "src": "TV"})
         evs += tv
-        note("cal.tv", "Calendrier économique semaine suivante (TradingView) : %d publications dont %d fortes" % (len(tv), n_hi), "calendar", True, TODAY, url="https://www.tradingview.com/economic-calendar/")
+        note("cal.tv", "Calendrier économique semaine passée et suivante + chiffres réels (TradingView) : %d publications dont %d fortes, %d chiffres réels ajoutés" % (len(tv), n_hi, filled), "calendar", True, TODAY, url="https://www.tradingview.com/economic-calendar/")
     except Exception as e:
         note("cal.tv", "Calendrier économique semaine suivante (TradingView)", "calendar", False, err=e, url="https://www.tradingview.com/economic-calendar/")
     seen, out = set(), []
@@ -3191,7 +3235,11 @@ def do_reactions(data):
 # ---------------------------------------------------------------- Clôtures quotidiennes multi-actifs (résumé « Ce matin »)
 DAILY = [("gold", "GC=F", "Or (contrat à terme)"), ("silver", "SI=F", "Argent"), ("nq", "NQ=F", "Nasdaq 100 (contrat à terme)"), ("es", "ES=F", "S&P 500 (contrat à terme)"),
          ("dxy", "DX-Y.NYB", "Dollar (DXY)"), ("us10", "^TNX", "Taux US 10 ans"), ("eur", "EURUSD=X", "EUR/USD"), ("gbp", "GBPUSD=X", "GBP/USD"),
-         ("jpy", "JPY=X", "USD/JPY"), ("oil", "CL=F", "Pétrole WTI"), ("vix", "^VIX", "VIX"), ("btc", "BTC-USD", "Bitcoin")]
+         ("jpy", "JPY=X", "USD/JPY"), ("oil", "CL=F", "Pétrole WTI"), ("vix", "^VIX", "VIX"), ("btc", "BTC-USD", "Bitcoin"),
+         # 6 nov. 2026 : actifs ajoutés pour les corrélations multi-actifs
+         ("aud", "AUDUSD=X", "AUD/USD"), ("nzd", "NZDUSD=X", "NZD/USD"), ("cad", "CAD=X", "USD/CAD"), ("chf", "CHF=X", "USD/CHF"),
+         ("dow", "YM=F", "Dow Jones (contrat à terme)"), ("dax", "^GDAXI", "DAX"), ("nikkei", "^N225", "Nikkei 225"),
+         ("brent", "BZ=F", "Pétrole Brent"), ("plat", "PL=F", "Platine"), ("copper", "HG=F", "Cuivre")]
 
 
 def do_daily(data):
