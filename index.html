@@ -4751,8 +4751,8 @@ body.rdon{overflow:hidden}
   var UACT = 0;
   document.addEventListener("pointerdown", function (e) {
     UACT = Date.now();
-    var b = e.target.closest && e.target.closest("button, .tile, a.hubt, [data-wlc], [data-det], .g8chip, .kw, .chip, .seg button, nav a, .bnav a");
-    if (!b || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) || b.tagName === "path") return;
+    var b = e.target.closest && e.target.closest("button, .g8chip, .kw, .chip"); /* jamais sur les liens du menu : on ne touche pas à leur mise en page */
+    if (!b || b.id === "trBtn" || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
     var r = b.getBoundingClientRect(), s = document.createElement("span"), d = Math.max(r.width, r.height) * 1.4;
     s.className = "rip"; s.style.width = s.style.height = d + "px"; s.style.left = (e.clientX - r.left - d / 2) + "px"; s.style.top = (e.clientY - r.top - d / 2) + "px";
     if (getComputedStyle(b).position === "static") b.style.position = "relative";
