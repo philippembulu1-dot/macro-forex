@@ -792,6 +792,75 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
 .taidx svg{width:100%;height:110px;display:block}
 .tih{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:.88rem}
 @media (max-width:600px){.taidxg{grid-template-columns:1fr}.tachart{height:220px}}
+
+/* Fil de news en direct, récap des sessions, carte du monde en direct, réponse au toucher (6 nov. 2026) */
+.nticker{display:flex;align-items:stretch;gap:0;border-bottom:1px solid rgba(242,176,30,.18);background:rgba(10,10,9,.92);font-size:.82rem;overflow:hidden;position:relative;z-index:5}
+.nticker .ntlab{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f2b01e;color:#14130f;font-weight:700;white-space:nowrap;flex:none}
+.nticker .ntlab i{width:7px;height:7px;border-radius:50%;background:#c4271b;animation:ntblink 1.4s infinite}
+@keyframes ntblink{50%{opacity:.25}}
+.nticker .ntvp{overflow:hidden;flex:1;min-width:0;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.nticker .ntrow{display:inline-flex;white-space:nowrap;animation:ntscroll 140s linear infinite}
+.nticker:hover .ntrow,.nticker:focus-within .ntrow{animation-play-state:paused}
+.nticker .ntrow a,.nticker .ntdup a{display:inline-flex;align-items:baseline;gap:6px;padding:6px 18px 6px 0;color:#ece8dc;text-decoration:none}
+.nticker .ntrow a:hover{color:#f2b01e}
+.nticker .ntrow a.u{color:#ffb4ab}
+.nticker time{color:#f2b01e;font-variant-numeric:tabular-nums}
+.nticker small{color:#8a8577}
+.nticker em{font-style:normal;font-size:.7rem;padding:1px 6px;border-radius:999px;background:#3ddc97;color:#0c1a12;font-weight:700}
+.ntdup{display:inline-flex}
+@keyframes ntscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.nticker .ntrow{animation:none}.nticker .ntvp{overflow-x:auto}.ntdup{display:none}}
+.rctabs{flex-wrap:wrap}
+.rcsum{margin:10px 0;padding:10px 12px;border-left:3px solid #f2b01e;background:rgba(242,176,30,.06);line-height:1.55}
+.rcmv{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px;margin:8px 0}
+.rcmv div{padding:8px 10px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.02)}
+.rcmv small{display:block;color:#8a8577;font-size:.74rem}.rcmv b{font-size:1rem}
+.rccur{display:flex;flex-wrap:wrap;gap:6px}.rccur span{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.04);font-variant-numeric:tabular-nums;font-size:.84rem}
+.rch{font-size:.86rem;margin:14px 0 6px;color:#c9c3b3}
+.wlwrap{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start;margin:10px 0}
+.wlmap{width:100%;height:auto;display:block}
+.wlmap .wlc{cursor:pointer;transition:filter .15s}
+.wlmap .wlc:hover{filter:brightness(1.35)}
+.wlcard{border:1px solid rgba(242,176,30,.22);border-radius:12px;padding:12px;background:rgba(242,176,30,.035)}
+.wlcard h3{margin:0 0 8px;font-size:1.05rem}.wlcard h3 small{color:#8a8577;font-weight:400}
+.wlgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.wlk{padding:7px 9px;border-radius:9px;background:rgba(255,255,255,.03)}
+.wlk small{display:block;color:#8a8577;font-size:.72rem}.wlk b{font-size:.98rem}.wlk span{display:block;font-size:.72rem;color:#a8a294}
+.wlnx{margin:10px 0 6px;font-size:.86rem}
+.wlnews li{font-size:.84rem}
+.wltbl tr[data-wlc]{cursor:pointer}.wltbl tr.on td{background:rgba(242,176,30,.08)}
+.wltbl tr[data-wlc]:hover td{background:rgba(255,255,255,.04)}
+@media (max-width:820px){.wlwrap{grid-template-columns:1fr}}
+.ripb{overflow:hidden}
+.rip{position:absolute;border-radius:50%;background:rgba(242,176,30,.28);transform:scale(0);animation:rip .55s ease-out forwards;pointer-events:none}
+@keyframes rip{to{transform:scale(1);opacity:0}}
+button,.tile,.chip,.kw,.g8chip,.seg button{transition:transform .12s ease,background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+button:active,.tile:active,.chip:active,.kw:active,.g8chip:active{transform:scale(.96)}
+.dbody.swap{animation:swapin .22s ease-out}
+@keyframes swapin{from{opacity:.35;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rip{display:none}.dbody.swap{animation:none}button:active,.tile:active{transform:none}}
+
+/* Lecteur intégré */
+.rdr{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px}
+.rdr[hidden]{display:none}
+.rdbg{position:absolute;inset:0;background:rgba(5,5,4,.72);backdrop-filter:blur(6px)}
+.rdpan{position:relative;width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#151410;border:1px solid rgba(242,176,30,.35);border-radius:16px;padding:18px 20px;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:rdin .2s ease-out}
+@keyframes rdin{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.rdtop{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#a8a294;font-size:.82rem}
+.rdt{font-size:1.25rem;line-height:1.35;margin:10px 0 8px}
+.rdtags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.rdtags span{font-size:.72rem;padding:2px 8px;border-radius:999px;border:1px solid rgba(242,176,30,.35);color:#f2d38a}
+.rdfr{margin:8px 0;padding:10px 12px;border-left:3px solid #3ddc97;background:rgba(61,220,151,.06);line-height:1.55}
+.rdfr small{display:block;color:#8a8577;font-size:.72rem;margin-bottom:4px}.rdxfr{display:block;margin-top:8px;color:#d6d0c0}
+.rdx{line-height:1.6;color:#d6d0c0}
+.rdvid{position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000;margin:8px 0}
+.rdvid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.rdact{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.rdact .btn{text-decoration:none}
+body.rdon{overflow:hidden}
+@media (prefers-reduced-motion:reduce){.rdpan{animation:none}}
+
+.trbtn{position:fixed;left:12px;bottom:12px;z-index:8000;min-width:44px;min-height:44px;border-radius:999px;border:1px solid rgba(242,176,30,.5);background:rgba(20,19,15,.92);color:#f2b01e;font-weight:700;letter-spacing:.04em;box-shadow:0 6px 20px rgba(0,0,0,.45);cursor:pointer}
+.trbtn[aria-pressed="false"]{color:#a8a294;border-color:rgba(255,255,255,.2)}
 </style>
 
 </head><body><div class="shell">
@@ -856,6 +925,9 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     </div>
     <div class="tv" id="tv" aria-label="Cotations en direct"></div>
     <div class="live" id="liveBar" aria-label="Cotations en direct (CNBC)" aria-live="off"></div>
+    <div class="nticker" id="nTicker" aria-label="Fil de news en direct" hidden></div>
+    <div class="rdr" id="reader" role="dialog" aria-modal="true" aria-label="Lecteur" hidden></div>
+    <button type="button" id="trBtn" class="trbtn" aria-pressed="true">FR</button>
     <div class="tape" id="tape" aria-label="Cours des paires"></div>
     <p class="tapenote">Ligne du haut : cotations en direct (CNBC, relues toutes les 60 s, différé de quelques minutes ; touchez une case pour le détail). Ligne du bas : * XAUUSD = jeton PAXG (Binance, toutes les 30 s), DXY* recalculé avec les taux BCE, paires BCE sur 7 jours.</p>
 
@@ -3905,7 +3977,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
      BRANCHES : accueil en tuiles, chaque outil dans sa branche (31 oct. 2026)
      ===================================================================== */
   var BR = [
-    { id: "matin", grp: "MARCHÉ", t: "Briefing du matin", ic: "☀", d: "Résumé de la veille, alertes, publications du jour à l'heure de Kinshasa, biais, scénarios et régime macro", p: ["matin", "scenarios", "regime"], g: { matin: "Résumé du jour", scenarios: "Lecture du marché" } },
+    { id: "matin", grp: "MARCHÉ", t: "Briefing du matin", ic: "☀", d: "Résumé de la veille, alertes, publications du jour à l'heure de Kinshasa, biais, scénarios et régime macro", blocks: ["recap"], p: ["matin", "scenarios", "regime"], g: { matin: "Résumé du jour", scenarios: "Lecture du marché" } },
     { id: "direct", grp: "MARCHÉ", t: "En direct", ic: "◉", d: "Cours en direct, Bloomberg TV, graphiques, moniteur multi-actifs, sessions", blocks: ["cours", "tv"], p: ["marches", "multi", "sessions"], g: { marches: "Graphiques", multi: "Multi-actifs et sessions" } },
     { id: "or", grp: "MARCHÉ", t: "Or", ic: "◆", d: "XAU/USD, tableau à 6 piliers, flux de l'or (ETF, banques centrales), volatilité", p: ["or", "scorecard", "flux", "orvol"], g: { or: "Cours", scorecard: "Analyse fondamentale", orvol: "Volatilité" } },
     { id: "drivers", grp: "MARCHÉ", t: "Drivers et devises", ic: "⇄", d: "Drivers et biais par marché, moteurs du marché, force des devises sur tous les horizons, paires, carte thermique", blocks: ["drivers", "force"], p: ["moteurs", "fstr", "force", "heat", "paires", "selPanel", "~duo"], g: { moteurs: "Moteurs", fstr: "Force des devises", paires: "Paires et graphique" } },
@@ -3914,7 +3986,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     { id: "actus", grp: "MARCHÉ", t: "Actualités et analyses", ic: "✎", d: "Fil d'actualités avec urgences et mots-clés, notes des banques, consensus, communiqués, vidéos", blocks: ["flash"], p: ["analyses", "consensus", "actus", "videos"], g: { analyses: "Recherche des banques", actus: "Communiqués et vidéos" } },
     { id: "geo", grp: "MARCHÉ", t: "Géopolitique", ic: "⚑", d: "Moniteur de risque (crises, alertes, prédictions, énergie), trafic maritime et détroits", blocks: ["geo"], p: ["geopol", "maritime"] },
     { id: "macro", grp: "MACRO", t: "Données macro", ic: "▤", d: "Indicateurs des 8 économies, cycle américain, déficits et dettes, projections Fed et BCE, indicateurs des desks, guide de lecture", p: ["indicateurs", "cycle", "deficits", "dotplot", "bceproj", "desk", "lecture"], g: { indicateurs: "Indicateurs", cycle: "Cycle et finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
-    { id: "carte", grp: "MACRO", t: "Carte du monde", ic: "◍", d: "G8 : inflation, taux, croissance, chômage, dette, PMI avec classement et comparaison ; carte mondiale détaillée ; réserves", blocks: ["g8"], p: ["monde", "reserves"] },
+    { id: "carte", grp: "MACRO", t: "Carte du monde", ic: "◍", d: "En direct : devise, bourse, taux à 10 ans, taux directeur, inflation, news et prochaine annonce de chaque pays ; G8 : inflation, taux, croissance, chômage, dette, PMI avec classement et comparaison ; carte mondiale détaillée ; réserves", blocks: ["wlive", "g8"], p: ["monde", "reserves"] },
     { id: "banques", grp: "MACRO", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, zone euro", blocks: ["banques"], p: ["bce", "banques", "probas", "agenda", "comite"], g: { bce: "Zone euro", banques: "Taux et probabilités", agenda: "Réunions et comités" } },
     { id: "taux", grp: "MACRO", t: "Taux et courbes", ic: "%", d: "Pricing de la Fed, règle de Taylor, courbes US et zone euro, taux réels, VIX et dollar, écarts entre pays", p: ["pricing", "taylor", "courbe", "taux", "ezone", "ecarts"], g: { pricing: "Fed : où vont les taux", courbe: "Courbes et taux réels", ezone: "Zone euro et écarts" } },
     { id: "saison", grp: "MACRO", t: "Saisonnalité", ic: "◔", d: "Rendement moyen par mois et par semaine sur 20 ans, taux de réussite (or et paires)", p: ["saison"] },
@@ -4142,7 +4214,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
   var flashF = "all";
   function flashTime(it) { var t = it.ts ? Date.parse(it.ts) : it.d ? Date.parse(it.d + "T12:00:00Z") : NaN; return t; }
   function flashList(max) {
-    var F = (AUTO && AUTO.flash) || [];
+    var F = typeof allNews === "function" ? allNews() : (AUTO && AUTO.flash) || [];
     var cb = ((AUTO && AUTO.news) || []).map(function (n) { return { t: n.t, l: n.l, d: n.d, src: n.src, k: "banques", u: false, a: n.c ? [n.c] : [] }; });
     var kw = flKw && FL_KW.filter(function (k) { return k[0] === flKw; })[0];
     var all = F.concat(cb).filter(function (x) { return (flashF === "all" || (flashF === "u" ? x.u : x.k === flashF)) && (!kw || kw[1].test(x.t)); });
@@ -4486,6 +4558,341 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     var tip = sv.closest(".dbody").querySelector(".tatip"), d = taDec(TA_LAST.sym, R.v[i]);
     if (tip) tip.textContent = taLbl(R.S.c[i][0], TA_LAST.tf) + " : " + fmtN(R.v[i], d) + (taOn.ma20 && R.ma20[i] !== null ? " · MM20 " + fmtN(R.ma20[i], d) : "") + (taOn.ma50 && R.ma50[i] !== null ? " · MM50 " + fmtN(R.ma50[i], d) : "") + (taOn.rsi && R.rsi[i] !== null ? " · RSI " + Math.round(R.rsi[i]) : "");
   });
+  /* ---------- Fil de news en direct dans le navigateur (6 nov. 2026) ----------
+     Sources lues directement par le navigateur (CORS ouvert, vérifié depuis le site le 6 nov. 2026) :
+     FinancialJuice (RSS), CNBC (2 flux RSS), MarketWatch (bulletins), investingLive (via rss2json, toutes les 5 min). */
+  var LN = { items: [], at: 0, ok: {}, t0: Date.now(), il: 0 };
+  var LN_SRC = [
+    ["FinancialJuice", "https://www.financialjuice.com/feed.ashx?xy=rss", "marchés"],
+    ["CNBC Monde", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100727362", "marchés"],
+    ["CNBC Finance", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664", "marchés"],
+    ["MarketWatch", "https://feeds.content.dowjones.io/public/rss/mw_bulletins", "marchés"]
+  ];
+  var LN_URG = /\b(breaking|urgent|flash|alert|surprise[sd]?|unexpected(ly)?|shock|plunge[sd]?|soar(s|ed)?|surge[sd]?|crash(es|ed)?|tumble[sd]?|rate (cut|hike)|cuts? rates?|hikes? rates?|FOMC|Powell|Lagarde|Ueda|Bailey|intervention|non-?farm|payrolls|CPI|inflation|GDP|war|missile|attack|sanction\w*|tariff\w*)\b/i;
+  var LN_AST = [["USD", /\b(dollar|USD|Fed|FOMC|Powell|Treasur\w*|U\.?S\.? (CPI|GDP|jobs|payrolls|yields?))\b/i], ["EUR", /\b(euro|EUR|ECB|Lagarde|eurozone|euro area|German\w*|Bund)\b/i], ["GBP", /\b(sterling|pound|GBP|BoE|Bank of England|Bailey|U\.?K\.?|Brit\w*|gilts?)\b/i], ["JPY", /\b(yen|JPY|BoJ|Bank of Japan|Ueda|Japan\w*|JGBs?)\b/i], ["CHF", /\b(franc|CHF|SNB|Swiss)\b/i], ["AUD", /\b(aussie|AUD|RBA|Australi\w*)\b/i], ["CAD", /\b(loonie|CAD|BoC|Bank of Canada|Canad\w*)\b/i], ["NZD", /\b(kiwi|NZD|RBNZ|New Zealand)\b/i], ["XAU", /\b(gold|XAU|bullion)\b/i]];
+  function lnTag(t) { return LN_AST.filter(function (a) { return a[1].test(t); }).map(function (a) { return a[0]; }); }
+  function lnParse(xml, src, k) {
+    var d = new DOMParser().parseFromString(xml, "text/xml");
+    return Array.prototype.slice.call(d.querySelectorAll("item"), 0, 40).map(function (i) {
+      var g = function (n) { var e = i.querySelector(n); return e ? e.textContent.trim() : ""; };
+      var t = g("title").replace(/^FinancialJuice:\s*/i, ""), ts = Date.parse(g("pubDate"));
+      var dx = g("description").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, 600);
+      if (dx === t || /^FinancialJuice/i.test(dx)) dx = "";
+      return t && !isNaN(ts) ? { t: t, x: dx, l: g("link"), ts: new Date(ts).toISOString().slice(0, 16) + "Z", d: new Date(ts).toISOString().slice(0, 10), src: src, k: k, u: LN_URG.test(t), a: lnTag(t), live: 1 } : null;
+    }).filter(Boolean);
+  }
+  function lnGet(u, ms) { var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, ms || 9000); return fetch(u, c ? { signal: c.signal, cache: "no-store" } : { cache: "no-store" }).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); }); }
+  function pollNews() {
+    if (document.hidden) return;
+    var jobs = LN_SRC.map(function (s) { return lnGet(s[1]).then(function (x) { LN.ok[s[0]] = 1; return lnParse(x, s[0], s[2]); }).catch(function () { LN.ok[s[0]] = 0; return null; }); });
+    if (Date.now() - LN.il > 5 * 6e4) {
+      LN.il = Date.now();
+      jobs.push(lnGet("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://investinglive.com/feed/news")).then(function (x) {
+        var j = JSON.parse(x); LN.ok.investingLive = 1;
+        LN.ilItems = (j.items || []).map(function (i) { var ts = Date.parse(String(i.pubDate).replace(" ", "T") + "Z"); return isNaN(ts) ? null : { t: i.title, x: String(i.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 600), l: i.link, ts: new Date(ts).toISOString().slice(0, 16) + "Z", d: new Date(ts).toISOString().slice(0, 10), src: "investingLive", k: "marchés", u: LN_URG.test(i.title), a: lnTag(i.title), live: 1 }; }).filter(Boolean);
+        return null;
+      }).catch(function () { LN.ok.investingLive = 0; return null; }));
+    }
+    Promise.all(jobs).then(function (all) {
+      var seen = {}, out = [];
+      all.concat([LN.ilItems || []]).forEach(function (L) { (L || []).forEach(function (x) { var key = x.t.toLowerCase().replace(/\W+/g, " ").trim().slice(0, 70); if (!seen[key]) { seen[key] = 1; out.push(x); } }); });
+      if (!out.length && LN.items.length) return;
+      out.sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); });
+      LN.items = out.slice(0, 150); LN.at = Date.now();
+      renderTicker(); renderDashBlock("flash"); renderDashBlock("recap"); renderDashBlock("wlive");
+    });
+  }
+  function allNews() { /* fil direct + fil du robot, sans doublon, du plus récent au plus ancien */
+    var seen = {}, out = [];
+    LN.items.concat((AUTO && AUTO.flash) || []).forEach(function (x) { if (/^FinancialJuice:\s*/i.test(x.t)) x.t = x.t.replace(/^FinancialJuice:\s*/i, ""); var key = String(x.t).toLowerCase().replace(/\W+/g, " ").trim().slice(0, 70); if (!seen[key]) { seen[key] = 1; out.push(x); } });
+    return out.sort(function (a, b) { return (flashTime(b) || 0) - (flashTime(a) || 0); });
+  }
+  function lnNew(x) { var t = flashTime(x); return x.live && t > LN.t0 - 10 * 6e4 && Date.now() - t < 20 * 6e4; }
+  function renderTicker() {
+    var el = $("nTicker"); if (!el) return;
+    var L = allNews().filter(function (x) { return Date.now() - flashTime(x) < 36 * 36e5; }).slice(0, 18);
+    if (!L.length) { el.hidden = true; return; }
+    var src = Object.keys(LN.ok).filter(function (k) { return LN.ok[k]; }).length;
+    var row = L.map(function (x) { var t = new Date(flashTime(x)); return '<a href="' + esc(x.l) + '" target="_blank" rel="noopener" class="' + (x.u ? "u" : "") + '"><time>' + t.toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }) + "</time>" + (lnNew(x) ? "<em>nouveau</em>" : "") + esc(x.t) + "<small>" + esc(x.src) + "</small></a>"; }).join("");
+    el.hidden = false;
+    el.innerHTML = '<span class="ntlab"><i></i>' + (src ? "News en direct" : "News (robot)") + '</span><div class="ntvp"><div class="ntrow">' + row + '<span aria-hidden="true" class="ntdup">' + row.replace(/<a /g, '<a tabindex="-1" ') + "</span></div></div>";
+    el.title = src ? "Lu par votre navigateur toutes les 60 s (" + Object.keys(LN.ok).filter(function (k) { return LN.ok[k]; }).join(", ") + ")" : "Fil du robot (environ toutes les 12 min)";
+  }
+
+  /* ---------- Récap de chaque session (6 nov. 2026) ---------- */
+  var RC_S = [["Asie", 22, 7], ["Europe", 7, 13], ["New York", 13, 21]];
+  var RC_A = [["gold", "Or", "XAU=", 1], ["dxy", "Dollar (DXY)", ".DXY", 1], ["EURUSD", "EUR/USD", "EUR=", 1], ["GBPUSD", "GBP/USD", "GBP=", 1], ["USDJPY", "USD/JPY", "JPY=", 1], ["AUDUSD", "AUD/USD", "AUD=", 1], ["nq", "Nasdaq 100", "@ND.1", 1], ["es", "S&P 500", "@SP.1", 1], ["oil", "Pétrole WTI", "@CL.1", 1], ["btc", "Bitcoin", "BTC.CM=", 1], ["us10", "Taux US 10 ans", "US10Y", 0]];
+  var rcSel = -1;
+  function rcWindows() { /* les 5 dernières sessions (hors week-end), de la plus récente à la plus ancienne */
+    var out = [], d = new Date(); d.setUTCMinutes(0, 0, 0);
+    for (var k = 0; k < 96 * 2 && out.length < 5; k++) {
+      var t = new Date(d.getTime() - k * 36e5), h = t.getUTCHours();
+      RC_S.forEach(function (s) {
+        if (h !== s[1]) return;
+        var a = t.getTime(), b = a + ((s[2] - s[1] + 24) % 24) * 36e5, wd = new Date(a + 4 * 36e5).getUTCDay();
+        if (wd === 0 || wd === 6) return; /* séance du samedi ou du dimanche : marché fermé */
+        if (out.some(function (o) { return o.a === a; })) return;
+        out.push({ n: s[0], a: a, b: b, on: Date.now() < b });
+      });
+    }
+    return out.sort(function (x, y) { return y.a - x.a; });
+  }
+  function rcAt(key, t) { /* dernière cotation horaire terminée à l'instant t */
+    var s = AUTO && AUTO.intraday && AUTO.intraday[key] && AUTO.intraday[key].c; if (!s) return null;
+    var v = null; for (var i = 0; i < s.length; i++) { var tt = Date.parse(s[i][0]) + 36e5; if (tt <= t + 6e4) v = s[i][1]; else break; } return v;
+  }
+  function rcMoves(w) {
+    return RC_A.map(function (a) {
+      var v0 = rcAt(a[0], w.a), v1 = rcAt(a[0], w.b), lq = LIVE.q[a[2]];
+      if (w.on && lq && liveFresh(lq)) v1 = lq.v;
+      if (v0 === null || v1 === null) return null;
+      return { k: a[0], n: a[1], v: v1, ch: a[3] ? (v1 / v0 - 1) * 100 : (v1 - v0) * 100, pct: a[3] };
+    }).filter(Boolean);
+  }
+  function rcCur(w) {
+    var P = { EUR: ["EURUSD", 1], GBP: ["GBPUSD", 1], AUD: ["AUDUSD", 1], NZD: ["NZDUSD", 1], JPY: ["USDJPY", -1], CHF: ["USDCHF", -1], CAD: ["USDCAD", -1] }, vs = { USD: 0 };
+    for (var c in P) { var a = rcAt(P[c][0], w.a), b = rcAt(P[c][0], w.b); if (a === null || b === null) return null; vs[c] = P[c][1] * (b / a - 1) * 100; }
+    var m = 0; Object.keys(vs).forEach(function (k) { m += vs[k] / 8; });
+    return Object.keys(vs).map(function (k) { return [k, vs[k] - m]; }).sort(function (x, y) { return y[1] - x[1]; });
+  }
+  function rcHtml() {
+    var W = rcWindows(); if (!W.length) return '<p class="hint">Pas de session récente.</p>';
+    var i = rcSel >= 0 && rcSel < W.length ? rcSel : 0, w = W[i];
+    var lbl = function (x) { var a = new Date(x.a); return x.n + " · " + a.toLocaleDateString("fr-FR", { timeZone: KIN, weekday: "short", day: "numeric" }); };
+    var tabs = '<div class="seg rctabs" role="group" aria-label="Session">' + W.map(function (x, j) { return '<button type="button" data-rcs="' + j + '" aria-pressed="' + (j === i) + '">' + lbl(x) + (x.on ? " ●" : "") + "</button>"; }).join("") + "</div>";
+    var hm = function (t) { return new Date(t).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }); };
+    var M = rcMoves(w), C = rcCur(w);
+    var E = ((AUTO && AUTO.calendar && AUTO.calendar.events) || []).filter(function (e) { var t = Date.parse(e.d); return t >= w.a && t < w.b && (e.i === "High" || e.i === "Medium"); }).sort(function (a, b) { return Date.parse(a.d) - Date.parse(b.d); });
+    var N = allNews().filter(function (x) { var t = flashTime(x); return x.ts && t >= w.a && t < Math.min(w.b, Date.now() + 6e4); });
+    N = N.filter(function (x) { return x.u; }).concat(N.filter(function (x) { return !x.u; })).slice(0, 6);
+    /* phrase de synthèse, factuelle */
+    var g = M.filter(function (m) { return m.k === "gold"; })[0], dx = M.filter(function (m) { return m.k === "dxy"; })[0], nq = M.filter(function (m) { return m.k === "nq"; })[0], big = M.filter(function (m) { return m.pct; }).sort(function (a, b) { return Math.abs(b.ch) - Math.abs(a.ch); })[0];
+    var hiE = E.filter(function (e) { return e.i === "High" && e.a && (e.f || e.p) && cfNum(e.a) !== null; });
+    var sum = [];
+    if (dx) sum.push("dollar " + (Math.abs(dx.ch) < 0.05 ? "stable" : dx.ch > 0 ? "en hausse" : "en baisse") + " (DXY " + pct(dx.ch) + ")");
+    if (g) sum.push("or " + pct(g.ch));
+    if (nq) sum.push("Nasdaq " + pct(nq.ch));
+    if (C) sum.push("devise la plus forte : " + C[0][0] + ", la plus faible : " + C[C.length - 1][0]);
+    if (big && big.k !== "gold" && big.k !== "dxy" && big.k !== "nq") sum.push("plus gros mouvement : " + big.n + " " + pct(big.ch));
+    var head = '<p class="rcsum"><b>' + w.n + (w.on ? " (en cours)" : "") + "</b>, de " + hm(w.a) + " à " + hm(w.b) + " (Kinshasa) : " + (sum.length ? sum.join(" ; ") : "cotations horaires pas encore disponibles") + "." + (hiE.length ? " " + hiE.length + " annonce" + (hiE.length > 1 ? "s" : "") + " forte" + (hiE.length > 1 ? "s" : "") + " : " + hiE.slice(0, 3).map(function (e) { return esc(e.c) + " " + esc(e.t) + " " + esc(e.a) + (e.f ? " (prévu " + esc(e.f) + ")" : ""); }).join(", ") + "." : "") + "</p>";
+    var mv = M.length ? '<div class="rcmv">' + M.map(function (m) { return '<div><small>' + m.n + '</small><b class="num ' + cls(m.ch) + '">' + (m.pct ? pct(m.ch) : (m.ch >= 0 ? "+" : "−") + fmt(Math.abs(m.ch), 1) + " pb") + "</b></div>"; }).join("") + "</div>" : "";
+    var cur = C ? '<div class="rccur">' + C.map(function (c) { return '<span class="' + cls(c[1]) + '">' + c[0] + " " + (c[1] >= 0 ? "+" : "−") + fmt(Math.abs(c[1]), 2) + "</span>"; }).join("") + "</div>" : "";
+    var ev = E.length ? '<table class="mini rcev"><tbody>' + E.slice(0, 8).map(function (e) { var a = cfNum(e.a), f = cfNum(e.f || e.p), tone = a === null || f === null || a === f ? "" : ((a > f) !== INV_RX.test(e.t)) ? "up" : "down"; return '<tr><td class="num">' + hm(Date.parse(e.d)) + "</td><td>" + esc(e.c) + '</td><td><i class="imp ' + (e.i === "High" ? "hi" : "md") + '"></i>' + esc(e.t) + '</td><td class="num ' + tone + '">' + (e.a ? esc(e.a) : "–") + '</td><td class="num"><small>' + (e.f ? "prévu " + esc(e.f) : e.p ? "préc. " + esc(e.p) : "") + "</small></td></tr>"; }).join("") + "</tbody></table>" : '<p class="hint">Aucune annonce forte ou moyenne pendant cette session.</p>';
+    var nw = N.length ? '<ul class="flash">' + N.map(function (x) { return '<li class="' + (x.u ? "urg" : "") + '"><span class="ft num">' + hm(flashTime(x)) + '</span><a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + '</a><span class="fs">' + esc(x.src) + "</span></li>"; }).join("") + "</ul>" : '<p class="hint">Pas d\'actualité datée pendant cette session.</p>';
+    return tabs + head + mv + (cur ? '<h3 class="rch">Force des devises pendant la session</h3>' + cur : "") + '<h3 class="rch">Annonces publiées</h3>' + ev + '<h3 class="rch">News de la session</h3>' + nw +
+      '<p class="hint">Sessions à l\'heure de Kinshasa : Asie 23 h – 8 h, Europe 8 h – 14 h, New York 14 h – 22 h. Variations entre les cotations horaires de début et de fin (Yahoo Finance, différé)' + (w.on ? ", et cours en direct CNBC pour la session en cours" : "") + ". Taux en points de base (pb).</p>";
+  }
+
+  /* ---------- Carte du monde en direct (6 nov. 2026) ---------- */
+  var WL = [
+    { c: "USD", n: "États-Unis", iso: "USA", fx: [".DXY", 1], ix: [".SPX", "S&P 500"], y: "US10Y", rx: /\b(U\.?S\.?|United States|America\w*|Fed|Powell|Trump|Washington|Wall Street|Treasur\w*)\b/i },
+    { c: "EUR", n: "Zone euro", iso: "EMU", fx: ["EUR=", 1], ix: [".GDAXI", "DAX"], y: "DE10Y-DE", rx: /\b(euro\w*|ECB|Lagarde|German\w*|France|French|Ital\w*|Spain|Spanish)\b/i },
+    { c: "GBP", n: "Royaume-Uni", iso: "GBR", fx: ["GBP=", 1], ix: [".FTSE", "FTSE 100"], y: "GB10Y-GB", rx: /\b(U\.?K\.?|Brit\w*|England|BoE|Bailey|sterling|pound|gilts?|London)\b/i },
+    { c: "JPY", n: "Japon", iso: "JPN", fx: ["JPY=", -1], ix: [".N225", "Nikkei 225"], y: "JP10Y-JP", rx: /\b(Japan\w*|BoJ|Ueda|yen|Tokyo|Nikkei)\b/i },
+    { c: "CHF", n: "Suisse", iso: "CHE", fx: ["CHF=", -1], ix: [".SSMI", "SMI"], y: "CH10Y-CH", rx: /\b(Swiss|Switzerland|SNB|franc)\b/i },
+    { c: "AUD", n: "Australie", iso: "AUS", fx: ["AUD=", 1], ix: [".AXJO", "ASX 200"], y: "AU10Y-AU", rx: /\b(Australi\w*|RBA|aussie)\b/i },
+    { c: "CAD", n: "Canada", iso: "CAN", fx: ["CAD=", -1], ix: [".GSPTSE", "TSX"], y: "CA10Y-CA", rx: /\b(Canad\w*|BoC|loonie|Ottawa)\b/i },
+    { c: "NZD", n: "Nouvelle-Zélande", iso: "NZL", fx: ["NZD=", 1], ix: [".NZ50", "NZX 50"], y: "NZ10Y-NZ", rx: /\b(New Zealand|RBNZ|kiwi)\b/i }
+  ];
+  var WL_MODE = [["fx", "Devise aujourd'hui"], ["ix", "Bourse aujourd'hui"], ["y", "Taux 10 ans"], ["cpi", "Inflation"], ["rate", "Taux directeur"]];
+  var wlMode = "fx", wlSel = "USD";
+  try { var wls = JSON.parse(localStorage.getItem("mf-wl") || "null"); if (wls) { wlMode = wls.m || wlMode; wlSel = wls.s || wlSel; } } catch (e) { /* stockage indisponible */ }
+  function wlQ(sym) { var q = LIVE.q[sym]; if (!q || q.p === null || q.p === undefined) return null; return { v: q.v, ch: q.v - q.p, pc: (q.v / q.p - 1) * 100, fresh: liveFresh(q), t: q.t }; }
+  function wlRow(x) {
+    var f = wlQ(x.fx[0]), i = wlQ(x.ix[0]), y = wlQ(x.y), cpi = g8Now(x.c, "cpi"), rate = g8Now(x.c, "rate"), gdp = g8Now(x.c, "gdp"), un = g8Now(x.c, "unemp");
+    return { x: x, fx: f ? f.pc * x.fx[1] : null, fxv: f, ix: i ? i.pc : null, ixv: i, y: y ? y.ch * 100 : null, yv: y, cpi: cpi, rate: rate, gdp: gdp, un: un };
+  }
+  function wlVal(r, m) { return m === "cpi" ? (r.cpi ? r.cpi.v : null) : m === "rate" ? (r.rate ? r.rate.v : null) : r[m]; }
+  function wlHtml() {
+    var R = WL.map(wlRow), sel = R.filter(function (r) { return r.x.c === wlSel; })[0] || R[0];
+    var vals = R.map(function (r) { return wlVal(r, wlMode); }).filter(function (v) { return v !== null; }), mx = Math.max.apply(null, vals.map(Math.abs).concat([0.0001])), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var lvl = wlMode === "cpi" || wlMode === "rate";
+    var col = function (v) { if (v === null) return "#2a2822"; if (lvl) { var t = hi > lo ? (v - lo) / (hi - lo) : 0.5; return "hsl(" + (38 - t * 38).toFixed(0) + ",85%," + (28 + t * 24).toFixed(0) + "%)"; } var a = Math.min(1, Math.abs(v) / mx); return v >= 0 ? "rgba(61,220,151," + (0.22 + a * 0.7).toFixed(2) + ")" : "rgba(255,92,79," + (0.22 + a * 0.7).toFixed(2) + ")"; };
+    var fmtV = function (r, m) { var v = wlVal(r, m); if (v === null) return "–"; return m === "y" ? (v >= 0 ? "+" : "−") + fmt(Math.abs(v), 1) + " pb" : lvl ? fmt(v, 2) + " %" : pct(v); };
+    var seg = '<div class="seg" role="group" aria-label="Couleur de la carte">' + WL_MODE.map(function (m) { return '<button type="button" data-wlm="' + m[0] + '" aria-pressed="' + (wlMode === m[0]) + '">' + m[1] + "</button>"; }).join("") + "</div>";
+    var map = "";
+    if (typeof WMAP !== "undefined" && WMAP && WMAP.c) {
+      var by = {}; R.forEach(function (r) { by[r.x.iso] = r; });
+      map = '<svg class="wlmap" viewBox="0 30 ' + WMAP.w + " " + (WMAP.h - 60) + '" role="img" aria-label="Carte du monde en direct">' + WMAP.c.map(function (p) {
+        var r = by[p[0]] || (EZ.indexOf(p[0]) >= 0 ? by.EMU : null), on = r && r.x.c === sel.x.c;
+        return '<path d="' + p[2] + '" fill="' + (r ? col(wlVal(r, wlMode)) : "#1d1c18") + '" stroke="' + (on ? "#f2b01e" : "#0b0b0c") + '" stroke-width="' + (on ? 1.6 : 0.4) + '"' + (r ? ' data-wlc="' + r.x.c + '" class="wlc"' : "") + "><title>" + esc(p[1]) + (r ? " : " + fmtV(r, wlMode) : "") + "</title></path>";
+      }).join("") + "</svg>";
+    } else map = '<p class="hint">Carte en chargement…</p>';
+    /* fiche du pays choisi */
+    var s = sel, nx = nextEvents(40).filter(function (e) { return e.c === s.x.c && e.i === "High"; })[0], co = AUTO && AUTO.cot && AUTO.cot[s.x.c === "USD" ? "DXY" : s.x.c];
+    var news = allNews().filter(function (n) { return s.x.rx.test(n.t) || (n.a && n.a.indexOf(s.x.c) >= 0); }).slice(0, 5);
+    var line = function (k, v, cl, sub) { return '<div class="wlk"><small>' + k + '</small><b class="num ' + (cl || "") + '">' + v + "</b>" + (sub ? "<span>" + sub + "</span>" : "") + "</div>"; };
+    var fq = s.fxv, iq = s.ixv, yq = s.yv;
+    var card = '<div class="wlcard"><h3>' + s.x.n + " <small>" + s.x.c + "</small></h3>" + '<div class="wlgrid">' +
+      line(s.x.c === "USD" ? "Dollar (DXY)" : s.x.c + " contre dollar", fq ? pct(s.fx) : "–", fq ? cls(s.fx) : "", fq ? (fq.fresh ? "en direct" : "dernier cours") + " · " + fmtN(fq.v, s.x.c === "JPY" ? 2 : 4) : "") +
+      line(s.x.ix[1], iq ? pct(s.ix) : "–", iq ? cls(s.ix) : "", iq ? fmtN(iq.v, 0) + (iq.fresh ? " · en direct" : " · clôture") : "non disponible") +
+      line("Taux à 10 ans", yq ? fmt(yq.v, 2) + " %" : "–", yq ? (s.y >= 0 ? "down" : "up") : "", yq ? (s.y >= 0 ? "+" : "−") + fmt(Math.abs(s.y), 1) + " pb aujourd'hui" : "non disponible") +
+      line("Taux directeur", s.rate ? fmt(s.rate.v, 2) + " %" : "–", "", s.rate ? s.rate.d : "") +
+      line("Inflation", s.cpi ? fmt(s.cpi.v, 1) + " %" : "–", "", s.cpi ? s.cpi.d : "") +
+      line("Croissance", s.gdp ? fmt(s.gdp.v, 1) + " %" : "–", "", s.gdp ? s.gdp.d + " · annuel" : "") +
+      line("Chômage", s.un ? fmt(s.un.v, 1) + " %" : "–", "", s.un ? s.un.d : "") +
+      line("COT (fonds)", co ? (co.net >= 0 ? "+" : "−") + Math.abs(co.net).toLocaleString("fr-FR") : "–", co ? cls(co.net) : "", co ? (co.pctl !== undefined ? "centile 3 ans : " + co.pctl : "") + " · " + shortD(co.date) : "") +
+      "</div>" + (nx ? '<p class="wlnx">Prochaine annonce forte : <b>' + esc(nx.t) + "</b>, " + new Date(nx.d).toLocaleString("fr-FR", { timeZone: KIN, weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) + ' (<span class="num" data-cd="' + Date.parse(nx.d) + '">' + cd(Date.parse(nx.d) - Date.now()) + "</span>)</p>" : "") +
+      (news.length ? '<ul class="flash wlnews">' + news.map(function (n) { return '<li class="' + (n.u ? "urg" : "") + '"><span class="ft num">' + new Date(flashTime(n)).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + '</span><a href="' + esc(n.l) + '" target="_blank" rel="noopener">' + esc(n.t) + '</a><span class="fs">' + esc(n.src) + "</span></li>"; }).join("") + "</ul>" : '<p class="hint">Pas de news récente sur ce pays.</p>') + "</div>";
+    var tbl = '<div class="tbl"><table class="mini wltbl"><thead><tr><th>Pays</th><th>Devise</th><th>Bourse</th><th>10 ans</th><th>Taux dir.</th><th>Inflation</th></tr></thead><tbody>' + R.map(function (r) { return '<tr data-wlc="' + r.x.c + '"' + (r.x.c === sel.x.c ? ' class="on"' : "") + "><td><b>" + r.x.c + "</b> " + r.x.n + '</td><td class="num ' + (r.fx === null ? "" : cls(r.fx)) + '">' + fmtV(r, "fx") + '</td><td class="num ' + (r.ix === null ? "" : cls(r.ix)) + '">' + fmtV(r, "ix") + '</td><td class="num">' + (r.yv ? fmt(r.yv.v, 2) + " %" : "–") + '</td><td class="num">' + fmtV(r, "rate") + '</td><td class="num">' + fmtV(r, "cpi") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    var hot = AUTO && AUTO.geo && AUTO.geo.alerts && AUTO.geo.alerts.length ? '<p class="hint">Alertes géopolitiques : ' + AUTO.geo.alerts.slice(0, 3).map(function (a) { return esc(a[2]); }).join(" · ") + ' (<a href="#/geo">Géopolitique</a>).</p>' : "";
+    return seg + '<div class="wlwrap"><div class="wlmapbox">' + map + "</div>" + card + "</div>" + tbl + hot +
+      '<p class="hint">Touchez un pays (carte ou tableau) pour sa fiche. Devise, bourse et taux à 10 ans : variation depuis la clôture d\'hier, cotations CNBC relues toutes les 60 s (différé possible, « – » si la cotation n\'est pas disponible). Taux directeurs (BRI et banques centrales), inflation, croissance et chômage : dernier chiffre publié, avec sa date. News : fil en direct et robot.</p>';
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("[data-wlm],[data-wlc],[data-rcs]"); if (!t) return;
+    if (t.dataset.rcs) { rcSel = +t.dataset.rcs; renderDashBlock("recap"); return; }
+    if (t.dataset.wlm) wlMode = t.dataset.wlm; else wlSel = t.dataset.wlc;
+    try { localStorage.setItem("mf-wl", JSON.stringify({ m: wlMode, s: wlSel })); } catch (x) { /* stockage indisponible */ }
+    renderDashBlock("wlive");
+  });
+
+  /* ---------- Réponse au toucher : effet d'appui sur tous les boutons, tuiles et lignes cliquables ---------- */
+  var UACT = 0;
+  document.addEventListener("pointerdown", function (e) {
+    UACT = Date.now();
+    var b = e.target.closest && e.target.closest("button, .tile, a.hubt, [data-wlc], [data-det], .g8chip, .kw, .chip, .seg button, nav a, .bnav a");
+    if (!b || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) || b.tagName === "path") return;
+    var r = b.getBoundingClientRect(), s = document.createElement("span"), d = Math.max(r.width, r.height) * 1.4;
+    s.className = "rip"; s.style.width = s.style.height = d + "px"; s.style.left = (e.clientX - r.left - d / 2) + "px"; s.style.top = (e.clientY - r.top - d / 2) + "px";
+    if (getComputedStyle(b).position === "static") b.style.position = "relative";
+    b.classList.add("ripb"); b.appendChild(s); setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 600);
+  }, { passive: true });
+  /* ---------- Lecteur intégré : un clic sur une news, une analyse ou une vidéo s'ouvre DANS le terminal (6 nov. 2026) ----------
+     Les sites d'information interdisent leur affichage dans une autre page : le lecteur montre donc le titre, la source,
+     l'heure, le résumé publié dans le flux, la traduction en français, et un bouton pour ouvrir l'article complet si on le veut. */
+  var RD_TR = {};
+  function rdIndex() {
+    var m = {}, add = function (x, kind) { if (x && x.l && !m[x.l]) m[x.l] = { t: x.t, l: x.l, src: x.src || x.bank || "", ts: x.ts, d: x.d, x: x.x || "", a: x.a || [], kind: kind }; };
+    allNews().forEach(function (x) { add(x, "news"); });
+    ((AUTO && AUTO.analyses) || []).forEach(function (x) { add(x, "analyse"); });
+    ((AUTO && AUTO.news) || []).forEach(function (x) { add(x, "banque"); });
+    var cbn = AUTO && AUTO.cb_news; if (cbn && !Array.isArray(cbn)) cbn = [].concat.apply([], Object.keys(cbn).map(function (k) { return Array.isArray(cbn[k]) ? cbn[k] : []; }));
+    (Array.isArray(cbn) ? cbn : []).forEach(function (x) { add(x, "banque"); });
+    ((AUTO && AUTO.videos) || []).forEach(function (v) { if (v.id) add({ t: v.t, l: "https://www.youtube.com/watch?v=" + v.id, src: v.ch, d: v.d }, "vidéo"); });
+    return m;
+  }
+  function rdTr(txt) { /* traduction automatique en français (service Google gratuit, sans clé) ; repli : texte original */
+    if (!txt) return Promise.resolve("");
+    if (RD_TR[txt]) return Promise.resolve(RD_TR[txt]);
+    return lnGet("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=fr&dt=t&q=" + encodeURIComponent(txt.slice(0, 1800)), 8000).then(function (r) {
+      var j = JSON.parse(r), out = (j[0] || []).map(function (p) { return p[0]; }).join("");
+      if (!out) throw new Error("vide"); RD_TR[txt] = out; return out;
+    });
+  }
+  function rdYt(u) { var m = String(u).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/); return m ? m[1] : null; }
+  function rdOpen(href, label) {
+    var box = $("reader"); if (!box) return;
+    var tm = String(href).match(/translate\.google\.com\/translate\?.*?[?&]u=([^&]+)/), orig = tm ? decodeURIComponent(tm[1]) : href;
+    var it = rdIndex()[orig] || { t: label || orig, l: orig, src: "", x: "", a: [] };
+    var host = ""; try { host = new URL(orig).hostname.replace(/^www\./, ""); } catch (e) { /* adresse invalide */ }
+    var when = it.ts ? new Date(Date.parse(it.ts)).toLocaleString("fr-FR", { timeZone: KIN, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : it.d ? longD(it.d) : "";
+    var yt = rdYt(orig);
+    var body = yt ? '<div class="rdvid"><iframe src="https://www.youtube-nocookie.com/embed/' + yt + '?autoplay=1&rel=0" title="Vidéo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>' :
+      '<p class="rdx" id="rdX">' + (it.x ? esc(it.x) : "Le flux de cette source ne donne que le titre. Le texte complet est sur le site de " + esc(it.src || host) + ".") + "</p>";
+    box.innerHTML = '<div class="rdbg" data-rdclose="1"></div><div class="rdpan" role="document"><div class="rdtop"><span class="rdsrc">' + esc(it.src || host) + (when ? " · " + when + " (Kinshasa)" : "") + '</span><button type="button" class="btn rdx-close" data-rdclose="1" aria-label="Fermer">✕</button></div>' +
+      '<h2 class="rdt" id="rdT">' + esc(it.t) + "</h2>" + (it.a && it.a.length ? '<div class="rdtags">' + it.a.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") +
+      '<p class="rdfr" id="rdFr" hidden></p>' + body +
+      '<div class="rdact">' + '<a class="btn" data-ext="1" href="' + esc(orig) + '" target="_blank" rel="noopener">Ouvrir ' + (yt ? "sur YouTube" : "l'article complet") + " ↗</a></div>" +
+      '<p class="hint">' + (yt ? "Vidéo lue dans le terminal." : "Vous restez dans le terminal. Le bouton « Ouvrir » affiche la page d'origine dans un nouvel onglet ; revenez ici en fermant cet onglet.") + "</p></div>";
+    box.hidden = false; document.body.classList.add("rdon");
+    box._back = document.activeElement; var c = box.querySelector(".rdx-close"); if (c) c.focus();
+    box._it = it;
+  }
+  function rdDoTr() {
+    var box = $("reader"), it = box && box._it; if (!it) return;
+    var fr = $("rdFr"), b = box.querySelector("[data-rdtr]"); if (b) { b.disabled = true; b.textContent = "Traduction…"; }
+    Promise.all([rdTr(it.t), rdTr(it.x)]).then(function (r) {
+      if (!$("rdFr") || box._it !== it) return;
+      fr.hidden = false; fr.innerHTML = '<small>En français (traduction automatique)</small>' + esc(r[0]) + (r[1] ? '<span class="rdxfr">' + esc(r[1]) + "</span>" : "");
+      if (b) { b.textContent = "Traduit"; }
+    }).catch(function () { if (b) { b.disabled = false; b.textContent = "Traduction indisponible, réessayer"; } });
+  }
+  function rdClose() { var box = $("reader"); if (!box || box.hidden) return; box.hidden = true; box.innerHTML = ""; document.body.classList.remove("rdon"); if (box._back && box._back.focus) try { box._back.focus(); } catch (e) { /* élément disparu */ } }
+  document.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    var c = e.target.closest && e.target.closest("[data-rdclose],[data-rdtr]");
+    if (c) { if (c.dataset.rdtr) rdDoTr(); else rdClose(); return; }
+    var a = e.target.closest && e.target.closest("a[href]"); if (!a || a.dataset.ext || a.closest(".rdpan") || a.closest(".tradingview-widget-container")) return;
+    var h = a.getAttribute("href") || ""; if (!/^https?:\/\//i.test(h)) return;
+    if (/philippembulu1-dot\.github\.io\/macro-forex/i.test(h)) return;
+    e.preventDefault(); rdOpen(h, a.textContent.trim());
+  }, true);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") rdClose(); });
+  /* ---------- Traduction automatique en français de tout le texte anglais du site (6 nov. 2026) ----------
+     Service de traduction Google gratuit et sans clé (translate.googleapis.com, client « gtx »), CORS ouvert vérifié depuis le site.
+     Les titres anglais (news, analyses, communiqués, vidéos, calendrier…) sont traduits dès leur affichage ; l'original reste visible
+     au survol (info-bulle). Mémoire locale pour ne pas retraduire. Bouton « FR / EN » pour revenir aux textes d'origine. */
+  var TRX = { on: true, c: {}, out: {}, q: [], qs: {}, busy: false, tm: null, nodes: [] };
+  try { TRX.on = localStorage.getItem("mf-tr") !== "0"; TRX.c = JSON.parse(localStorage.getItem("mf-trc") || "{}") || {}; } catch (e) { TRX.c = {}; }
+  Object.keys(TRX.c).forEach(function (k) { TRX.out[TRX.c[k]] = 1; });
+  var TR_EN = /\b(the|and|of|to|in|for|on|with|is|are|at|by|from|after|over|as|its|says|said|sees|amid|vs|expected|ahead|than|will|could|may|rise[sd]?|fall[s]?|fell|hits?|cuts?|hikes?|week|year|month|rates?|prices?|growth|sales|jobs|stocks?|market[s]?|bank|new|first|up|down|high|low|record|data|report|speech|statement|meeting|minutes|change|index|balance|confidence|sentiment|production|orders|spending|inflation|unemployment|earnings|retail|housing|trade|employment|manufacturing|services|consumer|business|claims|governor|chair|president)\b/i;
+  var TR_FR = /\b(le|la|les|des|du|de|une|est|sur|pour|avec|dans|aux|et|ou|en|un|au|ce|qui|que|par|pas|plus|ven|jeu|mer|mar|lun|sam|dim)\b/i;
+  var TR_FN = /\b(the|and|of|to|in|for|on|with|is|are|at|by|from|after|over|as|its|says|said|vs|will|than|amid|ahead|could|may|into|about|this|that|has|have|was|were|be)\b/i;
+  function trWanted(s) {
+    var t = s.trim(); if (t.length < 10 || !/[a-z]{3}/i.test(t) || TR_FR.test(t) || /[éèàùçêâîôû]/i.test(t) || /^https?:/i.test(t) || TRX.out[t]) return false;
+    if (TR_FN.test(t)) return true;
+    var m = t.match(new RegExp(TR_EN.source, "gi")); return !!(m && m.length >= 2);
+  }
+  function trSkip(el) { for (var e = el; e && e !== document.body; e = e.parentNode) { if (e.nodeType !== 1) continue; var tg = e.tagName; if (tg === "SCRIPT" || tg === "STYLE" || tg === "TEXTAREA" || tg === "INPUT" || tg === "SELECT" || tg === "OPTION" || tg === "svg" || tg === "SVG" || tg === "CODE" || tg === "IFRAME") return true; if (e.hasAttribute("data-notr") || (e.classList && (e.classList.contains("num") || e.classList.contains("tradingview-widget-container")))) return true; } return false; }
+  function trApply(node) {
+    var raw = node.nodeValue, key = raw.trim(), fr = TRX.c[key]; if (!fr) return false;
+    if (node._orig === undefined) node._orig = raw;
+    node.nodeValue = raw.replace(key, fr);
+    var p = node.parentNode; if (p && p.nodeType === 1 && !p.getAttribute("title")) p.setAttribute("title", "Original : " + key);
+    return true;
+  }
+  function trScan(root) {
+    if (!TRX.on || !root) return;
+    var w = document.createTreeWalker(root.nodeType === 3 ? root.parentNode || document.body : root, NodeFilter.SHOW_TEXT, null), n, add = 0;
+    while ((n = w.nextNode())) {
+      var t = n.nodeValue; if (!t || t.length < 10 || !trWanted(t)) continue;
+      if (trSkip(n.parentNode)) continue;
+      if (!trApply(n)) { var k = t.trim(); if (!TRX.qs[k]) { TRX.qs[k] = 1; TRX.q.push(k); add++; } TRX.nodes.push(n); }
+    }
+    if (add) trKick();
+  }
+  function trKick() { clearTimeout(TRX.tm); TRX.tm = setTimeout(trRun, 350); }
+  function trSave() { try { var k = Object.keys(TRX.c); if (k.length > 2500) { k.slice(0, k.length - 2000).forEach(function (x) { delete TRX.c[x]; }); } localStorage.setItem("mf-trc", JSON.stringify(TRX.c)); } catch (e) { /* stockage plein ou indisponible */ } }
+  function trRun() {
+    if (TRX.busy || !TRX.q.length) return;
+    var batch = [], len = 0;
+    while (TRX.q.length && batch.length < 30 && len + TRX.q[0].length < 1800) { var x = TRX.q.shift().replace(/\n/g, " "); batch.push(x); len += x.length + 1; }
+    if (!batch.length) batch.push(TRX.q.shift().slice(0, 1800));
+    TRX.busy = true;
+    lnGet("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=" + encodeURIComponent(batch.join("\n")), 10000).then(function (r) {
+      var j = JSON.parse(r), all = (j[0] || []).map(function (p) { return p[0] || ""; }).join(""), parts = all.split("\n");
+      if (parts.length !== batch.length) { if (batch.length > 1) { batch.forEach(function (b) { TRX.q.unshift(b); }); TRX.q._solo = (TRX.q._solo || 0) + batch.length; } return; }
+      batch.forEach(function (b, i) { var f = parts[i].trim(); if (f) { TRX.c[b] = f; TRX.out[f] = 1; } });
+      trSave();
+    }).catch(function () { batch.forEach(function (b) { delete TRX.qs[b]; }); TRX.fail = (TRX.fail || 0) + 1; }).then(function () {
+      TRX.busy = false;
+      TRX.nodes = TRX.nodes.filter(function (n) { return n.isConnected && !trApply(n); });
+      if (TRX.q.length && (TRX.fail || 0) < 5) setTimeout(trRun, TRX.q._solo ? 150 : 250);
+    });
+  }
+  /* lots qui ne se découpent pas proprement : on retraduit un par un */
+  var trRun0 = trRun; trRun = function () { if (TRX.q._solo > 0 && !TRX.busy && TRX.q.length) { TRX.q._solo--; var one = TRX.q.shift(); TRX.busy = true; lnGet("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=" + encodeURIComponent(one), 10000).then(function (r) { var j = JSON.parse(r), f = (j[0] || []).map(function (p) { return p[0] || ""; }).join("").trim(); if (f) { TRX.c[one] = f; TRX.out[f] = 1; trSave(); } }).catch(function () { }).then(function () { TRX.busy = false; TRX.nodes = TRX.nodes.filter(function (n) { return n.isConnected && !trApply(n); }); if (TRX.q.length) setTimeout(trRun, 150); }); return; } trRun0(); };
+  if (typeof MutationObserver === "function") {
+    var trPend = [], trT = null;
+    new MutationObserver(function (ms) {
+      if (!TRX.on) return;
+      ms.forEach(function (m) { if (m.type === "characterData") { if (!TRX.out[(m.target.nodeValue || "").trim()]) trPend.push(m.target); } else Array.prototype.forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1 || n.nodeType === 3) trPend.push(n); }); });
+      clearTimeout(trT); trT = setTimeout(function () { var L = trPend; trPend = []; L.forEach(function (n) { if (n.isConnected) trScan(n); }); }, 120);
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+  function trBtn() {
+    var b = $("trBtn"); if (!b) return;
+    b.textContent = TRX.on ? "FR" : "EN"; b.setAttribute("aria-pressed", TRX.on ? "true" : "false");
+    b.title = TRX.on ? "Textes anglais traduits automatiquement en français (touchez pour voir les originaux)" : "Textes d'origine (touchez pour traduire en français)";
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("#trBtn"); if (!b) return;
+    TRX.on = !TRX.on; try { localStorage.setItem("mf-tr", TRX.on ? "1" : "0"); } catch (x) { /* stockage indisponible */ }
+    if (TRX.on) trScan(document.body); else location.reload();
+    trBtn();
+  });
+  setTimeout(function () { trBtn(); trScan(document.body); }, 1500);
   /* ---------- COT élargi : extrêmes sur 3 ans, résumé factuel, direction par catégorie (6 nov. 2026) ---------- */
   var COTN = { XAU: "Or", XAG: "Argent", WTI: "Pétrole WTI", EUR: "Euro", GBP: "Livre sterling", JPY: "Yen", CHF: "Franc suisse", AUD: "Dollar australien", CAD: "Dollar canadien", NZD: "Dollar néo-zélandais", DXY: "Dollar (DXY)", NAS: "Nasdaq 100", DOW: "Dow Jones", SPX: "S&P 500", US10: "Taux US 10 ans (T-Note)", BTC: "Bitcoin" };
   var cotSel = "XAU", cotThr = 80;
@@ -4681,6 +5088,8 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
   }
   var DASH = [
     { id: "brief", t: "Briefing du jour", f: briefHtml, w: 1 },
+    { id: "recap", t: "Récap des sessions", f: rcHtml, w: 1 },
+    { id: "wlive", t: "Carte du monde en direct", f: wlHtml, w: 1 },
     { id: "next", t: "Prochaines annonces", f: nextHtml },
     { id: "cours", t: "Cours en direct", f: coursHtml, w: 1 },
     { id: "drivers", t: "Drivers et biais par marché", f: function () { return drvHtml(true); }, w: 1 },
@@ -4711,7 +5120,8 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
   var dashEdit = false;
   function renderDashBlock(id) {
     var b = DASH.filter(function (x) { return x.id === id; })[0]; if (!b) return;
-    Array.prototype.forEach.call(document.querySelectorAll('.dblk[data-blk="' + id + '"] .dbody'), function (el) { if (el.closest(".branch") && !el.closest(".branch.on")) return; try { el.innerHTML = b.f(); } catch (e) { el.innerHTML = '<p class="hint">Bloc indisponible pour le moment.</p>'; } });
+    var anim = typeof UACT !== "undefined" && Date.now() - UACT < 900;
+    Array.prototype.forEach.call(document.querySelectorAll('.dblk[data-blk="' + id + '"] .dbody'), function (el) { if (el.closest(".branch") && !el.closest(".branch.on")) return; var y = window.scrollY; try { el.innerHTML = b.f(); } catch (e) { el.innerHTML = '<p class="hint">Bloc indisponible pour le moment.</p>'; } if (anim) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); } if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); });
   }
   function dashHtml() {
     var ord = dashOrder();
@@ -6374,7 +6784,9 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
     ["US2Y", "US 2 ans", 3, "%"], ["US5Y", "US 5 ans", 3, "%"], ["US10Y", "US 10 ans", 3, "%"], ["US30Y", "US 30 ans", 3, "%"], ["DE10Y-DE", "Bund 10 ans", 3, "%"], ["DE2Y-DE", "Schatz 2 ans", 3, "%"],
     ["FR10Y-FR", "OAT 10 ans", 3, "%"], ["IT10Y-IT", "BTP 10 ans", 3, "%"], ["ES10Y-ES", "Bonos 10 ans", 3, "%"], ["GB10Y-GB", "Gilt 10 ans", 3, "%"],
     [".VIX", "VIX", 2, ""], [".MOVE", "MOVE", 1, ""], [".GVZ", "GVZ (vol. or)", 2, ""], ["@LCO.1", "Brent", 2, "$"], ["@CL.1", "WTI", 2, "$"], ["@NG.1", "Gaz US", 3, "$"],
-    [".SPX", "S&P 500", 0, ""], ["@SP.1", "S&P fut.", 0, ""], [".NDX", "Nasdaq 100", 0, ""], ["@ND.1", "Nasdaq fut.", 0, ""], ["BTC.CM=", "Bitcoin", 0, "$"], ["AUDJPY=", "AUD/JPY", 3, ""]
+    [".SPX", "S&P 500", 0, ""], ["@SP.1", "S&P fut.", 0, ""], [".NDX", "Nasdaq 100", 0, ""], ["@ND.1", "Nasdaq fut.", 0, ""], ["BTC.CM=", "Bitcoin", 0, "$"], ["AUDJPY=", "AUD/JPY", 3, ""],
+    [".GDAXI", "DAX", 0, ""], [".FTSE", "FTSE 100", 0, ""], [".N225", "Nikkei 225", 0, ""], [".SSMI", "SMI", 0, ""], [".AXJO", "ASX 200", 0, ""], [".GSPTSE", "TSX", 0, ""], [".NZ50", "NZX 50", 0, ""],
+    ["JP10Y-JP", "Japon 10 ans", 3, "%"], ["CH10Y-CH", "Suisse 10 ans", 3, "%"], ["AU10Y-AU", "Australie 10 ans", 3, "%"], ["CA10Y-CA", "Canada 10 ans", 3, "%"], ["NZ10Y-NZ", "N.-Zélande 10 ans", 3, "%"]
   ];
   var LIVE_BAR = ["XAU=", "US10Y", "US2Y", ".DXY", "EUR=", ".VIX", ".MOVE", "~FRDE", "@LCO.1", "@ND.1"];
   function liveNum(s) { if (s === undefined || s === null || s === "UNCH") return s === "UNCH" ? 0 : null; var v = parseFloat(String(s).replace(/[%,\s]/g, "")); return isNaN(v) ? null : v; }
@@ -6397,7 +6809,7 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
       }); });
       if (!n) throw new Error("aucune cotation");
       LIVE.at = Date.now(); LIVE.err = "";
-      renderLive();
+      renderLive(); renderDashBlock("wlive"); renderDashBlock("recap");
     }).catch(function (e) { LIVE.err = String(e && e.message || e); renderLive(); });
   }
   function fxWeekend() { var d = new Date(), w = d.getUTCDay(), h = d.getUTCHours(); return w === 6 || (w === 0 && h < 21) || (w === 5 && h >= 21); }
@@ -6479,9 +6891,9 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
   buildBranches(); tagNature(); initMotion();
   initCmd(); initCal(); initCalViews(); initEz(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
-  initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 5 * 60 * 1000); pollLive(); setInterval(pollLive, 60000); setInterval(function () { if (!document.hidden) renderBrStatus(); }, 15000);
+  initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 5 * 60 * 1000); pollLive(); setInterval(pollLive, 60000); pollNews(); setInterval(pollNews, 60000); setInterval(function () { if (!document.hidden) renderTicker(); }, 60000); setInterval(function () { if (!document.hidden) renderBrStatus(); }, 15000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
-  document.addEventListener("visibilitychange", function () { if (!document.hidden) { refreshGold(); pollLive(); if (!AUTO || !AUTO.generated || Date.now() - Date.parse(AUTO.generated) > 30 * 6e4) loadAuto(); } });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) { refreshGold(); pollLive(); pollNews(); if (!AUTO || !AUTO.generated || Date.now() - Date.parse(AUTO.generated) > 30 * 6e4) loadAuto(); } });
   $("gChart").addEventListener("pointermove", function (e) { if (gCur) gShow(idx(e, $("gChart"), gCur.W, gCur.L, gCur.Rm, gCur.s.length), false); });
   $("gChart").addEventListener("pointerleave", function () { if (gCur) gShow(gCur.s.length - 1, true); });
   var rzT = null;

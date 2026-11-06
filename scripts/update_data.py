@@ -10,6 +10,7 @@ Règles :
 Test hors ligne : MF_MOCK_DIR=<dossier> lit des fichiers au lieu d'Internet.
 Diagnostic : MF_ONLY=fred,cot,... ne lance que certaines sources."""
 import csv, io, json, os, re, sys, time, statistics, threading, urllib.request, urllib.parse
+import html as _html
 from concurrent.futures import ThreadPoolExecutor, wait
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta, date
@@ -1998,11 +1999,17 @@ def parse_feed(txt):
                         return e
             return None
         t, l, dt = g("title"), g("link"), g("pubDate", "updated", "published", "date")
+        de = g("description", "summary", "content")
+        summ = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", _html.unescape((de.text or "") if de is not None else ""))).strip()[:400]
         if t is None or not (t.text or "").strip():
             continue
         link = (l.text or "").strip() if (l is not None and (l.text or "").strip()) else (l.get("href") if l is not None else "")
         raw = (dt.text or "").strip() if dt is not None else ""
-        out.append({"t": re.sub(r"\s+", " ", t.text).strip()[:200], "l": link or "", "d": parse_date(raw), "ts": parse_ts(raw)})
+        title = re.sub(r"\s+", " ", t.text).strip()[:200]
+        item = {"t": title, "l": link or "", "d": parse_date(raw), "ts": parse_ts(raw)}
+        if summ and summ != title and not summ.startswith("FinancialJuice"):
+            item["x"] = summ  # résumé publié dans le flux (affiché par le lecteur intégré du site)
+        out.append(item)
     return out
 
 
