@@ -2794,6 +2794,7 @@ def do_analyses(data):
 
 # ---------------------------------------------------------------- Fil d'actualités « flash » (marchés + monde), avec repérage des urgences
 # Ajouté le 6 nov. 2026 (demande : outils de type FXOS). Chaque flux est isolé : une panne n'empêche pas les autres.
+B = "https://www.bing.com/news/search?format=rss&mkt=en-US&q="  # titres via Bing Actualités (adresse réelle dans le lien)
 FLASH_FEEDS = [
     ("investingLive", "marchés", ["https://investinglive.com/feed/news", "https://investinglive.com/feed/"]),
     ("FinancialJuice", "marchés", ["https://www.financialjuice.com/feed.ashx?xy=rss"]),
