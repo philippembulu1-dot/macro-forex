@@ -5832,6 +5832,8 @@ html.lkon body{overflow:hidden}
     { id: "relais", race: [{ id: "allorigins", u: function (x) { return "https://api.allorigins.win/raw?url=" + encodeURIComponent(x); } }, { id: "codetabs", u: function (x) { return "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(x); } }] },
     { id: "jina2", u: function (x) { return "https://r.jina.ai/" + x; }, md: 1 }
   ];
+  /* pages anti-robot ou réservées aux abonnés renvoyées à la place de l'article : jamais affichées comme « article complet » */
+  var RD_BLOCK = /not a robot|are you a robot|are you human|verify you are human|captcha|access denied|block reference id|unusual activity|enable javascript and cookies|supports javascript and cookies|press (&amp;|&) hold|subscribe to (continue|read)|already a subscriber|this content is for subscribers|403 forbidden|attention required/i;
   function rdSvcOrder() { var last = ""; try { last = localStorage.getItem("mf-rdsvc") || ""; } catch (e) { /* stockage indisponible */ } return RD_SVC.slice().sort(function (a, b) { return (b.id === last) - (a.id === last); }); }
   function rdFetchSvc(svc, url) {
     if (svc.race) return new Promise(function (ok, ko) { /* relais lancés en même temps : le premier texte valide gagne */
@@ -5842,14 +5844,15 @@ html.lkon body{overflow:hidden}
     return fetch(svc.u(url), opt).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); }).then(function (t) {
       var h = svc.md ? rdMdHtml(t) : rdExtract(t);
       if (!h || (h.match(/<p>/g) || []).length < 3 || h.replace(/<[^>]+>/g, "").length < 400) throw new Error("vide");
-      if (/captcha|access denied|are you a robot|enable javascript/i.test(h.slice(0, 600))) throw new Error("bloqué");
+      if (RD_BLOCK.test(h.replace(/<[^>]+>/g, " "))) throw new Error("bloqué");
       return h;
     }, function (e) { clearTimeout(tm); throw e; });
   }
   function rdReader(it, tryN) {
     var box = $("rdFull"); if (!box) return;
     LN.art = LN.art || {}; tryN = tryN || 0;
-    if (!tryN) { try { var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"); if (cache[it.l]) LN.art[it.l] = cache[it.l].h; } catch (e) { /* stockage indisponible */ } }
+    if (!tryN) { try { var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"); if (cache[it.l]) { if (RD_BLOCK.test(String(cache[it.l].h).replace(/<[^>]+>/g, " "))) { delete cache[it.l]; delete LN.art[it.l]; localStorage.setItem("mf-art", JSON.stringify(cache)); } else LN.art[it.l] = cache[it.l].h; } } catch (e) { /* stockage indisponible */ } }
+    if (LN.art[it.l] && RD_BLOCK.test(String(LN.art[it.l]).replace(/<[^>]+>/g, " "))) delete LN.art[it.l];
     var show = function (h, how) { if (!$("rdFull") || $("reader")._it !== it) return; box.innerHTML = '<h4>Article complet</h4><div class="rdbody">' + h + '</div><p class="hint">' + how + "</p>"; box.hidden = false; var s = $("rdSum"); if (s) s.hidden = true; };
     if (LN.art[it.l]) return show(LN.art[it.l], "Mode lecture (texte de la page publique, traduit automatiquement).");
     var realU = typeof it.u === "string" && /^https?:/.test(it.u) ? it.u : ""; /* dans le fil, « u » signale une news urgente (vrai / faux), pas une adresse */
