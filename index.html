@@ -931,6 +931,17 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
 
 .rdload{display:flex;gap:6px;padding:10px 0}.rdload i{width:8px;height:8px;border-radius:50%;background:#f2b01e;animation:rdl 1s infinite ease-in-out}.rdload i:nth-child(2){animation-delay:.15s}.rdload i:nth-child(3){animation-delay:.3s}
 @keyframes rdl{0%,80%,100%{opacity:.2;transform:scale(.7)}40%{opacity:1;transform:none}}
+
+.essg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.essc{padding:12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07)}
+.essc h4{margin:0 0 6px;color:#f2b01e;font-size:.88rem}.essc h4 small{color:#8a8577;font-weight:400}
+.artday{margin:14px 0 4px;font-size:.84rem;color:#c9c3b3;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:4px}
+ul.flash li{position:relative}
+ul.flash li.artrd a{color:#a8a294}ul.flash li.artnew a{font-weight:600}
+.artnw{color:#f2b01e;font-weight:700}.artbk{color:#4da3ff;font-weight:700}
+.artst{position:absolute;right:0;top:6px;background:none;border:0;color:#8a8577;font-size:1.1rem;cursor:pointer;min-width:36px;min-height:36px}
+.artst.on{color:#f2b01e}
+ul.flash li:has(.artst){padding-right:38px}
 </style>
 
 </head><body><div class="shell">
@@ -4054,7 +4065,7 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     { id: "drivers", grp: "MARCHÉ", t: "Drivers et devises", ic: "⇄", d: "Drivers et biais par marché, moteurs du marché, force des devises sur tous les horizons, paires, carte thermique", blocks: ["drivers", "force"], p: ["moteurs", "fstr", "force", "heat", "paires", "selPanel", "~duo"], g: { moteurs: "Moteurs", fstr: "Force des devises", paires: "Paires et graphique" } },
     { id: "analyse", grp: "MARCHÉ", t: "Analyse technique", ic: "∿", d: "Graphique de chaque paire, de l'or et des indices avec moyennes mobiles 20/50/100, Bollinger, RSI, MACD ; indices des deux devises ; unités 1 h, 4 h, jour, semaine", blocks: ["ta"], p: [] },
     { id: "calendrier", grp: "MARCHÉ", t: "Calendrier économique", ic: "▦", d: "Prochaines annonces avec compte à rebours, chiffres réels contre prévus, semaine passée, surprises et réactions du marché", blocks: ["next", "rel"], p: ["calendrier", "semaine", "surprises", "reactions"], g: { calendrier: "Calendrier complet", surprises: "Surprises et réactions" } },
-    { id: "actus", grp: "MARCHÉ", t: "Actualités et analyses", ic: "✎", d: "Fil d'actualités avec urgences et mots-clés, notes des banques, consensus, communiqués, vidéos", blocks: ["flash"], p: ["analyses", "consensus", "actus", "videos"], g: { analyses: "Recherche des banques", actus: "Communiqués et vidéos" } },
+    { id: "actus", grp: "MARCHÉ", t: "Actualités et analyses", ic: "✎", d: "Fil d'actualités avec urgences et mots-clés, notes des banques, consensus, communiqués, vidéos", blocks: ["essentiel", "flash", "articles"], p: ["analyses", "consensus", "actus", "videos"], g: { analyses: "Recherche des banques", actus: "Communiqués et vidéos" } },
     { id: "geo", grp: "MARCHÉ", t: "Géopolitique", ic: "⚑", d: "Moniteur de risque (crises, alertes, prédictions, énergie), trafic maritime et détroits", blocks: ["geo"], p: ["geopol", "maritime"] },
     { id: "macro", grp: "MACRO", t: "Données macro", ic: "▤", d: "Indicateurs des 8 économies, cycle américain, déficits et dettes, projections Fed et BCE, indicateurs des desks, guide de lecture", p: ["indicateurs", "cycle", "deficits", "dotplot", "bceproj", "desk", "lecture"], g: { indicateurs: "Indicateurs", cycle: "Cycle et finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
     { id: "carte", grp: "MACRO", t: "Carte du monde", ic: "◍", d: "En direct : devise, bourse, taux à 10 ans, taux directeur, inflation, news et prochaine annonce de chaque pays ; G8 : inflation, taux, croissance, chômage, dette, PMI avec classement et comparaison ; carte mondiale détaillée ; réserves", blocks: ["wlive", "g8"], p: ["monde", "reserves"] },
@@ -4812,7 +4823,7 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
       if (!out.length && LN.items.length) return;
       out.sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); });
       LN.items = out.slice(0, 150); LN.at = Date.now();
-      renderTicker(); renderDashBlock("flash"); renderDashBlock("recap"); renderDashBlock("wlive");
+      renderTicker(); renderDashBlock("flash"); renderDashBlock("recap"); renderDashBlock("wlive"); renderDashBlock("essentiel"); renderDashBlock("articles");
     });
   }
   function allNews() { /* fil direct + fil du robot, sans doublon, du plus récent au plus ancien */
@@ -5060,6 +5071,60 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     });
   }
   function rdYt(u) { var m = String(u).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/); return m ? m[1] : null; }
+  /* ---------- Articles : lu / non lu, « à lire », médias / banques, et l'essentiel du jour (8 nov. 2026) ---------- */
+  var ART = { f: "all", unread: false, star: {}, read: {} };
+  try { ART.read = JSON.parse(localStorage.getItem("mf-read") || "{}") || {}; ART.star = JSON.parse(localStorage.getItem("mf-star") || "{}") || {}; } catch (e) { /* stockage indisponible */ }
+  function artSave() { try { var k = Object.keys(ART.read); if (k.length > 3000) k.slice(0, k.length - 2500).forEach(function (x) { delete ART.read[x]; }); localStorage.setItem("mf-read", JSON.stringify(ART.read)); localStorage.setItem("mf-star", JSON.stringify(ART.star)); } catch (e) { /* stockage indisponible */ } }
+  function artList() {
+    var seen = {}, out = [];
+    var add = function (x, kind) { if (!x || !x.l || seen[x.l]) return; seen[x.l] = 1; out.push({ t: x.t, l: x.l, x: x.x || "", src: x.src || x.bank || "", ts: x.ts || (x.d ? x.d + "T12:00Z" : null), a: x.a || [], u: x.u, kind: kind }); };
+    ((AUTO && AUTO.analyses) || []).forEach(function (x) { add(x, "bank"); });
+    ((AUTO && AUTO.news) || []).forEach(function (x) { add(x, "bank"); });
+    allNews().forEach(function (x) { add(x, "media"); });
+    return out.filter(function (x) { return x.ts; }).sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); });
+  }
+  var ESS_CAT = [["Banques centrales et macro des 8 économies", /\b(Fed|FOMC|Powell|ECB|Lagarde|BoE|Bailey|BoJ|Ueda|SNB|RBA|BoC|RBNZ|CPI|inflation|payrolls?|jobs|GDP|PMI|retail sales|unemployment|rate (hike|cut)|central bank)\b/i],
+    ["Géopolitique", /\b(war|missile|attack|strike|military|Iran|Israel|Russia|Ukraine|Houthi|Yemen|Saudi|China|Taiwan|sanction\w*|tariff\w*|ceasefire|nuclear)\b/i],
+    ["Marchés : or, dollar, actions, pétrole", /\b(gold|dollar|yen|euro|sterling|stocks?|Nasdaq|S&P|Dow|oil|crude|OPEC|yields?|Treasur\w*|bitcoin)\b/i]];
+  function artScore(x) { return (x.u ? 3 : 0) + (x.kind === "bank" ? 2 : 0) + (x.x ? 1 : 0) + (x.a ? x.a.length * 0.5 : 0); }
+  function essHtml() {
+    var day = Date.now() - 24 * 36e5, L = artList().filter(function (x) { return Date.parse(x.ts) >= day; }), used = {};
+    var groups = ESS_CAT.map(function (c) {
+      var g = L.filter(function (x) { return !used[x.l] && c[1].test(x.t + " " + x.x); }).sort(function (a, b) { return artScore(b) - artScore(a) || Date.parse(b.ts) - Date.parse(a.ts); }).slice(0, 4);
+      g.forEach(function (x) { used[x.l] = 1; }); return [c[0], g];
+    });
+    if (!groups.some(function (g) { return g[1].length; })) return '<p class="hint">Rien de marquant ces dernières 24 heures.</p>';
+    return '<div class="essg">' + groups.map(function (g) {
+      return '<div class="essc"><h4>' + g[0] + " <small>" + g[1].length + "</small></h4>" + (g[1].length ? '<ul class="flash">' + g[1].map(artLi).join("") + "</ul>" : '<p class="hint">Rien de majeur.</p>') + "</div>";
+    }).join("") + '</div><p class="hint">Sélection automatique des 24 dernières heures : les news urgentes, les notes de banques et les articles avec résumé passent en premier.</p>';
+  }
+  function artLi(x) {
+    var t = new Date(Date.parse(x.ts)), rd = ART.read[x.l], st = ART.star[x.l];
+    return '<li class="' + (x.u ? "urg " : "") + (rd ? "artrd" : "artnew") + '"><span class="ft num">' + t.toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + "</span>" +
+      '<a href="' + esc(x.l) + '" target="_blank" rel="noopener" data-artl="' + esc(x.l) + '">' + esc(x.t) + "</a>" + (x.x ? '<p class="fx">' + esc(x.x.length > 200 ? x.x.slice(0, 197).replace(/\s+\S*$/, "") + "…" : x.x) + "</p>" : "") +
+      '<span class="fs">' + esc(x.src) + (x.kind === "bank" ? ' · <b class="artbk">Banque</b>' : "") + (x.a && x.a.length ? " · " + x.a.join(" ") : "") + (rd ? "" : ' · <b class="artnw">Non lu</b>') + '</span><button type="button" class="artst' + (st ? " on" : "") + '" data-artst="' + esc(x.l) + '" aria-pressed="' + !!st + '" title="' + (st ? "Retirer de « à lire »" : "Garder pour plus tard") + '">' + (st ? "★" : "☆") + "</button></li>";
+  }
+  function artsHtml() {
+    var L = artList(), n = L.length, nu = L.filter(function (x) { return !ART.read[x.l]; }).length, ns = L.filter(function (x) { return ART.star[x.l]; }).length;
+    var F = L.filter(function (x) { return (ART.f === "all" || (ART.f === "bank" ? x.kind === "bank" : ART.f === "star" ? ART.star[x.l] : x.kind === "media")) && (!ART.unread || !ART.read[x.l]); });
+    var seg = '<div class="cfhead"><div class="seg" role="group" aria-label="Type">' + [["all", "Tout"], ["media", "Médias"], ["bank", "Banques"], ["star", "À lire (" + ns + ")"]].map(function (b) { return '<button type="button" data-artf="' + b[0] + '" aria-pressed="' + (ART.f === b[0]) + '">' + b[1] + "</button>"; }).join("") + "</div>" +
+      '<button type="button" class="chip" data-artu="1" aria-pressed="' + ART.unread + '">Masquer les lus</button><button type="button" class="chip" data-artall="1">Tout marquer comme lu</button></div>';
+    var days = {}, html = "";
+    F.slice(0, 60).forEach(function (x) { var d = new Date(Date.parse(x.ts)).toLocaleDateString("fr-FR", { timeZone: KIN, weekday: "long", day: "numeric", month: "long" }); (days[d] = days[d] || []).push(x); });
+    Object.keys(days).forEach(function (d) { html += '<h4 class="artday">' + d.replace(/^./, function (c) { return c.toUpperCase(); }) + '</h4><ul class="flash">' + days[d].map(artLi).join("") + "</ul>"; });
+    return '<p class="hint" style="margin-top:0">' + n + " articles · <b>" + nu + " non lus</b> · " + ns + " à lire plus tard</p>" + seg + (html || '<p class="hint">Aucun article pour ce filtre.</p>') +
+      '<p class="hint">Touchez un titre : l\'article s\'ouvre dans le terminal et passe en « lu ». L\'étoile le garde dans « À lire ». Mémorisé sur cet appareil.</p>';
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("[data-artf],[data-artu],[data-artall],[data-artst]"); if (t) {
+      if (t.dataset.artf) ART.f = t.dataset.artf; else if (t.dataset.artu) ART.unread = !ART.unread;
+      else if (t.dataset.artall) artList().forEach(function (x) { ART.read[x.l] = 1; });
+      else { if (ART.star[t.dataset.artst]) delete ART.star[t.dataset.artst]; else ART.star[t.dataset.artst] = 1; }
+      artSave(); renderDashBlock("articles"); renderDashBlock("essentiel"); return;
+    }
+    var a = e.target.closest && e.target.closest("a[href^='http']");
+    if (a && !a.dataset.ext && !a.closest(".rdpan")) { var h = a.getAttribute("href"); if (!ART.read[h]) { ART.read[h] = 1; artSave(); setTimeout(function () { renderDashBlock("articles"); renderDashBlock("essentiel"); }, 50); } }
+  }, true);
   /* ---------- Fiche détaillée d'un article, rédigée par le terminal (8 nov. 2026) ----------
      On ne recopie pas le texte des journaux (droits d'auteur) : la fiche assemble le résumé publié par la source,
      les chiffres repérés dans le titre, l'annonce du calendrier correspondante, la réaction des marchés depuis
@@ -5501,6 +5566,8 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     { id: "banques", t: "Banques centrales : prochaines réunions", f: banksHtml },
     { id: "geo", t: "Géopolitique", f: geoHtml },
     { id: "flash", t: "Actualités", f: function () { return flashHtml(18); }, w: 1 },
+    { id: "essentiel", t: "L'essentiel du jour", f: essHtml, w: 1 },
+    { id: "articles", t: "Articles : à lire et déjà lus", f: artsHtml, w: 1 },
     { id: "tv", t: "Bloomberg TV en direct", f: tvHtml },
     { id: "alertes", t: "Mes alertes", f: alertsHtml }
   ];
