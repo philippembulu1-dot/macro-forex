@@ -1044,6 +1044,11 @@ html.lkon body{overflow:hidden}
 .calic{white-space:nowrap}.calbtn{background:none;border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:15px;cursor:pointer;line-height:1}.calbtn:hover,.calbtn:focus-visible{border-color:var(--amber)}
 .evhtbl{width:100%}.evhtbl th,.evhtbl td{padding:5px 6px}.evhtbl td:last-child,.evhtbl td:first-child,.jproj td:last-child{min-width:0;white-space:nowrap}.jproj td:last-child{white-space:normal}.evspec th{text-align:left;vertical-align:top;width:34%;color:var(--muted);font-weight:500;padding:6px 8px}.evspec td{padding:6px 8px;white-space:normal}.evbars{width:100%;height:auto}
 @media (max-width:600px){.caltbl td.calic{display:table-cell!important}.caltbl th:nth-child(9){display:table-cell!important}}
+tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 14px;border-left:3px solid var(--amber)}.calxh{margin-bottom:8px}.calxh small{color:var(--muted)}
+.calxg{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}@media (max-width:800px){.calxg{grid-template-columns:1fr}}
+.evhmini td,.evhmini th{padding:4px 6px}.evgraph{width:100%;height:auto;background:rgba(255,255,255,.02);border-radius:6px}.calxctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.calxf{margin:10px 0 0}
+.calbtn[aria-expanded="true"]{border-color:var(--amber);background:rgba(242,176,30,.12)}
+@media (max-width:600px){tr.calxrow td{display:table-cell!important}.calx{padding:10px 8px}}
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -3477,7 +3482,7 @@ html.lkon body{overflow:hidden}
           '<td class="r num calA ' + (g > 0 ? "up" : g < 0 ? "down" : "") + '">' + (e.a ? dec(e.a) + (e.ao ? ' <small title="Chiffre officiel relevé par le robot">off.</small>' : "") : "") + "</td>" +
           '<td class="r num">' + dec(e.f) + "</td>" +
           '<td class="r num">' + dec(e.p) + rev + "</td>" +
-          '<td class="c calic"><button type="button" class="calbtn" data-det="evspec:' + c.events.indexOf(e) + '" title="Détails de l\'indicateur" aria-label="Détails de l\'indicateur">📁</button><button type="button" class="calbtn" data-det="evhist:' + c.events.indexOf(e) + '" title="Historique : réel contre prévu" aria-label="Historique">📊</button></td></tr>';
+          '<td class="c calic"><button type="button" class="calbtn" data-calx="spec:' + c.events.indexOf(e) + '" aria-expanded="false" title="Détails de l\'indicateur" aria-label="Détails de l\'indicateur">📁</button><button type="button" class="calbtn" data-calx="graph:' + c.events.indexOf(e) + '" aria-expanded="false" title="Graphique : réel contre prévu" aria-label="Graphique">📊</button></td></tr>';
       }).join("");
     }).join("");
     tb.className = "caltbl";
@@ -7047,7 +7052,9 @@ html.lkon body{overflow:hidden}
     [/PPI|Producer Price/i, "Prix payés aux producteurs (sortie d'usine).", "Institut statistique national", "Mensuelle", "Annonce l'inflation à la consommation des mois suivants."],
     [/Import Prices|Export Prices/i, "Prix des biens importés / exportés.", "Institut statistique national", "Mensuelle", "Inflation importée ; effet de marché en général faible."],
     [/GDP/i, "Valeur de toute la production du pays ; variation sur le trimestre (ou l'année).", "Institut statistique national (BEA, Eurostat, ONS…)", "Trimestrielle (estimation flash, puis révisions)", "La mesure la plus large de l'économie ; la première estimation fait le plus réagir."],
-    [/ISM Manufacturing|Manufacturing PMI/i, "Enquête auprès des directeurs d'achat de l'industrie (production, commandes, emploi, prix).", "ISM (États-Unis) ou S&P Global / HCOB", "Mensuelle, 1er jour ouvré du mois", "Indicateur avancé : au-dessus de 50 = expansion. Les sous-indices « prix payés » et « nouvelles commandes » sont les plus regardés."],
+    [/ISM Manufacturing/i, "Indice de diffusion tiré d'une enquête auprès des directeurs d'achat de l'industrie américaine (production, commandes, emploi, prix).", "Institute for Supply Management (ISM)", "Mensuelle, 1er jour ouvré du mois, 16 h heure de Kinshasa (15 h en été américain)", "Indicateur avancé de la santé de l'économie : les directeurs d'achat voient les changements avant tout le monde. Les sous-indices « prix payés » et « nouvelles commandes » sont les plus regardés."],
+    [/ISM Services|ISM Non-Manufacturing/i, "Indice de diffusion tiré d'une enquête auprès des directeurs d'achat des services américains.", "Institute for Supply Management (ISM)", "Mensuelle, 3e jour ouvré du mois, 16 h heure de Kinshasa (15 h en été américain)", "Les services pèsent environ 70 % de l'économie américaine ; le sous-indice des prix payés annonce l'inflation des services."],
+    [/Manufacturing PMI/i, "Enquête auprès des directeurs d'achat de l'industrie (production, commandes, emploi, prix).", "S&P Global / HCOB ou institut national", "Mensuelle, 1er jour ouvré du mois", "Indicateur avancé : au-dessus de 50 = expansion. Les sous-indices « prix payés » et « nouvelles commandes » sont les plus regardés."],
     [/ISM Services|Services PMI|Non-Manufacturing/i, "Enquête auprès des directeurs d'achat des services.", "ISM (États-Unis) ou S&P Global / HCOB", "Mensuelle, 3e jour ouvré", "Les services pèsent environ 70 % de l'économie : au-dessus de 50 = expansion ; les prix payés indiquent l'inflation des services."],
     [/Composite PMI|PMI/i, "Enquête auprès des directeurs d'achat (industrie et services).", "S&P Global / HCOB / institut national", "Mensuelle (flash en fin de mois, final au début du suivant)", "Le premier chiffre du mois sur l'activité : 50 = frontière expansion / contraction."],
     [/Retail Sales/i, "Évolution des ventes des commerces de détail.", "Institut statistique national (Census Bureau aux États-Unis)", "Mensuelle", "La consommation est le moteur de la croissance ; le « groupe de contrôle » américain entre directement dans le PIB."],
@@ -7097,12 +7104,87 @@ html.lkon body{overflow:hidden}
     var nb = H.filter(function (x) { return x.f !== null; }), beat = nb.filter(function (x) { return calGood(e, x.a, x.f) > 0; }).length;
     return svg + '<p class="hint" style="max-width:none">Barres : chiffre réel (vert = meilleur que prévu pour ' + esc(e.c) + ", rouge = moins bon) ; trait blanc : prévision." + (nb.length >= 4 ? " Meilleur que prévu <b>" + beat + " fois sur " + nb.length + "</b>." : "") + "</p>" + tbl;
   }
+  /* Détail et graphique ouverts SOUS la ligne, comme sur Forex Factory (observé le 8 nov. 2026) :
+     fiche (source, mesure, effet habituel, fréquence, prochaine publication, notes, pourquoi les traders s'y intéressent, méthode),
+     historique (réel, prévu, précédent), articles liés ; graphique avec base 50 pour les PMI, prévision en point orange, période et barres / ligne. */
+  var EV_NOTE = [[/ISM|PMI/i, "Au-dessus de 50 = expansion, en dessous = contraction."], [/Unemployment Rate/i, "Indicateur « inversé » : plus bas = meilleur pour la devise."], [/Claims/i, "Chiffre hebdomadaire bruité : suivez la moyenne sur 4 semaines."], [/Non ?Farm|Payrolls/i, "Les deux mois précédents sont révisés à chaque publication."], [/GDP/i, "Trois estimations successives (avancée, deuxième, troisième) : la première fait le plus réagir."], [/CPI|HICP|Inflation/i, "La version « sous-jacente » (hors énergie et alimentation) fait souvent plus réagir que l'indice global."], [/Retail Sales/i, "Version hors automobiles souvent plus parlante."], [/Michigan/i, "Deux versions : préliminaire (mi-mois) puis finale (fin de mois)."]];
+  var EV_HOW = [[/ISM|PMI/i, "Enquête mensuelle auprès de directeurs d'achat : production, nouvelles commandes, emploi, prix, délais de livraison, stocks."], [/Non ?Farm|Payrolls|Employment Change/i, "Enquête auprès des entreprises (fiches de paie)."], [/Unemployment Rate/i, "Enquête auprès des ménages."], [/CPI|HICP|Inflation Rate/i, "Relevé des prix d'un panier de biens et services, pondéré par les dépenses des ménages."], [/GDP/i, "Somme des dépenses (consommation, investissement, État, commerce extérieur)."], [/Claims/i, "Comptage administratif des inscriptions."], [/Retail Sales/i, "Enquête auprès des commerces."], [/Confidence|Sentiment|Ifo|ZEW|Sentix/i, "Enquête d'opinion (ménages, entreprises ou investisseurs)."]];
+  function evRelated(e) {
+    var gen = { rate: 1, index: 1, change: 1, final: 1, prel: 1, flash: 1, month: 1, year: 1, total: 1, prices: 0 }, kw = (String(e.t).replace(/^\[[A-Z]{2}\]\s*/, "").toLowerCase().match(/[a-z]{3,}/g) || []).filter(function (w) { return !gen[w]; });
+    var CTRY = { USD: /\b(US|U\.S\.|United States|America|American|Fed)\b/i, EUR: /\b(euro|eurozone|euro area|ECB|German|France|Italy|Spain)\b/i, GBP: /\b(UK|Britain|British|BoE)\b/i, JPY: /\b(Japan|Japanese|BoJ)\b/i, CHF: /\b(Swiss|Switzerland|SNB)\b/i, AUD: /\b(Australia\w*|RBA)\b/i, CAD: /\b(Canad\w*|BoC)\b/i, NZD: /\b(New Zealand|RBNZ|Kiwi)\b/i };
+    var lim = Date.parse(e.d) - 3 * 864e5, lim2 = Date.parse(e.d) + 5 * 864e5;
+    return artList().filter(function (x) { var t = Date.parse(x.ts); if (t < lim || t > lim2) return false; var txt = (x.t + " " + (x.x || "")).toLowerCase(), n = kw.filter(function (w) { return txt.indexOf(w) >= 0; }).length; return n >= 2 || (n >= 1 && kw.length <= 2 && CTRY[e.c] && CTRY[e.c].test(x.t + " " + (x.x || ""))); }).slice(0, 4);
+  }
+  function evInlineSpec(e) {
+    var sp = EV_SPEC.filter(function (x) { return x[0].test(e.t); })[0], pb = PB.filter(function (p) { return p[0].test(e.t); })[0], dir = pb ? pb[3] : (/Unemployment|Claims|Jobless/i.test(e.t) ? -1 : 1);
+    var nxt = ((AUTO && AUTO.calendar && AUTO.calendar.events) || []).filter(function (x) { return x.c === e.c && x.t === e.t && Date.parse(x.d) > Date.parse(e.d); }).sort(function (a, b) { return Date.parse(a.d) - Date.parse(b.d); })[0];
+    var note = (EV_NOTE.filter(function (x) { return x[0].test(e.t); })[0] || [])[1], how = (EV_HOW.filter(function (x) { return x[0].test(e.t); })[0] || [])[1];
+    var row = function (k, v) { return v ? "<tr><th>" + k + "</th><td>" + v + "</td></tr>" : ""; };
+    var H = evHist(e).filter(function (x) { return x.a !== null; }).reverse(), nd = 0; H.forEach(function (x) { [x.a, x.f, x.p].forEach(function (v) { if (v !== null && v !== undefined) { var m = String(v).match(/\.(\d+)/); if (m) nd = Math.max(nd, Math.min(2, m[1].length)); } }); });
+    var dec = function (x) { return x === null || x === undefined ? "" : fmtN(x, nd); }, unit = (String(e.a || e.f || e.p || "").match(/[%KMBT]$/i) || [""])[0];
+    var hist = '<table class="gtbl evhtbl evhmini"><thead><tr><th>Historique</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r">Précédent</th></tr></thead><tbody>' + (H.length ? H.map(function (x, k) { var g = x.f !== null ? calGood(e, x.a, x.f) : 0; return '<tr' + (k >= 6 ? ' class="evmore" hidden' : "") + "><td>" + parseD(x.d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) + '</td><td class="r num ' + (g > 0 ? "up" : g < 0 ? "down" : "") + '"><b>' + dec(x.a) + unit + '</b></td><td class="r num">' + (x.f !== null ? dec(x.f) + unit : "") + '</td><td class="r num">' + (x.p !== null ? dec(x.p) + unit : "") + "</td></tr>"; }).join("") : '<tr><td colspan="4">Pas encore d\'historique relevé.</td></tr>') + "</tbody></table>" + (H.length > 6 ? '<button type="button" class="chip" data-calmore="1">Plus (' + (H.length - 6) + ")</button>" : "");
+    var rel = evRelated(e);
+    var relH = rel.length ? '<h4>Articles liés</h4><ul class="flash">' + rel.map(artLi).join("") + "</ul>" : "";
+    return '<div class="calx"><div class="calxh"><b>' + esc(e.c) + '</b> <span class="ffimp ' + esc(calImpOf(e)) + '"></span> <b>' + esc(frEvent(e.t).t) + '</b> <small>' + esc(e.t) + '</small></div><div class="calxg"><div><table class="evspec"><tbody>' +
+      row("Source", sp ? sp[2] : "Institut statistique ou banque centrale du pays") + row("Ce que ça mesure", sp ? sp[1] : (pb ? pb[1] : "")) +
+      row("Effet habituel", dir > 0 ? "Réel <b>supérieur</b> à la prévision = <b>bon</b> pour la devise" : "Réel <b>inférieur</b> à la prévision = <b>bon</b> pour la devise") +
+      row("Fréquence", sp ? sp[3] : "") + row("Prochaine publication", nxt ? new Date(nxt.d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) + (nxt.f ? " · prévu " + esc(String(nxt.f).replace(/(\d)\.(\d)/g, "$1,$2")) : "") : "") +
+      row("Notes", note) + row("Sous-indices (dernier chiffre)", (function () { if (e.c !== "USD" || !/^ISM (Manufacturing|Services) PMI$/.test(e.t)) return ""; var SS = (AUTO && AUTO.ism && AUTO.ism.series) || {}, pre = /Manufacturing/.test(e.t) ? "manuf." : "serv.", lab = { commandes: "nouvelles commandes", prix: "prix payés", emploi: "emploi", activite: "activité" }; return Object.keys(lab).map(function (k) { var L = SS[pre + k]; if (!L || !L.length) return ""; var x = L[L.length - 1]; return lab[k] + " <b>" + fmtN(x.a, 1) + "</b>" + (x.p !== null && x.p !== undefined ? " (avant " + fmtN(x.p, 1) + ")" : ""); }).filter(Boolean).join(" · "); })()) + row("Pourquoi les traders s'y intéressent", sp ? sp[4] : (pb ? pb[2] : "")) + row("Méthode", how) +
+      '</tbody></table></div><div>' + hist + "</div></div>" + relH + '<p class="calxf"><button type="button" class="chip" data-det="ev:' + AUTO.calendar.events.indexOf(e) + '">Analyse complète du chiffre ›</button> <button type="button" class="chip" data-calclose="1">Fermer</button></p></div>';
+  }
+  function evGraphSvg(e, range, mode) {
+    var H = evHist(e).filter(function (x) { return x.a !== null; }), last = H.length ? Date.parse(H[H.length - 1].d) : 0;
+    if (range !== "max") H = H.filter(function (x) { return Date.parse(x.d) >= last - range * 365.25 * 864e5; });
+    if (H.length < 2) return '<p class="hint">Historique trop court pour un graphique (' + H.length + " publication" + (H.length > 1 ? "s" : "") + ").</p>";
+    var base = /ISM|PMI/i.test(e.t) ? 50 : 0, vals = [base]; H.forEach(function (x) { vals.push(x.a); if (x.f !== null) vals.push(x.f); });
+    var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals), sp_ = (mx - mn) || 1; mx += sp_ * 0.06; mn -= sp_ * 0.06;
+    var W = 640, Ht = 240, L = 8, R = 46, T = 10, B = 24, n = H.length, bw = (W - L - R) / n, y = function (v) { return T + (mx - v) / (mx - mn) * (Ht - T - B); }, yb = y(base);
+    var g = "";
+    for (var k = 0; k <= 4; k++) { var v = mn + (mx - mn) * k / 4, yy = y(v); g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="rgba(255,255,255,.07)"/><text x="' + (W - R + 4) + '" y="' + (yy + 3).toFixed(1) + '" font-size="10" fill="var(--muted)">' + fmtN(v, Math.abs(mx - mn) < 5 ? 1 : 0) + "</text>"; }
+    g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yb.toFixed(1) + '" y2="' + yb.toFixed(1) + '" stroke="var(--muted)" stroke-dasharray="3 3"/>';
+    if (mode === "line") g += '<polyline fill="none" stroke="#4da3ff" stroke-width="2" points="' + H.map(function (x, i) { return (L + i * bw + bw / 2).toFixed(1) + "," + y(x.a).toFixed(1); }).join(" ") + '"/>';
+    H.forEach(function (x, i) {
+      var X = L + i * bw, gd = x.f !== null ? calGood(e, x.a, x.f) : 0, c = gd > 0 ? "var(--up)" : gd < 0 ? "var(--down)" : "#4da3ff";
+      if (mode !== "line") { var top = Math.min(y(x.a), yb), h = Math.max(1, Math.abs(y(x.a) - yb)); g += '<rect x="' + (X + bw * 0.12).toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + Math.max(1, bw * 0.76).toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + c + '" opacity=".9"><title>' + longD(x.d) + " : réel " + fmtN(x.a, 2) + (x.f !== null ? ", prévu " + fmtN(x.f, 2) : "") + "</title></rect>"; }
+      else g += '<circle cx="' + (X + bw / 2).toFixed(1) + '" cy="' + y(x.a).toFixed(1) + '" r="2.5" fill="' + c + '"><title>' + longD(x.d) + " : réel " + fmtN(x.a, 2) + "</title></circle>";
+      if (x.f !== null) g += '<rect x="' + (X + bw / 2 - 2.5).toFixed(1) + '" y="' + (y(x.f) - 2.5).toFixed(1) + '" width="5" height="5" fill="#f28c28"><title>Prévu ' + fmtN(x.f, 2) + "</title></rect>";
+      if (i % Math.ceil(n / 8) === 0 && n - 1 - i >= Math.ceil(n / 8) * 0.6 || i === n - 1) g += '<text x="' + (X + bw / 2).toFixed(1) + '" y="' + (Ht - 7) + '" font-size="10" text-anchor="middle" fill="var(--muted)">' + parseD(x.d).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }) + "</text>";
+    });
+    var lv = H[H.length - 1].a; g += '<text x="' + (W - R + 4) + '" y="' + (y(lv) + 3).toFixed(1) + '" font-size="11" font-weight="700" fill="#4da3ff">' + fmtN(lv, 1) + "</text>";
+    return '<svg viewBox="0 0 ' + W + " " + Ht + '" class="evgraph" role="img" aria-label="Graphique de l\'indicateur">' + g + "</svg>";
+  }
+  function evInlineGraph(e, range, mode) {
+    var H = evHist(e).filter(function (x) { return x.a !== null; }), span = H.length ? (Date.parse(H[H.length - 1].d) - Date.parse(H[0].d)) / (365.25 * 864e5) : 0;
+    var rg = [[1, "1 an"], [2, "2 ans"], ["max", "Tout"]].filter(function (r) { return r[0] === "max" || span > r[0] - 1 + 0.2 || r[0] === 1; });
+    return '<div class="calx"><div class="calxh"><b>' + esc(e.c) + '</b> <span class="ffimp ' + esc(calImpOf(e)) + '"></span> <b>' + esc(frEvent(e.t).t) + "</b>" + (H.length ? ' <small>' + parseD(H[0].d).toLocaleDateString("fr-FR", { month: "short", year: "numeric" }) + " – " + parseD(H[H.length - 1].d).toLocaleDateString("fr-FR", { month: "short", year: "numeric" }) + "</small>" : "") + "</div>" +
+      evGraphSvg(e, range, mode) +
+      '<div class="calxctl"><span class="seg" role="group" aria-label="Période">' + rg.map(function (r) { return '<button type="button" data-calrg="' + r[0] + '" aria-pressed="' + (String(range) === String(r[0])) + '">' + r[1] + "</button>"; }).join("") + '</span> <span class="seg" role="group" aria-label="Type de graphique"><button type="button" data-calmode="bar" aria-pressed="' + (mode !== "line") + '">Barres</button><button type="button" data-calmode="line" aria-pressed="' + (mode === "line") + '">Ligne</button></span>' +
+      ' <small class="hint">Réel en barres (vert = meilleur que prévu, rouge = moins bon) · prévu en carré orange' + (/ISM|PMI/i.test(e.t) ? " · base 50" : "") + '</small></div><p class="calxf"><button type="button" class="chip" data-det="ev:' + AUTO.calendar.events.indexOf(e) + '">Analyse complète du chiffre ›</button> <button type="button" class="chip" data-calclose="1">Fermer</button></p></div>';
+  }
+  function calDayCell(tr) { var r = tr; while (r && !r.querySelector("td.calday")) r = r.previousElementSibling; return r ? r.querySelector("td.calday") : null; }
+  function calXRemove(row) { var dc = calDayCell(row); if (dc && dc.rowSpan > 1) dc.rowSpan--; row.remove(); }
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-calx],[data-calrg],[data-calmode],[data-calclose],[data-calmore]"); if (!b || !b.closest("#calTbl")) return;
+    ev.stopPropagation();
+    if (b.dataset.calmore) { [].forEach.call(b.parentNode.querySelectorAll(".evmore"), function (r) { r.hidden = false; }); b.remove(); return; }
+    var ex = b.closest("tr.calxrow");
+    if (b.dataset.calclose) { var prev = ex && ex.previousElementSibling; if (ex) calXRemove(ex); if (prev) [].forEach.call(prev.querySelectorAll("[data-calx]"), function (x) { x.setAttribute("aria-expanded", "false"); }); return; }
+    if (b.dataset.calrg || b.dataset.calmode) { var e0 = AUTO.calendar.events[+ex.dataset.ev]; if (b.dataset.calrg) ex.dataset.rg = b.dataset.calrg; if (b.dataset.calmode) ex.dataset.mode = b.dataset.calmode; ex.firstChild.innerHTML = evInlineGraph(e0, ex.dataset.rg === "max" ? "max" : +ex.dataset.rg, ex.dataset.mode); return; }
+    var kind = b.dataset.calx.split(":")[0], id = +b.dataset.calx.split(":")[1], tr = b.closest("tr"), e = AUTO.calendar.events[id]; if (!e) return;
+    var nx = tr.nextElementSibling, open = nx && nx.classList.contains("calxrow") ? nx : null;
+    [].forEach.call(tr.querySelectorAll("[data-calx]"), function (x) { x.setAttribute("aria-expanded", "false"); });
+    if (open) { var same = open.dataset.kind === kind; calXRemove(open); if (same) return; }
+    var row = document.createElement("tr"); row.className = "calxrow"; row.dataset.kind = kind; row.dataset.ev = id; row.dataset.rg = "max"; row.dataset.mode = "bar";
+    var dc = calDayCell(tr); if (dc) dc.rowSpan++;
+    var td = document.createElement("td"); td.colSpan = 8; td.innerHTML = kind === "spec" ? evInlineSpec(e) : evInlineGraph(e, "max", "bar"); row.appendChild(td);
+    tr.parentNode.insertBefore(row, tr.nextSibling); b.setAttribute("aria-expanded", "true");
+  }, true);
   /* Historique d'un indicateur du calendrier (8 nov. 2026) : séries TradingView du robot (États-Unis : ism.series, autres : eu_guide.tv) + calendrier */
   var EV_CC = { EUR: "EU", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" };
   function evHist(e) {
     var out = {}, add = function (x) { if (!x || !x.d) return; var a = numOf(x.a), f = numOf(x.f); var k = String(x.d).slice(0, 10); if (a === null && f === null) return; out[k] = { d: k, a: a, f: f, p: numOf(x.p) }; };
     var tt = String(e.t).replace(/^\[([A-Z]{2})\]\s*/, ""), cc = (String(e.t).match(/^\[([A-Z]{2})\]/) || [])[1] || EV_CC[e.c];
-    if (e.c === "USD") (((AUTO && AUTO.ism && AUTO.ism.series) || {})["tv." + tt] || []).forEach(add);
+    if (e.c === "USD") { var SS = (AUTO && AUTO.ism && AUTO.ism.series) || {}; Object.keys(SS).forEach(function (k) { (SS[k] || []).forEach(function (x) { if (k === "tv." + tt || x.t === tt) add(x); }); }); }
     else if (cc) (((AUTO && AUTO.eu_guide && AUTO.eu_guide.tv) || {})[cc + "|" + tt] || []).forEach(add);
     ((AUTO && AUTO.calendar && AUTO.calendar.events) || []).forEach(function (x) { if (x.c === e.c && x.t === e.t) add(x); });
     return Object.keys(out).sort().map(function (k) { return out[k]; });
