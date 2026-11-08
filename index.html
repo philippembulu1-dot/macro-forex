@@ -1026,6 +1026,7 @@ html.lkon body{overflow:hidden}
 .gtot td{border-top:1px solid rgba(242,176,30,.4)}
 .gbtns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .gcmd{width:100%;box-sizing:border-box;background:#0f0e0b;color:#ece8dc;border:1px solid rgba(242,176,30,.35);border-radius:10px;padding:10px;font:inherit;font-size:.82rem;margin:8px 0}
+.rdalt{border-left:3px solid var(--amber,#f0a020);padding:6px 10px;background:rgba(240,160,32,.08);border-radius:4px}
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -5203,7 +5204,7 @@ html.lkon body{overflow:hidden}
      l'heure, le résumé publié dans le flux, la traduction en français, et un bouton pour ouvrir l'article complet si on le veut. */
   var RD_TR = {};
   function rdIndex() {
-    var m = {}, add = function (x, kind) { if (x && x.l && !m[x.l]) m[x.l] = { t: x.t, l: x.l, u: x.u, src: x.src || x.bank || "", ts: x.ts, d: x.d, x: x.x || "", a: x.a || [], kind: kind, bank: x.bank, v: x.v, asset: x.asset, rev: x.rev }; };
+    var m = {}, add = function (x, kind) { if (x && x.l && !m[x.l]) m[x.l] = { t: x.t, l: x.l, u: x.u, src: x.src || x.bank || "", ts: x.ts, d: x.d, x: x.x || "", a: x.a || [], kind: kind, bank: x.bank, v: x.v, asset: x.asset, rev: x.rev, alt: x.alt }; };
     /* prévisions des banques relevées dans la presse (lien Google Actualités + adresse réelle trouvée par le robot) */
     ((AUTO && AUTO.consensus_auto) || []).forEach(function (c) { var src = (String(c.t).match(/ - ([^-]+)$/) || [])[1] || "presse"; add({ t: String(c.t).replace(/ - [^-]+$/, ""), l: c.l, u: c.u, src: src.trim(), d: c.d, x: "", a: c.asset === "gold" ? ["XAU", "USD"] : c.asset === "eurusd" ? ["EUR", "USD"] : ["USD"], bank: c.bank, v: c.v, asset: c.asset, rev: c.rev }, "prévision"); });
     allNews().forEach(function (x) { add(x, "news"); });
@@ -5848,6 +5849,16 @@ html.lkon body{overflow:hidden}
       return h;
     }, function (e) { clearTimeout(tm); throw e; });
   }
+  /* Articles réservés aux abonnés (Bloomberg, Reuters…) : même information chez un média dont la page est publique.
+     1) équivalent trouvé par le robot (Google Actualités, champ « alt ») ; 2) titre proche dans le fil du terminal. */
+  var RD_PW = /(^|\.)(bloomberg|reuters|wsj|ft|barrons|marketwatch|nytimes|washingtonpost|economist|nikkei|businessinsider)\.(com|co\.uk|net)$/;
+  function rdHost(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } }
+  function rdWords(t) { var st = { the: 1, and: 1, for: 1, with: 1, from: 1, after: 1, over: 1, amid: 1, says: 1, said: 1, into: 1, than: 1, its: 1, that: 1, this: 1, are: 1, was: 1, new: 1 }; return (String(t).toLowerCase().match(/[a-z0-9$%']{3,}/g) || []).filter(function (w) { return !st[w]; }); }
+  function rdAltLocal(it) {
+    var w = rdWords(it.t); if (w.length < 3) return null; var W = {}; w.forEach(function (x) { W[x] = 1; }); var best = null, bs = 0;
+    allNews().forEach(function (x) { if (!x.l || x.l === it.l || RD_PW.test(rdHost(x.l)) || /news\.google\.com/.test(x.l)) return; var w2 = rdWords(x.t), inter = 0, U = {}; w2.forEach(function (y) { if (W[y]) inter++; U[y] = 1; }); w.forEach(function (y) { U[y] = 1; }); var sc = inter / Math.max(1, Object.keys(U).length); if (sc > bs) { bs = sc; best = x; } });
+    return best && bs >= 0.4 ? { l: best.l, s: best.src || rdHost(best.l), t: best.t } : null;
+  }
   function rdReader(it, tryN) {
     var box = $("rdFull"); if (!box) return;
     LN.art = LN.art || {}; tryN = tryN || 0;
@@ -5857,21 +5868,24 @@ html.lkon body{overflow:hidden}
     if (LN.art[it.l]) return show(LN.art[it.l], "Mode lecture (texte de la page publique, traduit automatiquement).");
     var realU = typeof it.u === "string" && /^https?:/.test(it.u) ? it.u : ""; /* dans le fil, « u » signale une news urgente (vrai / faux), pas une adresse */
     if (/news\.google\.com/.test(it.l) && !realU) { box.hidden = false; box.innerHTML = '<p class="hint">L\'adresse de cet article sera retrouvée au prochain passage du robot ; en attendant, la fiche ci-dessous résume la prévision.</p>'; return; }
-    var url = realU || it.l, list = rdSvcOrder(), i = 0;
+    var url = realU || it.l, pw = RD_PW.test(rdHost(url)), alt = pw ? (it.alt && it.alt.l ? it.alt : rdAltLocal(it)) : null;
+    /* abonnés : l'article public équivalent d'abord (rapide et lisible), la page d'origine ensuite */
+    var targets = alt ? [{ u: alt.l, alt: alt }, { u: url }] : [{ u: url }], ti = 0, list = rdSvcOrder(), i = 0;
     var step = function () {
       if (!$("rdFull") || $("reader")._it !== it) return;
-      if (i >= list.length) {
+      if (i >= list.length) { ti++; i = 0; }
+      if (ti >= targets.length) {
         if (tryN < 1) { box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Les services de lecture sont chargés, nouvel essai dans quelques secondes…</p>'; setTimeout(function () { rdReader(it, tryN + 1); }, 5000); return; }
-        var pw = /bloomberg\.com|reuters\.com|wsj\.com|ft\.com|marketwatch\.com|barrons\.com|nikkei\.com/.test(url);
-        box.innerHTML = '<p class="hint">' + (pw ? "Le texte de cet article est réservé aux abonnés de " + esc(it.src || "la source") + " : seuls le titre et le résumé publics sont lisibles." : "Le texte complet de cet article n'a pas pu être lu (page protégée ou services de lecture indisponibles).") + ' <button type="button" class="chip" data-rdretry="1">Réessayer</button> Le résumé et la fiche détaillée sont ci-dessous.</p>';
+        box.innerHTML = '<p class="hint">' + (pw ? "Le texte de cet article est réservé aux abonnés de " + esc(it.src || "la source") + (alt ? "" : " et aucun média public n'a encore repris cette information") + " : le résumé et la fiche détaillée sont ci-dessous." : "Le texte complet de cet article n'a pas pu être lu (page protégée ou services de lecture indisponibles). Le résumé et la fiche détaillée sont ci-dessous.") + ' <button type="button" class="chip" data-rdretry="1">Réessayer</button></p>';
         return;
       }
-      var svc = list[i++];
-      box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Chargement de l\'article complet… (service ' + i + " sur " + list.length + ")</p>";
-      rdFetchSvc(svc, url).then(function (h) {
+      var tg = targets[ti], svc = list[i++];
+      box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">' + (tg.alt ? "Article réservé aux abonnés de " + esc(it.src || "la source") + " : chargement de la même information publiée par " + esc(tg.alt.s) + "…" : "Chargement de l'article complet… (service " + i + " sur " + list.length + ")") + "</p>";
+      rdFetchSvc(svc, tg.u).then(function (h) {
+        if (tg.alt) h = '<p class="rdalt"><b>Même information, article public de ' + esc(tg.alt.s) + "</b> : « " + esc(tg.alt.t) + " ». L'article d'origine de " + esc(it.src || "la source") + " est réservé à ses abonnés.</p>" + h;
         LN.art[it.l] = h;
         try { localStorage.setItem("mf-rdsvc", svc.id); var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"), ks = Object.keys(cache); cache[it.l] = { h: h, t: Date.now() }; if (ks.length > 40) ks.sort(function (a, b) { return cache[a].t - cache[b].t; }).slice(0, ks.length - 40).forEach(function (k) { delete cache[k]; }); localStorage.setItem("mf-art", JSON.stringify(cache)); } catch (e) { /* stockage plein */ }
-        show(h, "Mode lecture : texte de la page publique de " + esc(it.src || "la source") + ", traduit automatiquement. Si la page est réservée aux abonnés, seul le début public apparaît.");
+        show(h, "Mode lecture : texte de la page publique de " + esc(tg.alt ? tg.alt.s : (it.src || "la source")) + ", traduit automatiquement.");
       }).catch(step);
     };
     step();

@@ -2841,10 +2841,80 @@ def do_flash(data):
         gu.update(data.get("gn_urls") or {})
         gu.update({k: v for k, v in GN_CACHE.items() if v})
         data["gn_urls"] = dict(list(gu.items())[-600:])
+    try:
+        find_alternatives(out[:200], data)
+    except Exception as e:
+        DIAG["alt"] = fr_err(e)[:120]
     if out:
         data["flash"] = out[:200]
     elif PREVIOUS.get("flash"):
         data["flash"] = PREVIOUS["flash"]
+
+
+PAYWALL = re.compile(r"(bloomberg|reuters|wsj|ft|barrons|marketwatch|nytimes|washingtonpost|economist|nikkei|theinformation|businessinsider|telegraph|thetimes|axios)\.(com|co\.uk|net)$")
+ALT_STOP = set("a an the of to in on for and or with at by from as is are was be after over amid says said new its it that this into up down than more less vs".split())
+
+
+def _altwords(t):
+    return set(w for w in re.findall(r"[a-z0-9$%']{3,}", t.lower()) if w not in ALT_STOP)
+
+
+def find_alternatives(items, data):
+    """Bloomberg et Reuters réservent leurs articles aux abonnés (8 nov. 2026) : pour chaque titre, on cherche la même
+    information chez un média dont la page est publique (AP, BBC, Al Jazeera, CNBC, Yahoo Finance…), via Google Actualités.
+    Seuls l'adresse et le titre sont gardés ; le texte est lu par le navigateur de l'utilisateur, comme pour les autres articles."""
+    cache = dict((PREVIOUS.get("alt_cache") or {}))
+    todo = [it for it in items if it.get("src", "").startswith(("Bloomberg", "Reuters"))][:60]
+    end_ = time.time() + 75
+    def one(it):
+        key = re.sub(r"\W", "", it["t"].lower())[:70]
+        if key in cache:
+            return key, cache[key]
+        if time.time() > end_:
+            return key, None
+        words = _altwords(it["t"])
+        if len(words) < 3:
+            return key, ""
+        q = " ".join(sorted(words, key=lambda w: -len(w))[:7]) + " -site:bloomberg.com -site:reuters.com when:3d"
+        try:
+            xml = http("alt_%s.xml" % key[:30], "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q, "hl": "en-US", "gl": "US", "ceid": "US:en"}), tries=1, timeout=15)
+            best = None
+            for m in re.finditer(r"(?s)<item>(.*?)</item>", xml):
+                blk = m.group(1)
+                tt = _html.unescape(re.sub(r"<[^>]+>", "", (re.search(r"(?s)<title>(.*?)</title>", blk) or [None, ""])[1])).strip()
+                ln = (re.search(r"(?s)<link>(.*?)</link>", blk) or [None, ""])[1].strip()
+                sm = re.search(r'<source url="([^"]+)">(.*?)</source>', blk)
+                if not (tt and ln and sm):
+                    continue
+                host = re.sub(r"^www\.", "", urllib.parse.urlparse(sm.group(1)).netloc.lower())
+                if PAYWALL.search(host) or "youtube" in host:
+                    continue
+                t2 = re.sub(r"\s+-\s+[^-]{2,60}$", "", tt)
+                w2 = _altwords(t2)
+                sim = len(words & w2) / max(1, len(words | w2))
+                if sim >= 0.34 and (not best or sim > best[0]):
+                    best = (sim, ln, _html.unescape(sm.group(2)), t2)
+            if not best:
+                return key, ""
+            u = gnews_resolve(best[1], end_)
+            if not u:
+                return key, None
+            return key, [u, best[2], best[3][:200], round(best[0], 2)]
+        except Exception as e:
+            DIAG["alt_err"] = fr_err(e)[:100]
+            return key, None
+    with ThreadPoolExecutor(5) as ex:
+        res = list(ex.map(one, todo))
+    found = 0
+    for (key, v), it in zip(res, todo):
+        if v is not None:
+            cache[key] = v
+        if v:
+            it["alt"] = {"l": v[0], "s": v[1], "t": v[2]}
+            found += 1
+    keep = set(re.sub(r"\W", "", it["t"].lower())[:70] for it in items)
+    data["alt_cache"] = {k: v for k, v in cache.items() if k in keep}
+    DIAG["alt"] = "%d titres Bloomberg / Reuters, %d avec un article public équivalent" % (len(todo), found)
 
 
 # ---------------------------------------------------------------- Sentiment des particuliers : API officielle Myfxbook (compte gratuit)
