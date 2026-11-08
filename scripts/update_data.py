@@ -4823,9 +4823,9 @@ def do_guide_auto(data):
         note("guide.acm", "Prime de terme 10 ans (modèle ACM, Fed de New York)", "daily", True, out[-1][0], url="https://www.newyorkfed.org/research/data_indicators/term-premia-tabs")
     except Exception as e:
         note("guide.acm", "Prime de terme 10 ans (Fed de New York)", "daily", False, err=e, url="https://www.newyorkfed.org/research/data_indicators/term-premia-tabs")
-    # 10. Wage tracker de la BCE (jeu de données WTS, API BCE, CSV)
+    # 10. Wage tracker de la BCE (jeu EWT, mensuel ; le tracker se prolonge sur les mois à venir = projection tirée des accords signés). WTS = poids commerciaux, à ne pas confondre.
     try:
-        rows = list(csv.DictReader(io.StringIO(http("wts.csv", "https://data-api.ecb.europa.eu/service/data/WTS?lastNObservations=12&format=csvdata", timeout=40))))
+        rows = list(csv.DictReader(io.StringIO(http("ewt.csv", "https://data-api.ecb.europa.eu/service/data/EWT/M.U2.N.WT.._T.4F0.GY?lastNObservations=30&format=csvdata", timeout=40))))
         ser = {}
         for r in rows:
             if not r.get("OBS_VALUE"):
@@ -4842,9 +4842,9 @@ def do_guide_auto(data):
         L.sort(key=lambda x: x["k"])
         DIAG["wts_series"] = [x["k"] + " | " + x["t"][:70] for x in L][:12]
         G["wts"] = L[:12]
-        note("guide.wts", "Wage tracker de la BCE (salaires négociés, projection)", "monthly", True, max(x["h"][-1][0] for x in L)[:10], url="https://data.ecb.europa.eu/data/datasets/WTS")
+        note("guide.wts", "Wage tracker de la BCE (salaires négociés, projection)", "monthly", True, max(x["h"][-1][0] for x in L)[:10], url="https://data.ecb.europa.eu/data/datasets/EWT")
     except Exception as e:
-        note("guide.wts", "Wage tracker de la BCE", "monthly", False, err=e, url="https://data.ecb.europa.eu/data/datasets/WTS")
+        note("guide.wts", "Wage tracker de la BCE", "monthly", False, err=e, url="https://data.ecb.europa.eu/data/datasets/EWT")
     # 11. BlackRock Investment Institute : commentaire hebdomadaire (titre et résumé publics de la page)
     try:
         h = http("blk.html", "https://www.blackrock.com/corporate/insights/blackrock-investment-institute/publications/weekly-commentary", timeout=30)
@@ -4852,9 +4852,11 @@ def do_guide_auto(data):
             m = re.search(r'<meta[^>]+(?:property|name)="%s"[^>]+content="([^"]*)"' % re.escape(nm), h, re.I) or re.search(r'<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="%s"' % re.escape(nm), h, re.I)
             return _html.unescape(m.group(1)).strip() if m else ""
         hs = [re.sub(r"\s+", " ", strip_html(x)).strip() for x in re.findall(r"(?is)<h[1-3][^>]*>(.*?)</h[1-3]>", h)]
-        hs = [x for x in hs if 15 < len(x) < 160 and not re.search(r"(?i)weekly commentary|cookie|subscribe|blackrock investment institute$", x)]
+        hs = [_html.unescape(x) for x in hs if 15 < len(x) < 160 and not re.search(r"(?i)weekly commentary|cookie|subscribe|no search results|search|blackrock investment institute$", x)]
         dm = re.search(r"((?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, 20\d\d)", strip_html(h))
         desc = meta("og:description") or meta("description")
+        if re.search(r"(?i)stay tuned|weekly commentary by the blackrock", desc):
+            desc = ""  # texte générique de la page, pas le contenu de la semaine
         if not hs and not desc:
             raise ValueError("titre introuvable")
         dd = datetime.strptime(dm.group(1), "%B %d, %Y").strftime("%Y-%m-%d") if dm else TODAY
