@@ -5806,8 +5806,9 @@ html.lkon body{overflow:hidden}
     }).catch(function () { if (b) { b.disabled = false; b.textContent = "Traduction indisponible, réessayer"; } });
   }
   function rdRelated(it) { /* autres news sur le même sujet (même devise ou mots communs), pour lire la suite sans quitter le terminal */
-    var words = String(it.t).toLowerCase().match(/[a-z]{5,}/g) || [], A = it.a || [];
-    var L = allNews().filter(function (x) { if (x.l === it.l) return false; var sc = 0; (x.a || []).forEach(function (a) { if (A.indexOf(a) >= 0) sc += 1; }); words.forEach(function (w) { if (String(x.t).toLowerCase().indexOf(w) >= 0) sc += 2; }); x._sc = sc; return sc >= 2; }).sort(function (a, b) { return b._sc - a._sc || flashTime(b) - flashTime(a); }).slice(0, 5);
+    var STOP = /^(about|after|again|against|amid|could|first|their|there|these|those|which|while|would|years?|today|says?|said|report|reports|rules|people|world|still|other|being|where|since|under|could|should|change|changed|latest|news|update|record|today|times|world|leaders?|week|month)$/;
+    var words = (String(it.t).toLowerCase().match(/[a-z]{5,}/g) || []).filter(function (w) { return !STOP.test(w); }), A = it.a || [];
+    var L = allNews().filter(function (x) { if (x.l === it.l) return false; var sc = 0, wm = 0; (x.a || []).forEach(function (a) { if (A.indexOf(a) >= 0) sc += 1; }); var lg = 0; words.forEach(function (w) { if (new RegExp("\\b" + w + "\\b").test(String(x.t).toLowerCase())) { sc += 2; wm++; if (w.length >= 7) lg++; } }); x._sc = sc; return wm >= 2 || lg >= 1 || (wm >= 1 && sc >= 3); }).sort(function (a, b) { return b._sc - a._sc || flashTime(b) - flashTime(a); }).slice(0, 5);
     return L.length ? '<div class="rdrel"><h4>Sur le même sujet</h4><ul class="flash">' + L.map(function (x) { return '<li><span class="ft num">' + new Date(flashTime(x)).toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + '</span><a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(x.t) + "</a>" + (x.x ? '<p class="fx">' + esc(x.x.slice(0, 180)) + "</p>" : "") + '<span class="fs">' + esc(x.src) + "</span></li>"; }).join("") + "</ul></div>" : "";
   }
   function rdClose() { var box = $("reader"); if (!box || box.hidden) return; box.hidden = true; box.innerHTML = ""; document.body.classList.remove("rdon"); if (box._back && box._back.focus) try { box._back.focus(); } catch (e) { /* élément disparu */ } }
@@ -5815,7 +5816,7 @@ html.lkon body{overflow:hidden}
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
     var c = e.target.closest && e.target.closest("[data-rdclose],[data-rdtr]");
     if (c) { if (c.dataset.rdtr) rdDoTr(); else rdClose(); return; }
-    var a = e.target.closest && e.target.closest("a[href]"); if (!a || a.dataset.ext || a.closest(".rdpan") || a.closest(".tradingview-widget-container")) return;
+    var a = e.target.closest && e.target.closest("a[href]"); if (!a || a.dataset.ext || (a.closest(".rdpan") && !a.closest(".rdrel")) || a.closest(".tradingview-widget-container")) return; /* « Sur le même sujet » s'ouvre aussi dans le lecteur */
     var h = a.getAttribute("href") || ""; if (!/^https?:\/\//i.test(h)) return;
     if (/philippembulu1-dot\.github\.io\/macro-forex/i.test(h)) return;
     e.preventDefault(); rdOpen(h, a.textContent.trim());

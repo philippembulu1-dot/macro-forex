@@ -4556,6 +4556,9 @@ def due(name):
     """Le bloc doit-il tourner à ce passage ? (lancement manuel avec MF_FULL=1 : tout)"""
     if ONLY or os.environ.get("MF_FULL") == "1" or name not in PERIOD:
         return True
+    # bloc dont les données attendues manquent encore (nouvelle série ajoutée au robot) : on le relance tout de suite
+    if name == "ism" and not any("jobless" in k.lower() for k in ((PREVIOUS.get("ism") or {}).get("series") or {})):
+        return True
     per = PERIOD[name]
     wd, h = NOW.weekday(), NOW.hour
     if per and (wd == 5 or (wd == 6 and h < 21) or (wd == 4 and h >= 22)):
