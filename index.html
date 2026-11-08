@@ -4458,7 +4458,7 @@ html.lkon body{overflow:hidden}
   }
   function flashHtml(max) {
     var L = flashList(max);
-    var seg = '<div class="seg" role="group" aria-label="Filtre des actualités">' + [["all", "Tout"], ["u", "Urgent"], ["marchés", "Marchés"], ["monde", "Monde"], ["banques", "Banques centrales"]].map(function (f) { return '<button type="button" data-flf="' + f[0] + '" aria-pressed="' + (flashF === f[0]) + '">' + f[1] + "</button>"; }).join("") + "</div>";
+    var seg = '<div class="seg" role="group" aria-label="Filtre des actualités">' + [["all", "Tout"], ["u", "Urgent"], ["trader", "Traders"], ["marchés", "Marchés"], ["monde", "Monde"], ["banques", "Banques centrales"]].map(function (f) { return '<button type="button" data-flf="' + f[0] + '" aria-pressed="' + (flashF === f[0]) + '">' + f[1] + "</button>"; }).join("") + "</div>";
     if (!AUTO || !AUTO.flash) seg += '<p class="hint">Le fil flash arrive au prochain passage du robot (moins de 30 min).</p>';
     var pool = ((AUTO && AUTO.flash) || []), nu = pool.filter(function (x) { return x.u; }).length;
     seg += '<div class="kwrow"><span class="hint">' + nu + " urgentes sur " + pool.length + ' · mots-clés :</span>' + FL_KW.map(function (k) { var n = pool.filter(function (x) { return k[1].test(x.t); }).length; return n ? '<button type="button" class="kw" data-flkw="' + k[0] + '" aria-pressed="' + (flKw === k[0]) + '">' + k[0] + " <small>" + n + "</small></button>" : ""; }).join("") + "</div>";
@@ -5233,13 +5233,13 @@ html.lkon body{overflow:hidden}
     var add = function (x, kind) { if (!x || !x.l || seen[x.l]) return; seen[x.l] = 1; out.push({ t: x.t, l: x.l, x: x.x || "", src: x.src || x.bank || "", ts: x.ts || (x.d ? x.d + "T12:00Z" : null), a: x.a || [], u: x.u, kind: kind }); };
     ((AUTO && AUTO.analyses) || []).forEach(function (x) { add(x, "bank"); });
     ((AUTO && AUTO.news) || []).forEach(function (x) { add(x, "bank"); });
-    allNews().forEach(function (x) { add(x, "media"); });
+    allNews().forEach(function (x) { add(x, x.k === "trader" ? "trader" : "media"); });
     return out.filter(function (x) { return x.ts; }).sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); });
   }
   var ESS_CAT = [["Banques centrales et macro des 8 économies", /\b(Fed|FOMC|Powell|ECB|Lagarde|BoE|Bailey|BoJ|Ueda|SNB|RBA|BoC|RBNZ|CPI|inflation|payrolls?|jobs|GDP|PMI|retail sales|unemployment|rate (hike|cut)|central bank)\b/i],
     ["Géopolitique", /\b(war|missile|attack|strike|military|Iran|Israel|Russia|Ukraine|Houthi|Yemen|Saudi|China|Taiwan|sanction\w*|tariff\w*|ceasefire|nuclear)\b/i],
     ["Marchés : or, dollar, actions, pétrole", /\b(gold|dollar|yen|euro|sterling|stocks?|Nasdaq|S&P|Dow|oil|crude|OPEC|yields?|Treasur\w*|bitcoin)\b/i]];
-  function artScore(x) { return (x.u ? 3 : 0) + (x.kind === "bank" ? 2 : 0) + (x.x ? 1 : 0) + (x.a ? x.a.length * 0.5 : 0); }
+  function artScore(x) { return (x.u ? 3 : 0) + (x.kind === "bank" ? 2 : x.kind === "trader" ? 1 : 0) + (x.x ? 1 : 0) + (x.a ? x.a.length * 0.5 : 0); }
   function essHtml() {
     var day = Date.now() - 24 * 36e5, L = artList().filter(function (x) { return Date.parse(x.ts) >= day; }), used = {};
     var groups = ESS_CAT.map(function (c) {
@@ -5255,12 +5255,12 @@ html.lkon body{overflow:hidden}
     var t = new Date(Date.parse(x.ts)), rd = ART.read[x.l], st = ART.star[x.l];
     return '<li class="' + (x.u ? "urg " : "") + (rd ? "artrd" : "artnew") + '"><span class="ft num">' + t.toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + "</span>" +
       '<a href="' + esc(x.l) + '" target="_blank" rel="noopener" data-artl="' + esc(x.l) + '">' + esc(x.t) + "</a>" + (x.x ? '<p class="fx">' + esc(x.x.length > 200 ? x.x.slice(0, 197).replace(/\s+\S*$/, "") + "…" : x.x) + "</p>" : "") +
-      '<span class="fs">' + esc(x.src) + (x.kind === "bank" ? ' · <b class="artbk">Banque</b>' : "") + (x.a && x.a.length ? " · " + x.a.join(" ") : "") + (rd ? "" : ' · <b class="artnw">Non lu</b>') + '</span><button type="button" class="artst' + (st ? " on" : "") + '" data-artst="' + esc(x.l) + '" aria-pressed="' + !!st + '" title="' + (st ? "Retirer de « à lire »" : "Garder pour plus tard") + '">' + (st ? "★" : "☆") + "</button></li>";
+      '<span class="fs">' + esc(x.src) + (x.kind === "bank" ? ' · <b class="artbk">Banque</b>' : x.kind === "trader" ? ' · <b class="artbk">Traders</b>' : "") + (x.a && x.a.length ? " · " + x.a.join(" ") : "") + (rd ? "" : ' · <b class="artnw">Non lu</b>') + '</span><button type="button" class="artst' + (st ? " on" : "") + '" data-artst="' + esc(x.l) + '" aria-pressed="' + !!st + '" title="' + (st ? "Retirer de « à lire »" : "Garder pour plus tard") + '">' + (st ? "★" : "☆") + "</button></li>";
   }
   function artsHtml() {
     var L = artList(), n = L.length, nu = L.filter(function (x) { return !ART.read[x.l]; }).length, ns = L.filter(function (x) { return ART.star[x.l]; }).length;
-    var F = L.filter(function (x) { return (ART.f === "all" || (ART.f === "bank" ? x.kind === "bank" : ART.f === "star" ? ART.star[x.l] : x.kind === "media")) && (!ART.unread || !ART.read[x.l]); });
-    var seg = '<div class="cfhead"><div class="seg" role="group" aria-label="Type">' + [["all", "Tout"], ["media", "Médias"], ["bank", "Banques"], ["star", "À lire (" + ns + ")"]].map(function (b) { return '<button type="button" data-artf="' + b[0] + '" aria-pressed="' + (ART.f === b[0]) + '">' + b[1] + "</button>"; }).join("") + "</div>" +
+    var F = L.filter(function (x) { return (ART.f === "all" || (ART.f === "bank" ? x.kind === "bank" : ART.f === "star" ? ART.star[x.l] : ART.f === "trader" ? x.kind === "trader" : x.kind === "media")) && (!ART.unread || !ART.read[x.l]); });
+    var seg = '<div class="cfhead"><div class="seg" role="group" aria-label="Type">' + [["all", "Tout"], ["trader", "Traders"], ["media", "Médias"], ["bank", "Banques"], ["star", "À lire (" + ns + ")"]].map(function (b) { return '<button type="button" data-artf="' + b[0] + '" aria-pressed="' + (ART.f === b[0]) + '">' + b[1] + "</button>"; }).join("") + "</div>" +
       '<button type="button" class="chip" data-artu="1" aria-pressed="' + ART.unread + '">Masquer les lus</button><button type="button" class="chip" data-artall="1">Tout marquer comme lu</button></div>';
     var days = {}, html = "";
     F.slice(0, 60).forEach(function (x) { var d = new Date(Date.parse(x.ts)).toLocaleDateString("fr-FR", { timeZone: KIN, weekday: "long", day: "numeric", month: "long" }); (days[d] = days[d] || []).push(x); });

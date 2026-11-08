@@ -2706,7 +2706,12 @@ ANALYSIS_FEEDS = [
     ("ING THINK", ["https://think.ing.com/rss/", "https://think.ing.com/feed/", "https://think.ing.com/rss"]),
     # FXStreet retiré le 31 oct. 2026 : refuse les serveurs de GitHub (403).
     ("investingLive", ["https://investinglive.com/feed/news", "https://investinglive.com/feed/", "https://investinglive.com/rss"]),
+    # Recherche publique des banques et institutions (8 nov. 2026) : titres via Bing Actualités, adresse réelle, banque déduite du site
+    ("Banques : recherche publique", ["https://www.bing.com/news/search?format=rss&mkt=en-US&q=" + urllib.parse.quote("(site:goldmansachs.com OR site:jpmorgan.com OR site:morganstanley.com OR site:ubs.com OR site:home.saxo OR site:rabobank.com OR site:economic-research.bnpparibas.com OR site:wellsfargo.com OR site:blackrock.com OR site:db.com OR site:hsbc.com) (markets OR economy OR outlook OR gold OR dollar OR rates)")]),
+    ("BRI : discours des banquiers centraux", ["https://www.bis.org/doclist/cbspeeches.rss"]),
 ]
+BANK_DOM = {"goldmansachs": "Goldman", "jpmorgan": "JPMorgan", "morganstanley": "Morgan Stanley", "ubs.com": "UBS", "saxo": "Saxo", "rabobank": "Rabobank",
+            "bnpparibas": "BNP", "wellsfargo": "Wells Fargo", "blackrock": "BlackRock", "db.com": "Deutsche Bank", "hsbc": "HSBC", "bis.org": "BRI"}
 BANKS = ["BlackRock", "ING", "Goldman", "JPMorgan", "JP Morgan", "Morgan Stanley", "Citi", "UBS", "BofA", "Bank of America", "HSBC", "Barclays", "Commerzbank",
          "Danske", "MUFG", "Rabobank", "Nomura", "Deutsche Bank", "BNP", "Societe Generale", "Société Générale", "SocGen", "Wells Fargo", "Scotiabank",
          "RBC", "TD Securities", "Credit Agricole", "Crédit Agricole", "Natixis", "Nordea", "SEB", "Standard Chartered", "Westpac", "ANZ", "NAB",
@@ -2729,6 +2734,24 @@ def do_analyses(data):
                 if not got:
                     raise ValueError("flux vide")
                 keep = 0
+                if name.startswith(("Banques", "BRI")):  # recherche de banques et banquiers centraux : tout est gardé, banque déduite du site
+                    for g in got:
+                        um = re.search(r"[?&]url=([^&]+)", g.get("l") or "")
+                        if um:
+                            g["l"] = urllib.parse.unquote(um.group(1))
+                        bk = next((v for k_, v in BANK_DOM.items() if k_ in (g.get("l") or "")), None)
+                        if name.startswith("Banques") and not bk:
+                            continue
+                        t = g["t"]
+                        g.update({"src": (bk + " (recherche)") if name.startswith("Banques") else "BRI", "bank": bk or "BRI", "usd": bool(RX_USD.search(t)), "eur": bool(RX_EUR.search(t)), "rate": bool(RX_RATE.search(t))})
+                        with LOCK:
+                            items.append(g)
+                        keep += 1
+                    if not keep:
+                        raise ValueError("aucun article de banque reconnu")
+                    note("an." + re.sub(r"\W", "", name).lower(), "Analyses : " + name, "news", True, max((g["d"] for g in got if g["d"]), default=TODAY), url=url)
+                    DIAG.setdefault("analyses", {})[name] = {"articles": len(got), "retenus": keep}
+                    return
                 for g in got:
                     t = g["t"]
                     usd, eur, rate = bool(RX_USD.search(t)), bool(RX_EUR.search(t)), bool(RX_RATE.search(t))
@@ -2766,7 +2789,7 @@ def do_analyses(data):
         if k not in seen:
             seen.add(k)
             out.append(it)
-    data["analyses"] = out[:80]
+    data["analyses"] = out[:140]
 
 
 # ---------------------------------------------------------------- Fil d'actualités « flash » (marchés + monde), avec repérage des urgences
@@ -2794,7 +2817,18 @@ FLASH_FEEDS = [
     ("DW", "marchés", ["https://rss.dw.com/rdf/rss-en-bus", "https://rss.dw.com/rdf/rss-en-all"]),
     ("NPR Économie", "marchés", ["https://feeds.npr.org/1006/rss.xml"]),
     ("Al Jazeera Économie", "marchés", ["https://www.aljazeera.com/xml/rss/economy.xml"]),
+    # Sites de traders (8 nov. 2026) : flux direct d'abord ; si le site refuse les serveurs de GitHub, titres via Bing Actualités (adresse réelle)
+    ("FXStreet", "trader", ["https://www.fxstreet.com/rss/news", B + "site%3Afxstreet.com"]),
+    ("Kitco", "trader", [B + "site%3Akitco.com+gold"]),
+    ("FXEmpire", "trader", ["https://www.fxempire.com/api/v1/en/articles/rss/news", B + "site%3Afxempire.com"]),
+    ("Investing.com", "trader", ["https://www.investing.com/rss/news_1.rss", B + "site%3Ainvesting.com+forex+OR+gold+OR+dollar"]),
+    ("MarketPulse (OANDA)", "trader", ["https://www.marketpulse.com/feed/", B + "site%3Amarketpulse.com"]),
+    ("Action Forex", "trader", ["https://www.actionforex.com/feed/", B + "site%3Aactionforex.com"]),
+    ("DailyFX", "trader", [B + "site%3Adailyfx.com"]),
+    ("World Gold Council", "trader", [B + "site%3Agold.org"]),
 ]
+FLASH_GEN = ("BBC", "Al Jazeera", "The Guardian", "France 24", "DW", "NPR", "AP Monde", "CNBC Monde")  # médias généralistes
+FLASH_GEN_MAX = 0.30  # part maximale des médias généralistes ; le reste va aux sites de marché et de traders
 FLASH_PW_MAX = 0.40  # part maximale des titres Bloomberg + Reuters dans le fil (souvent réservés aux abonnés)
 RX_URGENT = re.compile(r"\b(breaking|urgent|flash|alert|emergency|surprise[sd]?|unexpected(ly)?|shock|plunge[sd]?|soar(s|ed)?|surge[sd]?|crash(es|ed)?|tumble[sd]?|"
                        r"rate (cut|hike)|cuts? rates?|hikes? rates?|FOMC|Powell|Lagarde|Ueda|Bailey|intervention|"
@@ -2829,12 +2863,16 @@ def do_flash(data):
                             g["l"] = u
                     if not got:
                         raise ValueError("aucun titre Reuters")
-                if "bing.com/news" in url:  # adresse réelle contenue dans le lien Bing
+                if "bing.com/news" in url:  # adresse réelle contenue dans le lien Bing ; on garde le seul site demandé
                     for g in got:
                         um = re.search(r"[?&]url=([^&]+)", g.get("l") or "")
                         if um:
                             g["l"] = urllib.parse.unquote(um.group(1))
-                    got = [g for g in got if "apnews.com" in (g.get("l") or "")] or got
+                    dm = re.search(r"site%3A([a-z0-9.\-]+)", url)
+                    if dm:
+                        got = [g for g in got if dm.group(1) in (g.get("l") or "")]
+                    if not got:
+                        raise ValueError("aucun titre du site demandé")
                 for g in got:
                     g.update({"src": name, "k": kind, "u": bool(RX_URGENT.search(g["t"])),
                               "a": [code for code, rx in RX_ASSET if rx.search(g["t"])]})
@@ -2870,7 +2908,15 @@ def do_flash(data):
     cap = int(min(200, len(free) / (1 - FLASH_PW_MAX)) * FLASH_PW_MAX) if free else 30
     keep_pw = set(id(it) for it in sorted(pwl, key=lambda it: (0 if it.get("alt") else 1, -(Date_ts(it))))[:cap])
     out = [it for it in out if not ispw(it) or id(it) in keep_pw]
-    DIAG["flash_part"] = "%d titres dont %d Bloomberg / Reuters (plafond %d %%)" % (min(200, len(out)), sum(1 for it in out[:200] if ispw(it)), FLASH_PW_MAX * 100)
+    # médias généralistes plafonnés à 30 % (les plus récents gardés)
+    isgen = lambda it: it.get("src", "").startswith(FLASH_GEN)
+    rest = [it for it in out if not isgen(it)]
+    capg = int(min(200, len(rest) / (1 - FLASH_GEN_MAX)) * FLASH_GEN_MAX) if rest else 60
+    keep_g = set(id(it) for it in sorted([it for it in out if isgen(it)], key=lambda it: -Date_ts(it))[:capg])
+    out = [it for it in out if not isgen(it) or id(it) in keep_g]
+    DIAG["flash_part"] = "%d titres : %d Bloomberg / Reuters (plafond %d %%), %d médias généralistes (plafond %d %%), %d sites de marché et de traders" % (
+        min(200, len(out)), sum(1 for it in out[:200] if ispw(it)), FLASH_PW_MAX * 100, sum(1 for it in out[:200] if isgen(it)), FLASH_GEN_MAX * 100,
+        sum(1 for it in out[:200] if not ispw(it) and not isgen(it)))
     if out:
         data["flash"] = out[:200]
     elif PREVIOUS.get("flash"):
