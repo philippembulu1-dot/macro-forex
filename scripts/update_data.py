@@ -4541,6 +4541,50 @@ def do_move(data):
     note("move", "Indice MOVE, volatilité implicite des obligations US (%s)" % M["src"], "daily", True, out["d"], url="https://www.ice.com/")
 
 
+# Fréquence de chaque bloc (8 nov. 2026) : l'utile au jour le jour à chaque passage, le lent moins souvent.
+# Minutes minimales entre deux mises à jour d'un bloc (0 = à chaque passage). Le week-end, tout ce qui n'est pas 0 est espacé ×3.
+PERIOD = {"calendar": 0, "flash": 0, "markets": 0, "fng": 25, "rss": 25, "retail": 25, "intraday": 25, "geo": 25,
+          "crosses": 55, "daily": 55, "zq": 55, "curves": 55, "fred": 55, "move": 55, "euro": 55, "analyses": 55, "cbnews": 55,
+          "videos": 115, "national": 175, "cot": 175, "cot2": 175, "fredapi": 175, "consensus": 175,
+          "policy": 355, "shipping": 355, "goldetf": 355, "ism": 355, "euguide": 355, "ofr": 355,
+          "oecd": 715, "kei": 715, "world": 715, "blsinfl": 715, "bankcot": 715, "bea": 715, "oecdsdmx": 715,
+          "reserves": 1435, "deficits": 1435, "g8": 1435, "fomc": 1435, "wgcproj": 1435, "ecbproj": 1435}
+SCHED = dict(PREVIOUS.get("sched") or {})
+
+
+def due(name):
+    """Le bloc doit-il tourner à ce passage ? (lancement manuel avec MF_FULL=1 : tout)"""
+    if ONLY or os.environ.get("MF_FULL") == "1" or name not in PERIOD:
+        return True
+    per = PERIOD[name]
+    wd, h = NOW.weekday(), NOW.hour
+    if per and (wd == 5 or (wd == 6 and h < 21) or (wd == 4 and h >= 22)):
+        per *= 3
+    last = SCHED.get(name)
+    if not last:
+        return True
+    try:
+        age = (NOW - datetime.strptime(last, "%Y-%m-%dT%H:%MZ").replace(tzinfo=timezone.utc)).total_seconds() / 60
+    except Exception:
+        return True
+    return age >= per
+
+
+def merge_previous(data):
+    """Les blocs non relancés gardent leurs dernières valeurs : clés absentes ou vides reprises du passage précédent,
+    dictionnaires complétés (les séries non rafraîchies restent, avec leur date)."""
+    for k, v in PREVIOUS.items():
+        if k in ("generated", "sources", "diag", "sched"):
+            continue
+        cur = data.get(k)
+        if cur in (None, [], {}, ""):
+            data[k] = v
+        elif isinstance(cur, dict) and isinstance(v, dict):
+            for kk, vv in v.items():
+                if kk not in cur:
+                    cur[kk] = vv
+
+
 def do_access():
     """Code d'accès du site (8 nov. 2026) : lu dans le secret GitHub ACCESS_CODE, jamais écrit ni affiché.
     Seule une empreinte PBKDF2-SHA256 salée (200 000 tours) est publiée dans data/acces.json ; secret vide = site ouvert."""
@@ -4581,7 +4625,11 @@ def main():
             fn(data)
         except Exception as e:  # filet de sécurité : une erreur de code n'arrête pas le reste
             note("robot." + name, "Bloc " + name, "daily", False, err=e)
-    todo = [st for st in steps if want(st[0])]
+    todo = [st for st in steps if want(st[0]) and due(st[0])]
+    skipped = [st[0] for st in steps if want(st[0]) and not due(st[0])]
+    for st in todo:
+        SCHED[st[0]] = NOW.strftime("%Y-%m-%dT%H:%MZ")
+    print("Blocs à ce passage : %d ; gardés du passage précédent : %d (%s)" % (len(todo), len(skipped), ", ".join(skipped)), flush=True)
     if want("seasonal"):
         todo.append(("seasonal", lambda d: do_seasonal(force=os.environ.get("MF_SEAS_FORCE") == "1")))
     if want("history"):
@@ -4598,6 +4646,8 @@ def main():
     done, pending = wait(futs, timeout=budget)
     for f in pending:
         note("robot." + futs[f], "Bloc " + futs[f] + " (arrêté : délai global de %d s dépassé)" % budget, "daily", False, err="délai dépassé")
+    if not ONLY:
+        merge_previous(data)  # avant les calculs qui combinent plusieurs blocs
     if want("calendar") or want("surprises"):
         try:
             do_surprises(data)
@@ -4630,6 +4680,14 @@ def main():
     # Séries FRED remplacées par une autre source officielle (OFR, BEA…) : plus affichées comme des pannes
     with LOCK:
         SOURCES[:] = [x for x in SOURCES if not (x["id"].startswith("fred.") and not x["ok"] and x["id"][5:] in data["fred"])]
+    # sources des blocs non relancés : on garde leur dernier état (date de la dernière lecture réussie)
+    if not ONLY:
+        with LOCK:
+            have = set(x["id"] for x in SOURCES)
+            SOURCES.extend(x for x in (PREVIOUS.get("sources") or []) if x.get("id") not in have and not str(x.get("id", "")).startswith("robot."))
+        for k, v in (PREVIOUS.get("diag") or {}).items():
+            DIAG.setdefault(k, v)
+    data["sched"] = SCHED
     out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES, "diag": DIAG}
     out.update(data)
     ok = sum(1 for s in SOURCES if s["ok"])

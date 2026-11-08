@@ -34,6 +34,7 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           ACCESS_CODE: ${{ secrets.ACCESS_CODE }}
           CYCLES: ${{ github.event_name == 'push' && '1' || '5' }}
+          MF_FULL: ${{ github.event_name == 'push' && '1' || '0' }}
           GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "macro-forex-robot"
@@ -53,13 +54,18 @@ jobs:
             return 1
           }
           ok=0
+          wd0=$(date -u +%u); hh0=$(date -u +%H)
+          if [ "$CYCLES" -gt 1 ] && { [ "$wd0" = 6 ] || { [ "$wd0" = 7 ] && [ "$hh0" -lt 20 ]; } || { [ "$wd0" = 5 ] && [ "$hh0" -ge 22 ]; }; }; then CYCLES=2; fi  # week-end : 2 passages espacés de 30 min par boucle
           for c in $(seq 1 $CYCLES); do
             start=$(date +%s)
             echo "=== Passage $c / $CYCLES : $(date -u +%H:%M) UTC"
             # le robot part de la dernière version publiée (mémoires et historiques à jour)
             git fetch -q origin main && git reset -q --hard origin/main
             if python scripts/update_data.py && publish; then ok=1; else echo "Passage $c en échec"; fi
-            [ "$CYCLES" -gt 1 ] && sleep $(( 720 - ($(date +%s) - start) > 30 ? 720 - ($(date +%s) - start) : 30 ))
+            # Semaine : un passage toutes les 12 min. Week-end (marchés fermés) : toutes les 30 min.
+            wd=$(date -u +%u); hh=$(date -u +%H); gap=720
+            if [ "$wd" = 6 ] || { [ "$wd" = 7 ] && [ "$hh" -lt 21 ]; } || { [ "$wd" = 5 ] && [ "$hh" -ge 22 ]; }; then gap=1800; fi
+            [ "$CYCLES" -gt 1 ] && sleep $(( gap - ($(date +%s) - start) > 30 ? gap - ($(date +%s) - start) : 30 ))
           done
           # Chaîne : en fin de boucle, on relance le robot tout de suite (sans attendre l'horaire GitHub, souvent en retard).
           # Le groupe « concurrency » garde au plus un passage en attente : pas d'emballement possible.
