@@ -32,13 +32,14 @@ jobs:
           MYFXBOOK_EMAIL: ${{ secrets.MYFXBOOK_EMAIL }}
           MYFXBOOK_PASSWORD: ${{ secrets.MYFXBOOK_PASSWORD }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ACCESS_CODE: ${{ secrets.ACCESS_CODE }}
           CYCLES: ${{ github.event_name == 'push' && '1' || '5' }}
           GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "macro-forex-robot"
           git config user.email "actions@users.noreply.github.com"
           publish() {
-            mkdir -p /tmp/out && rm -f /tmp/out/*.json && cp data/macro.json data/seasonal.json /tmp/out/ && for f in macro-history surprises reactions gold-etf geo-history; do cp data/$f.json /tmp/out/ 2>/dev/null || true; done
+            mkdir -p /tmp/out && rm -f /tmp/out/*.json && cp data/macro.json data/seasonal.json /tmp/out/ && for f in macro-history surprises reactions gold-etf geo-history acces; do cp data/$f.json /tmp/out/ 2>/dev/null || true; done
             for i in 1 2 3; do
               # On repart de la dernière version du dépôt et on y pose les nouvelles données (évite les conflits entre deux passages)
               git fetch -q origin main && git reset -q --hard origin/main

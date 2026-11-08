@@ -949,9 +949,74 @@ ul.flash li:has(.artst){padding-right:38px}
 .rdbars>div.on span,.rdbars>div.on b{color:#f2b01e;font-weight:700}.rdbars>div.on i{background:linear-gradient(90deg,#f2b01e,#ffd36b)}
 .rdbars>div.now i{background:linear-gradient(90deg,rgba(77,163,255,.3),#4da3ff)}.rdbars small{color:#8a8577}
 @media (max-width:480px){.rdbars>div{grid-template-columns:92px 1fr 64px}.rdbars small{display:none}}
+
+/* Code d'accès */
+html.lkwait body>*:not(#lock),html.lkon body>*:not(#lock):not(script){visibility:hidden!important}
+html.lkon body{overflow:hidden}
+.lock{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(90% 70% at 50% 30%,rgba(242,176,30,.12),transparent 60%),#0b0a08}
+.lock[hidden]{display:none}
+.lockbox{width:min(380px,100%);text-align:center;padding:28px 24px;border-radius:20px;border:1px solid rgba(242,176,30,.35);background:rgba(20,19,15,.92);box-shadow:0 30px 90px rgba(0,0,0,.6);animation:rdin .3s ease-out}
+.lockmark{font-size:2rem;color:#f2b01e;line-height:1}
+.lockbox h1{margin:10px 0 6px;font-size:1.4rem;color:#f6e3b0;letter-spacing:.02em}
+.lockbox p{margin:0 0 14px;color:#a8a294;font-size:.9rem}
+.lockbox input{width:100%;box-sizing:border-box;min-height:48px;padding:0 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#0f0e0b;color:#ece8dc;font-size:1.05rem;text-align:center;letter-spacing:.15em}
+.lockbox input:focus{outline:2px solid #f2b01e;outline-offset:2px}
+.lockbox button{width:100%;min-height:48px;margin-top:10px;border:0;border-radius:12px;background:#f2b01e;color:#14130f;font-weight:700;font-size:1rem;cursor:pointer}
+.lockbox button:disabled{opacity:.6}
+.lockerr{color:#ff8a7f!important;min-height:1.2em;margin:10px 0 4px!important}
+.lockhint{font-size:.76rem!important;color:#6f6a5c!important;margin:0!important}
+.lock.lkok .lockbox{transform:scale(.97);opacity:0;transition:all .3s ease}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 
-</head><body><div class="shell">
+</head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
+  <form class="lockbox" id="lockF" autocomplete="off">
+    <div class="lockmark" aria-hidden="true">◆</div>
+    <h1 id="lockT">Terminal privé</h1>
+    <p>Entrez votre code d'accès pour ouvrir le terminal.</p>
+    <label class="sr" for="lockIn">Code d'accès</label>
+    <input id="lockIn" type="password" inputmode="text" autocomplete="current-password" placeholder="Code d'accès" required>
+    <button type="submit" id="lockB">Entrer</button>
+    <p class="lockerr" id="lockE" role="alert"></p>
+    <p class="lockhint">Le code est mémorisé sur cet appareil après la première entrée.</p>
+  </form>
+</div>
+<script>
+/* Code d'accès (8 nov. 2026) : empreinte PBKDF2 publiée par le robot dans data/acces.json (secret GitHub ACCESS_CODE).
+   Serrure légère contre les visiteurs de passage : le contenu reste masqué tant que le code n'est pas validé. */
+(function () {
+  var D = document.documentElement, KEY = "mf-acces", ON = "mf-lockon";
+  var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, put = function (k, v) { try { localStorage.setItem(k, v); } catch (e) { } };
+  D.classList.add("lkwait");
+  var base = (function () { var m = /^([a-z0-9-]+)\.github\.io$/i.exec(location.hostname), r = location.pathname.split("/")[1]; return m && r ? "https://raw.githubusercontent.com/" + m[1] + "/" + r + "/main/data/" : "data/"; })();
+  var hex = function (b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return ("0" + x.toString(16)).slice(-2); }).join(""); };
+  var unhex = function (h) { var a = new Uint8Array(h.length / 2); for (var i = 0; i < a.length; i++) a[i] = parseInt(h.substr(i * 2, 2), 16); return a; };
+  var derive = function (code, A) { return crypto.subtle.importKey("raw", new TextEncoder().encode(code), "PBKDF2", false, ["deriveBits"]).then(function (k) { return crypto.subtle.deriveBits({ name: "PBKDF2", salt: unhex(A.s), iterations: A.it || 200000, hash: "SHA-256" }, k, 256); }).then(hex); };
+  var open = function () { D.classList.remove("lkwait", "lkon"); var l = document.getElementById("lock"); if (l) l.hidden = true; };
+  var lock = function (A) {
+    D.classList.remove("lkwait"); D.classList.add("lkon"); var l = document.getElementById("lock"); l.hidden = false;
+    var inp = document.getElementById("lockIn"), err = document.getElementById("lockE"), btn = document.getElementById("lockB"), fails = 0;
+    setTimeout(function () { inp.focus(); }, 50);
+    document.getElementById("lockF").onsubmit = function (e) {
+      e.preventDefault(); if (btn.disabled) return; btn.disabled = true; btn.textContent = "Vérification…"; err.textContent = "";
+      derive(inp.value, A).then(function (h) {
+        if (h === A.h) { put(KEY, A.h); put(ON, "1"); l.classList.add("lkok"); setTimeout(open, 350); }
+        else { fails++; inp.value = ""; err.textContent = "Code incorrect." + (fails >= 5 ? " Patientez 30 secondes." : ""); l.querySelector(".lockbox").classList.remove("shake"); void l.offsetWidth; l.querySelector(".lockbox").classList.add("shake"); if (fails >= 5) { setTimeout(function () { btn.disabled = false; btn.textContent = "Entrer"; fails = 0; }, 30000); return; } }
+        btn.disabled = false; btn.textContent = "Entrer";
+      }).catch(function () { btn.disabled = false; btn.textContent = "Entrer"; err.textContent = "Votre navigateur ne peut pas vérifier le code (ouvrez le site en https)."; });
+    };
+  };
+  var decide = function (A) { if (!A || !A.on) { put(ON, "0"); return open(); } put(ON, "1"); if (get(KEY) === A.h) return open(); lock(A); };
+  var timer = setTimeout(function () { if (get(ON) === "1") { if (!get(KEY)) lock(JSON.parse(get("mf-acces-a") || "null") || { on: true, s: "00", h: "x" }); else open(); } else open(); }, 6000);
+  fetch(base + "acces.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return fetch("data/acces.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); })
+    .then(function (A) { clearTimeout(timer); put("mf-acces-a", JSON.stringify(A)); decide(A); })
+    .catch(function () { clearTimeout(timer); var A = null; try { A = JSON.parse(get("mf-acces-a") || "null"); } catch (e) { } if (A && A.on) decide(A); else open(); });
+})();
+</script>
+<div class="shell">
   <nav class="side" aria-label="Sections"><div class="side-in">
     <div class="brand"><span class="mark"></span>MACRO FOREX</div>
     <div class="grp">MARCHÉS</div>

@@ -4541,7 +4541,35 @@ def do_move(data):
     note("move", "Indice MOVE, volatilité implicite des obligations US (%s)" % M["src"], "daily", True, out["d"], url="https://www.ice.com/")
 
 
+def do_access():
+    """Code d'accès du site (8 nov. 2026) : lu dans le secret GitHub ACCESS_CODE, jamais écrit ni affiché.
+    Seule une empreinte PBKDF2-SHA256 salée (200 000 tours) est publiée dans data/acces.json ; secret vide = site ouvert."""
+    import hashlib, secrets as _sec
+    code = os.environ.get("ACCESS_CODE", "").strip("\r\n")
+    path = os.path.join(ROOT, "data", "acces.json")
+    DIAG["ACCESS_CODE"] = "présent" if code else "vide"
+    old = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            old = json.load(f)
+    except Exception:
+        old = {}
+    if not code:
+        out = {"on": False}
+    else:
+        salt = old.get("s") if old.get("on") and old.get("s") else _sec.token_hex(16)
+        h = hashlib.pbkdf2_hmac("sha256", code.encode("utf-8"), bytes.fromhex(salt), 200000).hex()
+        out = {"on": True, "s": salt, "it": 200000, "h": h}
+    if out != old:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(out, f)
+
+
 def main():
+    try:
+        do_access()
+    except Exception as e:
+        DIAG["acces"] = fr_err(e)[:120]
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("g8", do_g8), ("flash", do_flash), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("crosses", do_crosses), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
