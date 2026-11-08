@@ -2867,7 +2867,7 @@ def find_alternatives(items, data):
     todo = [it for it in items if it.get("src", "").startswith(("Bloomberg", "Reuters"))][:60]
     end_ = time.time() + 75
     def one(it):
-        key = re.sub(r"\W", "", it["t"].lower())[:70]
+        key = "b:" + re.sub(r"\W", "", it["t"].lower())[:70]  # « b: » = recherche Bing + Google (les anciennes entrées Google seules sont refaites)
         if key in cache:
             return key, cache[key]
         if time.time() > end_:
@@ -2875,10 +2875,35 @@ def find_alternatives(items, data):
         words = _altwords(it["t"])
         if len(words) < 3:
             return key, ""
-        q = " ".join(sorted(words, key=lambda w: -len(w))[:7]) + " -site:bloomberg.com -site:reuters.com when:3d"
+        q0 = " ".join(sorted(words, key=lambda w: -len(w))[:7])
         try:
-            xml = http("alt_%s.xml" % key[:30], "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q, "hl": "en-US", "gl": "US", "ceid": "US:en"}), tries=1, timeout=15)
             best = None
+            # 1) Bing Actualités (RSS) : l'adresse réelle est dans le lien, sans requête supplémentaire
+            try:
+                xml = http("altb_%s.xml" % key[2:32], "https://www.bing.com/news/search?" + urllib.parse.urlencode({"q": q0, "format": "rss", "mkt": "en-US"}), tries=1, timeout=15)
+                for m in re.finditer(r"(?s)<item>(.*?)</item>", xml):
+                    blk = m.group(1)
+                    tt = _html.unescape(re.sub(r"<[^>]+>", "", (re.search(r"(?s)<title>(.*?)</title>", blk) or [None, ""])[1])).strip()
+                    ln = _html.unescape((re.search(r"(?s)<link>(.*?)</link>", blk) or [None, ""])[1].strip())
+                    um = re.search(r"[?&]url=([^&]+)", ln)
+                    real = urllib.parse.unquote(um.group(1)) if um else ln
+                    if not real.startswith("http"):
+                        continue
+                    host = re.sub(r"^www\.", "", urllib.parse.urlparse(real).netloc.lower())
+                    if PAYWALL.search(host) or "youtube" in host or "msn.com" in host:
+                        continue
+                    srcn = _html.unescape((re.search(r"(?s)<News:Source>(.*?)</News:Source>", blk) or [None, host])[1]).strip()
+                    w2 = _altwords(tt)
+                    sim = len(words & w2) / max(1, len(words | w2))
+                    if sim >= 0.34 and (not best or sim > best[0]):
+                        best = (sim, real, srcn, tt)
+            except Exception as e:
+                DIAG["alt_bing"] = fr_err(e)[:100]
+            if best:
+                return key, [best[1], best[2], best[3][:200], round(best[0], 2)]
+            # 2) Google Actualités (adresse à résoudre : limité par Google, en secours seulement)
+            q = q0 + " -site:bloomberg.com -site:reuters.com when:3d"
+            xml = http("alt_%s.xml" % key[2:32], "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q, "hl": "en-US", "gl": "US", "ceid": "US:en"}), tries=1, timeout=15)
             for m in re.finditer(r"(?s)<item>(.*?)</item>", xml):
                 blk = m.group(1)
                 tt = _html.unescape(re.sub(r"<[^>]+>", "", (re.search(r"(?s)<title>(.*?)</title>", blk) or [None, ""])[1])).strip()
@@ -2912,7 +2937,7 @@ def find_alternatives(items, data):
         if v:
             it["alt"] = {"l": v[0], "s": v[1], "t": v[2]}
             found += 1
-    keep = set(re.sub(r"\W", "", it["t"].lower())[:70] for it in items)
+    keep = set("b:" + re.sub(r"\W", "", it["t"].lower())[:70] for it in items)
     data["alt_cache"] = {k: v for k, v in cache.items() if k in keep}
     DIAG["alt"] = "%d titres Bloomberg / Reuters, %d avec un article public équivalent" % (len(todo), found)
 
