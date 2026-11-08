@@ -2864,7 +2864,7 @@ def find_alternatives(items, data):
     information chez un média dont la page est publique (AP, BBC, Al Jazeera, CNBC, Yahoo Finance…), via Google Actualités.
     Seuls l'adresse et le titre sont gardés ; le texte est lu par le navigateur de l'utilisateur, comme pour les autres articles."""
     cache = dict((PREVIOUS.get("alt_cache") or {}))
-    todo = [it for it in items if it.get("src", "").startswith(("Bloomberg", "Reuters"))][:60]
+    todo = [it for it in items if it.get("src", "").startswith(("Bloomberg", "Reuters"))][:100]
     end_ = time.time() + 75
     def one(it):
         key = "b2:" + re.sub(r"\W", "", it["t"].lower())[:70]  # « b: » = recherche Bing + Google (les anciennes entrées Google seules sont refaites)

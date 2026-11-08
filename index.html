@@ -5856,7 +5856,7 @@ html.lkon body{overflow:hidden}
   function rdWords(t) { var st = { the: 1, and: 1, for: 1, with: 1, from: 1, after: 1, over: 1, amid: 1, says: 1, said: 1, into: 1, than: 1, its: 1, that: 1, this: 1, are: 1, was: 1, new: 1 }; return (String(t).toLowerCase().match(/[a-z0-9$%']{3,}/g) || []).filter(function (w) { return !st[w]; }); }
   function rdAltLocal(it) {
     var w = rdWords(it.t); if (w.length < 3) return null; var W = {}; w.forEach(function (x) { W[x] = 1; }); var best = null, bs = 0;
-    allNews().forEach(function (x) { if (!x.l || x.l === it.l || RD_PW.test(rdHost(x.l)) || /news\.google\.com/.test(x.l)) return; var w2 = rdWords(x.t), inter = 0, U = {}; w2.forEach(function (y) { if (W[y]) inter++; U[y] = 1; }); w.forEach(function (y) { U[y] = 1; }); var sc = inter / Math.max(1, Object.keys(U).length); if (sc > bs) { bs = sc; best = x; } });
+    allNews().forEach(function (x) { if (x && x.alt && x.alt.l && RD_PW.test(rdHost(x.l || ""))) x = { l: x.alt.l, src: x.alt.s, t: x.t }; /* titre abonnés déjà relié à un article public */ if (!x.l || x.l === it.l || RD_PW.test(rdHost(x.l)) || /news\.google\.com/.test(x.l)) return; var w2 = rdWords(x.t), inter = 0, U = {}; w2.forEach(function (y) { if (W[y]) inter++; U[y] = 1; }); w.forEach(function (y) { U[y] = 1; }); var sc = inter / Math.max(1, Object.keys(U).length); if (sc > bs) { bs = sc; best = x; } });
     return best && bs >= 0.4 ? { l: best.l, s: best.src || rdHost(best.l), t: best.t } : null;
   }
   function rdReader(it, tryN) {
