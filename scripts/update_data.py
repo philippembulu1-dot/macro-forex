@@ -1827,6 +1827,14 @@ def do_consensus_news(data):
             seen.add(key)
             out.append({"bank": key[0], "asset": asset, "v": val, "t": t[:160], "l": link, "d": d, "rev": rev})
     out.sort(key=lambda x: x["d"], reverse=True)
+    # adresses réelles des articles (lecteur intégré du site), avec mémoire d'un passage à l'autre
+    GN_CACHE.update({k: v for k, v in ((PREVIOUS.get("gn_urls") or {}).items()) if v})
+    end_ = time.time() + 60
+    for x in out[:70]:
+        u = gnews_resolve(x["l"], end_)
+        if u:
+            x["u"] = u
+    data["gn_urls"] = {k: v for k, v in list(GN_CACHE.items())[-400:] if v}
     if out:
         data["consensus_auto"] = out[:70]
     elif (PREVIOUS.get("consensus_auto")):
@@ -3401,6 +3409,44 @@ ADV_FR = {"terrorism": "terrorisme", "unrest": "troubles civils", "civil unrest"
           "kidnapping": "enlèvements", "armed conflict": "conflit armé", "wrongful detention": "détentions arbitraires",
           "health": "santé", "natural disasters": "catastrophes naturelles", "hostage taking": "prises d'otages",
           "landmines": "mines", "civil war": "guerre civile", "military conflict": "conflit militaire"}
+
+
+GN_CACHE = {}
+
+
+def gnews_resolve(link, budget_end):
+    """Adresse réelle de l'article derrière un lien Google Actualités (8 nov. 2026), pour que le site puisse
+    afficher l'article en mode lecture. Méthode publique de la page Google (jeton data-n-a-sg / data-n-a-ts)."""
+    m = re.search(r"/articles/([^?]+)", link or "")
+    if not m:
+        return None
+    gid = m.group(1)
+    if gid in GN_CACHE:
+        return GN_CACHE[gid]
+    if time.time() > budget_end:
+        return None
+    try:
+        page = http("gn_%s.html" % gid[:40], "https://news.google.com/articles/%s?hl=en-US&gl=US&ceid=US:en" % gid, tries=1, timeout=12)
+        sg = re.search(r'data-n-a-sg="([^"]+)"', page)
+        ts = re.search(r'data-n-a-ts="([^"]+)"', page)
+        if not (sg and ts):
+            raise ValueError("jetons absents")
+        inner = '["garturlreq",[["X","X",["X","X"],null,null,1,1,"US:en",null,1,null,null,null,null,null,0,1],"X","X",1,[1,1,1],1,1,null,0,0,null,0],"%s",%s,"%s"]' % (gid, ts.group(1), sg.group(1))
+        body = ("f.req=" + urllib.parse.quote(json.dumps([[["Fbv4je", inner]]]))).encode()
+        req = urllib.request.Request("https://news.google.com/_/DotsSplashUi/data/batchexecute", data=body,
+                                     headers={"User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"})
+        with urllib.request.urlopen(req, timeout=12) as r:
+            txt = r.read().decode("utf-8", "replace")
+        arr = json.loads(txt.split("\n\n", 1)[1])
+        url = json.loads(arr[0][2])[1]
+        if not str(url).startswith("http"):
+            raise ValueError("adresse invalide")
+        GN_CACHE[gid] = url
+        return url
+    except Exception as e:
+        DIAG["gn_resolve"] = fr_err(e)[:120]
+        GN_CACHE[gid] = None
+        return None
 
 
 def http_bytes(url, timeout=40):

@@ -942,6 +942,13 @@ ul.flash li.artrd a{color:#a8a294}ul.flash li.artnew a{font-weight:600}
 .artst{position:absolute;right:0;top:6px;background:none;border:0;color:#8a8577;font-size:1.1rem;cursor:pointer;min-width:36px;min-height:36px}
 .artst.on{color:#f2b01e}
 ul.flash li:has(.artst){padding-right:38px}
+
+.rdbars{display:flex;flex-direction:column;gap:6px}
+.rdbars>div{display:grid;grid-template-columns:120px 1fr 74px 56px;gap:8px;align-items:center;font-size:.84rem}
+.rdbars i{height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(242,176,30,.25),rgba(242,176,30,.75))}
+.rdbars>div.on span,.rdbars>div.on b{color:#f2b01e;font-weight:700}.rdbars>div.on i{background:linear-gradient(90deg,#f2b01e,#ffd36b)}
+.rdbars>div.now i{background:linear-gradient(90deg,rgba(77,163,255,.3),#4da3ff)}.rdbars small{color:#8a8577}
+@media (max-width:480px){.rdbars>div{grid-template-columns:92px 1fr 64px}.rdbars small{display:none}}
 </style>
 
 </head><body><div class="shell">
@@ -5053,7 +5060,9 @@ ul.flash li:has(.artst){padding-right:38px}
      l'heure, le résumé publié dans le flux, la traduction en français, et un bouton pour ouvrir l'article complet si on le veut. */
   var RD_TR = {};
   function rdIndex() {
-    var m = {}, add = function (x, kind) { if (x && x.l && !m[x.l]) m[x.l] = { t: x.t, l: x.l, src: x.src || x.bank || "", ts: x.ts, d: x.d, x: x.x || "", a: x.a || [], kind: kind }; };
+    var m = {}, add = function (x, kind) { if (x && x.l && !m[x.l]) m[x.l] = { t: x.t, l: x.l, u: x.u, src: x.src || x.bank || "", ts: x.ts, d: x.d, x: x.x || "", a: x.a || [], kind: kind, bank: x.bank, v: x.v, asset: x.asset, rev: x.rev }; };
+    /* prévisions des banques relevées dans la presse (lien Google Actualités + adresse réelle trouvée par le robot) */
+    ((AUTO && AUTO.consensus_auto) || []).forEach(function (c) { var src = (String(c.t).match(/ - ([^-]+)$/) || [])[1] || "presse"; add({ t: String(c.t).replace(/ - [^-]+$/, ""), l: c.l, u: c.u, src: src.trim(), d: c.d, x: "", a: c.asset === "gold" ? ["XAU", "USD"] : c.asset === "eurusd" ? ["EUR", "USD"] : ["USD"], bank: c.bank, v: c.v, asset: c.asset, rev: c.rev }, "prévision"); });
     allNews().forEach(function (x) { add(x, "news"); });
     ((AUTO && AUTO.analyses) || []).forEach(function (x) { add(x, "analyse"); });
     ((AUTO && AUTO.news) || []).forEach(function (x) { add(x, "banque"); });
@@ -5177,6 +5186,22 @@ ul.flash li:has(.artst){padding-right:38px}
     if (ev && ev.length) h += '<table class="mini"><thead><tr><th>Annonce du calendrier</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r">Précédent</th></tr></thead><tbody>' + ev.map(function (e) { return "<tr><td><b>" + esc(e.c) + "</b> " + esc(e.t) + ' <small>' + new Date(e.d).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }) + '</small></td><td class="r num"><b>' + esc(e.a) + '</b></td><td class="r num">' + esc(e.f || "–") + '</td><td class="r num">' + esc(e.p || "–") + "</td></tr>"; }).join("") + "</tbody></table>";
     return h + "</div>";
   }
+  function rdBank(it) { /* fiche de la prévision d'une banque : cible, révision, écart avec le cours, comparaison avec les autres banques */
+    var A = (AUTO && AUTO.consensus_auto) || [], latest = {};
+    A.filter(function (c) { return c.asset === it.asset && typeof c.v === "number" && ageDays(c.d) <= 120; }).forEach(function (c) { if (!latest[c.bank] || latest[c.bank].d < c.d) latest[c.bank] = c; });
+    var L = Object.keys(latest).map(function (k) { return latest[k]; }).sort(function (a, b) { return b.v - a.v; });
+    var lq = function (sym, ds) { var q = LIVE.q[sym]; return q ? q.v : (dSeries(ds) ? dSeries(ds).last[1] : null); };
+    var now = it.asset === "gold" ? lq("XAU=", "gold") : it.asset === "eurusd" ? lq("EUR=", "eur") : null, dec = it.asset === "gold" ? 0 : it.asset === "eurusd" ? 4 : 2, unit = it.asset === "gold" ? " $" : it.asset === "eurusd" ? "" : " %";
+    var name = (typeof CONS_ASSET !== "undefined" && CONS_ASSET[it.asset]) || it.asset, gap = now && typeof it.v === "number" ? (it.v / now - 1) * 100 : null;
+    var vals = L.map(function (c) { return c.v; }).sort(function (a, b) { return a - b; }), med = vals.length ? (vals.length % 2 ? vals[(vals.length - 1) / 2] : (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2) : null;
+    var mx = Math.max.apply(null, vals.concat(now ? [now] : [])), mn = Math.min.apply(null, vals.concat(now ? [now] : []));
+    var bar = function (v) { return Math.round(((v - mn) / ((mx - mn) || 1)) * 80 + 20); };
+    return '<div class="rdsec"><h4>La prévision de ' + esc(it.bank) + "</h4>" +
+      '<div class="rdfig"><div><small>Actif</small><b>' + esc(name) + "</b><small>Cible</small><b>" + (typeof it.v === "number" ? fmtN(it.v, dec) + unit : "–") + "</b><small>Révision</small><b class=\"" + (it.rev === "hausse" ? "up" : it.rev === "baisse" ? "down" : "") + "\">" + (it.rev === "hausse" ? "▲ relevée" : it.rev === "baisse" ? "▼ abaissée" : it.rev === "maintien" ? "= maintenue" : "non précisée") + "</b>" +
+      (gap !== null ? '<small>Écart avec le cours</small><b class="' + cls(gap) + '">' + pct(gap) + "</b><span>Cours actuel : " + fmtN(now, dec) + unit + (med !== null ? " · médiane des banques : " + fmtN(med, dec) + unit : "") + "</span>" : "") + "</div></div>" +
+      (L.length > 1 ? '<h4 style="margin-top:12px">Les autres banques sur ' + esc(name) + '</h4><div class="rdbars">' + L.map(function (c) { return '<div class="' + (c.bank === it.bank ? "on" : "") + '"><span>' + esc(c.bank) + '</span><i style="width:' + bar(c.v) + '%"></i><b class="num">' + fmtN(c.v, dec) + unit + "</b><small>" + shortD(c.d) + "</small></div>"; }).join("") + (now ? '<div class="now"><span>Cours actuel</span><i style="width:' + bar(now) + '%"></i><b class="num">' + fmtN(now, dec) + unit + "</b><small>maintenant</small></div>" : "") + "</div>" : "") +
+      '<p class="hint">Prévision relevée automatiquement dans un titre de presse le ' + shortD(it.d).replace(/\.$/, "") + ". C'est une opinion de la banque, pas une donnée ; vérifiez l'horizon (date visée) dans l'article.</p></div>";
+  }
   function rdTopic(it) {
     var txt = it.t + " " + (it.x || ""), T = RD_TOPIC.filter(function (r) { return r[0].test(txt); }).slice(0, 2);
     return T.length ? '<div class="rdsec"><h4>Pourquoi c\'est important</h4>' + T.map(function (r) { return '<p><b>' + r[1] + " :</b> " + r[2] + "</p>"; }).join("") + '<p class="hint">Explication générale rédigée par le terminal, pas une prévision ni un conseil.</p></div>' : "";
@@ -5216,9 +5241,10 @@ ul.flash li:has(.artst){padding-right:38px}
     LN.art = LN.art || {};
     var show = function (h, how) { if (!$("rdFull") || $("reader")._it !== it) return; box.innerHTML = '<h4>Article complet</h4><div class="rdbody">' + h + '</div><p class="hint">' + how + "</p>"; box.hidden = false; var s = $("rdSum"); if (s) s.hidden = true; };
     if (LN.art[it.l]) return show(LN.art[it.l], "Mode lecture (texte de la page publique, traduit automatiquement).");
+    if (/news\.google\.com/.test(it.l) && !it.u) { box.hidden = false; box.innerHTML = '<p class="hint">L\'adresse de cet article sera retrouvée au prochain passage du robot ; en attendant, la fiche ci-dessous résume la prévision.</p>'; return; }
     box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Chargement de l\'article complet…</p>';
     var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, 20000);
-    fetch("https://r.jina.ai/" + it.l, { signal: c ? c.signal : undefined, headers: { "X-Retain-Images": "none", "X-Target-Selector": "article, [itemprop=articleBody], .ArticleBody-articleBody, .article-body, .wysiwyg, main", "X-Remove-Selector": "nav, header, footer, aside, figure, form, .newsletter, .related, .RelatedContent, .social, .share" } })
+    fetch("https://r.jina.ai/" + (it.u || it.l), { signal: c ? c.signal : undefined, headers: { "X-Retain-Images": "none", "X-Target-Selector": "article, [itemprop=articleBody], .ArticleBody-articleBody, .article-body, .wysiwyg, main", "X-Remove-Selector": "nav, header, footer, aside, figure, form, .newsletter, .related, .RelatedContent, .social, .share" } })
       .then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); })
       .then(function (md) { var h = rdMdHtml(md); if ((h.match(/<p>/g) || []).length < 2) throw new Error("vide"); LN.art[it.l] = h; show(h, "Mode lecture : texte de la page publique de " + esc(it.src || "la source") + ", traduit automatiquement. Si la page est réservée aux abonnés, seul le début public apparaît."); })
       .catch(function () { if ($("rdFull") && $("reader")._it === it) { box.innerHTML = '<p class="hint">Article complet indisponible pour ce site (page protégée ou service de lecture saturé) : le résumé et la fiche détaillée restent ci-dessous.</p>'; } });
@@ -5241,7 +5267,7 @@ ul.flash li:has(.artst){padding-right:38px}
     var when = it.ts ? new Date(Date.parse(it.ts)).toLocaleString("fr-FR", { timeZone: KIN, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : it.d ? longD(it.d) : "";
     var yt = rdYt(orig);
     var body = yt ? '<div class="rdvid"><iframe src="https://www.youtube-nocookie.com/embed/' + yt + '?autoplay=1&rel=0" title="Vidéo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>' :
-      '<div class="rdsec rdfull" id="rdFull" hidden></div><div class="rdsec" id="rdSum"><h4>Résumé publié par ' + esc(it.src || host) + '</h4><p class="rdx" id="rdX">' + (it.x ? esc(it.x.length >= 390 ? it.x.replace(/\s+\S*$/, "") + "…" : it.x) : "Cette source ne publie que le titre dans son fil : le terminal complète avec les chiffres, la réaction des marchés et l'explication ci-dessous.") + "</p></div>" + rdFigures(it) + rdMoves(it) + rdTopic(it);
+      '<div id="rdBank"></div><div class="rdsec rdfull" id="rdFull" hidden></div><div class="rdsec" id="rdSum"><h4>Résumé publié par ' + esc(it.src || host) + '</h4><p class="rdx" id="rdX">' + (it.x ? esc(it.x.length >= 390 ? it.x.replace(/\s+\S*$/, "") + "…" : it.x) : "Cette source ne publie que le titre dans son fil : le terminal complète avec les chiffres, la réaction des marchés et l'explication ci-dessous.") + "</p></div>" + rdFigures(it) + rdMoves(it) + rdTopic(it);
     box.innerHTML = '<div class="rdbg" data-rdclose="1"></div><div class="rdpan" role="document"><div class="rdtop"><span class="rdsrc">' + esc(it.src || host) + (when ? " · " + when + " (Kinshasa)" : "") + '</span><button type="button" class="btn rdx-close" data-rdclose="1" aria-label="Fermer">✕</button></div>' +
       '<h2 class="rdt" id="rdT">' + esc(it.t) + "</h2>" + (it.a && it.a.length ? '<div class="rdtags">' + it.a.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") +
       '<p class="rdfr" id="rdFr" hidden></p>' + body +
@@ -5251,6 +5277,7 @@ ul.flash li:has(.artst){padding-right:38px}
     box._it = it;
     if (!yt && /investinglive\.com/i.test(orig) && !/financialjuice/i.test(orig)) rdLoadFull(it);
     else if (!yt && /^https?:\/\//i.test(orig) && !/financialjuice\.com|translate\.google/i.test(orig)) rdReader(it);
+    var bk = $("rdBank"); if (bk && it.bank) bk.outerHTML = rdBank(it);
   }
   function rdDoTr() {
     var box = $("reader"), it = box && box._it; if (!it) return;
