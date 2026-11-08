@@ -999,6 +999,33 @@ html.lkon body{overflow:hidden}
 .gcq textarea{width:100%;box-sizing:border-box;margin-top:4px;background:#0f0e0b;color:#ece8dc;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;font:inherit;font-size:.86rem}
 .gcsug{display:block;color:#a8a294;margin-top:2px}
 @media (max-width:640px){.gchead{grid-template-columns:1fr}.gccal li{grid-template-columns:1fr}}
+
+/* Mon biais XAUUSD */
+.gtabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.gtabs button{flex:none;padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.02);color:#c9c3b3;font:inherit;cursor:pointer}
+.gtabs button.on{background:#f2b01e;color:#14130f;border-color:#f2b01e;font-weight:700}
+.gtools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 4px}.gtools small{color:#a8a294}
+.gstep{margin:16px 0;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.015)}
+.gstep h3{margin:0 0 8px;font-size:1rem}.gstep h3>span{display:inline-block;min-width:38px;padding:2px 7px;border-radius:7px;background:rgba(242,176,30,.15);color:#f2b01e;font-size:.8rem;text-align:center;margin-right:6px}
+.gsn{color:#8a8577;font-weight:400;font-size:.78rem;margin-left:8px}
+.gtbl td{vertical-align:top}.gtbl td:first-child{min-width:170px;max-width:280px}.gtbl td:nth-child(3),.gtbl td:nth-child(4){max-width:260px}.gtbl td small{color:#a8a294}.gtbl .gsrc{display:block;color:#6f6a5c;font-size:.7rem}
+.gtbl input,.gtbl select,.gav input,.gav textarea,.gav select{background:#0f0e0b;color:#ece8dc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 8px;font:inherit;font-size:.84rem;max-width:100%;box-sizing:border-box}
+.gtbl td input:not([type=date]){width:100%}
+.gman td{background:rgba(77,163,255,.035)}
+.gsig{display:inline-block;min-width:28px;padding:2px 6px;border-radius:6px;font-weight:700;text-align:center}
+.gsig.p{background:rgba(61,220,151,.15);color:#3ddc97}.gsig.m{background:rgba(255,92,79,.15);color:#ff7a6f}.gsig.z{background:rgba(255,255,255,.06);color:#c9c3b3}.gsig.n{color:#6f6a5c}
+.gadd{font-size:.66rem;padding:1px 5px;border-radius:5px;background:rgba(199,125,255,.15);color:#d6a8ff}
+.gmiss{color:#ff8a7f;font-weight:700}
+.gavg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:8px 0}
+.gav{display:flex;flex-direction:column;gap:4px}.gav span{font-size:.78rem;color:#a8a294}.gav textarea,.gav input{width:100%}
+.galertx{padding:8px 12px;border-radius:10px;background:rgba(255,92,79,.1);border:1px solid rgba(255,92,79,.4);color:#ffb4ab}
+.gres{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0}
+.gres>div{padding:12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:2px}
+.gres small{color:#a8a294;font-size:.76rem}.gres b{font-size:1.4rem}.gres span{font-size:.76rem;color:#c9c3b3}
+.gres.up>div:first-child b{color:#3ddc97}.gres.down>div:first-child b{color:#ff7a6f}
+.gtot td{border-top:1px solid rgba(242,176,30,.4)}
+.gbtns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.gcmd{width:100%;box-sizing:border-box;background:#0f0e0b;color:#ece8dc;border:1px solid rgba(242,176,30,.35);border-radius:10px;padding:10px;font:inherit;font-size:.82rem;margin:8px 0}
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -4161,6 +4188,7 @@ html.lkon body{overflow:hidden}
      BRANCHES : accueil en tuiles, chaque outil dans sa branche (31 oct. 2026)
      ===================================================================== */
   var BR = [
+    { id: "guide", grp: "MON BIAIS", t: "Mon biais XAUUSD", ic: "◎", d: "Le guide en 8 parties : macro, Fed, marchés, positionnement, géopolitique, annonces et sentiment, États-Unis contre Europe, conclusion avec score S", blocks: ["guide"], p: [] },
     { id: "matin", grp: "MARCHÉ", t: "Briefing du matin", ic: "☀", d: "Résumé de la veille, alertes, publications du jour à l'heure de Kinshasa, biais, scénarios et régime macro", blocks: ["recap"], p: ["matin", "scenarios", "regime"], g: { matin: "Résumé du jour", scenarios: "Lecture du marché" } },
     { id: "direct", grp: "MARCHÉ", t: "En direct", ic: "◉", d: "Cours en direct, Bloomberg TV, graphiques, moniteur multi-actifs, sessions", blocks: ["cours", "tv"], p: ["marches", "multi", "sessions"], g: { marches: "Graphiques", multi: "Multi-actifs et sessions" } },
     { id: "or", grp: "MARCHÉ", t: "Or", ic: "◆", d: "XAU/USD, tableau à 6 piliers, flux de l'or (ETF, banques centrales), volatilité", p: ["or", "scorecard", "flux", "orvol"], g: { or: "Cours", scorecard: "Analyse fondamentale", orvol: "Volatilité" } },
@@ -4208,7 +4236,7 @@ html.lkon body{overflow:hidden}
   };
 
   /* Panneaux ouverts d'office dans chaque branche (les autres sont repliés) */
-  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
+  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], guide: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
   function setFold(el, folded) {
     el.classList.toggle("fold", folded);
     var b = el.querySelector(":scope > .ph > .foldbtn"); if (b) { b.textContent = folded ? "Afficher ▾" : "Replier ▴"; b.setAttribute("aria-expanded", folded ? "false" : "true"); }
@@ -5301,6 +5329,328 @@ html.lkon body{overflow:hidden}
       '<p class="hint">Sources : presse mondiale codée par GDELT (incidents et conflits, mis à jour toutes les 25 min), indice GPR Caldara-Iacoviello, trafic des détroits (FMI PortWatch), cours Yahoo Finance, Polymarket, actualités. « Effet habituel » = ce qui se passe le plus souvent, pas une prévision. Les détails techniques (pays, escalades statistiques, carte) sont plus bas.</p>';
   }
   document.addEventListener("input", function (e) { var t = e.target; if (t.dataset && t.dataset.gcq !== undefined) { gcAns[t.dataset.gcq] = t.value; try { localStorage.setItem("mf-geoq", JSON.stringify(gcAns)); } catch (x) { /* stockage indisponible */ } } });
+  /* ---------- Mon biais XAUUSD : le guide en 8 parties (8 nov. 2026, PDF de l'utilisateur) ----------
+     Convention du signal : + = soutien pour l'or, 0 = neutre, − = pression sur l'or. Seuils = repères de départ à valider par backtest.
+     Aucune valeur inventée : sans source gratuite, la ligne est en « saisie manuelle » (valeur + date + signal, enregistrés sur l'appareil). */
+  var GD = { tab: "p1", hide: false, man: {}, note: {}, avis: {}, step: {} };
+  try { GD.tab = localStorage.getItem("mf-gtab") || "p1"; GD.hide = localStorage.getItem("mf-ghide") === "1"; GD.man = JSON.parse(localStorage.getItem("mf-gman") || "{}") || {}; GD.note = JSON.parse(localStorage.getItem("mf-gnote") || "{}") || {}; GD.avis = JSON.parse(localStorage.getItem("mf-gavis") || "{}") || {}; } catch (e) { /* stockage indisponible */ }
+  function gdSave() { try { localStorage.setItem("mf-gtab", GD.tab); localStorage.setItem("mf-ghide", GD.hide ? "1" : "0"); localStorage.setItem("mf-gman", JSON.stringify(GD.man)); localStorage.setItem("mf-gnote", JSON.stringify(GD.note)); localStorage.setItem("mf-gavis", JSON.stringify(GD.avis)); } catch (e) { /* stockage indisponible */ } }
+  /* accès aux données */
+  function gTV(rx) { var S = (AUTO && AUTO.ism && AUTO.ism.series) || {}, k = Object.keys(S).filter(function (x) { return rx.test(x); }).sort(function (a, b) { return a.length - b.length; })[0]; if (!k) return null; var L = S[k].filter(function (x) { return x.a !== null && x.a !== undefined && x.a !== ""; }); return L.length ? { k: k, L: L, last: L[L.length - 1] } : null; }
+  function gEU(key) { var S = (AUTO && AUTO.eu_guide && AUTO.eu_guide.tv) || {}, L = (S[key] || []).filter(function (x) { return x.a !== null && x.a !== undefined && x.a !== ""; }); return L.length ? { L: L, last: L[L.length - 1] } : null; }
+  function gfmt(v, d) { return v === null || v === undefined || isNaN(v) ? "–" : fmt(+v, d === undefined ? 2 : d); }
+  function gN(x) { if (x === null || x === undefined || x === "") return null; var v = parseFloat(String(x).replace(/[^\d.\-−]/g, "").replace("−", "-")); return isNaN(v) ? null : v; }
+  function gAgo(hist, days) { if (!hist || !hist.length) return null; var lim = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10), v = null; for (var i = 0; i < hist.length; i++) { if (hist[i][0] <= lim) v = hist[i][1]; else break; } return v; }
+  function gPctl(arr, v) { if (!arr || !arr.length || v === null) return null; return Math.round(arr.filter(function (x) { return x <= v; }).length / arr.length * 100); }
+  function gBp(v) { return v === null || v === undefined || isNaN(v) ? "–" : (v >= 0 ? "+" : "−") + gfmt(Math.abs(v), 0) + " pb"; }
+  function gSgn(v, d) { return v === null || v === undefined || isNaN(v) ? "–" : (v >= 0 ? "+" : "−") + gfmt(Math.abs(v), d === undefined ? 2 : d); }
+  function gD(t) { return !t ? "–" : /^\d{4}-\d\d-\d\d/.test(String(t)) ? shortD(String(t).slice(0, 10)) : esc(String(t)); }
+  function gCorr(a, b) { var n = Math.min(a.length, b.length); if (n < 8) return null; a = a.slice(-n); b = b.slice(-n); var ma = a.reduce(function (s, x) { return s + x; }, 0) / n, mb = b.reduce(function (s, x) { return s + x; }, 0) / n, c = 0, va = 0, vb = 0; for (var i = 0; i < n; i++) { c += (a[i] - ma) * (b[i] - mb); va += (a[i] - ma) * (a[i] - ma); vb += (b[i] - mb) * (b[i] - mb); } return va && vb ? c / Math.sqrt(va * vb) : null; }
+  function gDaily(key) { return (AUTO && AUTO.daily && AUTO.daily[key] && AUTO.daily[key].c) || []; }
+  function gJoin(A, B) { var m = {}; B.forEach(function (r) { m[r[0]] = r[1]; }); return A.filter(function (r) { return m[r[0]] !== undefined; }).map(function (r) { return [r[0], r[1], m[r[0]]]; }); }
+  /* lignes génériques */
+  function rTV(rx, unit, th, sigFn, dec) { return function () { var s = gTV(rx); if (!s) return null; var l = s.last, a = gN(l.a), f = gN(l.f), p = gN(l.p); return { v: gfmt(a, dec === undefined ? 1 : dec) + (unit || ""), ch: f !== null ? "prévu " + gfmt(f, dec === undefined ? 1 : dec) + (unit || "") + " · écart " + gSgn(a - f, dec === undefined ? 1 : dec) : p !== null ? "précédent " + gfmt(p, dec === undefined ? 1 : dec) : "", th: th, sig: sigFn ? sigFn(a, f, p, s) : 0, d: l.d, src: "calendrier TradingView" }; }; }
+  function rInd(k, c, th, sigFn, unit) { return function () { var x = indAuto(k, c); if (!x) return null; return { v: gfmt(x.v, Math.abs(x.v) >= 100 ? 0 : 2) + (unit === undefined ? " %" : unit), ch: "précédent " + gfmt(x.p, Math.abs(x.p) >= 100 ? 0 : 2) + (unit === undefined ? " %" : unit), th: th, sig: sigFn ? sigFn(x.v, x.p) : 0, d: x.per, src: x.src }; }; }
+  var surpInv = function (a, f) { return a === null || f === null ? 0 : a - f >= 0.1 ? -1 : a - f <= -0.1 ? 1 : 0; };
+  var lvlInfl = function (v) { return v === null ? 0 : v < 2 ? 1 : v >= 3 ? -1 : 0; };
+  function gSahm() { var s = gTV(/^tv\.Unemployment Rate$/); if (!s || s.L.length < 15) return null; var v = s.L.map(function (x) { return gN(x.a); }), m3 = []; for (var i = 2; i < v.length; i++) m3.push((v[i] + v[i - 1] + v[i - 2]) / 3); var cur = m3[m3.length - 1], prior = m3.slice(-13, -1); return { v: cur - Math.min.apply(null, prior), d: s.last.d }; }
+  function gFwAgo(n) { var ds = zqDates(); return ds.length > n ? fedWatchCalc(ds[ds.length - 1 - n]) : null; }
+  function gNext(F) { if (!F || !F.res.length) return null; var r = F.res[0], pu = 0, ph = 0, pd = 0; r.single.forEach(function (x) { if (x.s > 0) pu += x.p; else if (x.s < 0) pd += x.p; else ph += x.p; }); return { d: r.d, pu: pu, ph: ph, pd: pd }; }
+  function g12m(F) { if (!F) return null; var lim = new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10), r = F.res.filter(function (x) { return x.d <= lim; }).pop(); return r ? { bp: (r.rate - F.effr) * 100, d: r.d } : null; }
+  function gCOT(code, grp) { var c = AUTO && AUTO.cot2 && AUTO.cot2[code] && AUTO.cot2[code].g && AUTO.cot2[code].g[grp]; return c ? { net: c.net, prev: c.prev, pct: c.hist ? gPctl(c.hist, c.net) : c.pct3y, date: AUTO.cot2[code].date } : null; }
+  /* définition des parties */
+  var GUIDE = [
+    { id: "p1", t: "1. Macro", steps: [
+      { id: "1.1", t: "Cycle", h: "Phase Early / Mid / Late / Contraction : ne change que si 2 indicateurs sur 3 le disent depuis 3 semaines.", rows: [
+        { l: "ISM manufacturier", f: function () { var s = AUTO && AUTO.ism && AUTO.ism.series && AUTO.ism.series["manuf.pmi"], L = s ? s.filter(function (x) { return x.a !== null; }) : []; if (!L.length) return null; var a = gN(L[L.length - 1].a), p = gN(L[L.length - 1].p), f = gN(L[L.length - 1].f); return { v: gfmt(a, 1), ch: "précédent " + gfmt(p, 1) + (f !== null ? " · prévu " + gfmt(f, 1) : ""), th: "50 = frontière expansion / contraction", sig: a < 50 ? 1 : a >= 52 ? -1 : 0, d: L[L.length - 1].d, src: "ISM via TradingView" }; } },
+        { l: "ISM services", f: function () { var s = AUTO && AUTO.ism && AUTO.ism.series && AUTO.ism.series["serv.pmi"], L = s ? s.filter(function (x) { return x.a !== null; }) : []; if (!L.length) return null; var a = gN(L[L.length - 1].a), p = gN(L[L.length - 1].p); return { v: gfmt(a, 1), ch: "précédent " + gfmt(p, 1), th: "50", sig: a < 50 ? 1 : a >= 54 ? -1 : 0, d: L[L.length - 1].d, src: "ISM via TradingView" }; } },
+        { l: "Inscriptions hebdomadaires au chômage (ICSA)", f: function () { var s = gTV(/^tv\.Initial Jobless Claims$/); if (!s || s.L.length < 4) return null; var v = s.L.slice(-4).map(function (x) { return gN(x.a); }), up = v[3] > v[2] && v[2] > v[1], dn = v[3] < v[2] && v[2] < v[1]; return { v: gfmt(v[3], 0) + " K", ch: "3 dernières : " + v.slice(1).map(function (x) { return gfmt(x, 0); }).join(" → "), th: "tendance sur 3 publications", sig: up ? 1 : dn ? -1 : 0, d: s.last.d, src: "calendrier TradingView" }; } },
+        { l: "Règle de Sahm", f: function () { var s = gSahm(); if (!s) return null; return { v: gSgn(s.v, 2) + " pt", ch: "moyenne 3 mois du chômage − plus bas des 12 mois précédents", th: "déclenchement à 0,50 pt", sig: s.v >= 0.5 ? 1 : 0, d: s.d, src: "calcul maison (chômage, TradingView)" }; } },
+        { l: "Courbe 2s10s (T10Y2Y)", f: function () { var x = fred("T10Y2Y"); if (!x) return null; var a3 = gAgo(x.hist, 91), neg6 = (x.hist || []).filter(function (r) { return r[0] >= new Date(Date.now() - 182 * 864e5).toISOString().slice(0, 10) && r[1] < 0; }).length; return { v: gSgn(x.v, 2) + " pt", ch: a3 !== null ? "3 mois : " + gBp((x.v - a3) * 100) : "", th: "sous 0 = inversion ; désinversion = contraction proche", sig: x.v > 0 && neg6 ? 1 : 0, d: x.asof, src: "Trésor US" }; } },
+        { l: "Spread high yield (BAMLH0A0HYM2)", f: function () { var x = fred("BAMLH0A0HYM2"); if (!x) return null; var a3 = gAgo(x.hist, 91); return { v: gfmt(x.v, 2) + " %", ch: a3 !== null ? "3 mois : " + gBp((x.v - a3) * 100) : "", th: "hausse rapide = stress (refuge)", sig: a3 !== null && x.v - a3 >= 0.5 ? 1 : a3 !== null && x.v - a3 <= -0.5 ? -1 : 0, d: x.asof, src: "ICE BofA (FRED)" }; } },
+        { l: "NFCI (conditions financières)", f: function () { var x = fred("NFCI"); if (!x) return null; return { v: gSgn(x.v, 2), ch: x.prev !== undefined ? "précédent " + gSgn(x.prev, 2) : "", th: "sous 0 = plus souples que la moyenne", sig: x.v > 0 ? 1 : 0, d: x.asof, src: "Fed de Chicago" }; } }
+      ] },
+      { id: "1.2", t: "Croissance et emploi", rows: [
+        { l: "PIB réel annualisé (t/t)", f: rTV(/^tv\.GDP Growth Rate QoQ( Adv| 2nd Est| Final)?$/, " %", "zone 1,5 à 2,5 %", function (a) { return a === null ? 0 : a > 2.5 ? -1 : a < 1.5 ? 1 : 0; }) },
+        { l: "Ventes au détail m/m (tendance 3 mois)", f: function () { var s = gTV(/^tv\.Retail Sales MoM$/); if (!s) return null; var v = s.L.slice(-3).map(function (x) { return gN(x.a); }), m = v.reduce(function (a, b) { return a + b; }, 0) / v.length; return { v: gfmt(v[v.length - 1], 1) + " %", ch: "moyenne 3 mois " + gSgn(m, 2) + " %", th: "tendance 3 mois", sig: m < 0 ? 1 : m > 0.4 ? -1 : 0, d: s.last.d, src: "calendrier TradingView" }; } },
+        { l: "NFP (emplois créés)", f: rTV(/^tv\.Non ?Farm Payrolls$/, " K", "surprise ±50 K vs consensus", function (a, f) { return a === null || f === null ? 0 : a - f >= 50 ? -1 : a - f <= -50 ? 1 : 0; }, 0) },
+        { l: "Taux de chômage", f: rInd("unemp", "USD", "4 à 4,5 % = plein emploi", function (v) { return v > 4.5 ? 1 : v < 4 ? -1 : 0; }) },
+        { l: "Salaire horaire moyen (AHE) m/m", f: rTV(/^tv\.Average Hourly Earnings MoM$/, " %", "surprise ±0,1 pt", surpInv) },
+        { l: "JOLTS (offres d'emploi)", f: rTV(/^tv\.JOLTs Job Openings$/, " M", "baisse = marché du travail qui ralentit", function (a, f, p) { return a === null || p === null ? 0 : a < p ? 1 : -1; }, 2) }
+      ] },
+      { id: "1.3", t: "Inflation", h: "Lecture : sous 2 % dovish ; environ 2,3 % neutre ; 3 % et plus trop fort.", rows: [
+        { l: "CPI a/a", f: rTV(/^tv\.Inflation Rate YoY$/, " %", "écart ±0,1 pt vs consensus", surpInv) },
+        { l: "Core CPI a/a", f: rTV(/^tv\.Core Inflation Rate YoY$/, " %", "écart ±0,1 pt vs consensus", surpInv) },
+        { l: "PCE a/a", f: rInd("pce", "USD", "cible 2 %", lvlInfl) },
+        { l: "Core PCE a/a (préféré de la Fed)", f: rInd("pcec", "USD", "cible 2 %", lvlInfl) },
+        { l: "Supercore (services hors logement)", add: 1, f: rInd("supercore", "USD", "repère 3 %", lvlInfl) },
+        { l: "Logement (shelter)", add: 1, f: rInd("shelter", "USD", "baisse = désinflation", function (v, p) { return v < p ? 1 : v > p ? -1 : 0; }) },
+        { l: "PPI a/a", add: 1, f: rInd("ppi", "USD", "repère 2 %", lvlInfl) },
+        { l: "Salaires : AHE a/a", f: rInd("ahe", "USD", "repère 3,5 %", function (v) { return v >= 4 ? -1 : v < 3.3 ? 1 : 0; }) },
+        { l: "Coût de l'emploi (ECI) a/a", f: rInd("eci", "USD", "repère 3,5 %", function (v) { return v >= 4 ? -1 : v < 3.3 ? 1 : 0; }) },
+        { l: "Breakeven 5y5y (T5YIFR)", f: function () { var x = fred("T5YIFR"); if (!x) return null; var a = gAgo(x.hist, 21); return { v: gfmt(x.v, 2) + " %", ch: a !== null ? "3 sem. : " + gBp((x.v - a) * 100) : "", th: "≈ 2,2–2,5 % ancré", sig: x.v > 2.6 ? 1 : 0, d: x.asof, src: "calcul Trésor US" }; } },
+        { l: "Anticipations Michigan 1 an", add: 1, f: rInd("mich1", "USD", "repère 3 %", lvlInfl) },
+        { l: "Anticipations Michigan long terme", add: 1, f: rInd("mich5", "USD", "repère 3 %", lvlInfl) },
+        { l: "Pétrole WTI", f: rInd("oil", "USD", "hausse = inflation importée", function (v, p) { return 0; }, " $") },
+        { l: "Prix à l'importation a/a", add: 1, f: rInd("impp", "USD", "repère 2 %", lvlInfl) }
+      ] }
+    ] },
+    { id: "p2", t: "2. Fed", steps: [
+      { id: "1.4", t: "Posture", rows: [
+        { l: "Taux Fed Funds", f: function () { var u = fedUp(), p = AUTO && AUTO.policy && AUTO.policy.USD; if (!u) return null; return { v: gfmt(u.v - 0.25, 2) + "–" + gfmt(u.v, 2) + " %", ch: p && p.prev !== undefined ? "dernière décision : " + (p.v > p.prev ? "hausse" : p.v < p.prev ? "baisse" : "maintien") + (p.since ? " (" + gD(p.since) + ")" : "") : "", th: "–", sig: p && p.v > p.prev ? -1 : p && p.v < p.prev ? 1 : 0, d: u.asof, src: u.src || "Fed" }; } },
+        { l: "Communiqué FOMC : mots ajoutés / retirés", man: 1, k: "fomc_txt", th: "durcissement du vocabulaire = hawkish" },
+        { l: "SEP et dot plot (médiane fin d'année)", man: 1, k: "dot", th: "trimestriel ; à comparer au pricing (1.5)" },
+        { l: "Minutes (≈ 3 semaines après la réunion)", man: 1, k: "minutes", th: "ton des débats" },
+        { l: "Conférence de presse et discours des votants", man: 1, k: "speech", th: "changement de ton" },
+        { l: "Beige Book", man: 1, k: "beige", th: "activité régionale" },
+        { l: "Bilan de la Fed (H.4.1, WALCL)", f: function () { var x = fred("WALCL"); if (!x) return null; var a = gAgo(x.hist, 91); return { v: gfmt(x.v / 1e6, 2) + " k Md$", ch: a ? "3 mois : " + gSgn((x.v / a - 1) * 100, 1) + " %" : "", th: "baisse = resserrement quantitatif", sig: a ? (x.v < a * 0.99 ? -1 : x.v > a * 1.01 ? 1 : 0) : 0, d: x.asof, src: "Fed (H.4.1)" }; } },
+        { l: "Biais retenu", man: 1, k: "bias", sel: [["hawkish", -1], ["neutre", 0], ["dovish", 1]], th: "hawkish = pression sur l'or" }
+      ] },
+      { id: "1.5", t: "Ce qui est pricé", rows: [
+        { l: "Prochaine réunion (méthode CME FedWatch)", f: function () { var F = fedWatchCalc(), n = gNext(F), o = gNext(gFwAgo(5)); if (!n) return null; return { v: "hausse " + Math.round(n.pu * 100) + " % · maintien " + Math.round(n.ph * 100) + " % · baisse " + Math.round(n.pd * 100) + " %", ch: o ? "5 séances : hausse " + gSgn((n.pu - o.pu) * 100, 0) + " pts" : "", th: "variation de 15 pts = signal", sig: o ? ((n.pu - o.pu) * 100 >= 15 ? -1 : (n.pu - o.pu) * 100 <= -15 ? 1 : 0) : 0, d: F.asof, src: "contrats fed funds CBOT" }; } },
+        { l: "Mouvements pricés sur 12 mois", f: function () { var F = fedWatchCalc(), a = g12m(F), b = g12m(gFwAgo(5)); if (!a) return null; return { v: gBp(a.bp) + " (" + gSgn(a.bp / 25, 1) + " mouvement de 25 pb)", ch: b ? "5 séances : " + gBp(a.bp - b.bp) : "", th: "repricing de 15 pb = signal", sig: b ? (a.bp - b.bp >= 15 ? -1 : a.bp - b.bp <= -15 ? 1 : 0) : 0, d: F.asof, src: "contrats fed funds CBOT" }; } },
+        { l: "Taux terminal pricé", f: function () { var F = fedWatchCalc(); if (!F) return null; var mx = F.res.reduce(function (m, r) { return Math.max(m, r.rate); }, -9), mn = F.res.reduce(function (m, r) { return Math.min(m, r.rate); }, 99), up = mx - F.effr > F.effr - mn; return { v: gfmt(up ? mx : mn, 2) + " %", ch: "à comparer au dot plot (saisie 1.4)", th: "pricé > dot plot = marché plus hawkish", sig: 0, d: F.asof, src: "contrats fed funds CBOT" }; } },
+        { l: "Taux US 2 ans", f: function () { var x = fred("DGS2"); if (!x) return null; var a = gAgo(x.hist, 7); return { v: gfmt(x.v, 2) + " %", ch: a !== null ? "5 séances : " + gBp((x.v - a) * 100) : "", th: "±15 pb sur 5 séances = signal", sig: a !== null ? ((x.v - a) * 100 >= 15 ? -1 : (x.v - a) * 100 <= -15 ? 1 : 0) : 0, d: x.asof, src: "Trésor US" }; } },
+        { l: "Scénario non pricé : récession (probabilité)", man: 1, k: "np_rec", th: "probabilité estimée par vous" },
+        { l: "Scénario non pricé : réaccélération de l'inflation", man: 1, k: "np_inf", th: "probabilité estimée par vous" },
+        { l: "Scénario non pricé : pause longue", man: 1, k: "np_pause", th: "probabilité estimée par vous" }
+      ] },
+      { id: "1.6", t: "Mon avis (à remplir AVANT le score)", avis: 1 }
+    ] },
+    { id: "p3", t: "3. Marchés", steps: [
+      { id: "1.7", t: "Taux réel et dollar", rows: [
+        { l: "TIPS 10 ans (DFII10)", f: function () { var x = fred("DFII10"); if (!x) return null; var a = gAgo(x.hist, 7), d = a !== null ? (x.v - a) * 100 : null; return { v: gfmt(x.v, 2) + " %", ch: d !== null ? "5 séances : " + gBp(d) : "", th: "±15 pb sur 5 séances = note ±2", sig: d === null ? 0 : d <= -15 ? 2 : d <= -5 ? 1 : d >= 15 ? -2 : d >= 5 ? -1 : 0, d: x.asof, src: "Trésor US" }; } },
+        { l: "Corrélation or / TIPS (60 j)", f: function () { var x = fred("DFII10"), g = gDaily("gold"); if (!x || !x.hist || g.length < 30) return null; var J = gJoin(g, x.hist).slice(-61), dg = [], dt = []; for (var i = 1; i < J.length; i++) { dg.push(J[i][1] / J[i - 1][1] - 1); dt.push(J[i][2] - J[i - 1][2]); } var c = gCorr(dg, dt), c20 = gCorr(dg.slice(-20), dt.slice(-20)); if (c === null) return null; return { v: gSgn(c, 2) + " (60 j)", ch: c20 !== null ? "20 j : " + gSgn(c20, 2) : "", th: "normale négative ; positive = relation cassée (lecture refuge)", sig: c > 0.1 ? 1 : 0, d: J[J.length - 1][0], src: "calcul maison" }; } },
+        { l: "US10Y et décomposition (réel + inflation)", f: function () { var n = fred("DGS10"), r = fred("DFII10"), b = fred("T10YIE"); if (!n) return null; var dn = gAgo(n.hist, 7), dr = r ? gAgo(r.hist, 7) : null, db = b ? gAgo(b.hist, 7) : null; return { v: gfmt(n.v, 2) + " %", ch: dn !== null ? "5 séances : " + gBp((n.v - dn) * 100) + (dr !== null ? " = réel " + gBp((r.v - dr) * 100) : "") + (db !== null ? " + inflation " + gBp((b.v - db) * 100) : "") : "", th: "hausse portée par le réel = pression", sig: dr !== null ? ((r.v - dr) * 100 >= 10 ? -1 : (r.v - dr) * 100 <= -10 ? 1 : 0) : 0, d: n.asof, src: "Trésor US" }; } },
+        { l: "DXY", f: function () { var g = gDaily("dxy"); if (g.length < 60) return null; var L = g.slice(-63).map(function (r) { return r[1]; }), v = L[L.length - 1], hi = Math.max.apply(null, L), lo = Math.min.apply(null, L), pos = (v - lo) / ((hi - lo) || 1); return { v: gfmt(v, 2), ch: "3 mois : " + gfmt(lo, 2) + " – " + gfmt(hi, 2) + " (position " + Math.round(pos * 100) + " %)", th: "extrêmes de 3 mois = ±2", sig: pos >= 0.95 ? -2 : pos >= 0.75 ? -1 : pos <= 0.05 ? 2 : pos <= 0.25 ? 1 : 0, d: g[g.length - 1][0], src: "ICE (Yahoo)" }; } },
+        { l: "EURUSD", f: function () { var g = gDaily("eur"); if (g.length < 60) return null; var L = g.slice(-63).map(function (r) { return r[1]; }), v = L[L.length - 1], hi = Math.max.apply(null, L), lo = Math.min.apply(null, L), pos = (v - lo) / ((hi - lo) || 1); return { v: gfmt(v, 4), ch: "3 mois : " + gfmt(lo, 4) + " – " + gfmt(hi, 4), th: "euro fort = dollar faible = soutien or", sig: pos >= 0.8 ? 1 : pos <= 0.2 ? -1 : 0, d: g[g.length - 1][0], src: "Yahoo" }; } }
+      ] },
+      { id: "1.8", t: "Courbe, cycle et actifs", rows: [
+        { l: "Type de mouvement de la courbe (5 séances)", f: function () { var a = fred("DGS2"), b = fred("DGS10"); if (!a || !b) return null; var d2 = gAgo(a.hist, 7), d10 = gAgo(b.hist, 7); if (d2 === null || d10 === null) return null; var x2 = (a.v - d2) * 100, x10 = (b.v - d10) * 100, steep = x10 - x2 > 0, bull = (x2 + x10) / 2 < 0, t = (bull ? "bull " : "bear ") + (steep ? "steepening" : "flattening"); return { v: t, ch: "2 ans " + gBp(x2) + " · 10 ans " + gBp(x10), th: "bull steepening = baisses de taux attendues", sig: bull ? 1 : -1, d: b.asof, src: "Trésor US" }; } },
+        { l: "MOVE (volatilité des taux)", f: function () { var m = AUTO && AUTO.move; if (!m) return null; return { v: gfmt(m.v, 1), ch: "5 séances : " + gSgn(m.d5, 1) + " %", th: "<80 calme ; 80-120 normal ; 120-150 stress ; >150 crise", sig: m.v > 120 ? 1 : 0, d: m.d, src: m.src }; } },
+        { l: "Spread high yield", f: function () { var x = fred("BAMLH0A0HYM2"); if (!x) return null; var a = gAgo(x.hist, 21); return { v: gfmt(x.v, 2) + " %", ch: a !== null ? "3 sem. : " + gBp((x.v - a) * 100) : "", th: "élargissement = stress", sig: a !== null && x.v - a > 0.3 ? 1 : 0, d: x.asof, src: "ICE BofA (FRED)" }; } },
+        { l: "Corrélation actions / obligations (20 j)", f: function () { var e = gDaily("es"), b = fred("DGS10"); if (e.length < 25 || !b || !b.hist) return null; var J = gJoin(e, b.hist).slice(-21), de = [], db = [], both = 0; for (var i = 1; i < J.length; i++) { var x = J[i][1] / J[i - 1][1] - 1, y = -(J[i][2] - J[i - 1][2]); de.push(x); db.push(y); if (x < 0 && y < 0) both++; } var c = gCorr(de, db); return { v: gSgn(c, 2), ch: both + " jours sur 20 où actions et obligations ont baissé ensemble", th: "les deux baissent le même jour = risk-off d'inflation", sig: both >= 8 ? -1 : 0, d: J[J.length - 1][0], src: "calcul maison" }; } },
+        { l: "Réaction sur 5 séances : actions, obligations, dollar, pétrole", f: function () { var m = AUTO && AUTO.geo && AUTO.geo.mkt; if (!m) return null; var g = function (k) { return m[k] ? m[k].c5 : null; }; return { v: "S&P " + gSgn(g("^GSPC"), 1) + " % · 10 ans " + gBp(g("^TNX")) + " · dollar " + gSgn(g("DX-Y.NYB"), 1) + " % · Brent " + gSgn(g("BZ=F"), 1) + " %", ch: "", th: "à comparer à la phase du cycle (1.1)", sig: 0, d: m["^GSPC"] && m["^GSPC"].d, src: "Yahoo" }; } }
+      ] }
+    ] },
+    { id: "p4", t: "4. Positionnement", steps: [
+      { id: "1.9", t: "COT et flux", h: "CFTC, publié le vendredi (positions du mardi). Position nette et percentile sur 3 ans.", rows: [
+        { l: "Or COMEX : managed money", f: function () { var c = gCOT("XAU", "mm"); if (!c) return null; return { v: gfmt(c.net, 0) + " contrats", ch: "semaine : " + gSgn(c.net - c.prev, 0) + " · percentile " + c.pct, th: "<20e percentile = soutien ; >90e = pression", sig: c.pct < 20 ? 1 : c.pct > 90 ? -1 : 0, d: c.date, src: "CFTC (désagrégé)" }; } },
+        { l: "Or : commerciaux (lecture inverse)", f: function () { var c = AUTO && AUTO.cot && AUTO.cot.XAU; if (!c) return null; return { v: gfmt(c.comm_net, 0), ch: "semaine : " + gSgn(c.comm_net - c.comm_prev, 0), th: "couverture qui se réduit = soutien", sig: c.comm_net > c.comm_prev ? 1 : -1, d: c.date, src: "CFTC" }; } },
+        { l: "Dollar (DXY ICE) : spéculateurs", f: function () { var c = AUTO && AUTO.cot && AUTO.cot.DXY; if (!c) return null; return { v: gfmt(c.net, 0), ch: "percentile " + c.pctl + " · semaine " + gSgn(c.net - c.prev_net, 0), th: "dollar très acheté (>90e) = risque de retournement", sig: c.pctl > 90 ? 1 : c.pctl < 10 ? -1 : 0, d: c.date, src: "CFTC" }; } },
+        { l: "Euro : fonds à effet de levier", f: function () { var c = gCOT("EUR", "lev"); if (!c) return null; return { v: gfmt(c.net, 0), ch: "percentile " + c.pct, th: "euro très vendu (<10e) = rebond possible de l'euro", sig: c.pct < 10 ? 1 : c.pct > 90 ? -1 : 0, d: c.date, src: "CFTC (TFF)" }; } },
+        { l: "Euro : asset managers", f: function () { var c = gCOT("EUR", "am"); if (!c) return null; return { v: gfmt(c.net, 0), ch: "percentile " + c.pct, th: "lecture de fond", sig: 0, d: c.date, src: "CFTC (TFF)" }; } },
+        { l: "ETF or (GLD + IAU), 4 semaines", f: function () { var s = AUTO && AUTO.goldetf && AUTO.goldetf.snap; if (!s) return null; var tot = 0, d = null, ok = 0; ["GLD_nq", "IAU_nq"].forEach(function (k) { var L = s[k] || []; if (L.length < 2) return; var a = L[L.length - 1], lim = new Date(Date.parse(a.d) - 28 * 864e5).toISOString().slice(0, 10), b = L.filter(function (x) { return x.d <= lim; }).pop() || L[0]; if (a.aum && b.aum) { tot += (a.aum / b.aum - 1) * 100; ok++; d = a.d; } }); if (!ok) return null; return { v: gSgn(tot / ok, 1) + " % de parts", ch: "variation des encours (parts) sur 4 semaines", th: "entrées = soutien", sig: tot / ok > 1 ? 1 : tot / ok < -1 ? -1 : 0, d: d, src: "Nasdaq (encours ETF)" }; } },
+        { l: "Achats des banques centrales (Gold Demand Trends)", f: function () { var w = AUTO && AUTO.wgc; if (!w || !w.fig || !w.fig.cb) return null; return { v: gfmt(w.fig.cb.v, 0) + " t", ch: w.latest, th: "achats forts = soutien de fond", sig: w.fig.cb.v > 200 ? 1 : 0, d: w.latest, src: "World Gold Council" }; } },
+        { l: "Prime Shanghai vs Londres", man: 1, k: "sge", th: "prime élevée = demande chinoise forte" },
+        { l: "Décote / prime en Inde", man: 1, k: "inde", th: "prime = demande ; décote = demande faible" }
+      ] },
+      { id: "1.9b", t: "Particuliers", rows: [
+        { l: "COT non-déclarants : or", f: function () { var c = AUTO && AUTO.cot && AUTO.cot.XAU && AUTO.cot.XAU.g && AUTO.cot.XAU.g.small; if (!c) return null; return { v: gfmt(c.long - c.short, 0), ch: c.p4 !== undefined ? "part acheteuse " + gfmt(c.p4, 0) + " %" : "", th: "foule très acheteuse = contrarien", sig: c.p4 > 75 ? -1 : c.p4 < 40 ? 1 : 0, d: AUTO.cot.XAU.date, src: "CFTC" }; } },
+        { l: "COT non-déclarants : euro", f: function () { var c = AUTO && AUTO.cot && AUTO.cot.EUR && AUTO.cot.EUR.g && AUTO.cot.EUR.g.small; if (!c) return null; return { v: gfmt(c.long - c.short, 0), ch: "part acheteuse " + gfmt(c.p4, 0) + " %", th: "lecture contrarienne", sig: 0, d: AUTO.cot.EUR.date, src: "CFTC" }; } },
+        { l: "% de clients acheteurs XAUUSD (Myfxbook)", f: function () { var r = AUTO && AUTO.retail && AUTO.retail.s && AUTO.retail.s.XAUUSD, th = gN((GD.man.retail_th || {}).v) || 70; if (!r) return null; return { v: gfmt(r.long, 0) + " % acheteurs", ch: "seuil contrarien : " + th + " % (modifiable ci-dessous)", th: "au-delà du seuil = signal contrarien", sig: r.long >= th ? -1 : r.long <= 100 - th ? 1 : 0, d: AUTO.retail.asof, src: AUTO.retail.src }; } },
+        { l: "% de clients acheteurs EURUSD (Myfxbook)", f: function () { var r = AUTO && AUTO.retail && AUTO.retail.s && AUTO.retail.s.EURUSD, th = gN((GD.man.retail_th || {}).v) || 70; if (!r) return null; return { v: gfmt(r.long, 0) + " % acheteurs", ch: "IG et OANDA : à comparer (saisie)", th: "seuil contrarien " + th + " %", sig: r.long >= th ? -1 : 0, d: AUTO.retail.asof, src: AUTO.retail.src }; } },
+        { l: "Mon seuil contrarien (%)", man: 1, k: "retail_th", th: "par défaut 70 %" },
+        { l: "IG / OANDA (% acheteurs, autres sources)", man: 1, k: "retail_ig", th: "comparer plusieurs sources" },
+        { l: "Institutions vs particuliers : opposés ?", f: function () { var m = gCOT("XAU", "mm"), r = AUTO && AUTO.retail && AUTO.retail.s && AUTO.retail.s.XAUUSD; if (!m || !r) return null; var inst = m.net > 0 ? "acheteurs" : "vendeurs", ret = r.long >= 50 ? "acheteurs" : "vendeurs"; return { v: inst !== ret ? "oui" : "non", ch: "fonds " + inst + ", particuliers " + ret, th: "opposés = la foule a souvent tort", sig: inst !== ret ? (m.net > 0 ? 1 : -1) : 0, d: AUTO.retail.asof, src: "CFTC + Myfxbook" }; } }
+      ] }
+    ] },
+    { id: "p5", t: "5. Géopolitique", steps: [{ id: "1.10", t: "Géopolitique", geo: 1 }, { id: "1.11", t: "Étape libre", libre: 1 }] },
+    { id: "p6", t: "6. Annonces, sentiment, projections", steps: [
+      { id: "1.12", t: "Calendrier des annonces", cal: 1 },
+      { id: "1.13", t: "Sentiment", rows: [
+        { l: "VIX", f: function () { var x = fred("VIXCLS"); if (!x) return null; var a = gAgo(x.hist, 7); return { v: gfmt(x.v, 1), ch: a !== null ? "5 séances : " + gSgn(x.v - a, 1) : "", th: "<15 complaisance ; 20-30 stress ; >30 panique", sig: x.v >= 20 ? 1 : x.v < 15 ? -1 : 0, d: x.asof, src: "CBOE" }; } },
+        { l: "GVZ (volatilité de l'or)", add: 1, f: function () { var x = fred("GVZCLS"); if (!x) return null; var a = gAgo(x.hist, 7); return { v: gfmt(x.v, 1), ch: a !== null ? "5 séances : " + gSgn(x.v - a, 1) : "", th: "pic = mouvement violent en cours", sig: 0, d: x.asof, src: "CBOE" }; } },
+        { l: "Ratio put/call", add: 1, man: 1, k: "putcall", th: ">1 = peur (contrarien)" },
+        { l: "AAII (haussiers − baissiers)", add: 1, man: 1, k: "aaii", th: "extrêmes = contrarien" },
+        { l: "Fear and Greed (CNN)", f: function () { var f = AUTO && AUTO.fng; if (!f) return null; return { v: gfmt(f.score, 0) + " / 100", ch: "semaine " + gfmt(f.week, 0) + " · mois " + gfmt(f.month, 0), th: "<25 peur extrême ; >75 avidité extrême", sig: f.score < 25 ? 1 : f.score > 75 ? -1 : 0, d: f.asof, src: "CNN" }; } },
+        { l: "Enquête gérants BofA", add: 1, man: 1, k: "bofa", th: "or très acheté (« most crowded ») = risque" },
+        { l: "Ton des médias", man: 1, k: "media", th: "votre lecture" }
+      ] },
+      { id: "1.14", t: "Projections des banques", rows: [
+        { l: "Cibles XAUUSD des banques (médiane)", f: function () { var A = (AUTO && AUTO.consensus_auto) || [], latest = {}; A.filter(function (c) { return c.asset === "gold" && typeof c.v === "number" && ageDays(c.d) <= 75; }).forEach(function (c) { if (!latest[c.bank] || latest[c.bank].d < c.d) latest[c.bank] = c; }); var L = Object.keys(latest).map(function (k) { return latest[k]; }); if (!L.length) return null; var v = L.map(function (c) { return c.v; }).sort(function (a, b) { return a - b; }), med = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2, up = A.filter(function (c) { return c.asset === "gold" && c.rev === "hausse" && ageDays(c.d) <= 60; }).length, dn = A.filter(function (c) { return c.asset === "gold" && c.rev === "baisse" && ageDays(c.d) <= 60; }).length, disp = (v[v.length - 1] - v[0]) / med * 100; return { v: gfmt(med, 0) + " $ (" + L.length + " banques)", ch: L.map(function (c) { return c.bank + " " + gfmt(c.v, 0); }).join(" · ") + " · révisions : " + up + " ▲ / " + dn + " ▼ · dispersion " + gfmt(disp, 0) + " %", th: "la direction des révisions compte plus que le niveau ; unanimité = risque", sig: up > dn ? 1 : dn > up ? -1 : 0, d: L.map(function (c) { return c.d; }).sort().pop(), src: "presse (Google Actualités)" }; } },
+        { l: "BlackRock Investment Institute (vue macro)", man: 1, k: "blk", th: "vue publiée chaque semaine" },
+        { l: "Prévisions EURUSD et DXY", man: 1, k: "fxfc", th: "voir aussi Actualités → prévisions des banques" },
+        { l: "Prévisions de taux Fed et BCE fin d'année vs pricing", man: 1, k: "ratefc", th: "banques plus hawkish que le marché = pression" },
+        { l: "Prévisions d'inflation et de croissance (US, zone euro)", man: 1, k: "macrofc", th: "révisions" },
+        { l: "Consensus Bloomberg / Reuters (médiane, dispersion)", man: 1, k: "cons", th: "réservé aux abonnés : saisie" }
+      ] },
+      { id: "1.15", t: "Structurel (revue trimestrielle)", rows: [
+        { l: "Dette et déficit US (% PIB, adjudications, term premium)", man: 1, k: "st_dette", sel: [["soutien", 1], ["neutre", 0], ["pression", -1]], th: "déficits élevés = soutien de fond" },
+        { l: "Diversification des réserves (part de l'or, rapatriements)", man: 1, k: "st_res", sel: [["soutien", 1], ["neutre", 0], ["pression", -1]], th: "voir rubrique Carte → réserves" },
+        { l: "Régime de taux réels (relation or / TIPS)", f: function () { var r = GUIDE_ROW("Corrélation or / TIPS (60 j)"); return r ? { v: r.sig > 0 ? "cassée" : "valide", ch: r.v, th: "cassée = l'or ne suit plus les taux réels", sig: r.sig, d: r.d, src: r.src } : null; } },
+        { l: "Inflation long terme (5y5y, CPI, Core PCE)", f: function () { var x = fred("T5YIFR"), p = indAuto("pcec", "USD"); if (!x) return null; return { v: "5y5y " + gfmt(x.v, 2) + " %" + (p ? " · Core PCE " + gfmt(p.v, 2) + " %" : ""), ch: "", th: "inflation durablement au-dessus de 2 % = soutien de fond", sig: p && p.v > 2.7 ? 1 : 0, d: x.asof, src: "Trésor, BEA" }; } },
+        { l: "Demande physique (bijouterie, barres et pièces, ETF)", f: function () { var w = AUTO && AUTO.wgc; if (!w || !w.fig) return null; var f = w.fig; return { v: Object.keys(f).map(function (k) { return k + " " + gfmt(f[k].v, 0) + " t"; }).join(" · "), ch: w.latest, th: "trimestriel (WGC)", sig: 0, d: w.latest, src: "World Gold Council" }; } },
+        { l: "Offre minière et recyclage", man: 1, k: "st_mine", sel: [["soutien", 1], ["neutre", 0], ["pression", -1]], th: "offre en baisse = soutien" },
+        { l: "Crédibilité des institutions monétaires", man: 1, k: "st_cred", sel: [["soutien", 1], ["neutre", 0], ["pression", -1]], th: "doutes sur l'indépendance = soutien or" }
+      ] }
+    ] },
+    { id: "p7", t: "7. États-Unis contre Europe", steps: [
+      { id: "3.1", t: "Fed et BCE côte à côte", duo: 1 },
+      { id: "3.2", t: "Côté Fed", rows: [
+        { l: "PCE a/a", f: rInd("pce", "USD", "cible 2 %", lvlInfl) }, { l: "Core PCE a/a", f: rInd("pcec", "USD", "cible 2 %", lvlInfl) },
+        { l: "NFP", f: rTV(/^tv\.Non ?Farm Payrolls$/, " K", "±50 K", function (a, f) { return a === null || f === null ? 0 : a - f >= 50 ? -1 : a - f <= -50 ? 1 : 0; }, 0) },
+        { l: "CPI a/a", f: rTV(/^tv\.Inflation Rate YoY$/, " %", "±0,1 pt", surpInv) },
+        { l: "ISM services", f: function () { return GUIDE_ROW("ISM services"); } }
+      ] },
+      { id: "3.3", t: "Économie US", rows: [
+        { l: "PIB", f: function () { return GUIDE_ROW("PIB réel annualisé (t/t)"); } },
+        { l: "Chômage", f: rInd("unemp", "USD", "4 à 4,5 %", function (v) { return v > 4.5 ? 1 : v < 4 ? -1 : 0; }) },
+        { l: "Vitesse de hausse du chômage (Sahm)", f: function () { return GUIDE_ROW("Règle de Sahm"); } }
+      ] },
+      { id: "3.4", t: "Côté BCE", rows: [
+        { l: "HICP flash a/a (zone euro)", f: rInd("cpi", "EUR", "cible 2 % symétrique", function (v) { return v < 1.5 ? -1 : v > 2.5 ? 1 : 0; }) },
+        { l: "HICP sous-jacent a/a", f: rInd("core", "EUR", "cible 2 %", function (v) { return v > 2.5 ? 1 : v < 1.5 ? -1 : 0; }) },
+        { l: "PMI zone euro (manufacturier et services)", f: function () { var m = indAuto("pmim", "EUR"), sv = indAuto("pmis", "EUR"); if (!m && !sv) return null; return { v: "manuf. " + (m ? gfmt(m.v, 1) : "–") + " · services " + (sv ? gfmt(sv.v, 1) : "–"), ch: "précédents " + (m ? gfmt(m.p, 1) : "–") + " · " + (sv ? gfmt(sv.p, 1) : "–"), th: "50 (le composite n'est pas diffusé gratuitement)", sig: sv ? (sv.v > 50 ? 1 : -1) : 0, d: (sv || m).per, src: (sv || m).src }; } },
+        { l: "PMI Allemagne / France / Italie / Espagne", man: 1, k: "pmi4", th: "50 ; chiffres S&P Global non diffusés gratuitement" },
+        { l: "Chômage zone euro", f: rInd("unemp", "EUR", "repère 6,5 %", function () { return 0; }) },
+        { l: "PIB flash zone euro a/a", f: rInd("gdpy", "EUR", "repère 0,8 à 1,5 %", function (v) { return v > 1.5 ? 1 : v < 0.8 ? -1 : 0; }) },
+        { l: "Ventes au détail zone euro a/a", f: function () { var s = gEU("EU|Retail Sales YoY"); if (!s) return null; return { v: gfmt(gN(s.last.a), 1) + " %", ch: "précédent " + gfmt(gN(s.last.p), 1), th: "tendance", sig: 0, d: s.last.d, src: "calendrier TradingView" }; } },
+        { l: "Ifo / ZEW / Sentix", f: function () { var i = gEU("DE|Ifo Business Climate"), z = gEU("DE|ZEW Economic Sentiment Index"), s = gEU("EU|Sentix Investor Confidence"); if (!i && !z && !s) return null; return { v: "Ifo " + (i ? gfmt(gN(i.last.a), 1) : "–") + " · ZEW " + (z ? gfmt(gN(z.last.a), 1) : "–") + " · Sentix " + (s ? gfmt(gN(s.last.a), 1) : "–"), ch: "", th: "hausse = confiance qui revient (euro soutenu)", sig: 0, d: ((i || z || s).last.d), src: "calendrier TradingView" }; } },
+        { l: "Wage tracker BCE", man: 1, k: "wagetr", th: "salaires négociés" },
+        { l: "Gaz TTF", f: function () { var m = AUTO && AUTO.geo && AUTO.geo.mkt && AUTO.geo.mkt["TTF=F"]; if (!m) return null; return { v: gfmt(m.c, 1) + " €/MWh", ch: "5 séances : " + gSgn(m.c5, 1) + " %", th: "gaz cher = euro pénalisé", sig: 0, d: m.d, src: "Yahoo" }; } }
+      ] },
+      { id: "3.5", t: "Taux européens", rows: [
+        { l: "Bund, OAT, BTP 10 ans et écarts", f: function () { var E = AUTO && AUTO.ezspread && AUTO.ezspread.cc; if (!E) return null; var fr = E.filter(function (c) { return c.cc === "FR"; })[0], it = E.filter(function (c) { return c.cc === "IT"; })[0], bund = fr ? fr.y - fr.bp / 100 : null; return { v: "Bund " + gfmt(bund, 2) + " % · OAT " + (fr ? gfmt(fr.y, 2) : "–") + " % · BTP " + (it ? gfmt(it.y, 2) : "–") + " %", ch: "OAT − Bund " + (fr ? gfmt(fr.bp, 0) + " pb" : "–") + " · BTP − Bund " + (it ? gfmt(it.bp, 0) + " pb" : "–"), th: "écarts qui montent vite = stress", sig: 0, d: fr && fr.t, src: "CNBC" }; } },
+        { l: "Taux de dépôt et refinancement BCE", f: function () { var d = fred("ECBDFR"), m = AUTO && AUTO.eu_guide && AUTO.eu_guide.ecb && AUTO.eu_guide.ecb.mro; if (!d) return null; return { v: "dépôt " + gfmt(d.v, 2) + " %" + (m ? " · refinancement " + gfmt(m.v, 2) + " %" : ""), ch: "", th: "–", sig: 0, d: d.asof, src: "BCE" }; } },
+        { l: "€STR / OIS : mouvements pricés BCE", man: 1, k: "estr", th: "réservé ou peu accessible : saisie" }
+      ] },
+      { id: "3.6", t: "Cadre BCE", rows: [{ l: "Où se situe la zone euro", f: function () { var c = indAuto("cpi", "EUR"), g = indAuto("gdpy", "EUR"); if (!c) return null; var z = c.v < 1.5 ? "sous la zone confortable (risque déflationniste)" : c.v <= 2.5 ? "dans la zone confortable 1,5-2,5 %" : c.v >= 3 ? "inflation trop forte" : "un peu au-dessus de la zone"; return { v: "inflation " + gfmt(c.v, 1) + " %" + (g ? " · croissance " + gfmt(g.v, 1) + " %" : ""), ch: z, th: "HICP 2 % ; zone 1,5-2,5 % ; croissance 0,8-1,5 %", sig: 0, d: c.per, src: c.src }; } }] },
+      { id: "3.7", t: "Discours et mesures BCE", rows: [{ l: "Discours, APP / PEPP, TPI, projections, comptes rendus", man: 1, k: "ecbmes", th: "pas de dot plot côté BCE" }] },
+      { id: "3.8", t: "Vigilance", rows: [
+        { l: "Risque déflationniste (inflation < 1,5 %)", f: function () { var c = indAuto("cpi", "EUR"); return c ? { v: c.v < 1.5 ? "oui" : "non", ch: "HICP " + gfmt(c.v, 1) + " %", th: "< 1,5 %", sig: 0, d: c.per, src: c.src } : null; } },
+        { l: "Fragmentation (BTP / OAT vs Bund)", f: function () { var E = AUTO && AUTO.ezspread && AUTO.ezspread.cc; if (!E) return null; var it = E.filter(function (c) { return c.cc === "IT"; })[0], fr = E.filter(function (c) { return c.cc === "FR"; })[0]; return { v: "OAT 20 j " + (fr ? gBp(fr.d20) : "–") + " · BTP 20 j " + (it ? gBp(it.d20) : "–"), ch: fr ? "OAT au " + fr.p1y + "e centile sur 1 an" : "", th: "montée rapide = stress", sig: 0, d: fr && fr.t, src: "CNBC" }; } },
+        { l: "Budget allemand, euro fort, risque politique", man: 1, k: "vigil", th: "votre lecture" }
+      ] },
+      { id: "3.9", t: "Europe hors taux", rows: [{ l: "Défense, énergie, politique, commerce, stress bancaire", man: 1, k: "eurohors", th: "ce qui peut faire baisser / monter l'euro" }] },
+      { id: "3.10", t: "Autres économies", rows: [
+        { l: "Japon (yen, BoJ)", man: 1, k: "o_jp", th: "canal et impact USD / EUR" }, { l: "Chine (croissance, yuan, immobilier)", man: 1, k: "o_cn", th: "canal et impact" },
+        { l: "Royaume-Uni (livre, gilts)", man: 1, k: "o_uk", th: "canal et impact" }, { l: "Suisse (franc)", man: 1, k: "o_ch", th: "canal et impact" },
+        { l: "Canada / Australie", man: 1, k: "o_ca", th: "canal et impact" }, { l: "Émergents / Inde", man: 1, k: "o_em", th: "canal et impact" }
+      ] },
+      { id: "3.11", t: "Synthèse Fed / BCE", rows: [
+        { l: "Écart US 2 ans − zone euro 2 ans", f: function () { var a = fred("DGS2"), e = AUTO && AUTO.curves && AUTO.curves.eu && AUTO.curves.eu.now; if (!a || !e) return null; var i = AUTO.curves.eu.tenors.indexOf("2A"), b = e.v[i]; if (b === null || b === undefined) return null; var w = AUTO.curves.eu.w1, bw = w ? w.v[i] : null, aw = gAgo(a.hist, 7); return { v: gBp((a.v - b) * 100), ch: bw !== null && aw !== null ? "1 semaine : " + gBp(((a.v - b) - (aw - bw)) * 100) : "", th: "écart qui s'élargit = dollar soutenu", sig: bw !== null && aw !== null ? (((a.v - b) - (aw - bw)) * 100 > 5 ? -1 : ((a.v - b) - (aw - bw)) * 100 < -5 ? 1 : 0) : 0, d: e.d, src: "Trésor US + courbe AAA BCE (proche du Bund)" }; } },
+        { l: "DXY vs extrêmes de 3 mois", f: function () { return GUIDE_ROW("DXY"); } }
+      ] }
+    ] },
+    { id: "p8", t: "8. Conclusion", steps: [{ id: "concl", t: "Conclusion", concl: 1 }] }
+  ];
+  var GUIDE_MEMO = {};
+  function GUIDE_ROW(label) { if (GUIDE_MEMO[label] !== undefined) return GUIDE_MEMO[label]; var r = null; GUIDE.forEach(function (p) { p.steps.forEach(function (s) { (s.rows || []).forEach(function (x) { if (x.l === label && x.f && !r) { try { r = x.f(); } catch (e) { r = null; } } }); }); }); GUIDE_MEMO[label] = r; return r; }
+  function gRowEval(x) {
+    if (x.man) { var m = GD.man[x.k] || {}; var sig = x.sel ? (m.v !== undefined && m.v !== "" ? (x.sel.filter(function (o) { return o[0] === m.v; })[0] || [0, 0])[1] : null) : (m.s !== undefined && m.s !== "" ? +m.s : null); return { man: 1, v: m.v || "", d: m.d || "", sig: sig, th: x.th }; }
+    if (GUIDE_MEMO[x.l] !== undefined) return GUIDE_MEMO[x.l];
+    var r = null; try { r = x.f(); } catch (e) { r = null; } GUIDE_MEMO[x.l] = r; return r;
+  }
+  function gSigH(s) { return s === null || s === undefined ? '<span class="gsig n">–</span>' : '<span class="gsig ' + (s > 0 ? "p" : s < 0 ? "m" : "z") + '">' + (s > 0 ? "+" + (s > 1 ? s : "") : s < 0 ? "−" + (s < -1 ? -s : "") : "0") + "</span>"; }
+  function gStepNote(st) { /* proposition de note de l'étape : moyenne des signaux, ramenée de −2 à +2 */
+    var v = (st.rows || []).map(gRowEval).filter(function (r) { return r && r.sig !== null && r.sig !== undefined; }).map(function (r) { return Math.max(-2, Math.min(2, r.sig)); });
+    if (st.geo) { var G = geoData(); return G && G.note ? G.note.v : 0; }
+    if (!v.length) return null; var m = v.reduce(function (a, b) { return a + b; }, 0) / v.length; return Math.max(-2, Math.min(2, Math.round(m * 2)));
+  }
+  function gStepTable(st) {
+    var rows = (st.rows || []).filter(function (x) { return !(GD.hide && x.add); });
+    return '<div class="tbl"><table class="gtbl"><thead><tr><th>Indicateur</th><th>Valeur</th><th>Variation</th><th>Seuil de lecture</th><th class="c">Signal</th><th>Mise à jour</th></tr></thead><tbody>' + rows.map(function (x) {
+      var r = gRowEval(x), tag = x.add ? ' <small class="gadd">ajout</small>' : "";
+      if (x.man) {
+        var m = GD.man[x.k] || {};
+        var sel = x.sel ? '<select data-gman="' + x.k + '" data-gf="v"><option value="">–</option>' + x.sel.map(function (o) { return "<option" + (m.v === o[0] ? " selected" : "") + ">" + o[0] + "</option>"; }).join("") + "</select>" : '<input data-gman="' + x.k + '" data-gf="v" value="' + esc(m.v || "") + '" placeholder="saisie manuelle">';
+        var sg = x.sel ? "" : '<select data-gman="' + x.k + '" data-gf="s" aria-label="Signal"><option value="">–</option><option value="1"' + (m.s === "1" ? " selected" : "") + '>+ soutien</option><option value="0"' + (m.s === "0" ? " selected" : "") + '>0 neutre</option><option value="-1"' + (m.s === "-1" ? " selected" : "") + ">− pression</option></select>";
+        return '<tr class="gman"><td><b>' + esc(x.l) + "</b>" + tag + '<small class="gsrc">saisie manuelle · à vérifier</small></td><td colspan="2">' + sel + '</td><td><small>' + esc(x.th || "") + '</small></td><td class="c">' + (x.sel ? gSigH(r.sig) : sg) + '</td><td><input type="date" data-gman="' + x.k + '" data-gf="d" value="' + esc(m.d || "") + '"></td></tr>';
+      }
+      if (!r) return "<tr><td><b>" + esc(x.l) + "</b>" + tag + '</td><td colspan="2"><span class="gmiss">manquant</span> <small>(source pas encore disponible)</small></td><td><small>' + esc(x.th || "") + '</small></td><td class="c">' + gSigH(null) + "</td><td>–</td></tr>";
+      var src = String(r.src || ""); return "<tr><td><b>" + esc(x.l) + "</b>" + tag + '<small class="gsrc" title="' + esc(src) + '">' + esc(src.length > 70 ? src.slice(0, 67) + "…" : src) + '</small></td><td class="num"><b>' + r.v + '</b></td><td><small>' + (r.ch || "") + "</small></td><td><small>" + esc(r.th || x.th || "") + '</small></td><td class="c">' + gSigH(r.sig) + "</td><td>" + gD(r.d) + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+  }
+  function gAvisHtml() {
+    var A = GD.avis, lk = !!A.locked, f = function (k, lab, ph, ta) { return '<label class="gav"><span>' + lab + "</span>" + (ta ? '<textarea data-gavis="' + k + '" rows="2"' + (lk ? " disabled" : "") + ' placeholder="' + ph + '">' + esc(A[k] || "") + "</textarea>" : '<input data-gavis="' + k + '"' + (lk ? " disabled" : "") + ' value="' + esc(A[k] || "") + '" placeholder="' + ph + '">') + "</label>"; };
+    return '<div class="gavg">' + f("central", "Scénario central", "ex. la Fed monte en décembre puis pause", 1) + f("p_central", "Probabilité (%)", "60") + f("conf", "Confiance (1 à 3)", "2") + f("alt", "Scénario alternatif", "ex. pause dès décembre", 1) + f("p_alt", "Probabilité (%)", "40") + f("diff", "Où je diffère du marché", "", 1) + f("preuve", "Ma preuve", "", 1) + f("invalid", "Ce qui m'invaliderait", "", 1) + "</div>" +
+      (lk ? '<p class="hint">🔒 Avis verrouillé le ' + esc(A.locked) + " (règle du guide : non modifiable après le calcul du score). <button type=\"button\" class=\"chip\" data-gunlock=\"1\">Nouvelle analyse (déverrouiller)</button></p>" : '<p class="hint">Remplissez avant de regarder la conclusion : l\'avis se verrouille quand vous calculez le score (partie 8).</p>');
+  }
+  function gCalHtml() {
+    var ev = ((AUTO && AUTO.calendar && AUTO.calendar.events) || []).filter(function (e) { var t = Date.parse(e.d); return e.i === "High" && (e.c === "USD" || e.c === "EUR") && t >= Date.now() - 864e5 && t <= Date.now() + 30 * 864e5; }).sort(function (a, b) { return Date.parse(a.d) - Date.parse(b.d); });
+    var rule = function (t) { return /core pce|pce price|cpi|inflation rate/i.test(t) ? ["±0,1 pt", "au-dessus = hawkish (pression or)", "en dessous = dovish (soutien or)"] : /non farm|payroll/i.test(t) ? ["±50 K", "au-dessus = hawkish", "en dessous = dovish"] : /hourly earnings|wage|employment cost/i.test(t) ? ["±0,1 pt", "au-dessus = hawkish", "en dessous = dovish"] : /\bISM\b|PMI/i.test(t) ? ["franchissement de 50", "au-dessus de 50 = hawkish", "sous 50 = dovish"] : /speech|speaks|press conference|testimony|statement/i.test(t) ? ["changement de vocabulaire", "ton plus ferme = hawkish", "ton plus souple = dovish"] : /interest rate|rate decision|deposit/i.test(t) ? ["décision vs pricing", "hausse ou ton ferme = hawkish", "baisse = dovish"] : ["consensus", "au-dessus = plutôt hawkish", "en dessous = plutôt dovish"]; };
+    var soon = ev.filter(function (e) { var t = Date.parse(e.d); return t > Date.now() && t < Date.now() + 24 * 36e5; });
+    return (soon.length ? '<p class="galertx">⚠ Annonce majeure dans moins de 24 h (' + esc(soon[0].c + " " + soon[0].t) + ") : pas de nouvelle position juste avant.</p>" : "") +
+      '<div class="tbl"><table class="gtbl"><thead><tr><th>Date (Kinshasa)</th><th>Annonce</th><th class="r">Consensus</th><th>Seuil de surprise</th><th>Si hawkish</th><th>Si dovish</th><th class="r">Résultat</th></tr></thead><tbody>' + (ev.length ? ev.map(function (e) { var r = rule(e.t); return "<tr><td>" + new Date(e.d).toLocaleString("fr-FR", { timeZone: KIN, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + "</td><td><b>" + esc(e.c) + "</b> " + esc(e.t) + '</td><td class="r num">' + esc(e.f || "–") + "</td><td><small>" + r[0] + "</small></td><td><small>" + r[1] + "</small></td><td><small>" + r[2] + '</small></td><td class="r num"><b>' + esc(e.a || "à venir") + "</b></td></tr>"; }).join("") : '<tr><td colspan="7">Aucune annonce majeure USD / EUR relevée.</td></tr>') + "</tbody></table></div><p class=\"hint\">Annonces à fort impact des États-Unis et de la zone euro (calendrier du robot : environ 2 semaines à l'avance).</p>";
+  }
+  function gDuoHtml() {
+    var u = fedUp(), d = fred("ECBDFR"), pu = AUTO && AUTO.policy && AUTO.policy.USD, pe = AUTO && AUTO.policy && AUTO.policy.EUR, today = iso(new Date());
+    var nx = function (c) { var m = MEETINGS.filter(function (x) { return x.c === c && x.d >= today; })[0]; return m ? shortD(m.d) : "–"; };
+    var F = fedWatchCalc(), m12 = g12m(F), man = GD.man;
+    var row = function (l, a, b, gap) { return "<tr><td><b>" + l + '</b></td><td class="num">' + a + '</td><td class="num">' + b + '</td><td class="num">' + (gap || "") + "</td></tr>"; };
+    var dec = function (p) { return p && p.prev !== undefined ? (p.v > p.prev ? "hausse" : p.v < p.prev ? "baisse" : "maintien") + (p.since ? " (" + gD(p.since) + ")" : "") : "–"; };
+    return '<div class="tbl"><table class="gtbl"><thead><tr><th></th><th>Fed</th><th>BCE</th><th>Écart (Fed − BCE)</th></tr></thead><tbody>' +
+      row("Taux directeur (BCE = dépôt)", u ? gfmt(u.v - 0.25, 2) + "–" + gfmt(u.v, 2) + " %" : "–", d ? gfmt(d.v, 2) + " %" : "–", u && d ? gBp((u.v - 0.125 - d.v) * 100) : "") +
+      row("Dernière décision", dec(pu), dec(pe)) + row("Prochaine réunion", nx("USD"), nx("EUR")) +
+      row("Mouvements pricés sur 12 mois", m12 ? gBp(m12.bp) : "–", '<input data-gman="ecb12" data-gf="v" value="' + esc((man.ecb12 || {}).v || "") + '" placeholder="saisie (€STR / OIS)">') +
+      row("Biais", esc((man.bias || {}).v || "à saisir (1.4)"), '<select data-gman="ecbbias" data-gf="v"><option value="">–</option>' + ["hawkish", "neutre", "dovish"].map(function (o) { return "<option" + ((man.ecbbias || {}).v === o ? " selected" : "") + ">" + o + "</option>"; }).join("") + "</select>") +
+      row("Projections (SEP vs services BCE)", '<input data-gman="sep" data-gf="v" value="' + esc((man.sep || {}).v || "") + '" placeholder="saisie">', '<input data-gman="ecbproj" data-gf="v" value="' + esc((man.ecbproj || {}).v || "") + '" placeholder="voir Banques centrales">') +
+      "</tbody></table></div>" + '<p class="hint">Qui est le plus hawkish ? ' + ((man.bias || {}).v && (man.ecbbias || {}).v ? "Fed " + esc(man.bias.v) + ", BCE " + esc(man.ecbbias.v) + "." : "renseignez les deux biais.") + " Une Fed plus hawkish que la BCE soutient le dollar (pression sur l'or).</p>";
+  }
+  var PILIERS = [["Taux réels", 25, ["1.3", "1.7"]], ["Attentes Fed", 20, ["1.2", "1.4", "1.5", "1.14"]], ["Dollar", 15, ["1.7", "1.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.8", "3.11"]], ["Flux", 15, ["1.9", "1.15"]], ["Risque et refuge", 15, ["1.8", "1.10", "1.13", "3.9", "3.10"]], ["Positionnement", 10, ["1.9", "1.9b", "1.13"]]];
+  function gAllSteps() { var L = []; GUIDE.forEach(function (p) { p.steps.forEach(function (s) { if (!s.concl) L.push(s); }); }); return L; }
+  function gConcl() {
+    var steps = gAllSteps(), sn = {};
+    steps.forEach(function (s) { var auto = gStepNote(s), ov = GD.note["s" + s.id]; sn[s.id] = ov !== undefined && ov !== "" ? +ov : auto; s._auto = auto; });
+    var P = PILIERS.map(function (p) { var v = p[2].map(function (id) { return sn[id]; }).filter(function (x) { return x !== null && x !== undefined; }), auto = v.length ? Math.max(-2, Math.min(2, Math.round(v.reduce(function (a, b) { return a + b; }, 0) / v.length))) : 0, ov = GD.note["p" + p[0]]; return { n: p[0], w: p[1], auto: auto, v: ov !== undefined && ov !== "" ? +ov : auto }; });
+    var S = P.reduce(function (s, p) { return s + p.w / 100 * p.v; }, 0), bias = S >= 0.5 ? "HAUSSIER" : S <= -0.5 ? "BAISSIER" : "NEUTRE", sg = S >= 0 ? 1 : -1, al = P.filter(function (p) { return p.v !== 0 && Math.sign(p.v) === sg; }).length, conv = al >= 5 ? "forte" : al >= 3 ? "moyenne" : "faible";
+    return { sn: sn, P: P, S: S, bias: bias, conv: conv, al: al, steps: steps };
+  }
+  function gConclHtml() {
+    var C = gConcl(), sel = function (key, v, auto) { return '<select data-gnote="' + key + '">' + [2, 1, 0, -1, -2].map(function (n) { return '<option value="' + n + '"' + (v === n ? " selected" : "") + ">" + (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n) + (n === auto ? " (auto)" : "") + "</option>"; }).join("") + "</select>"; };
+    var t1 = '<h4 class="gch4">Tableau de construction</h4><div class="tbl"><table class="gtbl"><thead><tr><th>Étape</th><th>Conclusion en une ligne</th><th class="c">Impact</th><th class="c">Note</th></tr></thead><tbody>' + C.steps.map(function (s) {
+      var v = C.sn[s.id], line = GD.note["c" + s.id] || "";
+      return "<tr><td><b>" + s.id + "</b> " + esc(s.t) + '</td><td><input data-gnote="c' + s.id + '" value="' + esc(line) + '" placeholder="votre conclusion"></td><td class="c">' + gSigH(v === null ? null : Math.sign(v)) + '</td><td class="c">' + sel("s" + s.id, v === null ? 0 : v, s._auto) + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+    var t2 = '<h4 class="gch4">Score par pilier</h4><div class="tbl"><table class="gtbl"><thead><tr><th>Pilier</th><th class="r">Poids</th><th class="c">Note (−2 à +2)</th><th class="r">Contribution</th></tr></thead><tbody>' + C.P.map(function (p) { return "<tr><td><b>" + p.n + '</b></td><td class="r num">' + p.w + ' %</td><td class="c">' + sel("p" + p.n, p.v, p.auto) + '</td><td class="r num">' + gSgn(p.w / 100 * p.v, 2) + "</td></tr>"; }).join("") + '<tr class="gtot"><td><b>Score S</b></td><td></td><td></td><td class="r num"><b>' + gSgn(C.S, 2) + "</b></td></tr></tbody></table></div>";
+    var m = GD.note;
+    var res = '<div class="gres ' + (C.bias === "HAUSSIER" ? "up" : C.bias === "BAISSIER" ? "down" : "") + '"><div><small>Biais XAUUSD</small><b>' + C.bias + "</b></div><div><small>Score S</small><b>" + gSgn(C.S, 2) + "</b></div><div><small>Conviction</small><b>" + C.conv + "</b><span>" + C.al + " piliers sur 6 alignés</span></div></div>" +
+      '<div class="gavg"><label class="gav"><span>Invalidation (prix XAUUSD)</span><input data-gnote="invalid" value="' + esc(m.invalid || "") + '" placeholder="ex. clôture quotidienne sous 3 950 $"></label><label class="gav"><span>Phrase de conclusion</span><textarea data-gnote="phrase" rows="2" placeholder="votre conclusion">' + esc(m.phrase || "") + "</textarea></label></div>" +
+      '<div class="gbtns"><button type="button" class="btn" data-ggen="1">Générer la commande</button>' + (GD.avis.locked ? "" : '<button type="button" class="btn" data-glock="1">Calculer et verrouiller mon avis</button>') + '</div><div class="gout"></div>';
+    return t1 + t2 + res + '<p class="hint">Règles : S = somme (poids × note) ; S ≥ +0,5 haussier, S ≤ −0,5 baissier, sinon neutre ; conviction forte si 5-6 piliers alignés, moyenne 3-4, faible 2 ou moins. Les notes « auto » sont des propositions calculées à partir des signaux : changez-les si votre lecture diffère. Repères à valider par backtest, pas un conseil d\'investissement.</p>';
+  }
+  function gCommand() {
+    var C = gConcl(), A = GD.avis, m = GD.note, L = [];
+    L.push("BIAIS MENSUEL XAUUSD — " + new Date().toLocaleDateString("fr-FR", { timeZone: KIN, day: "numeric", month: "long", year: "numeric" }));
+    L.push(""); L.push("BLOC 1");
+    C.steps.filter(function (s) { return /^1\./.test(s.id); }).forEach(function (s) { var v = C.sn[s.id]; L.push(s.id + " " + s.t + " : " + (m["c" + s.id] || "(conclusion à écrire)") + " | impact " + (v > 0 ? "+" : v < 0 ? "−" : "0") + " | note " + (v === null || v === undefined ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v))); });
+    L.push(""); L.push("BLOC 3 (États-Unis contre Europe)");
+    C.steps.filter(function (s) { return /^3\./.test(s.id); }).forEach(function (s) { var v = C.sn[s.id]; L.push(s.id + " " + s.t + " : " + (m["c" + s.id] || "(conclusion à écrire)") + " | note " + (v === null || v === undefined ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v))); });
+    L.push(""); L.push("MON AVIS (1.6) : central = " + (A.central || "–") + " (" + (A.p_central || "–") + " %, confiance " + (A.conf || "–") + ") ; alternatif = " + (A.alt || "–") + " (" + (A.p_alt || "–") + " %) ; différence avec le marché = " + (A.diff || "–") + " ; preuve = " + (A.preuve || "–") + " ; invalidation = " + (A.invalid || "–"));
+    L.push(""); L.push("PILIERS : " + C.P.map(function (p) { return p.n + " " + (p.v > 0 ? "+" : p.v < 0 ? "−" : "") + Math.abs(p.v) + " (" + p.w + " %)"; }).join(" ; "));
+    L.push("SCORE S = " + C.S.toFixed(2).replace(".", ",") + " → BIAIS " + C.bias + ", conviction " + C.conv + " (" + C.al + "/6 piliers alignés)");
+    L.push("INVALIDATION : " + (m.invalid || "–")); L.push("CONCLUSION : " + (m.phrase || "–"));
+    L.push(""); L.push("Analyse mes conclusions selon le guide (BLOC 1 et BLOC 3), signale les contradictions et ce qui manque, puis donne ton avis sur le biais et l'invalidation.");
+    return L.join("\n");
+  }
+  function guideHtml() {
+    GUIDE_MEMO = {};
+    var P = GUIDE.filter(function (p) { return p.id === GD.tab; })[0] || GUIDE[0];
+    var tabs = '<div class="gtabs" role="tablist">' + GUIDE.map(function (p) { return '<button type="button" role="tab" data-gtab="' + p.id + '" aria-selected="' + (p.id === P.id) + '" class="' + (p.id === P.id ? "on" : "") + '">' + p.t + "</button>"; }).join("") + "</div>";
+    var tools = '<div class="gtools"><button type="button" class="chip" data-ghide="1" aria-pressed="' + GD.hide + '">' + (GD.hide ? "Afficher" : "Masquer") + " les lignes « ajout »</button><small>Signal : <b class=\"gsig p\">+</b> soutien pour l'or · <b class=\"gsig z\">0</b> neutre · <b class=\"gsig m\">−</b> pression</small></div>";
+    var body = P.steps.map(function (s) {
+      var inner = s.avis ? gAvisHtml() : s.geo ? gcHtml() : s.libre ? '<div class="gavg"><label class="gav"><span>Titre</span><input data-gman="libre_t" data-gf="v" value="' + esc((GD.man.libre_t || {}).v || "") + '"></label><label class="gav"><span>Outils utilisés</span><textarea data-gman="libre_o" data-gf="v" rows="2">' + esc((GD.man.libre_o || {}).v || "") + '</textarea></label><label class="gav"><span>Conclusion</span><textarea data-gman="libre_c" data-gf="v" rows="2">' + esc((GD.man.libre_c || {}).v || "") + "</textarea></label></div>" : s.cal ? gCalHtml() : s.duo ? gDuoHtml() : s.concl ? gConclHtml() : gStepTable(s);
+      var n = s.concl || s.avis || s.libre ? null : gStepNote(s);
+      return '<section class="gstep"><h3><span>' + s.id + "</span> " + esc(s.t) + (n !== null && n !== undefined ? ' <small class="gsn">proposition de note : ' + gSigH(n) + "</small>" : "") + "</h3>" + (s.h ? '<p class="hint">' + esc(s.h) + "</p>" : "") + inner + "</section>";
+    }).join("");
+    return tabs + tools + body;
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("[data-gtab],[data-ghide],[data-ggen],[data-glock],[data-gunlock],[data-gcopy]"); if (!t) return;
+    if (t.dataset.gtab) { GD.tab = t.dataset.gtab; gdSave(); renderDashBlock("guide"); return; }
+    if (t.dataset.ghide) { GD.hide = !GD.hide; gdSave(); renderDashBlock("guide"); return; }
+    if (t.dataset.glock) { GD.avis.locked = new Date().toLocaleDateString("fr-FR", { timeZone: KIN }); gdSave(); renderDashBlock("guide"); return; }
+    if (t.dataset.gunlock) { delete GD.avis.locked; gdSave(); renderDashBlock("guide"); return; }
+    if (t.dataset.ggen) { var o = t.closest(".dbody") && t.closest(".dbody").querySelector(".gout"); if (o) o.innerHTML = '<textarea class="gcmd" rows="16" readonly data-notr="1">' + esc(gCommand()) + '</textarea><button type="button" class="btn" data-gcopy="1">Copier la commande</button>'; return; }
+    if (t.dataset.gcopy) { var ta = t.closest(".dbody") && t.closest(".dbody").querySelector(".gcmd"); if (ta) { ta.select(); try { navigator.clipboard.writeText(ta.value); } catch (x) { document.execCommand("copy"); } t.textContent = "Copié ✓"; } }
+  });
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!t.dataset) return;
+    if (t.dataset.gman) { var k = t.dataset.gman, f = t.dataset.gf || "v"; GD.man[k] = GD.man[k] || {}; GD.man[k][f] = t.value; if (f === "v" && !GD.man[k].d) GD.man[k].d = iso(new Date()); gdSave(); if (t.tagName === "SELECT") renderDashBlock("guide"); }
+    if (t.dataset.gnote) { GD.note[t.dataset.gnote] = t.value; gdSave(); if (t.tagName === "SELECT") renderDashBlock("guide"); }
+    if (t.dataset.gavis && !GD.avis.locked) { GD.avis[t.dataset.gavis] = t.value; gdSave(); }
+  });
   /* ---------- Fiche détaillée d'un article, rédigée par le terminal (8 nov. 2026) ----------
      On ne recopie pas le texte des journaux (droits d'auteur) : la fiche assemble le résumé publié par la source,
      les chiffres repérés dans le titre, l'annonce du calendrier correspondante, la réaction des marchés depuis
@@ -5759,17 +6109,18 @@ html.lkon body{overflow:hidden}
     { id: "risque", t: "Sentiment de risque", f: riskHtml },
     { id: "banques", t: "Banques centrales : prochaines réunions", f: banksHtml },
     { id: "geo", t: "Géopolitique", f: geoHtml },
-    { id: "geoclair", t: "Géopolitique en clair : où ça chauffe et ce que ça change", f: gcHtml, w: 1 },
+    { id: "geoclair", nodash: 1, t: "Géopolitique en clair : où ça chauffe et ce que ça change", f: gcHtml, w: 1 },
+    { id: "guide", nodash: 1, t: "Mon biais XAUUSD : le guide en 8 parties", f: guideHtml, w: 1 },
     { id: "flash", t: "Actualités", f: function () { return flashHtml(18); }, w: 1 },
-    { id: "essentiel", t: "L'essentiel du jour", f: essHtml, w: 1 },
-    { id: "articles", t: "Articles : à lire et déjà lus", f: artsHtml, w: 1 },
+    { id: "essentiel", nodash: 1, t: "L'essentiel du jour", f: essHtml, w: 1 },
+    { id: "articles", nodash: 1, t: "Articles : à lire et déjà lus", f: artsHtml, w: 1 },
     { id: "tv", t: "Bloomberg TV en direct", f: tvHtml },
     { id: "alertes", t: "Mes alertes", f: alertsHtml }
   ];
   var dashCfg = null;
   try { dashCfg = JSON.parse(localStorage.getItem("mf-dash") || "null"); } catch (e) { dashCfg = null; }
   function dashOrder() {
-    var ids = DASH.map(function (b) { return b.id; }), cfg = dashCfg && Array.isArray(dashCfg.order) ? dashCfg.order.filter(function (i) { return ids.indexOf(i) >= 0; }) : [];
+    var ids = DASH.filter(function (b) { return !b.nodash; }).map(function (b) { return b.id; }), cfg = dashCfg && Array.isArray(dashCfg.order) ? dashCfg.order.filter(function (i) { return ids.indexOf(i) >= 0; }) : [];
     ids.forEach(function (i) { if (cfg.indexOf(i) < 0) cfg.push(i); });
     return cfg;
   }
