@@ -917,6 +917,15 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
 .frp{display:inline-block;min-width:46px;padding:1px 6px;border-radius:6px;background:linear-gradient(90deg,rgba(201,195,179,.18) var(--p),transparent var(--p))}
 .frp.u{background:linear-gradient(90deg,rgba(61,220,151,.25) var(--p),transparent var(--p))}.frp.d{background:linear-gradient(90deg,rgba(255,92,79,.25) var(--p),transparent var(--p))}
 .frmini{margin-top:12px}.frmini h4{margin:0 0 6px;font-size:.88rem;color:#f2b01e}.frmini svg{width:100%;height:auto;display:block}
+
+.rdsec{margin:14px 0}.rdsec h4{margin:0 0 6px;color:#f2b01e;font-size:.9rem}.rdsec p{line-height:1.6;margin:6px 0}
+.rdmvs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.rdmv{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:2px}
+.rdmv small{color:#a8a294;font-size:.74rem}.rdmv b{font-size:1rem}.rdmv svg{width:100%;height:28px;display:block}
+.rdfig{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:8px}
+.rdfig>div{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;padding:10px;border-radius:10px;background:rgba(242,176,30,.06);border:1px solid rgba(242,176,30,.2)}
+.rdfig small{color:#a8a294;font-size:.74rem}.rdfig b{font-size:1.05rem}.rdfig span{grid-column:1/-1;font-size:.8rem;font-weight:700}
+.rdsrcl{margin-top:14px;font-size:.78rem;color:#8a8577}.rdsrcl a{color:#a8a294}
 </style>
 
 </head><body><div class="shell">
@@ -5045,6 +5054,62 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     });
   }
   function rdYt(u) { var m = String(u).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/); return m ? m[1] : null; }
+  /* ---------- Fiche détaillée d'un article, rédigée par le terminal (8 nov. 2026) ----------
+     On ne recopie pas le texte des journaux (droits d'auteur) : la fiche assemble le résumé publié par la source,
+     les chiffres repérés dans le titre, l'annonce du calendrier correspondante, la réaction des marchés depuis
+     la publication et une explication générale du sujet. */
+  var RD_TOPIC = [
+    [/non-?farm|payroll|jobs report|employment|unemployment|jobless|emploi|chômage/i, "Emploi", "Les chiffres de l'emploi américain font partie des plus suivis. Un emploi plus fort que prévu pousse le marché à attendre des taux plus hauts : le dollar monte souvent et l'or baisse souvent. Un chiffre faible fait en général l'inverse."],
+    [/\bCPI\b|inflation|\bPCE\b|\bPPI\b|prices|prix/i, "Inflation", "L'inflation guide les banques centrales. Une inflation plus forte que prévu fait craindre des hausses de taux : le dollar et les rendements montent souvent, l'or est souvent sous pression. Une inflation plus faible fait plutôt l'inverse."],
+    [/\bFed\b|FOMC|Powell|rate hike|rate cut|hausse des taux|baisse des taux|Federal Reserve|Réserve fédérale/i, "Fed et taux", "Tout ce qui change ce que le marché attend de la Fed bouge le dollar, les taux et l'or. Plus de hausses attendues : dollar plus fort et or plus faible en général. Moins de hausses : l'inverse. Voir la rubrique Taux et courbes pour les probabilités du jour."],
+    [/\bECB\b|Lagarde|BCE|euro area|eurozone|zone euro/i, "BCE et euro", "Les signaux de la BCE font bouger l'euro : un ton plus ferme (hausse des taux) soutient l'euro, un ton plus souple le pèse. EUR/USD dépend de l'écart entre la BCE et la Fed."],
+    [/\bBoE\b|Bank of England|Bailey|sterling|pound|livre sterling/i, "BoE et livre", "La livre réagit aux décisions et aux discours de la Banque d'Angleterre, et aux chiffres d'inflation et de salaires britanniques."],
+    [/\bBoJ\b|Bank of Japan|Ueda|yen|Japan|Japon/i, "BoJ et yen", "Le yen réagit à la Banque du Japon et à l'écart de taux avec les États-Unis. En cas de stress sur les marchés, le yen sert souvent de refuge."],
+    [/tariff|trade war|droits de douane|douane/i, "Commerce et droits de douane", "Les droits de douane renchérissent les importations : ils peuvent pousser l'inflation, freiner la croissance et créer de l'incertitude. L'or profite souvent de l'incertitude, et les devises des pays visés baissent souvent."],
+    [/war|missile|attack|strike|military|Iran|Israel|Russia|Ukraine|guerre|attaque|conflit/i, "Géopolitique", "Les tensions géopolitiques poussent souvent vers les valeurs refuges (or, franc suisse, yen, dollar) et font monter le pétrole quand une région productrice est touchée. Voir la rubrique Géopolitique."],
+    [/oil|crude|OPEC|pétrole|brut|OPEP/i, "Pétrole", "Le pétrole pèse sur l'inflation et sur les devises des pays producteurs (CAD, NOK). Une hausse du brut soutient en général le dollar canadien."],
+    [/gold|bullion|\bor\b|XAU/i, "Or", "L'or monte en général quand les taux réels baissent, quand le dollar faiblit ou quand l'incertitude augmente. Il baisse souvent quand le marché attend des taux plus hauts."],
+    [/\bAI\b|Nvidia|tech|chip|semiconductor|\bIA\b|Nasdaq/i, "Actions technologiques", "Les grandes valeurs technologiques pèsent lourd dans le Nasdaq. Une forte baisse peut faire fuir vers les refuges (yen, franc suisse, obligations) et peser sur les devises liées au risque (AUD, NZD)."]
+  ];
+  var RD_MK = { USD: ["dxy", "Dollar (DXY)", ".DXY", 1], EUR: ["EURUSD", "EUR/USD", "EUR=", 1], GBP: ["GBPUSD", "GBP/USD", "GBP=", 1], JPY: ["USDJPY", "USD/JPY", "JPY=", 1], CHF: ["USDCHF", "USD/CHF", "CHF=", 1], AUD: ["AUDUSD", "AUD/USD", "AUD=", 1], CAD: ["USDCAD", "USD/CAD", "CAD=", 1], NZD: ["NZDUSD", "NZD/USD", "NZD=", 1], XAU: ["gold", "Or", "@GC.1", 1], NAS: ["nq", "Nasdaq 100", "@ND.1", 1], OIL: ["oil", "Pétrole WTI", "@CL.1", 1], US10: ["us10", "Taux US 10 ans", "US10Y", 0] };
+  function rdMoves(it) {
+    var t0 = it.ts ? Date.parse(it.ts) : it.d ? Date.parse(it.d + "T12:00:00Z") : null; if (!t0 || isNaN(t0)) return "";
+    var keys = (it.a || []).slice(), txt = it.t + " " + (it.x || "");
+    if (/Nasdaq|tech|Nvidia|AI\b|stocks|actions/i.test(txt)) keys.push("NAS");
+    if (/oil|crude|pétrole|OPEC/i.test(txt)) keys.push("OIL");
+    if (/yield|Treasur|rendement|taux/i.test(txt)) keys.push("US10");
+    ["XAU", "USD"].forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+    keys = keys.filter(function (k, i) { return RD_MK[k] && keys.indexOf(k) === i; }).slice(0, 6);
+    var cells = keys.map(function (k) {
+      var m = RD_MK[k], s = AUTO && AUTO.intraday && AUTO.intraday[m[0]] && AUTO.intraday[m[0]].c; if (!s) return "";
+      var v0 = null, pts = [];
+      s.forEach(function (r) { var te = Date.parse(r[0]) + 36e5; if (te <= t0) v0 = r[1]; else pts.push(r[1]); });
+      if (v0 === null) return "";
+      var q = LIVE.q[m[2]], v1 = q && liveFresh(q) ? q.v : (pts.length ? pts[pts.length - 1] : null); if (v1 === null) return "";
+      pts.unshift(v0); pts.push(v1);
+      var ch = m[3] ? (v1 / v0 - 1) * 100 : (v1 - v0) * 100, mn = Math.min.apply(null, pts), mx = Math.max.apply(null, pts), n = pts.length;
+      var sp = '<svg viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="' + (ch >= 0 ? "#3ddc97" : "#ff5c4f") + '" stroke-width="1.6" vector-effect="non-scaling-stroke" points="' + pts.map(function (y, i) { return (i / (n - 1) * 100).toFixed(1) + "," + (2 + (mx - y) / ((mx - mn) || 1) * 24).toFixed(1); }).join(" ") + '"/></svg>';
+      return '<div class="rdmv"><small>' + m[1] + '</small><b class="num ' + cls(ch) + '">' + (m[3] ? pct(ch) : (ch >= 0 ? "+" : "−") + fmt(Math.abs(ch), 1) + " pb") + "</b>" + sp + "</div>";
+    }).filter(Boolean);
+    if (!cells.length) return "";
+    var age = (Date.now() - t0) / 36e5;
+    return '<div class="rdsec"><h4>Réaction des marchés depuis la publication</h4><div class="rdmvs">' + cells.join("") + '</div><p class="hint">Variation entre la dernière cotation horaire avant la publication et ' + (age < 72 ? "maintenant" : "la dernière cotation") + " (" + (age < 48 ? Math.round(age) + " h plus tard" : Math.round(age / 24) + " jours plus tard") + "). D'autres nouvelles ont pu jouer entre-temps.</p></div>";
+  }
+  function rdFigures(it) { /* chiffres « publié contre attendu » repérés dans le titre et le résumé */
+    var txt = it.t + " " + (it.x || ""), out = [], rx = /([+−-]?\d[\d.,]*\s*(?:K|M|B|%|bps?|pb)?)\s*(?:vs\.?|versus|contre)\s*([+−-]?\d[\d.,]*\s*(?:K|M|B|%|bps?|pb)?)\s*(?:expected|attendus?|prévus?|estimate[sd]?|consensus|est\.?)/gi, m;
+    while ((m = rx.exec(txt)) && out.length < 3) out.push([m[1].trim(), m[2].trim()]);
+    var ev = null, t0 = it.ts ? Date.parse(it.ts) : null;
+    if (t0) ev = ((AUTO && AUTO.calendar && AUTO.calendar.events) || []).filter(function (e) { var x = Date.parse(e.d); return e.a && x <= t0 + 5 * 6e4 && x >= t0 - 3 * 36e5 && (e.i === "High" || e.i === "Medium") && (it.a || []).indexOf(e.c) >= 0; }).sort(function (a, b) { return Math.abs(Date.parse(a.d) - t0) - Math.abs(Date.parse(b.d) - t0); }).slice(0, 3);
+    if (!out.length && !(ev && ev.length)) return "";
+    var h = '<div class="rdsec"><h4>Les chiffres</h4>';
+    if (out.length) h += '<div class="rdfig">' + out.map(function (f) { var a = cfNum(f[0]), b = cfNum(f[1]), d = a !== null && b !== null ? a - b : null; return '<div><small>Publié</small><b>' + esc(f[0]) + "</b><small>Attendu</small><b>" + esc(f[1]) + "</b>" + (d !== null ? '<span class="' + (d > 0 ? "up" : d < 0 ? "down" : "") + '">' + (d > 0 ? "Au-dessus des attentes" : d < 0 ? "En dessous des attentes" : "Conforme aux attentes") + "</span>" : "") + "</div>"; }).join("") + "</div>";
+    if (ev && ev.length) h += '<table class="mini"><thead><tr><th>Annonce du calendrier</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r">Précédent</th></tr></thead><tbody>' + ev.map(function (e) { return "<tr><td><b>" + esc(e.c) + "</b> " + esc(e.t) + ' <small>' + new Date(e.d).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }) + '</small></td><td class="r num"><b>' + esc(e.a) + '</b></td><td class="r num">' + esc(e.f || "–") + '</td><td class="r num">' + esc(e.p || "–") + "</td></tr>"; }).join("") + "</tbody></table>";
+    return h + "</div>";
+  }
+  function rdTopic(it) {
+    var txt = it.t + " " + (it.x || ""), T = RD_TOPIC.filter(function (r) { return r[0].test(txt); }).slice(0, 2);
+    return T.length ? '<div class="rdsec"><h4>Pourquoi c\'est important</h4>' + T.map(function (r) { return '<p><b>' + r[1] + " :</b> " + r[2] + "</p>"; }).join("") + '<p class="hint">Explication générale rédigée par le terminal, pas une prévision ni un conseil.</p></div>' : "";
+  }
   function rdOpen(href, label) {
     var box = $("reader"); if (!box) return;
     var tm = String(href).match(/translate\.google\.com\/translate\?.*?[?&]u=([^&]+)/), orig = tm ? decodeURIComponent(tm[1]) : href;
@@ -5053,12 +5118,11 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     var when = it.ts ? new Date(Date.parse(it.ts)).toLocaleString("fr-FR", { timeZone: KIN, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : it.d ? longD(it.d) : "";
     var yt = rdYt(orig);
     var body = yt ? '<div class="rdvid"><iframe src="https://www.youtube-nocookie.com/embed/' + yt + '?autoplay=1&rel=0" title="Vidéo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>' :
-      '<p class="rdx" id="rdX">' + (it.x ? esc(it.x) : "Le flux de cette source ne donne que le titre. Le texte complet est sur le site de " + esc(it.src || host) + ".") + "</p>";
+      '<div class="rdsec"><h4>Résumé publié par ' + esc(it.src || host) + '</h4><p class="rdx" id="rdX">' + (it.x ? esc(it.x.length >= 390 ? it.x.replace(/\s+\S*$/, "") + "…" : it.x) : "Cette source ne publie que le titre dans son fil : le terminal complète avec les chiffres, la réaction des marchés et l'explication ci-dessous.") + "</p></div>" + rdFigures(it) + rdMoves(it) + rdTopic(it);
     box.innerHTML = '<div class="rdbg" data-rdclose="1"></div><div class="rdpan" role="document"><div class="rdtop"><span class="rdsrc">' + esc(it.src || host) + (when ? " · " + when + " (Kinshasa)" : "") + '</span><button type="button" class="btn rdx-close" data-rdclose="1" aria-label="Fermer">✕</button></div>' +
       '<h2 class="rdt" id="rdT">' + esc(it.t) + "</h2>" + (it.a && it.a.length ? '<div class="rdtags">' + it.a.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") +
       '<p class="rdfr" id="rdFr" hidden></p>' + body +
-      '<div class="rdact">' + '<a class="btn" data-ext="1" href="' + esc(orig) + '" target="_blank" rel="noopener">Ouvrir ' + (yt ? "sur YouTube" : "l'article complet") + " ↗</a></div>" +
-      rdRelated(it) + '<p class="hint">' + (yt ? "Vidéo lue dans le terminal." : "Vous restez dans le terminal. Le bouton « Ouvrir » affiche la page d'origine dans un nouvel onglet ; revenez ici en fermant cet onglet.") + "</p></div>";
+      '' + rdRelated(it) + '<p class="rdsrcl">' + (yt ? "Vidéo lue dans le terminal. " : "Texte intégral : réservé au site de " + esc(it.src || host) + " (droits d'auteur), ") + '<a data-ext="1" href="' + esc(orig) + '" target="_blank" rel="noopener">' + (yt ? "voir sur YouTube" : "le lire là-bas") + "</a>.</p>" + '<p class="hint" hidden>' + (yt ? "Vidéo lue dans le terminal." : "Vous restez dans le terminal. Le bouton « Ouvrir » affiche la page d'origine dans un nouvel onglet ; revenez ici en fermant cet onglet.") + "</p></div>";
     box.hidden = false; document.body.classList.add("rdon");
     box._back = document.activeElement; var c = box.querySelector(".rdx-close"); if (c) c.focus();
     box._it = it;
