@@ -3812,13 +3812,24 @@ def geo_extra(g):
     for sym, lab, grp in GEO_YH:
         try:
             j = None
-            for host in ("query1", "query2"):
-                try:
-                    j = json.loads(http("geo_yh_%s.json" % re.sub(r"\W", "", sym), "https://%s.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=6mo" % (host, urllib.parse.quote(sym)), tries=1, timeout=20))
+            # TTF=F ne répondait plus le 8 nov. 2026 : symboles de secours essayés dans l'ordre (le premier qui répond est noté dans diag)
+            for cand in ((sym, "TFM=F", "TTE=F") if sym == "TTF=F" else (sym,)):
+                for host in ("query1", "query2"):
+                    try:
+                        jj = json.loads(http("geo_yh_%s.json" % re.sub(r"\W", "", cand), "https://%s.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=6mo" % (host, urllib.parse.quote(cand)), tries=1, timeout=20))
+                        if (jj.get("chart") or {}).get("result"):
+                            j = jj
+                            if cand != sym:
+                                DIAG["geo_ttf_symbole"] = cand
+                            break
+                        errs.append("%s vide" % cand)
+                    except Exception as e:
+                        errs.append("%s %s" % (cand, fr_err(e)[:40]))
+                        time.sleep(1)
+                if j:
                     break
-                except Exception as e:
-                    errs.append("%s %s" % (sym, fr_err(e)[:40]))
-                    time.sleep(2)
+            if not j:
+                raise ValueError("aucune réponse")
             r = j["chart"]["result"][0]
             cl = [(datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), c) for t, c in zip(r["timestamp"], r["indicators"]["quote"][0]["close"]) if c is not None]
             if len(cl) < 25:
@@ -3834,6 +3845,8 @@ def geo_extra(g):
     if mk:
         g["mkt"] = mk
         newest = max(v["d"] for v in mk.values())
+        if len(mk) < len(GEO_YH):
+            DIAG["geo_mkt_erreurs"] = errs[:8]
         note("geo.mkt", "Géopolitique : pétrole, gaz, défense, or, dollar, taux (Yahoo, %d/%d cours)" % (len(mk), len(GEO_YH)), "daily", len(mk) >= 6, newest, err=None if len(mk) >= 6 else "; ".join(errs[:3]), url="https://finance.yahoo.com/")
         # Code de réaction (étape 4 de la feuille) : or, dollar, taux US ensemble
         def code(n):
@@ -4611,21 +4624,31 @@ def do_guide_auto(data):
         def body(d8):
             h = http("fomc_st_%s.html" % d8, fed + "/newsevents/pressreleases/monetary%sa.htm" % d8, timeout=30)
             m = re.search(r'(?is)<div[^>]+id="article"[^>]*>(.*?)<div[^>]+(?:class="[^"]*(?:lastUpdate|footer)|id="lastUpdate")', h) or re.search(r'(?is)id="article"(.*)', h)
-            t = strip_html(m.group(1) if m else h)
-            t = re.split(r"Voting for the monetary policy action|For media inquiries|Implementation Note", t)[0]
-            return t.strip()
-        a, b = body(st[-1]), body(st[-2])
-        sa, sb = _sentences(a), _sentences(b)
+            t = re.sub(r"\s+", " ", strip_html(m.group(1) if m else h)).replace("-->", " ")
+            vm = re.search(r"by an? (\d+)\s*[\u2013\u2014-]\s*(\d+) vote", t)
+            dm = re.search(r"Voting against (?:the|this) (?:monetary policy )?action (?:was|were) (.+?)(?=\s+(?:For media inquiries|Implementation Note|Last Update|Board of Governors)|$)", t)
+            # en-tête de la page (date, « For release at », « Share », phrase d'approbation avec le vote) retiré avant la comparaison
+            hm = re.search(r"following statement for release[^:]*:\s*", t) or re.search(r"\bShare\b\s*", t)
+            if hm:
+                t = t[hm.end():]
+            t = re.split(r"Voting for (?:the|this) (?:monetary policy )?action|Voting against|For media inquiries|Implementation Note", t)[0]
+            return t.strip(), ("%s-%s" % vm.groups()) if vm else None, (dm.group(1).strip()[:400] if dm else "")
+        (a, va, da), (b, vb, db) = body(st[-1]), body(st[-2])
+        sa, sb = [x for x in _sentences(a) if len(x) > 25], [x for x in _sentences(b) if len(x) > 25]
         norm = lambda x: re.sub(r"\W+", " ", x.lower()).strip()
         nb, na = set(norm(x) for x in sb), set(norm(x) for x in sa)
         added = [x for x in sa if norm(x) not in nb][:6]
         removed = [x for x in sb if norm(x) not in na][:6]
-        HAWK = r"elevated|firming|further increases|additional increases|upside risks to inflation|tighten|restrictive|raise the target|increase the target"
+        HAWK = r"elevated|firming|further increases|additional increases|upside risks to inflation|tighten|restrictive|raise the target|increase the target|strong pace|strengthened"
         DOVE = r"easing|lower the target|decrease the target|reduce the target|downside risks to employment|moderated|cooling|cut"
         hk = len(re.findall(HAWK, " ".join(added), re.I)) - len(re.findall(HAWK, " ".join(removed), re.I))
         dv = len(re.findall(DOVE, " ".join(added), re.I)) - len(re.findall(DOVE, " ".join(removed), re.I))
+        if re.search(r"preferr\w* to (?:raise|increase)", da):
+            hk += 1
+        if re.search(r"preferr\w* to (?:lower|reduce|cut)", da):
+            dv += 1
         G["fomc"] = {"d": "%s-%s-%s" % (st[-1][:4], st[-1][4:6], st[-1][6:]), "prev": "%s-%s-%s" % (st[-2][:4], st[-2][4:6], st[-2][6:]),
-                     "url": fed + "/newsevents/pressreleases/monetary%sa.htm" % st[-1], "add": added, "rem": removed, "hawk": hk, "dove": dv,
+                     "url": fed + "/newsevents/pressreleases/monetary%sa.htm" % st[-1], "add": added, "rem": removed, "hawk": hk, "dove": dv, "vote": va, "vote_prev": vb, "diss": da,
                      "ton": "hawkish" if hk - dv >= 1 else "dovish" if dv - hk >= 1 else "neutre"}
         note("guide.fomc", "Communiqué du FOMC : phrases ajoutées et retirées (Fed)", "monthly", True, G["fomc"]["d"], url=G["fomc"]["url"])
     except Exception as e:
@@ -4648,8 +4671,27 @@ def do_guide_auto(data):
             raise ValueError("éditions introuvables")
         ym = eds[-1]
         url = fed + "/monetarypolicy/beigebook%s.htm" % ym
-        t = strip_html(http("beige_%s.html" % ym, url, timeout=30))
-        m = re.search(r"Overall Economic Activity\s+(.{40,600}?\.)\s", t)
+        t = ""
+        for u2, nm in ((fed + "/monetarypolicy/beigebook%s-summary.htm" % ym, "beige_%s_s.html" % ym), (url, "beige_%s.html" % ym)):
+            try:
+                t = re.sub(r"\s+", " ", strip_html(http(nm, u2, timeout=30)))
+                if "conomic activity" in t:
+                    url = u2
+                    break
+            except Exception as e:
+                DIAG["beige_" + nm[-6:]] = fr_err(e)[:60]
+        m = None
+        for hd in ("Overall Economic Activity", "Summary of Economic Activity", "National Summary", "Overall Economic Conditions"):
+            for mm in re.finditer(re.escape(hd) + r"\s*:?\s*(.{40,700}?\.)(?=\s|$)", t):
+                if not re.match(r"(?i)\s*(overall|labor|prices|employment)\b", mm.group(1)[:12]) or len(mm.group(1)) > 80:
+                    m = mm
+                    break
+            if m:
+                break
+        if not m:  # repli : première phrase qui parle de l'activité économique
+            m = re.search(r"((?:Economic activity|Overall economic activity|Activity)[^.]{30,500}\.)", t)
+        if not m:
+            DIAG["beige_debut"] = t[:300]
         G["beige"] = {"ym": ym[:4] + "-" + ym[4:], "url": url, "x": (m.group(1) if m else "")[:500]}
         note("guide.beige", "Beige Book de la Fed (synthèse)", "monthly", True, G["beige"]["ym"] + "-01", url=url)
     except Exception as e:
@@ -4707,22 +4749,146 @@ def do_guide_auto(data):
         note("guide.pm", "Polymarket : récession, BCE (probabilités)", "daily", True, TODAY, url="https://polymarket.com/")
     except Exception as e:
         note("guide.pm", "Polymarket : récession, BCE", "daily", False, err=e)
-    # 8. Sondes (sources incertaines) : code HTTP et début de réponse, pour décider au passage suivant
+    # 8. AAII : sentiment des particuliers américains (fichier .xls hebdomadaire, sans clé ; vérifié 200 depuis GitHub le 8 nov. 2026)
+    try:
+        import xlrd
+        sh = xlrd.open_workbook(file_contents=http_bytes("https://www.aaii.com/files/surveys/sentiment.xls", timeout=40)).sheet_by_index(0)
+        rows = []
+        for r in range(sh.nrows):
+            v = sh.row_values(r)
+            try:
+                d0, bu, ne, be = float(v[0]), float(v[1]), float(v[2]), float(v[3])
+            except (ValueError, TypeError, IndexError):
+                continue
+            if 20000 < d0 < 80000 and 0 <= bu <= 1 and 0 <= be <= 1 and 0 <= ne <= 1 and abs(bu + ne + be - 1) < 0.03:
+                rows.append([(datetime(1899, 12, 30) + timedelta(days=d0)).strftime("%Y-%m-%d"), round(bu * 100, 1), round(ne * 100, 1), round(be * 100, 1)])
+        rows.sort()
+        if len(rows) < 100:
+            raise ValueError("seulement %d semaines lues" % len(rows))
+        sp = [x[1] - x[3] for x in rows]
+        mu = sum(sp) / len(sp)
+        sd = (sum((x - mu) ** 2 for x in sp) / len(sp)) ** 0.5
+        G["aaii"] = {"d": rows[-1][0], "bull": rows[-1][1], "neu": rows[-1][2], "bear": rows[-1][3], "prev": rows[-2], "avg_bull": round(sum(x[1] for x in rows) / len(rows), 1),
+                     "avg_bear": round(sum(x[3] for x in rows) / len(rows), 1), "mu": round(mu, 1), "sd": round(sd, 1), "hist": [[x[0], round(x[1] - x[3], 1)] for x in rows[-52:]]}
+        note("guide.aaii", "AAII : particuliers haussiers / baissiers (enquête hebdomadaire)", "weekly", True, rows[-1][0], url="https://www.aaii.com/sentimentsurvey")
+    except Exception as e:
+        note("guide.aaii", "AAII : sentiment des particuliers", "weekly", False, err=e, url="https://www.aaii.com/sentimentsurvey")
+    # 9. Prime de terme 10 ans (modèle ACM, Fed de New York, fichier .xls quotidien)
+    try:
+        import xlrd
+        wb = xlrd.open_workbook(file_contents=http_bytes("https://www.newyorkfed.org/medialibrary/media/research/data_indicators/ACMTermPremium.xls", timeout=60))
+        best = None
+        names = wb.sheet_names()
+        for nm in sorted(names, key=lambda x: 0 if "aily" in x else 1):
+            sh = wb.sheet_by_name(nm)
+            hdr, hi = None, None
+            for r in range(min(sh.nrows, 15)):
+                vals = [str(x).strip().upper() for x in sh.row_values(r)]
+                if "ACMTP10" in vals:
+                    hdr, hi = vals, r
+                    break
+            if not hdr:
+                continue
+            ci, cy = hdr.index("ACMTP10"), (hdr.index("ACMY10") if "ACMY10" in hdr else None)
+            out = []
+            for r in range(hi + 1, sh.nrows):
+                v = sh.row_values(r)
+                dv = v[0]
+                try:
+                    if isinstance(dv, float):
+                        dd = (datetime(1899, 12, 30) + timedelta(days=dv)).strftime("%Y-%m-%d")
+                    else:
+                        dd = None
+                        for fmt in ("%d-%b-%Y", "%Y-%m-%d", "%m/%d/%Y", "%d-%b-%y"):
+                            try:
+                                dd = datetime.strptime(str(dv).strip(), fmt).strftime("%Y-%m-%d")
+                                break
+                            except ValueError:
+                                pass
+                    tp = float(v[ci])
+                    if dd:
+                        out.append([dd, round(tp, 3), round(float(v[cy]), 3) if cy is not None and v[cy] not in ("", None) else None])
+                except (ValueError, TypeError):
+                    continue
+            if out:
+                out.sort()
+                best = (nm, out)
+                break
+        if not best:
+            raise ValueError("colonne ACMTP10 introuvable (feuilles : %s)" % ", ".join(names)[:80])
+        nm, out = best
+        h = out[-260:]
+        a1 = [x for x in out if x[0] <= (datetime.strptime(out[-1][0], "%Y-%m-%d") - timedelta(days=365)).strftime("%Y-%m-%d")]
+        G["acm"] = {"d": out[-1][0], "tp": out[-1][1], "y10": out[-1][2], "y1": a1[-1][1] if a1 else None, "f": nm, "hist": [[x[0], x[1]] for x in h[::5]]}
+        note("guide.acm", "Prime de terme 10 ans (modèle ACM, Fed de New York)", "daily", True, out[-1][0], url="https://www.newyorkfed.org/research/data_indicators/term-premia-tabs")
+    except Exception as e:
+        note("guide.acm", "Prime de terme 10 ans (Fed de New York)", "daily", False, err=e, url="https://www.newyorkfed.org/research/data_indicators/term-premia-tabs")
+    # 10. Wage tracker de la BCE (jeu de données WTS, API BCE, CSV)
+    try:
+        rows = list(csv.DictReader(io.StringIO(http("wts.csv", "https://data-api.ecb.europa.eu/service/data/WTS?lastNObservations=12&format=csvdata", timeout=40))))
+        ser = {}
+        for r in rows:
+            if not r.get("OBS_VALUE"):
+                continue
+            k = r.get("KEY") or ""
+            x = ser.setdefault(k, {"k": k, "t": (r.get("TITLE") or r.get("TITLE_COMPL") or "")[:160], "h": []})
+            x["h"].append([r["TIME_PERIOD"], round(float(r["OBS_VALUE"]), 2)])
+        if not ser:
+            raise ValueError("aucune série")
+        L = []
+        for x in ser.values():
+            x["h"].sort()
+            L.append(x)
+        L.sort(key=lambda x: x["k"])
+        DIAG["wts_series"] = [x["k"] + " | " + x["t"][:70] for x in L][:12]
+        G["wts"] = L[:12]
+        note("guide.wts", "Wage tracker de la BCE (salaires négociés, projection)", "monthly", True, max(x["h"][-1][0] for x in L)[:10], url="https://data.ecb.europa.eu/data/datasets/WTS")
+    except Exception as e:
+        note("guide.wts", "Wage tracker de la BCE", "monthly", False, err=e, url="https://data.ecb.europa.eu/data/datasets/WTS")
+    # 11. BlackRock Investment Institute : commentaire hebdomadaire (titre et résumé publics de la page)
+    try:
+        h = http("blk.html", "https://www.blackrock.com/corporate/insights/blackrock-investment-institute/publications/weekly-commentary", timeout=30)
+        def meta(nm):
+            m = re.search(r'<meta[^>]+(?:property|name)="%s"[^>]+content="([^"]*)"' % re.escape(nm), h, re.I) or re.search(r'<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="%s"' % re.escape(nm), h, re.I)
+            return _html.unescape(m.group(1)).strip() if m else ""
+        hs = [re.sub(r"\s+", " ", strip_html(x)).strip() for x in re.findall(r"(?is)<h[1-3][^>]*>(.*?)</h[1-3]>", h)]
+        hs = [x for x in hs if 15 < len(x) < 160 and not re.search(r"(?i)weekly commentary|cookie|subscribe|blackrock investment institute$", x)]
+        dm = re.search(r"((?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, 20\d\d)", strip_html(h))
+        desc = meta("og:description") or meta("description")
+        if not hs and not desc:
+            raise ValueError("titre introuvable")
+        dd = datetime.strptime(dm.group(1), "%B %d, %Y").strftime("%Y-%m-%d") if dm else TODAY
+        G["blk"] = {"t": hs[0] if hs else "", "x": desc[:400], "d": dd, "h": hs[1:4]}
+        note("guide.blk", "BlackRock Investment Institute : commentaire hebdomadaire (page publique)", "weekly", True, dd, url="https://www.blackrock.com/corporate/insights/blackrock-investment-institute/publications/weekly-commentary")
+    except Exception as e:
+        note("guide.blk", "BlackRock : commentaire hebdomadaire", "weekly", False, err=e)
+    # 12. Ratio put/call : page publique des statistiques quotidiennes de la CBOE (le fichier JSON répond 403)
+    try:
+        h = http("cboe_pc.html", "https://www.cboe.com/us/options/market_statistics/daily/", timeout=30)
+        tx = re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", " ", h)))
+        vals = {}
+        for lab in ("TOTAL PUT/CALL RATIO", "INDEX PUT/CALL RATIO", "EQUITY PUT/CALL RATIO"):
+            m = re.search(re.escape(lab) + r"\W{0,40}(\d\.\d{2})", tx, re.I) or re.search(r'"' + re.escape(lab.lower().replace("/", "\\/")) + r'"\W{0,60}(\d\.\d{2})', h.lower())
+            if m:
+                vals[lab.split()[0].lower()] = float(m.group(1))
+        if not vals:
+            i = h.upper().find("PUT/CALL")
+            DIAG["putcall_extrait"] = re.sub(r"\s+", " ", h[max(0, i - 120):i + 200])[:320] if i >= 0 else "mot « put/call » absent (page chargée en JavaScript)"
+            raise ValueError("ratios absents du HTML (page remplie en JavaScript)")
+        dm = re.search(r"(20\d\d-\d\d-\d\d)", h)
+        G["putcall"] = dict(vals, d=dm.group(1) if dm else TODAY)
+        note("guide.putcall", "Ratio put/call (CBOE, statistiques quotidiennes)", "daily", True, G["putcall"]["d"], url="https://www.cboe.com/us/options/market_statistics/daily/")
+    except Exception as e:
+        note("guide.putcall", "Ratio put/call (CBOE)", "daily", False, err=e, url="https://www.cboe.com/us/options/market_statistics/daily/")
+    # 13. Sondes (sources incertaines) : code HTTP et début de réponse, pour décider au passage suivant
     probe = {}
-    for k, u in (("putcall_cboe", "https://cdn.cboe.com/api/global/us_indices/daily_prices/PUT_CALL_RATIO.json"),
-                 ("putcall_cboe2", "https://www.cboe.com/us/options/market_statistics/daily/"),
-                 ("aaii", "https://www.aaii.com/files/surveys/sentiment.xls"),
-                 ("aaii_page", "https://www.aaii.com/sentimentsurvey/sent_results"),
-                 ("acm", "https://www.newyorkfed.org/medialibrary/media/research/data_indicators/ACMTermPremium.xls"),
-                 ("sge", "https://en.sge.com.cn/data_DelayedQuotes"),
-                 ("ig", "https://www.ig.com/en/ig-client-sentiment"),
-                 ("blackrock", "https://www.blackrock.com/corporate/insights/blackrock-investment-institute/publications/weekly-commentary"),
-                 ("wage_ecb", "https://data-api.ecb.europa.eu/service/data/WTS?lastNObservations=2&format=csvdata")):
+    for k, u in (("sge", "https://en.sge.com.cn/data_DelayedQuotes"),
+                 ("ig", "https://www.ig.com/en/ig-client-sentiment")):
         try:
             req = urllib.request.Request(u, headers={"User-Agent": UA, "Accept": "*/*"})
             with urllib.request.urlopen(req, timeout=15) as r:
-                b = r.read(400)
-                probe[k] = "%d %s" % (r.status, re.sub(r"\s+", " ", b.decode("utf-8", "replace"))[:160])
+                b = r.read(200000).decode("utf-8", "replace")
+                probe[k] = "%d %d octets ; or : %s" % (r.status, len(b), re.sub(r"\s+", " ", b[max(0, b.lower().find("gold") - 80):b.lower().find("gold") + 160])[:240] if "gold" in b.lower() else "absent")
         except urllib.error.HTTPError as e:
             probe[k] = "HTTP %d" % e.code
         except Exception as e:
