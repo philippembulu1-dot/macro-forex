@@ -1030,6 +1030,17 @@ html.lkon body{overflow:hidden}
 .jour{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
 .jproj{width:100%;table-layout:fixed}.jproj td{vertical-align:top;padding:5px 6px;overflow-wrap:anywhere}.jproj td:nth-child(1){width:34%}.jproj td:nth-child(2){width:22%}.jproj td small{display:block;opacity:.75}.jproj a{font-size:.92em}
 .fjlist{max-height:520px;overflow:auto}.fjlist li.fjnew{background:rgba(242,176,30,.08)}
+.caltbl td{vertical-align:middle}.caltbl tr.dfirst td{border-top:2px solid var(--line,#2b2a26)}
+.caltbl td.calday{background:var(--panel2);text-align:center;min-width:64px;line-height:1.2}.caltbl td.calday b{display:block;text-transform:capitalize}.caltbl td.calday small{color:var(--muted)}
+.caltbl tr.today td.calday{color:var(--amber);box-shadow:inset 3px 0 0 var(--amber)}
+.ffimp{display:inline-block;width:16px;height:12px;border-radius:2px;background:#6f6a5c;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}.ffimp.High{background:#e5483b}.ffimp.Medium{background:#f28c28}.ffimp.Low{background:#d8c25a}.ffimp.Holiday{background:#8a8a8a}
+.caltbl .calA{font-weight:700}.caltbl .calA.up{color:var(--up)}.caltbl .calA.down{color:var(--down)}
+.calrev{font-size:11px;margin-left:2px}.calrev.up{color:var(--up)}.calrev.down{color:var(--down)}
+.caltbl td.calev{white-space:normal;min-width:180px}.caltbl .calgo{font-size:11px;color:var(--amber);white-space:nowrap}
+.caltbl tr.calnext td{background:rgba(242,176,30,.08)}.calnx{display:block;font-size:10px;color:var(--amber);font-weight:700}
+.caltbl tr.past td:not(.calday){opacity:.85}
+.calmob{display:none}#calQ{width:110px;min-width:90px}
+@media (max-width:600px){.caltbl th:nth-child(n+6),.caltbl td.calA,.caltbl tr td:nth-last-child(-n+3):not(.calev):not(.calday){display:none}.caltbl td.calday{min-width:40px;font-size:11px;padding:4px 2px}.caltbl td.calev{min-width:0}.calmob{display:block;font-size:11px;color:var(--muted);margin-top:2px}.calmob b.up{color:var(--up)}.calmob b.down{color:var(--down)}.caltbl th:nth-child(4),.caltbl td:nth-child(4){padding-left:2px;padding-right:2px}}
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -1341,7 +1352,8 @@ html.lkon body{overflow:hidden}
         <label class="chk" for="calImp">Impact <select id="calImp"><option value="High">Fort</option><option value="Medium" selected>Moyen et +</option><option value="all">Tous</option></select></label>
         <label class="chk" for="calType">Type <select id="calType"></select></label>
         <label class="chk" for="calQ">Recherche <input id="calQ" placeholder="ex. CPI" size="8"></label>
-        <label class="chk"><input type="checkbox" id="calPast"> passés</label>
+        <span class="seg" role="group" aria-label="Semaine" id="calWk"><button type="button" data-calwk="-1" aria-pressed="false">Semaine passée</button><button type="button" data-calwk="0" aria-pressed="true">Cette semaine</button><button type="button" data-calwk="1" aria-pressed="false">Semaine prochaine</button></span>
+        <label class="chk" style="display:none"><input type="checkbox" id="calPast"> passés</label>
         <span id="calCur"></span>
       </div>
       <div class="tbl"><table id="calTbl"></table></div>
@@ -3394,6 +3406,7 @@ html.lkon body{overflow:hidden}
     $("calType").innerHTML = CAL_TYPES.map(function (t, i) { return '<option value="' + i + '">' + t[1] + "</option>"; }).join("");
     $("calCur").innerHTML = CAL_CUR.map(function (c) { return '<label class="chk"><input type="checkbox" data-c="' + c + '"' + (calCur[c] ? " checked" : "") + ">" + c + "</label>"; }).join(" ");
     ["calImp", "calType", "calPast"].forEach(function (id) { $(id).addEventListener("change", renderCal); });
+    $("calWk").addEventListener("click", function (e) { var b = e.target.closest("[data-calwk]"); if (!b) return; CAL_WK = +b.getAttribute("data-calwk"); [].forEach.call(this.querySelectorAll("[data-calwk]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); }); renderCal(); });
     $("calQ").addEventListener("input", renderCal);
     $("calCur").addEventListener("change", function (e) { var c = e.target.getAttribute("data-c"); if (c) { calCur[c] = e.target.checked; renderCal(); } });
     $("calTV").addEventListener("click", function () {
@@ -3411,29 +3424,62 @@ html.lkon body{overflow:hidden}
     if (mIdx(o.asof) !== mIdx(String(e.d).slice(0, 10)) - 1) return null; /* le chiffre doit porter sur le mois précédant la publication */
     return (m[3] === "K" ? Math.round(o.v) : (Math.round(o.v * 10) / 10).toFixed(1)) + m[3];
   }
+  /* Calendrier façon Forex Factory (8 nov. 2026) : semaine du lundi au dimanche, jour en colonne, impact en couleur,
+     réel en vert / rouge selon l'effet pour la devise, précédent révisé signalé, fiche d'analyse détaillée au toucher. */
+  var CAL_WK = 0;
+  /* adjudications et chiffres de détail : impact faible comme sur Forex Factory (sauf rendement des 10 et 30 ans) */
+  function calImpOf(e) { if (/Auction|Bid-to-Cover|Allotted|Total Accepted|MBA |Mortgage (Rate|Market|Applications|Points)|Redbook|API Crude|EIA (?!Crude Oil Stocks Change)|Baker Hughes|Total Vehicle|Foreign Bond Investment|Stock Investment by Foreigners/i.test(e.t) && !/^(10|30)-Year (Note|Bond) Auction$/i.test(e.t)) return "Low"; return e.i || "Low"; }
+  function calGood(e, a, f) { var pb = (typeof PB !== "undefined" ? PB.filter(function (p) { return p[0].test(e.t); })[0] : null), dir = pb ? pb[3] : (/Unemployment|Claims|Jobless|Inventories/i.test(e.t) ? -1 : 1); return a === f ? 0 : (a > f ? 1 : -1) * (dir || 1); }
   function renderCal() {
     var c = AUTO && AUTO.calendar, tb = $("calTbl");
-    if (!c || !c.events || !c.events.length) { tb.innerHTML = '<tbody><tr><td>Pas de calendrier du robot pour l\'instant. Utilisez le bouton TradingView ci-dessous ou <a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">Forex Factory</a>.</td></tr></tbody>'; $("calMeta").textContent = "robot : en attente"; $("calSurp").innerHTML = ""; return; }
-    var imp = $("calImp").value, ty = CAL_TYPES[+$("calType").value][0], rx = ty ? new RegExp(ty, "i") : null, q = $("calQ").value.trim().toLowerCase(), past = $("calPast").checked, now = Date.now();
+    if (!c || !c.events || !c.events.length) { tb.innerHTML = '<tbody><tr><td>Pas de calendrier du robot pour l\'instant.</td></tr></tbody>'; $("calMeta").textContent = "robot : en attente"; $("calSurp").innerHTML = ""; return; }
+    var imp = $("calImp").value, ty = CAL_TYPES[+$("calType").value][0], rx = ty ? new RegExp(ty, "i") : null, q = $("calQ").value.trim().toLowerCase(), now = Date.now();
+    var d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - ((d0.getDay() + 6) % 7) + 7 * CAL_WK); var wStart = d0.getTime(), wEnd = wStart + 7 * 864e5;
+    c.events.forEach(function (e) { if (!e.a) { var o = officialActual(e); if (o) { e.a = o; e.ao = true; } } });
+    /* précédent révisé : chiffre réel de la publication précédente du même indicateur, différent du « précédent » annoncé */
+    var byK = {};
+    c.events.slice().sort(function (x, y) { return Date.parse(x.d) - Date.parse(y.d); }).forEach(function (e) { var k = e.c + "|" + e.t; if (byK[k] && byK[k].a) e._prevA = byK[k].a; byK[k] = e; });
     var rows = c.events.filter(function (e) {
       var t = Date.parse(e.d);
-      if (!past && t < now - 2 * 36e5) return false;
-      if (imp === "High" && e.i !== "High") return false;
-      if (imp === "Medium" && e.i !== "High" && e.i !== "Medium") return false;
+      if (t < wStart || t >= wEnd) return false;
+      var ie = calImpOf(e);
+      if (imp === "High" && ie !== "High") return false;
+      if (imp === "Medium" && ie !== "High" && ie !== "Medium") return false;
       if (calCur[e.c] === false || (calCur[e.c] === undefined && e.c !== "All")) return false;
       if (rx && !rx.test(e.t)) return false;
-      if (q && e.t.toLowerCase().indexOf(q) < 0) return false;
+      if (q && (e.t + " " + frEvent(e.t).t).toLowerCase().indexOf(q) < 0) return false;
       return true;
-    });
-    c.events.forEach(function (e) { if (!e.a) { var o = officialActual(e); if (o) { e.a = o; e.ao = true; } } });
-    var day = "", hasA = c.events.some(function (e) { return e.a; }), ncol = hasA ? 6 : 5;
-    tb.innerHTML = '<thead><tr><th>Heure</th><th>Dev.</th><th>Événement</th>' + (hasA ? '<th class="r">Réel</th>' : "") + '<th class="r">Prévu</th><th class="r col-core">Précédent</th></tr></thead><tbody>'  + (rows.length ? rows.map(function (e) {
-      var t = new Date(e.d), dk = t.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }), h = "";
-      if (dk !== day) { day = dk; h += '<tr class="grp"><td colspan="' + ncol + '" style="background:var(--panel2);color:var(--amber);font:600 11px var(--font-mono)">' + dk + "</td></tr>"; }
-      var a = numOf(e.a), f = numOf(e.f), sc = a !== null && f !== null && a !== f ? (a > f ? "up" : "down") : "";
-      var dec = function (s) { return esc(String(s || "").replace(/(\d)\.(\d)/g, "$1,$2")); };
-      return h + '<tr data-det="ev:' + c.events.indexOf(e) + '" class="calrow' + (Date.parse(e.d) < now ? " past" : "") + '"><td class="num">' + (isNaN(t) ? "–" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })) + '</td><td><span class="imp ' + esc(e.i) + '" title="Impact ' + esc(e.i) + '"></span>' + esc(e.c) + "</td><td style=\"white-space:normal\" title=\"" + esc(e.t) + "\">" + esc(frEvent(e.t).t) + (hasA ? '</td><td class="r num ' + sc + '">' + dec(e.a) + (e.ao ? ' <small title="Chiffre officiel relevé par le robot (BLS, ONS, Banque du Canada, Eurostat)">off.</small>' : "") : "") + '</td><td class="r num">' + dec(e.f) + '</td><td class="r num col-core">' + dec(e.p) + "</td></tr>";
-    }).join("") : '<tr><td colspan="' + ncol + '">Aucun événement avec ces filtres.</td></tr>') + "</tbody>";
+    }).sort(function (x, y) { return Date.parse(x.d) - Date.parse(y.d); });
+    var dec = function (s) { return esc(String(s === null || s === undefined ? "" : s).replace(/(\d)\.(\d)/g, "$1,$2")); };
+    var IMPL = { High: "Impact fort", Medium: "Impact moyen", Low: "Impact faible", Holiday: "Jour férié" };
+    var byDay = [], cur = null;
+    rows.forEach(function (e) { var t = new Date(e.d), dk = t.toDateString(); if (!cur || cur.k !== dk) { cur = { k: dk, t: t, L: [] }; byDay.push(cur); } cur.L.push(e); });
+    var nextIdx = rows.findIndex ? rows.findIndex(function (e) { return Date.parse(e.d) >= now; }) : -1, nextEv = nextIdx >= 0 ? rows[nextIdx] : null;
+    var body = byDay.map(function (D, di) {
+      var lab = D.t.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""), lab2 = D.t.toLocaleDateString("fr-FR", { day: "numeric", month: "long" }), today = D.t.toDateString() === new Date().toDateString();
+      var lastTime = "";
+      return D.L.map(function (e, i) {
+        var t = new Date(e.d), hh = t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }), allDay = /holiday|bank holiday|election/i.test(e.t) || (e.i === "Holiday");
+        var tm = allDay ? "Toute la journée" : hh; var showT = tm !== lastTime; lastTime = tm;
+        var a = numOf(e.a), f = numOf(e.f), pv = numOf(e.p), g = a !== null && f !== null ? calGood(e, a, f) : 0;
+        var rev = "", pa = numOf(e._prevA);
+        if (pa !== null && pv !== null && Math.abs(pa - pv) > 1e-9) { var gr = calGood(e, pv, pa); rev = ' <span class="calrev ' + (gr > 0 ? "up" : gr < 0 ? "down" : "") + '" title="Révisé : publié à ' + dec(e._prevA) + ", corrigé à " + dec(e.p) + '">◂</span>'; }
+        var isNext = nextEv === e, past = t.getTime() < now;
+        return '<tr data-det="ev:' + c.events.indexOf(e) + '" class="calrow ff' + (past ? " past" : "") + (isNext ? " calnext" : "") + (i === 0 ? " dfirst" : "") + (today ? " today" : "") + '">' +
+          (i === 0 ? '<td class="calday" rowspan="' + D.L.length + '"><b>' + lab + "</b><small>" + lab2 + "</small></td>" : "") +
+          '<td class="num caltime">' + (showT ? (isNext ? '<span class="calnx">Prochain</span>' : "") + tm : "") + "</td>" +
+          "<td><b>" + esc(e.c) + "</b></td>" +
+          '<td class="c"><span class="ffimp ' + esc(calImpOf(e)) + '" title="' + (IMPL[calImpOf(e)] || "Impact faible") + '" aria-label="' + (IMPL[calImpOf(e)] || "Impact faible") + '"></span></td>' +
+          '<td class="calev" title="' + esc(e.t) + '">' + esc(frEvent(e.t).t) + '<span class="calmob">' + (e.a ? 'Réel <b class="' + (g > 0 ? "up" : g < 0 ? "down" : "") + '">' + dec(e.a) + "</b> · " : "") + (e.f ? "Prévu " + dec(e.f) + " · " : "") + (e.p ? "Préc. " + dec(e.p) + rev : "") + "</span></td>" +
+          '<td class="r num calA ' + (g > 0 ? "up" : g < 0 ? "down" : "") + '">' + (e.a ? dec(e.a) + (e.ao ? ' <small title="Chiffre officiel relevé par le robot">off.</small>' : "") : "") + "</td>" +
+          '<td class="r num">' + dec(e.f) + "</td>" +
+          '<td class="r num">' + dec(e.p) + rev + "</td>" +
+          '<td class="c"><span class="calgo" aria-hidden="true">Analyse ›</span></td></tr>';
+      }).join("");
+    }).join("");
+    tb.className = "caltbl";
+    tb.innerHTML = '<thead><tr><th>Date</th><th>Heure</th><th>Dev.</th><th class="c">Impact</th><th>Événement</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r">Précédent</th><th class="c">Détail</th></tr></thead><tbody>' +
+      (body || '<tr><td colspan="9">Aucun événement cette semaine avec ces filtres.</td></tr>') + "</tbody>";
     var fa = ageDays(c.fetched.slice(0, 10)), st = fa <= 1 ? "ok" : fa <= 8 ? "old" : "ko";
     $("calMeta").innerHTML = "relevé " + shortD(c.fetched.slice(0, 10)) + " " + badge(st);
     renderSurprise(c.events);
