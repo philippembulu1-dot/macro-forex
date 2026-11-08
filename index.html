@@ -1041,6 +1041,9 @@ html.lkon body{overflow:hidden}
 .caltbl tr.past td:not(.calday){opacity:.85}
 .calmob{display:none}#calQ{width:110px;min-width:90px}
 @media (max-width:600px){.caltbl th:nth-child(n+6),.caltbl td.calA,.caltbl tr td:nth-last-child(-n+3):not(.calev):not(.calday){display:none}.caltbl td.calday{min-width:40px;font-size:11px;padding:4px 2px}.caltbl td.calev{min-width:0}.calmob{display:block;font-size:11px;color:var(--muted);margin-top:2px}.calmob b.up{color:var(--up)}.calmob b.down{color:var(--down)}.caltbl th:nth-child(4),.caltbl td:nth-child(4){padding-left:2px;padding-right:2px}}
+.calic{white-space:nowrap}.calbtn{background:none;border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:15px;cursor:pointer;line-height:1}.calbtn:hover,.calbtn:focus-visible{border-color:var(--amber)}
+.evhtbl{width:100%}.evhtbl th,.evhtbl td{padding:5px 6px}.evhtbl td:last-child,.evhtbl td:first-child,.jproj td:last-child{min-width:0;white-space:nowrap}.jproj td:last-child{white-space:normal}.evspec th{text-align:left;vertical-align:top;width:34%;color:var(--muted);font-weight:500;padding:6px 8px}.evspec td{padding:6px 8px;white-space:normal}.evbars{width:100%;height:auto}
+@media (max-width:600px){.caltbl td.calic{display:table-cell!important}.caltbl th:nth-child(9){display:table-cell!important}}
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -3474,11 +3477,11 @@ html.lkon body{overflow:hidden}
           '<td class="r num calA ' + (g > 0 ? "up" : g < 0 ? "down" : "") + '">' + (e.a ? dec(e.a) + (e.ao ? ' <small title="Chiffre officiel relevé par le robot">off.</small>' : "") : "") + "</td>" +
           '<td class="r num">' + dec(e.f) + "</td>" +
           '<td class="r num">' + dec(e.p) + rev + "</td>" +
-          '<td class="c"><span class="calgo" aria-hidden="true">Analyse ›</span></td></tr>';
+          '<td class="c calic"><button type="button" class="calbtn" data-det="evspec:' + c.events.indexOf(e) + '" title="Détails de l\'indicateur" aria-label="Détails de l\'indicateur">📁</button><button type="button" class="calbtn" data-det="evhist:' + c.events.indexOf(e) + '" title="Historique : réel contre prévu" aria-label="Historique">📊</button></td></tr>';
       }).join("");
     }).join("");
     tb.className = "caltbl";
-    tb.innerHTML = '<thead><tr><th>Date</th><th>Heure</th><th>Dev.</th><th class="c">Impact</th><th>Événement</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r">Précédent</th><th class="c">Détail</th></tr></thead><tbody>' +
+    tb.innerHTML = '<thead><tr><th>Date</th><th>Heure</th><th>Dev.</th><th class="c">Impact</th><th>Événement</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r">Précédent</th><th class="c">Détails</th></tr></thead><tbody>' +
       (body || '<tr><td colspan="9">Aucun événement cette semaine avec ces filtres.</td></tr>') + "</tbody>";
     var fa = ageDays(c.fetched.slice(0, 10)), st = fa <= 1 ? "ok" : fa <= 8 ? "old" : "ko";
     $("calMeta").innerHTML = "relevé " + shortD(c.fetched.slice(0, 10)) + " " + badge(st);
@@ -6702,6 +6705,9 @@ html.lkon body{overflow:hidden}
     if (type === "fw") return detFedWatch(id);
     if (type === "drv") return detDriver(id);
     if (type === "ev") { var ev_ = AUTO && AUTO.calendar && AUTO.calendar.events[+id]; if (ev_) evAnalysis(ev_); return; }
+    if (type === "evspec" || type === "evhist") { var e2 = AUTO && AUTO.calendar && AUTO.calendar.events[+id]; if (!e2) return; var tt = new Date(e2.d);
+      return openDetail({ t: frEvent(e2.t).t + " · " + e2.c, val: type === "evspec" ? "Détails de l'indicateur" : "Historique : réel contre prévu", sub: tt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) + " " + tt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + ' · <span class="more" data-det="ev:' + id + '" style="cursor:pointer">Analyse complète ›</span>',
+        extra: type === "evspec" ? evSpecHtml(e2) + '<h3>Historique récent</h3>' + evHistHtml(e2) : evHistHtml(e2) + '<h3>Détails</h3>' + evSpecHtml(e2) }); }
     if (type === "ind") {
       var row = IND[+id]; if (!row || row.g) return;
       var how = (HOW.filter(function (x) { return row.l.toLowerCase().indexOf(x[0].toLowerCase().split(" ")[0]) >= 0; })[0] || ["", ""])[1];
@@ -7024,6 +7030,73 @@ html.lkon body{overflow:hidden}
     [/Confidence|Sentiment/i, "Confiance", "Regardez surtout les anticipations d'inflation des ménages et la composante « avenir ».", 1],
     [/Trade Balance|Current Account/i, "Commerce extérieur", "Effet de marché souvent limité, sauf surprise forte ; l'or et le pétrole pèsent sur ces chiffres.", 1]
   ];
+  /* Fiche « Détails » de chaque indicateur, comme le dossier de Forex Factory (8 nov. 2026) : ce que ça mesure, source, fréquence,
+     effet habituel, pourquoi les traders s'y intéressent. Connaissances générales ; les chiffres viennent du calendrier. */
+  var EV_SPEC = [
+    [/Non ?Farm Payrolls|Nonfarm Payrolls/i, "Variation du nombre de salariés, hors secteur agricole, sur le mois.", "Bureau of Labor Statistics (BLS)", "Mensuelle, en général le 1er vendredi du mois, à 14 h 30 heure de Kinshasa (13 h 30 quand les États-Unis sont à l'heure d'été)", "Le plus gros rendez-vous du mois : l'emploi crée des revenus, donc de la consommation et de l'inflation, et pilote directement la Fed. Les révisions des deux mois précédents comptent autant que le chiffre."],
+    [/Employment Change/i, "Variation du nombre de personnes en emploi sur la période.", "Institut statistique national", "Mensuelle (trimestrielle en Nouvelle-Zélande)", "L'emploi annonce la consommation et l'inflation salariale : il guide la banque centrale."],
+    [/Unemployment Rate/i, "Part de la population active qui cherche un emploi sans en avoir.", "Institut statistique national (BLS aux États-Unis)", "Mensuelle", "Indicateur retardé mais très suivi : une hausse rapide (règle de Sahm, +0,5 point) annonce une récession et des baisses de taux."],
+    [/Initial Jobless Claims|Unemployment Claims/i, "Nombre de nouvelles inscriptions au chômage sur la semaine.", "Department of Labor (États-Unis)", "Hebdomadaire, le jeudi à 14 h 30 heure de Kinshasa (13 h 30 en été américain)", "Le chiffre le plus récent sur l'emploi américain : une hausse durable au-dessus de 250 000 signale un marché du travail qui casse."],
+    [/Continuing Jobless Claims/i, "Nombre de personnes qui touchent toujours l'allocation chômage.", "Department of Labor (États-Unis)", "Hebdomadaire, le jeudi", "Mesure la difficulté à retrouver un emploi."],
+    [/Average Hourly Earnings|Average Earnings|Wage/i, "Évolution du salaire moyen.", "Institut statistique national", "Mensuelle (trimestrielle selon les pays)", "Les salaires nourrissent l'inflation des services : très suivis par les banques centrales."],
+    [/JOLT/i, "Nombre de postes à pourvoir dans les entreprises.", "Bureau of Labor Statistics (enquête JOLTS)", "Mensuelle, avec deux mois de décalage", "Mesure la tension du marché du travail ; la Fed regarde le ratio postes / chômeurs."],
+    [/Core PCE/i, "Prix des dépenses de consommation, hors alimentation et énergie.", "Bureau of Economic Analysis (BEA)", "Mensuelle, fin de mois", "L'indicateur d'inflation préféré de la Fed : sa cible de 2 % porte sur le PCE."],
+    [/PCE/i, "Prix de l'ensemble des dépenses de consommation des ménages.", "Bureau of Economic Analysis (BEA)", "Mensuelle", "Inflation suivie par la Fed (cible 2 %)."],
+    [/Core (CPI|Inflation)/i, "Évolution des prix à la consommation, hors alimentation et énergie.", "Institut statistique national (BLS, Eurostat, ONS…)", "Mensuelle", "L'inflation de fond : c'est elle qui décide des taux. Un écart de 0,1 point fait bouger fortement devises, taux et or."],
+    [/HICP|CPI|Inflation Rate|Consumer Price/i, "Évolution des prix d'un panier de biens et services achetés par les ménages.", "Institut statistique national (BLS, Eurostat, ONS, StatCan…)", "Mensuelle (trimestrielle en Australie et Nouvelle-Zélande)", "L'inflation guide les banques centrales : plus haute que prévu = taux plus hauts plus longtemps = devise plus forte."],
+    [/PPI|Producer Price/i, "Prix payés aux producteurs (sortie d'usine).", "Institut statistique national", "Mensuelle", "Annonce l'inflation à la consommation des mois suivants."],
+    [/Import Prices|Export Prices/i, "Prix des biens importés / exportés.", "Institut statistique national", "Mensuelle", "Inflation importée ; effet de marché en général faible."],
+    [/GDP/i, "Valeur de toute la production du pays ; variation sur le trimestre (ou l'année).", "Institut statistique national (BEA, Eurostat, ONS…)", "Trimestrielle (estimation flash, puis révisions)", "La mesure la plus large de l'économie ; la première estimation fait le plus réagir."],
+    [/ISM Manufacturing|Manufacturing PMI/i, "Enquête auprès des directeurs d'achat de l'industrie (production, commandes, emploi, prix).", "ISM (États-Unis) ou S&P Global / HCOB", "Mensuelle, 1er jour ouvré du mois", "Indicateur avancé : au-dessus de 50 = expansion. Les sous-indices « prix payés » et « nouvelles commandes » sont les plus regardés."],
+    [/ISM Services|Services PMI|Non-Manufacturing/i, "Enquête auprès des directeurs d'achat des services.", "ISM (États-Unis) ou S&P Global / HCOB", "Mensuelle, 3e jour ouvré", "Les services pèsent environ 70 % de l'économie : au-dessus de 50 = expansion ; les prix payés indiquent l'inflation des services."],
+    [/Composite PMI|PMI/i, "Enquête auprès des directeurs d'achat (industrie et services).", "S&P Global / HCOB / institut national", "Mensuelle (flash en fin de mois, final au début du suivant)", "Le premier chiffre du mois sur l'activité : 50 = frontière expansion / contraction."],
+    [/Retail Sales/i, "Évolution des ventes des commerces de détail.", "Institut statistique national (Census Bureau aux États-Unis)", "Mensuelle", "La consommation est le moteur de la croissance ; le « groupe de contrôle » américain entre directement dans le PIB."],
+    [/Michigan|Consumer Sentiment/i, "Enquête auprès des ménages sur leur situation et leurs anticipations.", "Université du Michigan", "Mensuelle (préliminaire mi-mois, finale fin de mois)", "Les anticipations d'inflation à 1 an et 5 ans sont très suivies par la Fed."],
+    [/Consumer Confidence|Confidence/i, "Enquête de confiance des ménages ou des entreprises.", "Conference Board, GfK, institut national", "Mensuelle", "Indicateur avancé de la consommation."],
+    [/Ifo/i, "Climat des affaires de 9 000 entreprises allemandes.", "Institut Ifo (Munich)", "Mensuelle", "Le baromètre le plus suivi de l'économie allemande, donc de l'euro."],
+    [/ZEW/i, "Moral des analystes financiers sur l'économie allemande / européenne.", "Institut ZEW (Mannheim)", "Mensuelle", "Premier indicateur du mois sur l'Allemagne ; au-dessus de 0 = optimisme."],
+    [/Sentix/i, "Moral des investisseurs sur la zone euro.", "Sentix", "Mensuelle, 1er lundi", "Très tôt dans le mois, donne le ton pour l'euro."],
+    [/Durable Goods/i, "Commandes de biens durables (machines, avions, voitures…).", "Census Bureau (États-Unis)", "Mensuelle", "Indicateur de l'investissement des entreprises ; regardez la version hors transport."],
+    [/Industrial Production/i, "Évolution de la production des usines, mines et services publics.", "Institut statistique national (Fed aux États-Unis)", "Mensuelle", "Mesure l'industrie ; effet modéré sur les devises."],
+    [/Trade Balance|Balance of Trade/i, "Différence entre exportations et importations.", "Institut statistique national / douanes", "Mensuelle", "Un excédent croissant soutient la demande pour la devise à long terme ; effet immédiat en général limité."],
+    [/Housing Starts|Building Permits|Home Sales|House Price|Pending Home/i, "Activité ou prix de l'immobilier.", "Census Bureau / NAR / institut national", "Mensuelle", "L'immobilier réagit vite aux taux : un ralentissement net annonce une économie qui freine."],
+    [/Interest Rate Decision|Rate Decision|Cash Rate|Bank Rate|Deposit Facility|Fed Interest/i, "Décision de la banque centrale sur son taux directeur.", "Banque centrale", "Toutes les 6 à 8 semaines selon la banque", "Le rendez-vous le plus important pour une devise : le taux est souvent anticipé, c'est le ton (communiqué, votes, conférence) qui fait bouger."],
+    [/Speaks|Speech|Testimony|Press Conference/i, "Discours ou conférence d'un responsable de banque centrale ou de gouvernement.", "Banque centrale / gouvernement", "Ponctuelle", "Peut faire bouger fortement si le ton change par rapport au dernier communiqué."],
+    [/Minutes|Summary of Opinions|Statement/i, "Compte rendu ou communiqué de la banque centrale.", "Banque centrale", "Après chaque réunion", "Donne le détail des débats : indices sur les prochaines décisions."],
+    [/Crude Oil|EIA|API/i, "Variation des stocks de pétrole brut aux États-Unis.", "EIA (officiel) / API (privé)", "Hebdomadaire, le mercredi (API le mardi soir)", "Fait bouger le pétrole, donc le dollar canadien et l'inflation attendue."],
+    [/Auction/i, "Résultat d'une adjudication de titres du Trésor (taux obtenu, demande).", "Trésor (États-Unis ou autre)", "Selon le calendrier du Trésor", "Une demande faible (bid-to-cover bas, taux plus haut que prévu) fait monter les taux longs ; surtout suivi pour les 10 et 30 ans."]
+  ];
+  function evSpecHtml(e) {
+    var sp = EV_SPEC.filter(function (x) { return x[0].test(e.t); })[0], pb = PB.filter(function (p) { return p[0].test(e.t); })[0], dir = pb ? pb[3] : (/Unemployment|Claims|Jobless/i.test(e.t) ? -1 : 1);
+    var nxt = ((AUTO && AUTO.calendar && AUTO.calendar.events) || []).filter(function (x) { return x.c === e.c && x.t === e.t && Date.parse(x.d) > Date.parse(e.d); }).sort(function (a, b) { return Date.parse(a.d) - Date.parse(b.d); })[0];
+    var row = function (k, v) { return v ? "<tr><th>" + k + "</th><td>" + v + "</td></tr>" : ""; };
+    var IMPL = { High: "Fort", Medium: "Moyen", Low: "Faible", Holiday: "Jour férié" };
+    return '<div class="tbl"><table class="evspec"><tbody>' +
+      row("Indicateur", esc(frEvent(e.t).t) + (frEvent(e.t).t !== e.t ? ' <small>(' + esc(e.t) + ")</small>" : "")) + row("Devise", esc(e.c)) + row("Impact", IMPL[calImpOf(e)] || "Faible") +
+      row("Ce que ça mesure", sp ? sp[1] : (pb ? pb[1] : "Indicateur économique publié par une source officielle.")) + row("Source", sp ? sp[2] : "Institut statistique ou banque centrale du pays") +
+      row("Fréquence", sp ? sp[3] : "Selon le calendrier de la source") +
+      row("Effet habituel", dir > 0 ? "Réel <b>supérieur</b> à la prévision = <b>bon</b> pour " + esc(e.c) : "Réel <b>inférieur</b> à la prévision = <b>bon</b> pour " + esc(e.c) + " (indicateur « inversé »)") +
+      row("Pourquoi les traders s'y intéressent", sp ? sp[4] : (pb ? pb[2] : "C'est l'écart entre le chiffre et la prévision qui fait bouger le marché.")) +
+      row("Prochaine publication", nxt ? new Date(nxt.d).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) + (nxt.f ? " · prévu " + esc(String(nxt.f).replace(/(\d)\.(\d)/g, "$1,$2")) : "") : "pas encore dans le calendrier") +
+      "</tbody></table></div>";
+  }
+  function evHistHtml(e) {
+    var H = evHist(e).filter(function (x) { return x.a !== null; }).slice(-14);
+    if (!H.length) return '<p class="hint">Pas encore d\'historique relevé pour cet indicateur.</p>';
+    var nd = 0; H.forEach(function (x) { [x.a, x.f, x.p].forEach(function (v) { if (v !== null && v !== undefined) { var m = String(v).match(/\.(\d+)/); if (m) nd = Math.max(nd, Math.min(2, m[1].length)); } }); });
+    var dec = function (x) { return x === null || x === undefined ? "–" : fmtN(x, nd); };
+    var vals = []; H.forEach(function (x) { vals.push(x.a); if (x.f !== null) vals.push(x.f); });
+    var mx = Math.max.apply(null, vals.concat([0])), mn = Math.min.apply(null, vals.concat([0])), W = 520, Ht = 200, pad = 24, n = H.length, bw = (W - 2 * pad) / n;
+    var y = function (v) { return pad + (mx - v) / ((mx - mn) || 1) * (Ht - 2 * pad); }, y0 = y(0);
+    var bars = H.map(function (x, i) { var g = x.f !== null ? calGood(e, x.a, x.f) : 0, c = g > 0 ? "var(--up)" : g < 0 ? "var(--down)" : "var(--amber)", X = pad + i * bw + bw * 0.18, top = Math.min(y(x.a), y0), h = Math.max(1.5, Math.abs(y(x.a) - y0));
+      return '<rect x="' + X.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + (bw * 0.64).toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + c + '" opacity=".85"><title>' + x.d + " : réel " + dec(x.a) + (x.f !== null ? ", prévu " + dec(x.f) : "") + "</title></rect>" +
+        (x.f !== null ? '<line x1="' + (X - 2).toFixed(1) + '" x2="' + (X + bw * 0.64 + 2).toFixed(1) + '" y1="' + y(x.f).toFixed(1) + '" y2="' + y(x.f).toFixed(1) + '" stroke="var(--text,#eee)" stroke-width="2"/>' : "") +
+        ((i % Math.ceil(n / 7) === 0 && n - 1 - i >= Math.ceil(n / 7) * 0.7) || i === n - 1 ? '<text x="' + (X + bw * 0.32).toFixed(1) + '" y="' + (Ht - 6) + '" font-size="10" text-anchor="middle" fill="var(--muted)">' + shortD(x.d) + "</text>" : ""); }).join("");
+    var svg = '<svg viewBox="0 0 ' + W + " " + Ht + '" class="chart evbars" role="img" aria-label="Historique réel contre prévu"><line x1="' + pad + '" x2="' + (W - pad) + '" y1="' + y0.toFixed(1) + '" y2="' + y0.toFixed(1) + '" stroke="var(--line,#444)"/>' + bars + "</svg>";
+    var tbl = '<div class="tbl"><table class="gtbl evhtbl"><thead><tr><th>Date</th><th class="r">Réel</th><th class="r">Prévu</th><th class="r">Précédent</th><th class="r">Surprise</th></tr></thead><tbody>' + H.slice().reverse().map(function (x) { var s = x.f !== null ? x.a - x.f : null, g = s !== null ? calGood(e, x.a, x.f) : 0; return "<tr><td>" + parseD(x.d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "2-digit" }) + '</td><td class="r num ' + (g > 0 ? "up" : g < 0 ? "down" : "") + '"><b>' + dec(x.a) + '</b></td><td class="r num">' + dec(x.f) + '</td><td class="r num">' + dec(x.p) + '</td><td class="r num ' + (g > 0 ? "up" : g < 0 ? "down" : "") + '">' + (s === null ? "–" : (s >= 0 ? "+" : "−") + dec(Math.abs(s))) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    var nb = H.filter(function (x) { return x.f !== null; }), beat = nb.filter(function (x) { return calGood(e, x.a, x.f) > 0; }).length;
+    return svg + '<p class="hint" style="max-width:none">Barres : chiffre réel (vert = meilleur que prévu pour ' + esc(e.c) + ", rouge = moins bon) ; trait blanc : prévision." + (nb.length >= 4 ? " Meilleur que prévu <b>" + beat + " fois sur " + nb.length + "</b>." : "") + "</p>" + tbl;
+  }
   /* Historique d'un indicateur du calendrier (8 nov. 2026) : séries TradingView du robot (États-Unis : ism.series, autres : eu_guide.tv) + calendrier */
   var EV_CC = { EUR: "EU", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" };
   function evHist(e) {
