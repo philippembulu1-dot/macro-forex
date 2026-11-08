@@ -2783,7 +2783,19 @@ FLASH_FEEDS = [
     ("Bloomberg Politique", "monde", ["https://feeds.bloomberg.com/politics/news.rss"]),
     ("Reuters", "marchés", ["https://news.google.com/rss/search?q=site:reuters.com+(markets+OR+business+OR+economy+OR+gold+OR+dollar)+when:1d&hl=en-US&gl=US&ceid=US:en"]),
     ("Reuters Monde", "monde", ["https://news.google.com/rss/search?q=site:reuters.com+world+when:1d&hl=en-US&gl=US&ceid=US:en"]),
+    # Ajout du 8 nov. 2026 (demande : plus de sources dont l'article se lit en entier dans le terminal)
+    ("AP News", "marchés", ["https://www.bing.com/news/search?q=site%3Aapnews.com+business+OR+economy+OR+markets&format=rss&mkt=en-US"]),
+    ("AP Monde", "monde", ["https://www.bing.com/news/search?q=site%3Aapnews.com+world&format=rss&mkt=en-US"]),
+    ("CNBC", "marchés", ["https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664", "https://www.cnbc.com/id/10000664/device/rss/rss.html"]),
+    ("CNBC Monde", "monde", ["https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100727362"]),
+    ("The Guardian Économie", "marchés", ["https://www.theguardian.com/business/rss"]),
+    ("The Guardian Monde", "monde", ["https://www.theguardian.com/world/rss"]),
+    ("France 24", "monde", ["https://www.france24.com/en/business/rss", "https://www.france24.com/en/rss"]),
+    ("DW", "marchés", ["https://rss.dw.com/rdf/rss-en-bus", "https://rss.dw.com/rdf/rss-en-all"]),
+    ("NPR Économie", "marchés", ["https://feeds.npr.org/1006/rss.xml"]),
+    ("Al Jazeera Économie", "marchés", ["https://www.aljazeera.com/xml/rss/economy.xml"]),
 ]
+FLASH_PW_MAX = 0.40  # part maximale des titres Bloomberg + Reuters dans le fil (souvent réservés aux abonnés)
 RX_URGENT = re.compile(r"\b(breaking|urgent|flash|alert|emergency|surprise[sd]?|unexpected(ly)?|shock|plunge[sd]?|soar(s|ed)?|surge[sd]?|crash(es|ed)?|tumble[sd]?|"
                        r"rate (cut|hike)|cuts? rates?|hikes? rates?|FOMC|Powell|Lagarde|Ueda|Bailey|intervention|"
                        r"war|attack(s|ed)?|missile|strike[sd]?|invasion|ceasefire|sanction(s|ed)?|tariff(s)?|default|downgrade[sd]?|"
@@ -2817,6 +2829,12 @@ def do_flash(data):
                             g["l"] = u
                     if not got:
                         raise ValueError("aucun titre Reuters")
+                if "bing.com/news" in url:  # adresse réelle contenue dans le lien Bing
+                    for g in got:
+                        um = re.search(r"[?&]url=([^&]+)", g.get("l") or "")
+                        if um:
+                            g["l"] = urllib.parse.unquote(um.group(1))
+                    got = [g for g in got if "apnews.com" in (g.get("l") or "")] or got
                 for g in got:
                     g.update({"src": name, "k": kind, "u": bool(RX_URGENT.search(g["t"])),
                               "a": [code for code, rx in RX_ASSET if rx.search(g["t"])]})
@@ -2828,7 +2846,7 @@ def do_flash(data):
             except Exception as e:
                 err = "%s (%s)" % (fr_err(e), url)
         note("fl." + re.sub(r"\W", "", name).lower(), "Fil flash : " + name, "news", False, err=err, url=urls[0])
-    with ThreadPoolExecutor(6) as ex:
+    with ThreadPoolExecutor(8) as ex:
         list(ex.map(one, FLASH_FEEDS))
     seen, out = set(), []
     for it in sorted(items, key=lambda i: i.get("ts") or (i["d"] or "") + "T00:00Z", reverse=True):
@@ -2842,13 +2860,28 @@ def do_flash(data):
         gu.update({k: v for k, v in GN_CACHE.items() if v})
         data["gn_urls"] = dict(list(gu.items())[-600:])
     try:
-        find_alternatives(out[:200], data)
+        find_alternatives(out[:260], data)
     except Exception as e:
         DIAG["alt"] = fr_err(e)[:120]
+    # Bloomberg + Reuters plafonnés à 40 % : on garde d'abord ceux qui ont un article public équivalent
+    ispw = lambda it: it.get("src", "").startswith(("Bloomberg", "Reuters"))
+    free = [it for it in out if not ispw(it)]
+    pwl = [it for it in out if ispw(it)]
+    cap = int(min(200, len(free) / (1 - FLASH_PW_MAX)) * FLASH_PW_MAX) if free else 30
+    keep_pw = set(id(it) for it in sorted(pwl, key=lambda it: (0 if it.get("alt") else 1, -(Date_ts(it))))[:cap])
+    out = [it for it in out if not ispw(it) or id(it) in keep_pw]
+    DIAG["flash_part"] = "%d titres dont %d Bloomberg / Reuters (plafond %d %%)" % (min(200, len(out)), sum(1 for it in out[:200] if ispw(it)), FLASH_PW_MAX * 100)
     if out:
         data["flash"] = out[:200]
     elif PREVIOUS.get("flash"):
         data["flash"] = PREVIOUS["flash"]
+
+
+def Date_ts(it):
+    try:
+        return datetime.strptime((it.get("ts") or (it.get("d") or "1970-01-01") + "T00:00Z")[:16], "%Y-%m-%dT%H:%M").timestamp()
+    except Exception:
+        return 0
 
 
 PAYWALL = re.compile(r"(^|\.)(bloomberg|bgov|businessweek|reuters|wsj|ft|barrons|marketwatch|nytimes|washingtonpost|economist|nikkei|theinformation|businessinsider|telegraph|thetimes|axios|x|twitter|facebook|instagram|tiktok|linkedin|reddit|pagesix)\.(com|co\.uk|net)$")
