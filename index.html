@@ -5852,7 +5852,7 @@ html.lkon body{overflow:hidden}
   }
   /* Articles réservés aux abonnés (Bloomberg, Reuters…) : même information chez un média dont la page est publique.
      1) équivalent trouvé par le robot (Google Actualités, champ « alt ») ; 2) titre proche dans le fil du terminal. */
-  var RD_PW = /(^|\.)(bloomberg|reuters|wsj|ft|barrons|marketwatch|nytimes|washingtonpost|economist|nikkei|businessinsider)\.(com|co\.uk|net)$/;
+  var RD_PW = /(^|\.)(bloomberg|bgov|businessweek|reuters|wsj|ft|barrons|marketwatch|nytimes|washingtonpost|economist|nikkei|businessinsider)\.(com|co\.uk|net)$/;
   function rdHost(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } }
   function rdWords(t) { var st = { the: 1, and: 1, for: 1, with: 1, from: 1, after: 1, over: 1, amid: 1, says: 1, said: 1, into: 1, than: 1, its: 1, that: 1, this: 1, are: 1, was: 1, new: 1 }; return (String(t).toLowerCase().match(/[a-z0-9$%']{3,}/g) || []).filter(function (w) { return !st[w]; }); }
   function rdAltLocal(it) {

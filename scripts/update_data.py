@@ -2851,7 +2851,7 @@ def do_flash(data):
         data["flash"] = PREVIOUS["flash"]
 
 
-PAYWALL = re.compile(r"(^|\.)(bloomberg|businessweek|reuters|wsj|ft|barrons|marketwatch|nytimes|washingtonpost|economist|nikkei|theinformation|businessinsider|telegraph|thetimes|axios|x|twitter|facebook|instagram|tiktok|linkedin|reddit|pagesix)\.(com|co\.uk|net)$")
+PAYWALL = re.compile(r"(^|\.)(bloomberg|bgov|businessweek|reuters|wsj|ft|barrons|marketwatch|nytimes|washingtonpost|economist|nikkei|theinformation|businessinsider|telegraph|thetimes|axios|x|twitter|facebook|instagram|tiktok|linkedin|reddit|pagesix)\.(com|co\.uk|net)$")
 ALT_STOP = set("a an the of to in on for and or with at by from as is are was be after over amid says said new its it that this into up down than more less vs".split())
 
 
