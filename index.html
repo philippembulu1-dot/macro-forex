@@ -5834,7 +5834,7 @@ html.lkon body{overflow:hidden}
     { id: "jina2", u: function (x) { return "https://r.jina.ai/" + x; }, md: 1 }
   ];
   /* pages anti-robot ou réservées aux abonnés renvoyées à la place de l'article : jamais affichées comme « article complet » */
-  var RD_BLOCK = /not a robot|are you a robot|are you human|verify you are human|captcha|access denied|block reference id|unusual activity|enable javascript and cookies|supports javascript and cookies|press (&amp;|&) hold|subscribe to (continue|read)|already a subscriber|this content is for subscribers|403 forbidden|attention required/i;
+  var RD_BLOCK = /not a robot|are you a robot|are you human|verify you are human|captcha|access denied|block reference id|unusual activity|enable javascript and cookies|supports javascript and cookies|press (&amp;|&) hold|subscribe to (continue|read)|already a subscriber|this content is for subscribers|403 forbidden|attention required|bloomberg anywhere|request a demo|demande de démonstration|customer support|support client|bloomberg professional services|sign in to (continue|read)|create a free account|register to read|to read the full (story|article)/i;
   function rdSvcOrder() { var last = ""; try { last = localStorage.getItem("mf-rdsvc") || ""; } catch (e) { /* stockage indisponible */ } return RD_SVC.slice().sort(function (a, b) { return (b.id === last) - (a.id === last); }); }
   function rdFetchSvc(svc, url) {
     if (svc.race) return new Promise(function (ok, ko) { /* relais lancés en même temps : le premier texte valide gagne */
@@ -5870,7 +5870,8 @@ html.lkon body{overflow:hidden}
     if (/news\.google\.com/.test(it.l) && !realU) { box.hidden = false; box.innerHTML = '<p class="hint">L\'adresse de cet article sera retrouvée au prochain passage du robot ; en attendant, la fiche ci-dessous résume la prévision.</p>'; return; }
     var url = realU || it.l, pw = RD_PW.test(rdHost(url)), alt = pw ? (it.alt && it.alt.l ? it.alt : rdAltLocal(it)) : null;
     /* abonnés : l'article public équivalent d'abord (rapide et lisible), la page d'origine ensuite */
-    var targets = alt ? [{ u: alt.l, alt: alt }, { u: url }] : [{ u: url }], ti = 0, list = rdSvcOrder(), i = 0;
+    var targets = alt ? [{ u: alt.l, alt: alt }] : pw ? [] : [{ u: url }], ti = 0, list = rdSvcOrder(), i = 0;
+    if (pw && !alt) tryN = 1; /* rien à lire : message tout de suite, sans attente */
     var step = function () {
       if (!$("rdFull") || $("reader")._it !== it) return;
       if (i >= list.length) { ti++; i = 0; }
