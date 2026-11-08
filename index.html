@@ -5829,14 +5829,15 @@ html.lkon body{overflow:hidden}
   }
   var RD_SVC = [
     { id: "jina", u: function (x) { return "https://r.jina.ai/" + x; }, md: 1, h: { "X-Retain-Images": "none", "X-Target-Selector": "article, [itemprop=articleBody], .ArticleBody-articleBody, .article-body, .wysiwyg, main", "X-Remove-Selector": "nav, header, footer, aside, figure, form, .newsletter, .related, .RelatedContent, .social, .share" } },
-    { id: "allorigins", u: function (x) { return "https://api.allorigins.win/raw?url=" + encodeURIComponent(x); } },
-    { id: "codetabs", u: function (x) { return "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(x); } },
-    { id: "corsproxy", u: function (x) { return "https://corsproxy.io/?url=" + encodeURIComponent(x); } },
+    { id: "relais", race: [{ id: "allorigins", u: function (x) { return "https://api.allorigins.win/raw?url=" + encodeURIComponent(x); } }, { id: "codetabs", u: function (x) { return "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(x); } }] },
     { id: "jina2", u: function (x) { return "https://r.jina.ai/" + x; }, md: 1 }
   ];
   function rdSvcOrder() { var last = ""; try { last = localStorage.getItem("mf-rdsvc") || ""; } catch (e) { /* stockage indisponible */ } return RD_SVC.slice().sort(function (a, b) { return (b.id === last) - (a.id === last); }); }
   function rdFetchSvc(svc, url) {
-    var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, svc.md ? 20000 : 15000);
+    if (svc.race) return new Promise(function (ok, ko) { /* relais lancés en même temps : le premier texte valide gagne */
+      var left = svc.race.length; svc.race.forEach(function (r) { rdFetchSvc(r, url).then(ok, function () { if (--left === 0) ko(new Error("relais")); }); });
+    });
+    var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, svc.md ? 20000 : 25000);
     var opt = { signal: c ? c.signal : undefined }; if (svc.h) opt.headers = svc.h;
     return fetch(svc.u(url), opt).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); }).then(function (t) {
       var h = svc.md ? rdMdHtml(t) : rdExtract(t);
@@ -5851,8 +5852,9 @@ html.lkon body{overflow:hidden}
     if (!tryN) { try { var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"); if (cache[it.l]) LN.art[it.l] = cache[it.l].h; } catch (e) { /* stockage indisponible */ } }
     var show = function (h, how) { if (!$("rdFull") || $("reader")._it !== it) return; box.innerHTML = '<h4>Article complet</h4><div class="rdbody">' + h + '</div><p class="hint">' + how + "</p>"; box.hidden = false; var s = $("rdSum"); if (s) s.hidden = true; };
     if (LN.art[it.l]) return show(LN.art[it.l], "Mode lecture (texte de la page publique, traduit automatiquement).");
-    if (/news\.google\.com/.test(it.l) && !it.u) { box.hidden = false; box.innerHTML = '<p class="hint">L\'adresse de cet article sera retrouvée au prochain passage du robot ; en attendant, la fiche ci-dessous résume la prévision.</p>'; return; }
-    var url = it.u || it.l, list = rdSvcOrder(), i = 0;
+    var realU = typeof it.u === "string" && /^https?:/.test(it.u) ? it.u : ""; /* dans le fil, « u » signale une news urgente (vrai / faux), pas une adresse */
+    if (/news\.google\.com/.test(it.l) && !realU) { box.hidden = false; box.innerHTML = '<p class="hint">L\'adresse de cet article sera retrouvée au prochain passage du robot ; en attendant, la fiche ci-dessous résume la prévision.</p>'; return; }
+    var url = realU || it.l, list = rdSvcOrder(), i = 0;
     var step = function () {
       if (!$("rdFull") || $("reader")._it !== it) return;
       if (i >= list.length) {
