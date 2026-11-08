@@ -1027,6 +1027,9 @@ html.lkon body{overflow:hidden}
 .gbtns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .gcmd{width:100%;box-sizing:border-box;background:#0f0e0b;color:#ece8dc;border:1px solid rgba(242,176,30,.35);border-radius:10px;padding:10px;font:inherit;font-size:.82rem;margin:8px 0}
 .rdalt{border-left:3px solid var(--amber,#f0a020);padding:6px 10px;background:rgba(240,160,32,.08);border-radius:4px}
+.jour{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.jproj{width:100%;table-layout:fixed}.jproj td{vertical-align:top;padding:5px 6px;overflow-wrap:anywhere}.jproj td:nth-child(1){width:34%}.jproj td:nth-child(2){width:22%}.jproj td small{display:block;opacity:.75}.jproj a{font-size:.92em}
+.fjlist{max-height:520px;overflow:auto}.fjlist li.fjnew{background:rgba(242,176,30,.08)}
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -4216,7 +4219,7 @@ html.lkon body{overflow:hidden}
     { id: "drivers", grp: "MARCHÉ", t: "Drivers et devises", ic: "⇄", d: "Drivers et biais par marché, moteurs du marché, force des devises sur tous les horizons, paires, carte thermique", blocks: ["drivers", "force"], p: ["moteurs", "fstr", "force", "heat", "paires", "selPanel", "~duo"], g: { moteurs: "Moteurs", fstr: "Force des devises", paires: "Paires et graphique" } },
     { id: "analyse", grp: "MARCHÉ", t: "Analyse technique", ic: "∿", d: "Graphique de chaque paire, de l'or et des indices avec moyennes mobiles 20/50/100, Bollinger, RSI, MACD ; indices des deux devises ; unités 1 h, 4 h, jour, semaine", blocks: ["ta"], p: [] },
     { id: "calendrier", grp: "MARCHÉ", t: "Calendrier économique", ic: "▦", d: "Prochaines annonces avec compte à rebours, chiffres réels contre prévus, semaine passée, surprises et réactions du marché", blocks: ["next", "rel"], p: ["calendrier", "semaine", "surprises", "reactions"], g: { calendrier: "Calendrier complet", surprises: "Surprises et réactions" } },
-    { id: "actus", grp: "MARCHÉ", t: "Actualités et analyses", ic: "✎", d: "Fil d'actualités avec urgences et mots-clés, notes des banques, consensus, communiqués, vidéos", blocks: ["essentiel", "flash", "articles"], p: ["analyses", "consensus", "actus", "videos"], g: { analyses: "Recherche des banques", actus: "Communiqués et vidéos" } },
+    { id: "actus", grp: "MARCHÉ", t: "Actualités et analyses", ic: "✎", d: "Fil d'actualités avec urgences et mots-clés, notes des banques, consensus, communiqués, vidéos", blocks: ["essentiel", "jour", "fj", "flash", "articles"], p: ["analyses", "consensus", "actus", "videos"], g: { analyses: "Recherche des banques", actus: "Communiqués et vidéos" } },
     { id: "geo", grp: "MARCHÉ", t: "Géopolitique", ic: "⚑", d: "Moniteur de risque (crises, alertes, prédictions, énergie), trafic maritime et détroits", blocks: ["geoclair"], p: ["geopol", "maritime"], g: { geopol: "Détails techniques (pour aller plus loin)" } },
     { id: "macro", grp: "MACRO", t: "Données macro", ic: "▤", d: "Indicateurs des 8 économies, cycle américain, déficits et dettes, projections Fed et BCE, indicateurs des desks, guide de lecture", p: ["indicateurs", "bce34", "cycle", "deficits", "dotplot", "bceproj", "desk", "lecture"], g: { indicateurs: "Indicateurs", bce34: "Zone euro (étape 3.4)", cycle: "Cycle et finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
     { id: "carte", grp: "MACRO", t: "Carte du monde", ic: "◍", d: "En direct : devise, bourse, taux à 10 ans, taux directeur, inflation, news et prochaine annonce de chaque pays ; G8 : inflation, taux, croissance, chômage, dette, PMI avec classement et comparaison ; carte mondiale détaillée ; réserves", blocks: ["wlive", "g8"], p: ["monde", "reserves"] },
@@ -4974,7 +4977,7 @@ html.lkon body{overflow:hidden}
       if (!out.length && LN.items.length) return;
       out.sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); });
       LN.items = out.slice(0, 150); LN.at = Date.now();
-      renderTicker(); renderDashBlock("flash"); renderDashBlock("recap"); renderDashBlock("wlive"); renderDashBlock("essentiel"); renderDashBlock("articles");
+      renderTicker(); renderDashBlock("flash"); renderDashBlock("recap"); renderDashBlock("wlive"); renderDashBlock("essentiel"); renderDashBlock("articles"); renderDashBlock("fj"); renderDashBlock("jour");
     });
   }
   function allNews() { /* fil direct + fil du robot, sans doublon, du plus récent au plus ancien */
@@ -5250,6 +5253,34 @@ html.lkon body{overflow:hidden}
     return '<div class="essg">' + groups.map(function (g) {
       return '<div class="essc"><h4>' + g[0] + " <small>" + g[1].length + "</small></h4>" + (g[1].length ? '<ul class="flash">' + g[1].map(artLi).join("") + "</ul>" : '<p class="hint">Rien de majeur.</p>') + "</div>";
     }).join("") + '</div><p class="hint">Sélection automatique des 24 dernières heures : les news urgentes, les notes de banques et les articles avec résumé passent en premier.</p>';
+  }
+  /* ---------- Fil FinancialJuice seul, rapport du jour (ING, investingLive) et projections des banques (8 nov. 2026) ---------- */
+  function fjHtml() {
+    var L = allNews().filter(function (x) { return /financialjuice/i.test(x.src || "") || /financialjuice\.com/.test(x.l || ""); }).sort(function (a, b) { return (flashTime(b) || 0) - (flashTime(a) || 0); }).slice(0, 40);
+    if (!L.length) return '<p class="hint">Le fil FinancialJuice arrive au prochain passage du robot ou à la prochaine lecture en direct (toutes les 60 secondes).</p>';
+    var now = Date.now();
+    return '<ul class="flash fjlist">' + L.map(function (x) { var t = flashTime(x), age = (now - t) / 6e4, when = isNaN(t) ? "" : new Date(t).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" });
+      return '<li class="' + (x.u ? "urg " : "") + (age < 30 ? "fjnew" : "") + '"><span class="ft num">' + when + "</span>" + '<a href="' + esc(x.l) + '" target="_blank" rel="noopener">' + esc(String(x.t).replace(/^FinancialJuice:\s*/i, "")) + "</a>" + (x.a && x.a.length ? '<span class="fs">' + x.a.join(" ") + "</span>" : "") + "</li>"; }).join("") + '</ul><p class="hint">Titres courts publiés par FinancialJuice (flash de marché), relus toutes les 60 secondes. En rouge : urgent ; surligné : moins de 30 minutes.</p>';
+  }
+  function jourCol(title, L, empty) {
+    return '<div class="essc"><h4>' + title + " <small>" + L.length + "</small></h4>" + (L.length ? '<ul class="flash">' + L.map(artLi).join("") + "</ul>" : '<p class="hint">' + empty + "</p>") + "</div>";
+  }
+  function jourHtml() {
+    var A = artList(), lim = Date.now() - 48 * 36e5;
+    var ing = A.filter(function (x) { return /^ING\b/.test(x.src) && Date.parse(x.ts) >= lim - 48 * 36e5; });
+    ing.sort(function (a, b) { var d = function (x) { return /FX Daily|Rates Spark|Commodities Feed|Asia Morning Bites|Key Events/i.test(x.t) ? 1 : 0; }; return d(b) - d(a) || Date.parse(b.ts) - Date.parse(a.ts); });
+    var il = A.filter(function (x) { return /investingLive/i.test(x.src) && Date.parse(x.ts) >= lim; });
+    var ilA = il.filter(function (x) { return /analys|forecast|outlook|technical|levels?|preview|review|wrap|recap|what to watch|chart|support|resistance|trade idea/i.test(x.t); });
+    var ilL = (ilA.length >= 4 ? ilA : il).slice(0, 10);
+    var C = (AUTO && AUTO.consensus_auto) || [], last = {};
+    C.filter(function (c) { return typeof c.v === "number" && ageDays(c.d) <= 60; }).forEach(function (c) { var k = c.bank + "|" + c.asset; if (!last[k] || last[k].d < c.d) last[k] = c; });
+    var P = Object.keys(last).map(function (k) { return last[k]; }).sort(function (a, b) { return a.d < b.d ? 1 : -1; }).slice(0, 12);
+    var AS = { gold: "Or", eurusd: "EUR/USD", dxy: "Dollar (DXY)", ecb: "Taux BCE", fed: "Taux Fed", brii: "Or (BRI)", usdjpy: "USD/JPY", gbpusd: "GBP/USD" };
+    var proj = '<div class="essc"><h4>Projections des banques <small>' + P.length + "</small></h4>" + (P.length ? '<table class="gtbl jproj"><tbody>' + P.map(function (c) {
+      var dec = c.asset === "gold" ? 0 : c.asset === "eurusd" || c.asset === "gbpusd" ? 2 : 2;
+      return "<tr><td><b>" + esc(c.bank) + "</b><small>" + esc(AS[c.asset] || c.asset) + "</small></td><td class=\"num\"><b>" + fmtN(c.v, dec) + (c.asset === "ecb" || c.asset === "fed" ? " %" : "") + "</b>" + (c.rev ? '<small class="' + (/hausse|relev/i.test(c.rev) ? "up" : /baisse|abaiss/i.test(c.rev) ? "down" : "") + '">' + esc(c.rev) + "</small>" : "") + '</td><td><a href="' + esc(c.u || c.l) + '" target="_blank" rel="noopener">' + esc(String(c.t).replace(/ - [^-]+$/, "").slice(0, 80)) + "</a><small>" + shortD(c.d) + "</small></td></tr>";
+    }).join("") + "</tbody></table>" : '<p class="hint">Aucune prévision de banque relevée ces 60 derniers jours.</p>') + "</div>";
+    return '<div class="essg jour">' + jourCol("Rapport du jour ING (FX Daily, Rates Spark…)", ing.slice(0, 8), "Pas encore de note ING ces deux derniers jours.") + jourCol("investingLive : analyses du jour", ilL, "Pas encore d'analyse investingLive aujourd'hui.") + proj + '</div><p class="hint">Touchez un titre : la note s\'ouvre en entier dans le terminal. Projections : chiffres publiés par les banques et relevés automatiquement dans la presse, avec l\'article source.</p>';
   }
   function artLi(x) {
     var t = new Date(Date.parse(x.ts)), rd = ART.read[x.l], st = ART.star[x.l];
@@ -6243,6 +6274,8 @@ html.lkon body{overflow:hidden}
     { id: "guide", nodash: 1, t: "Mon biais XAUUSD : le guide en 8 parties", f: guideHtml, w: 1 },
     { id: "flash", t: "Actualités", f: function () { return flashHtml(18); }, w: 1 },
     { id: "essentiel", nodash: 1, t: "L'essentiel du jour", f: essHtml, w: 1 },
+    { id: "jour", nodash: 1, t: "Rapport du jour : ING, investingLive et projections des banques", f: jourHtml, w: 1 },
+    { id: "fj", nodash: 1, t: "Fil FinancialJuice en direct", f: fjHtml, w: 1 },
     { id: "articles", nodash: 1, t: "Articles : à lire et déjà lus", f: artsHtml, w: 1 },
     { id: "tv", t: "Bloomberg TV en direct", f: tvHtml },
     { id: "alertes", t: "Mes alertes", f: alertsHtml }
