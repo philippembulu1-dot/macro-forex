@@ -3224,10 +3224,10 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     add(S1, "pmic", "PMI composite (zone euro)", "Activité manufacturière et services combinée ; seuil de 50", tvoP(pc));
     var wt = tvEU("EU", /^ECB Wage Tracker$/), ng = tvEU("EU", /^Negotiated Wage Growth$/);
     var wtSrc;
-    if (!wt) { var ws = (((AUTO && AUTO.guide && AUTO.guide.wts) || []).filter(function (x) { return /\.INWS\./.test(x.k); })[0]), ymK = TODAYK().slice(0, 7); if (ws) { var ps = ws.h.filter(function (x) { return x[0] <= ymK; }); if (ps.length) { wt = { v: ps[ps.length - 1][1], prev: ps.length > 1 ? ps[ps.length - 2][1] : null, d: ps[ps.length - 1][0], t: "ECB wage tracker", hist: ps.map(function (x) { return [x[0], x[1]]; }) }; wtSrc = "BCE, wage tracker (primes ponctuelles lissées)"; } } }
+    if (!wt) { var ws = (((AUTO && AUTO.guide && AUTO.guide.wts) || []).filter(function (x) { return /\.INWS\./.test(x.k); })[0]), ymK = TODAYK().slice(0, 7); if (ws) { var ps = ws.h.filter(function (x) { return x[0] <= ymK; }); if (ps.length) { wt = { v: ps[ps.length - 1][1], prev: ps.length > 1 ? ps[ps.length - 2][1] : null, d: perDate(ps[ps.length - 1][0]), t: "ECB wage tracker", hist: ps.map(function (x) { return [x[0], x[1]]; }) }; wtSrc = "BCE, wage tracker (primes ponctuelles lissées)"; } } }
     add(S1, "wage", "Wage tracker de la BCE", "Risque de boucle prix-salaires", tvo(wt, 2, " %", function (v) { return v > 3.5 ? "salaires encore trop dynamiques pour 2 %" : v > 3 ? "un peu élevé" : "compatible avec 2 % d'inflation"; }, wtSrc));
     var ngSrc, NG = AUTO && AUTO.guide && AUTO.guide.negw;
-    if (!ng && NG && NG.h && NG.h.length) { var nh = NG.h; ng = { v: nh[nh.length - 1][1], prev: nh.length > 1 ? nh[nh.length - 2][1] : null, d: nh[nh.length - 1][0], t: "Negotiated wages", hist: nh.map(function (x) { return [x[0], x[1]]; }) }; ngSrc = "BCE, indicateur des salaires négociés (trimestriel, sur 1 an)"; }
+    if (!ng && NG && NG.h && NG.h.length) { var nh = NG.h; ng = { v: nh[nh.length - 1][1], prev: nh.length > 1 ? nh[nh.length - 2][1] : null, d: perDate(nh[nh.length - 1][0]), t: "Negotiated wages", hist: nh.map(function (x) { return [x[0], x[1]]; }) }; ngSrc = "BCE, indicateur des salaires négociés (trimestriel, sur 1 an)"; }
     add(S1, "negw", "Salaires négociés (BCE)", "Risque de boucle prix-salaires", tvo(ng, 2, " %", function (v) { return v > 3.5 ? "trop dynamique pour 2 %" : v > 3 ? "un peu élevé" : "compatible avec 2 % d'inflation"; }, ngSrc));
     ["DE", "FR", "IT", "ES"].forEach(function (cc) {
       var cand = [tvEU(cc, /Composite PMI/i), tvEU(cc, /Manufacturing PMI/i), tvF(cc, /Composite PMI/i), tvF(cc, /Manufacturing PMI/i)].filter(function (z) { return z; }), x = cand.filter(function (z) { return z.d && ageDays(z.d) <= 45; })[0] || cand[0] || null;
@@ -3278,6 +3278,9 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     add(S3, "acc", "Comptes rendus des réunions", "Publiés environ 4 semaines après", txt(acc, "") || { text: '<a href="https://www.ecb.europa.eu/press/accounts/html/index.en.html" target="_blank" rel="noopener">comptes rendus de la BCE</a>', d: null, read: "lien officiel", src: "BCE", url: "https://www.ecb.europa.eu/press/accounts/html/index.en.html" });
     return R;
   }
+  function perDate(p) { /* période « 2026-Q2 » ou « 2026-11 » → date affichable (1er jour du dernier mois de la période) */
+    p = String(p); var q = p.match(/^(\d{4})-Q([1-4])$/); if (q) return q[1] + "-" + ("0" + (q[2] * 3)).slice(-2) + "-01";
+    return /^\d{4}-\d{2}$/.test(p) ? p + "-01" : p; }
   function gtVal(o) { return o ? (o.text !== undefined ? o.text : fmtN(o.v, o.dec) + o.unit) : "–"; }
   function renderBce() { renderGt("bceBody", null); renderGt("bce34Body", /^3\.4/); }
   function renderGt(bodyId, only) {
