@@ -2789,6 +2789,8 @@ def do_analyses(data):
         if k not in seen:
             seen.add(k)
             out.append(it)
+    bri = [it for it in out if it.get("src") == "BRI"][:15]
+    out = [it for it in out if it.get("src") != "BRI" or it in bri]
     data["analyses"] = out[:140]
 
 
@@ -2817,15 +2819,12 @@ FLASH_FEEDS = [
     ("France 24", "monde", ["https://www.france24.com/en/business/rss", "https://www.france24.com/en/rss"]),
     ("DW", "marchés", ["https://rss.dw.com/rdf/rss-en-bus", "https://rss.dw.com/rdf/rss-en-all"]),
     ("NPR Économie", "marchés", ["https://feeds.npr.org/1006/rss.xml"]),
-    ("Al Jazeera Économie", "marchés", ["https://www.aljazeera.com/xml/rss/economy.xml"]),
     # Sites de traders (8 nov. 2026) : flux direct d'abord ; si le site refuse les serveurs de GitHub, titres via Bing Actualités (adresse réelle)
     ("FXStreet", "trader", ["https://www.fxstreet.com/rss/news", B + "site%3Afxstreet.com"]),
-    ("Kitco", "trader", [B + "site%3Akitco.com+gold"]),
     ("FXEmpire", "trader", ["https://www.fxempire.com/api/v1/en/articles/rss/news", B + "site%3Afxempire.com"]),
     ("Investing.com", "trader", ["https://www.investing.com/rss/news_1.rss", B + "site%3Ainvesting.com+forex+OR+gold+OR+dollar"]),
     ("MarketPulse (OANDA)", "trader", ["https://www.marketpulse.com/feed/", B + "site%3Amarketpulse.com"]),
     ("Action Forex", "trader", ["https://www.actionforex.com/feed/", B + "site%3Aactionforex.com"]),
-    ("DailyFX", "trader", [B + "site%3Adailyfx.com"]),
     ("World Gold Council", "trader", [B + "site%3Agold.org"]),
 ]
 FLASH_GEN = ("BBC", "Al Jazeera", "The Guardian", "France 24", "DW", "NPR", "AP Monde", "CNBC Monde")  # médias généralistes
@@ -2902,24 +2901,43 @@ def do_flash(data):
         find_alternatives(out[:260], data)
     except Exception as e:
         DIAG["alt"] = fr_err(e)[:120]
-    # Bloomberg + Reuters plafonnés à 40 % : on garde d'abord ceux qui ont un article public équivalent
+    # Équilibre des sources (8 nov. 2026) : au plus 25 titres par source (40 pour FinancialJuice), 4 jours maximum,
+    # pour que les sites de traders, plus lents le week-end, ne soient pas chassés par les fils très rapides.
+    recent = time.time() - 4 * 86400
+    per = {}
+    bal = []
+    for it in out:
+        if Date_ts(it) and Date_ts(it) < recent:
+            continue
+        n = per.get(it.get("src"), 0)
+        if n >= (40 if it.get("src") == "FinancialJuice" else 25):
+            continue
+        per[it.get("src")] = n + 1
+        bal.append(it)
+    out = bal or out
+    # Parts maximales : Bloomberg + Reuters 40 %, médias généralistes 30 %, le reste aux sites de marché et de traders.
+    # Les Bloomberg / Reuters reliés à un article public passent en premier ; sinon les plus récents.
     ispw = lambda it: it.get("src", "").startswith(("Bloomberg", "Reuters"))
-    free = [it for it in out if not ispw(it)]
-    pwl = [it for it in out if ispw(it)]
-    cap = int(min(200, len(free) / (1 - FLASH_PW_MAX)) * FLASH_PW_MAX) if free else 30
-    keep_pw = set(id(it) for it in sorted(pwl, key=lambda it: (0 if it.get("alt") else 1, -(Date_ts(it))))[:cap])
-    out = [it for it in out if not ispw(it) or id(it) in keep_pw]
-    # médias généralistes plafonnés à 30 % (les plus récents gardés)
     isgen = lambda it: it.get("src", "").startswith(FLASH_GEN)
-    rest = [it for it in out if not isgen(it)]
-    capg = int(min(200, len(rest) / (1 - FLASH_GEN_MAX)) * FLASH_GEN_MAX) if rest else 60
-    keep_g = set(id(it) for it in sorted([it for it in out if isgen(it)], key=lambda it: -Date_ts(it))[:capg])
-    out = [it for it in out if not isgen(it) or id(it) in keep_g]
+    P = [it for it in out if ispw(it)]
+    G = [it for it in out if isgen(it) and not ispw(it)]
+    M = len(out) - len(P) - len(G)
+    T = float(len(out))
+    for _ in range(20):  # T = M + min(G, 30 % T) + min(P, 40 % T)
+        T = M + min(len(G), FLASH_GEN_MAX * T) + min(len(P), FLASH_PW_MAX * T)
+    Tf = min(320.0, T)  # taille finale du fil ; les parts sont calculées sur cette taille
+    capp, capg = int(min(len(P), FLASH_PW_MAX * Tf)), int(min(len(G), FLASH_GEN_MAX * Tf))
+    capm = int(Tf) - capp - capg
+    Mi = [it for it in out if not ispw(it) and not isgen(it)]
+    keep = set(id(it) for it in sorted(P, key=lambda it: (0 if it.get("alt") else 1, -Date_ts(it)))[:capp])
+    keep |= set(id(it) for it in sorted(G, key=lambda it: -Date_ts(it))[:capg])
+    keep |= set(id(it) for it in sorted(Mi, key=lambda it: -Date_ts(it))[:capm])
+    out = [it for it in out if id(it) in keep]
     DIAG["flash_part"] = "%d titres : %d Bloomberg / Reuters (plafond %d %%), %d médias généralistes (plafond %d %%), %d sites de marché et de traders" % (
-        min(200, len(out)), sum(1 for it in out[:200] if ispw(it)), FLASH_PW_MAX * 100, sum(1 for it in out[:200] if isgen(it)), FLASH_GEN_MAX * 100,
-        sum(1 for it in out[:200] if not ispw(it) and not isgen(it)))
+        min(320, len(out)), sum(1 for it in out[:320] if ispw(it)), FLASH_PW_MAX * 100, sum(1 for it in out[:320] if isgen(it)), FLASH_GEN_MAX * 100,
+        sum(1 for it in out[:320] if not ispw(it) and not isgen(it)))
     if out:
-        data["flash"] = out[:200]
+        data["flash"] = out[:320]
     elif PREVIOUS.get("flash"):
         data["flash"] = PREVIOUS["flash"]
 
