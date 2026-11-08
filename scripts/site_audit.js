@@ -79,6 +79,14 @@ require('fs').mkdirSync('audit-out', { recursive: true });
     await p.evaluate(() => { const a = document.querySelector('.branch.on ul.flash a'); if (a) a.click(); }); await p.waitForTimeout(2500);
     console.log(name, 'lecteur :', await p.evaluate(() => { const r = document.getElementById('reader'); return r.hidden ? 'FERMÉ' : 'ouvert dans le site · ' + location.hash + ' · ' + r.innerText.replace(/\s+/g, ' ').slice(0, 220); }));
     await p.keyboard.press('Escape');
+    // lecteur : un article par source (Al Jazeera, BBC, investingLive, Bloomberg, Reuters, FinancialJuice), service de lecture utilisé
+    if (name === 'PC') for (const rx of ['aljazeera', 'bbc', 'investinglive', 'bloomberg', 'reuters', 'cnbc', 'marketwatch']) {
+      const ok = await p.evaluate((rx) => { try { localStorage.removeItem('mf-art'); localStorage.removeItem('mf-rdsvc'); } catch (e) {} const a = [...document.querySelectorAll('.branch.on ul.flash a')].find(a => new RegExp(rx).test(a.href)); if (!a) return false; a.click(); return a.href.slice(0, 90); }, rx);
+      if (!ok) { console.log(name, 'lecteur ' + rx + ' : aucun article de cette source dans la liste'); continue; }
+      await p.waitForFunction(() => { const f = document.getElementById('rdFull'); return f && !/Chargement|nouvel essai/.test(f.innerText); }, null, { timeout: 90000 }).catch(() => {});
+      console.log(name, 'lecteur ' + rx + ' :', ok, '→', await p.evaluate(() => { const f = document.getElementById('rdFull'); const n = f ? f.querySelectorAll('.rdbody p').length : 0; return (n ? 'ARTICLE COMPLET ' + n + ' paragraphes, ' + f.innerText.length + ' car., service ' + localStorage.getItem('mf-rdsvc') : 'ÉCHEC : ' + (f ? f.innerText.replace(/\s+/g, ' ').slice(0, 140) : 'pas de cadre')); }));
+      await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+    }
     console.log(name, 'traduction :', await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('mf-trc') || '{}')).length + ' titres traduits ; exemple : ' + ((document.querySelector('#nTicker .ntrow a') || {}).innerText || '').slice(0, 120)));
     console.log(name, 'REQUÊTES EN ÉCHEC :', JSON.stringify([...new Set(fails)].slice(0, 40)));
     console.log(name, 'ERREURS :', errs.length ? JSON.stringify([...new Set(errs)]) : 'aucune', '| branches à revoir :', problems.join(', ') || 'aucune');

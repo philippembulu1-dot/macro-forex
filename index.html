@@ -5795,6 +5795,56 @@ html.lkon body{overflow:hidden}
     }
     return out.join("").replace(/(<li>[\s\S]*?<\/li>)+/g, function (m) { return "<ul>" + m + "</ul>"; });
   }
+  /* Lecteur d'articles (8 nov. 2026) : plusieurs services de lecture gratuits essayés l'un après l'autre.
+     1) r.jina.ai (texte propre) ; 2) relais publics qui renvoient la page HTML, dont le texte est extrait ici même
+     (données structurées « articleBody », puis le bloc qui contient le plus de paragraphes). Le dernier service qui a marché passe en premier. */
+  function rdExtract(html) {
+    var doc; try { doc = new DOMParser().parseFromString(html, "text/html"); } catch (e) { return ""; }
+    var esc2 = function (t) { return esc(String(t).replace(/\s+/g, " ").trim()); }, paras = [];
+    [].slice.call(doc.querySelectorAll('script[type="application/ld+json"]')).some(function (sc) {
+      try {
+        var walk = function (o) { if (!o || typeof o !== "object") return null; if (typeof o.articleBody === "string" && o.articleBody.length > 300) return o.articleBody; var r = null; (Array.isArray(o) ? o : Object.keys(o).map(function (k) { return o[k]; })).some(function (v) { r = walk(v); return r; }); return r; };
+        var txt = sc.textContent, js; try { js = JSON.parse(txt); } catch (e1) { js = JSON.parse(txt.replace(/\r?\n/g, "\\n").replace(/[\u0000-\u001f]/g, " ")); } var body = walk(js);
+        if (body) { paras = body.split(/\n+/).map(function (x) { return x.trim(); }).filter(function (x) { return x.length > 1; }); if (paras.length < 3) paras = body.match(/(?:[^.!?]+[.!?]+["»]?\s*){1,3}/g) || [body]; return true; }
+      } catch (e) { /* JSON illisible */ }
+      return false;
+    });
+    if (paras.length >= 2) return paras.map(function (x) { return "<p>" + esc2(x) + "</p>"; }).join("");
+    [].slice.call(doc.querySelectorAll("script,style,noscript,nav,header,footer,aside,form,figure,iframe,svg,button,[role=navigation],[aria-hidden=true],.newsletter,.related,.share,.social,.ad,.advert,.promo")).forEach(function (x) { x.remove(); });
+    var best = null, score = 0;
+    [].slice.call(doc.querySelectorAll("article, [itemprop=articleBody], main, .article-body, .article__body, .story-body, .wysiwyg, .entry-content, .post-content, section, div")).forEach(function (el) {
+      var ps = [], t = 0; try { ps = [].slice.call(el.querySelectorAll(":scope > p, :scope > div > p, :scope > section > p")); } catch (e) { ps = [].slice.call(el.getElementsByTagName("p")); }
+      ps.forEach(function (q) { var l = q.textContent.trim().length; if (l >= 60) t += l; });
+      if (t > score) { score = t; best = el; }
+    });
+    if (!best || score < 500) return "";
+    var out = [];
+    [].slice.call(best.querySelectorAll("p, h2, h3, li")).forEach(function (q) {
+      var tx = q.textContent.replace(/\s+/g, " ").trim(); if (!tx) return;
+      if (/^H[23]$/.test(q.tagName)) { if (tx.length < 120) out.push("<h5>" + esc(tx) + "</h5>"); }
+      else if (q.tagName === "LI") { if (tx.length > 40 && q.closest("p") === null) out.push("<p>• " + esc(tx) + "</p>"); }
+      else if (tx.length >= 30 && !/^(advertisement|publicité|sign up|subscribe|read more|lire aussi)/i.test(tx)) out.push("<p>" + esc(tx) + "</p>");
+    });
+    return out.length >= 3 ? out.join("") : "";
+  }
+  var RD_SVC = [
+    { id: "jina", u: function (x) { return "https://r.jina.ai/" + x; }, md: 1, h: { "X-Retain-Images": "none", "X-Target-Selector": "article, [itemprop=articleBody], .ArticleBody-articleBody, .article-body, .wysiwyg, main", "X-Remove-Selector": "nav, header, footer, aside, figure, form, .newsletter, .related, .RelatedContent, .social, .share" } },
+    { id: "allorigins", u: function (x) { return "https://api.allorigins.win/raw?url=" + encodeURIComponent(x); } },
+    { id: "codetabs", u: function (x) { return "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(x); } },
+    { id: "corsproxy", u: function (x) { return "https://corsproxy.io/?url=" + encodeURIComponent(x); } },
+    { id: "jina2", u: function (x) { return "https://r.jina.ai/" + x; }, md: 1 }
+  ];
+  function rdSvcOrder() { var last = ""; try { last = localStorage.getItem("mf-rdsvc") || ""; } catch (e) { /* stockage indisponible */ } return RD_SVC.slice().sort(function (a, b) { return (b.id === last) - (a.id === last); }); }
+  function rdFetchSvc(svc, url) {
+    var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, svc.md ? 20000 : 15000);
+    var opt = { signal: c ? c.signal : undefined }; if (svc.h) opt.headers = svc.h;
+    return fetch(svc.u(url), opt).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); }).then(function (t) {
+      var h = svc.md ? rdMdHtml(t) : rdExtract(t);
+      if (!h || (h.match(/<p>/g) || []).length < 3 || h.replace(/<[^>]+>/g, "").length < 400) throw new Error("vide");
+      if (/captcha|access denied|are you a robot|enable javascript/i.test(h.slice(0, 600))) throw new Error("bloqué");
+      return h;
+    }, function (e) { clearTimeout(tm); throw e; });
+  }
   function rdReader(it, tryN) {
     var box = $("rdFull"); if (!box) return;
     LN.art = LN.art || {}; tryN = tryN || 0;
@@ -5802,23 +5852,24 @@ html.lkon body{overflow:hidden}
     var show = function (h, how) { if (!$("rdFull") || $("reader")._it !== it) return; box.innerHTML = '<h4>Article complet</h4><div class="rdbody">' + h + '</div><p class="hint">' + how + "</p>"; box.hidden = false; var s = $("rdSum"); if (s) s.hidden = true; };
     if (LN.art[it.l]) return show(LN.art[it.l], "Mode lecture (texte de la page publique, traduit automatiquement).");
     if (/news\.google\.com/.test(it.l) && !it.u) { box.hidden = false; box.innerHTML = '<p class="hint">L\'adresse de cet article sera retrouvée au prochain passage du robot ; en attendant, la fiche ci-dessous résume la prévision.</p>'; return; }
-    box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Chargement de l\'article complet' + (tryN ? " (nouvel essai " + (tryN + 1) + " sur 3)" : "") + "…</p>";
-    var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, 25000);
-    /* 1er essai : extraction ciblée ; essais suivants : page entière sans en-tête (pas de pré-vérification CORS) */
-    var opt = tryN === 0 ? { signal: c ? c.signal : undefined, headers: { "X-Retain-Images": "none", "X-Target-Selector": "article, [itemprop=articleBody], .ArticleBody-articleBody, .article-body, .wysiwyg, main", "X-Remove-Selector": "nav, header, footer, aside, figure, form, .newsletter, .related, .RelatedContent, .social, .share" } } : { signal: c ? c.signal : undefined };
-    fetch("https://r.jina.ai/" + (it.u || it.l), opt)
-      .then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); })
-      .then(function (md) {
-        var h = rdMdHtml(md); if ((h.match(/<p>/g) || []).length < 2) throw new Error("vide");
+    var url = it.u || it.l, list = rdSvcOrder(), i = 0;
+    var step = function () {
+      if (!$("rdFull") || $("reader")._it !== it) return;
+      if (i >= list.length) {
+        if (tryN < 1) { box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Les services de lecture sont chargés, nouvel essai dans quelques secondes…</p>'; setTimeout(function () { rdReader(it, tryN + 1); }, 5000); return; }
+        var pw = /bloomberg\.com|reuters\.com|wsj\.com|ft\.com|marketwatch\.com|barrons\.com|nikkei\.com/.test(url);
+        box.innerHTML = '<p class="hint">' + (pw ? "Le texte de cet article est réservé aux abonnés de " + esc(it.src || "la source") + " : seuls le titre et le résumé publics sont lisibles." : "Le texte complet de cet article n'a pas pu être lu (page protégée ou services de lecture indisponibles).") + ' <button type="button" class="chip" data-rdretry="1">Réessayer</button> Le résumé et la fiche détaillée sont ci-dessous.</p>';
+        return;
+      }
+      var svc = list[i++];
+      box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Chargement de l\'article complet… (service ' + i + " sur " + list.length + ")</p>";
+      rdFetchSvc(svc, url).then(function (h) {
         LN.art[it.l] = h;
-        try { var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"), ks = Object.keys(cache); cache[it.l] = { h: h, t: Date.now() }; if (ks.length > 40) ks.sort(function (a, b) { return cache[a].t - cache[b].t; }).slice(0, ks.length - 40).forEach(function (k) { delete cache[k]; }); localStorage.setItem("mf-art", JSON.stringify(cache)); } catch (e) { /* stockage plein */ }
+        try { localStorage.setItem("mf-rdsvc", svc.id); var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"), ks = Object.keys(cache); cache[it.l] = { h: h, t: Date.now() }; if (ks.length > 40) ks.sort(function (a, b) { return cache[a].t - cache[b].t; }).slice(0, ks.length - 40).forEach(function (k) { delete cache[k]; }); localStorage.setItem("mf-art", JSON.stringify(cache)); } catch (e) { /* stockage plein */ }
         show(h, "Mode lecture : texte de la page publique de " + esc(it.src || "la source") + ", traduit automatiquement. Si la page est réservée aux abonnés, seul le début public apparaît.");
-      })
-      .catch(function () {
-        if (!$("rdFull") || $("reader")._it !== it) return;
-        if (tryN < 2) { setTimeout(function () { rdReader(it, tryN + 1); }, tryN ? 6000 : 2500); return; }
-        box.innerHTML = '<p class="hint">Le service de lecture est momentanément saturé pour cet article. <button type="button" class="chip" data-rdretry="1">Réessayer</button> En attendant, le résumé et la fiche détaillée sont ci-dessous.</p>';
-      });
+      }).catch(step);
+    };
+    step();
   }
   function rdLoadFull(it) {
     var box = $("rdFull"); if (!box) return;
