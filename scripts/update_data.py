@@ -2867,7 +2867,7 @@ def find_alternatives(items, data):
     todo = [it for it in items if it.get("src", "").startswith(("Bloomberg", "Reuters"))][:100]
     end_ = time.time() + 75
     def one(it):
-        key = "b2:" + re.sub(r"\W", "", it["t"].lower())[:70]  # « b: » = recherche Bing + Google (les anciennes entrées Google seules sont refaites)
+        key = "b3:" + re.sub(r"\W", "", it["t"].lower())[:70]  # « b: » = recherche Bing + Google (les anciennes entrées Google seules sont refaites)
         if key in cache:
             return key, cache[key]
         if time.time() > end_:
@@ -2878,6 +2878,7 @@ def find_alternatives(items, data):
         q0 = " ".join(sorted(words, key=lambda w: -len(w))[:7])
         try:
             best = None
+            cands = []
             # 1) Bing Actualités (RSS) : l'adresse réelle est dans le lien, sans requête supplémentaire
             try:
                 xml = http("altb_%s.xml" % key[3:33], "https://www.bing.com/news/search?" + urllib.parse.urlencode({"q": q0, "format": "rss", "mkt": "en-US"}), tries=1, timeout=15)
@@ -2895,12 +2896,21 @@ def find_alternatives(items, data):
                     srcn = _html.unescape((re.search(r"(?s)<News:Source>(.*?)</News:Source>", blk) or [None, host])[1]).strip()
                     w2 = _altwords(tt)
                     sim = len(words & w2) / max(1, len(words | w2))
-                    if sim >= 0.45 and len(words & w2) >= 3 and not re.search(r"(?i)bloomberg|reuters", srcn) and (not best or sim > best[0]):
-                        best = (sim, real, srcn, tt)
+                    if sim >= 0.45 and len(words & w2) >= 3 and not re.search(r"(?i)bloomberg|reuters", srcn):
+                        # sites dont la page se lit bien en mode lecture d'abord ; Yahoo et MSN (bandeau de consentement, lecteur souvent refusé) en dernier
+                        bonus = -0.3 if re.search(r"yahoo|msn|usnews", host) else 0.1 if re.search(r"bbc|aljazeera|apnews|cnbc|theguardian|france24|euronews|dw\.com|npr\.org|abcnews|cbsnews|nbcnews|sacbee|miamiherald|independent|channelnewsasia|thestar|livemint|hindustantimes|ndtv", host) else 0
+                        cands.append((sim + bonus, real, srcn, tt, host))
             except Exception as e:
                 DIAG["alt_bing"] = fr_err(e)[:100]
-            if best:
-                return key, [best[1], best[2], best[3][:200], round(best[0], 2)]
+            if cands:
+                cands.sort(key=lambda c: -c[0])
+                seen_h, out_c = set(), []
+                for c in cands:
+                    if c[4] in seen_h:
+                        continue
+                    seen_h.add(c[4])
+                    out_c.append([c[1], c[2], c[3][:200]])
+                return key, [out_c[0][0], out_c[0][1], out_c[0][2], round(cands[0][0], 2), out_c[1:4]]
             # 2) Google Actualités (adresse à résoudre : limité par Google, en secours seulement)
             q = q0 + " -site:bloomberg.com -site:reuters.com when:3d"
             xml = http("alt_%s.xml" % key[3:33], "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q, "hl": "en-US", "gl": "US", "ceid": "US:en"}), tries=1, timeout=15)
@@ -2936,8 +2946,10 @@ def find_alternatives(items, data):
             cache[key] = v
         if v:
             it["alt"] = {"l": v[0], "s": v[1], "t": v[2]}
+            if len(v) > 4 and v[4]:
+                it["alts"] = [{"l": c[0], "s": c[1], "t": c[2]} for c in v[4]]
             found += 1
-    keep = set("b2:" + re.sub(r"\W", "", it["t"].lower())[:70] for it in items)
+    keep = set("b3:" + re.sub(r"\W", "", it["t"].lower())[:70] for it in items)
     data["alt_cache"] = {k: v for k, v in cache.items() if k in keep}
     DIAG["alt"] = "%d titres Bloomberg / Reuters, %d avec un article public équivalent" % (len(todo), found)
 
