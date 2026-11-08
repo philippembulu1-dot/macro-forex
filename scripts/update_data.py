@@ -4842,6 +4842,20 @@ def do_guide_auto(data):
         L.sort(key=lambda x: x["k"])
         DIAG["wts_series"] = [x["k"] + " | " + x["t"][:70] for x in L][:12]
         G["wts"] = L[:12]
+        try:  # indicateur des salaires négociés (BCE, jeu INW, trimestriel, variation sur 1 an)
+            ri = list(csv.DictReader(io.StringIO(http("inw.csv", "https://data-api.ecb.europa.eu/service/data/INW?lastNObservations=12&format=csvdata", timeout=40))))
+            S2 = {}
+            for r in ri:
+                k = r.get("KEY") or ""
+                if r.get("OBS_VALUE") and ".Q." in k and "INWR" in k and ".GY" in k:
+                    S2.setdefault(k, {"k": k, "t": (r.get("TITLE") or "")[:160], "h": []})["h"].append([r["TIME_PERIOD"], round(float(r["OBS_VALUE"]), 2)])
+            DIAG["inw_series"] = sorted(S2)[:8]
+            if S2:
+                x = S2[sorted(S2)[0]]
+                x["h"].sort()
+                G["negw"] = x
+        except Exception as e2:
+            DIAG["inw"] = fr_err(e2)[:80]
         note("guide.wts", "Wage tracker de la BCE (salaires négociés, projection)", "monthly", True, max(x["h"][-1][0] for x in L)[:10], url="https://data.ecb.europa.eu/data/datasets/EWT")
     except Exception as e:
         note("guide.wts", "Wage tracker de la BCE", "monthly", False, err=e, url="https://data.ecb.europa.eu/data/datasets/EWT")

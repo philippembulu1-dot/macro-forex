@@ -1424,6 +1424,11 @@ html.lkon body{overflow:hidden}
       <p class="note">Carte en temps réel fournie gratuitement par VesselFinder (positions AIS). Elle ne se charge que lorsque vous choisissez une zone.</p>
     </section>
 
+    <section class="panel" id="bce34">
+      <div class="ph"><h2>Étape 3.4 : situation économique, côté BCE</h2><span class="meta">robot · calendrier et BCE</span></div>
+      <p class="hint" style="max-width:none;padding:8px 12px 0"><b>En clair.</b> Les mêmes questions que pour les États-Unis, mais pour la zone euro : prix, activité, salaires. <b>À faire, dans l'ordre :</b> 1. relever l'IPCH flash (globale et sous-jacente), le PMI composite, le wage tracker et les PMI par pays ; 2. comparer à la cible de 2 % symétrique ; 3. regarder l'hétérogénéité Allemagne, France, Italie, Espagne. Touchez une ligne pour la fiche détaillée.</p>
+      <div id="bce34Body"></div>
+    </section>
     <section class="panel" id="bce">
       <div class="ph"><h2>Zone euro et BCE : économie, taux, discours</h2><span class="meta" id="bceMeta">robot</span></div>
       <p class="hint" style="max-width:none;padding:8px 12px 0">Étapes 3.4, 3.5 et 3.7 du guide. Chiffres réels, précédents et consensus : calendrier économique (TradingView) et BCE ; rendements : CNBC et Bundesbank. Touchez une ligne pour la fiche détaillée (historique, source, bouton « Copier »).</p>
@@ -3183,16 +3188,25 @@ html.lkon body{overflow:hidden}
     var h = tvEU("EU", /^Inflation Rate YoY (Flash|Final)$/), c = tvEU("EU", /^Core Inflation Rate YoY (Flash|Final)$/);
     add(S1, "hicp", "IPCH flash : globale", "Cible de 2 % symétrique", tvo(h, 1, " %", function (v) { return cible(v)[0]; }));
     add(S1, "hicpc", "IPCH flash : sous-jacente", "Inflation sous-jacente", tvo(c, 1, " %", function (v) { return cible(v)[0]; }));
-    var pc = tvEU("EU", /Composite PMI/i);
-    add(S1, "pmic", "PMI composite (zone euro)", "Activité manufacturière et services combinée ; seuil de 50", tvo(pc, 1, "", function (v) { return v >= 50 ? "expansion" : "contraction"; }));
+    var tvF = function (cc, rx) { /* PMI S&P Global : seul le consensus (« prévu ») est diffusé gratuitement */
+      var T = (AUTO && AUTO.eu_guide && AUTO.eu_guide.tv) || {}, best = null, today = iso(new Date());
+      Object.keys(T).forEach(function (k) { var p = k.split("|"); if (p[0] !== cc || !rx.test(p.slice(1).join("|"))) return; T[k].forEach(function (e) { if (e.f === null || e.f === undefined || e.d.slice(0, 10) > today) return; if (!best || e.d > best.d) best = { v: e.f, prev: null, f: null, d: e.d.slice(0, 10), t: p.slice(1).join("|"), cons: 1 }; }); });
+      return best;
+    };
+    var pmiRead = function (v) { return (v >= 50 ? "expansion" : "contraction"); };
+    var tvoP = function (x) { var o = tvo(x, 1, "", pmiRead); if (o && x.cons) { o.read = "prévision du consensus (" + pmiRead(x.v) + ") : le chiffre publié par S&P Global n'est pas diffusé gratuitement"; o.src = "calendrier économique (TradingView), consensus « " + x.t + " »"; o.unit = " (prévu)"; } return o; };
+    var pc = tvEU("EU", /Composite PMI/i) || tvF("EU", /Composite PMI/i);
+    add(S1, "pmic", "PMI composite (zone euro)", "Activité manufacturière et services combinée ; seuil de 50", tvoP(pc));
     var wt = tvEU("EU", /^ECB Wage Tracker$/), ng = tvEU("EU", /^Negotiated Wage Growth$/);
     var wtSrc;
     if (!wt) { var ws = (((AUTO && AUTO.guide && AUTO.guide.wts) || []).filter(function (x) { return /\.INWS\./.test(x.k); })[0]), ymK = TODAYK().slice(0, 7); if (ws) { var ps = ws.h.filter(function (x) { return x[0] <= ymK; }); if (ps.length) { wt = { v: ps[ps.length - 1][1], prev: ps.length > 1 ? ps[ps.length - 2][1] : null, d: ps[ps.length - 1][0], t: "ECB wage tracker", hist: ps.map(function (x) { return [x[0], x[1]]; }) }; wtSrc = "BCE, wage tracker (primes ponctuelles lissées)"; } } }
     add(S1, "wage", "Wage tracker de la BCE", "Risque de boucle prix-salaires", tvo(wt, 2, " %", function (v) { return v > 3.5 ? "salaires encore trop dynamiques pour 2 %" : v > 3 ? "un peu élevé" : "compatible avec 2 % d'inflation"; }, wtSrc));
-    add(S1, "negw", "Salaires négociés (BCE)", "Risque de boucle prix-salaires", tvo(ng, 2, " %", function (v) { return v > 3.5 ? "trop dynamique pour 2 %" : v > 3 ? "un peu élevé" : "compatible avec 2 % d'inflation"; }));
+    var ngSrc, NG = AUTO && AUTO.guide && AUTO.guide.negw;
+    if (!ng && NG && NG.h && NG.h.length) { var nh = NG.h; ng = { v: nh[nh.length - 1][1], prev: nh.length > 1 ? nh[nh.length - 2][1] : null, d: nh[nh.length - 1][0], t: "Negotiated wages", hist: nh.map(function (x) { return [x[0], x[1]]; }) }; ngSrc = "BCE, indicateur des salaires négociés (trimestriel, sur 1 an)"; }
+    add(S1, "negw", "Salaires négociés (BCE)", "Risque de boucle prix-salaires", tvo(ng, 2, " %", function (v) { return v > 3.5 ? "trop dynamique pour 2 %" : v > 3 ? "un peu élevé" : "compatible avec 2 % d'inflation"; }, ngSrc));
     ["DE", "FR", "IT", "ES"].forEach(function (cc) {
-      var x = tvEU(cc, /Composite PMI/i) || tvEU(cc, /Manufacturing PMI/i);
-      add(S1, "pmi" + cc, "PMI " + (x && /Manufacturing/.test(x.t) ? "manufacturier" : "composite") + " : " + CCN[cc], "Hétérogénéité de la zone", tvo(x, 1, "", function (v) { return v >= 50 ? "expansion" : "contraction"; }));
+      var cand = [tvEU(cc, /Composite PMI/i), tvEU(cc, /Manufacturing PMI/i), tvF(cc, /Composite PMI/i), tvF(cc, /Manufacturing PMI/i)].filter(function (z) { return z; }), x = cand.filter(function (z) { return z.d && ageDays(z.d) <= 45; })[0] || cand[0] || null;
+      add(S1, "pmi" + cc, "PMI " + (x && /Manufacturing/.test(x.t) ? "manufacturier" : "composite") + " : " + CCN[cc], "Hétérogénéité de la zone", tvoP(x));
     });
     ["DE", "FR", "IT", "ES"].forEach(function (cc) {
       var x = tvEU(cc, /^Harmonised Inflation Rate YoY (Prel|Final|Flash)$/);
@@ -3206,7 +3220,7 @@ html.lkon body{overflow:hidden}
     add(S1, "ifo", "Ifo (climat des affaires, Allemagne)", "Confiance, indicateur avancé allemand", tvo(tvEU("DE", /^Ifo Business Climate$/), 1, "", function () { return "comparer au précédent et au consensus"; }));
     add(S1, "zew", "ZEW (anticipations, Allemagne)", "Confiance des investisseurs", tvo(tvEU("DE", /^ZEW Economic Sentiment Index$/), 1, "", function (v) { return v > 0 ? "optimisme" : "pessimisme"; }));
     add(S1, "zeweu", "ZEW (anticipations, zone euro)", "Confiance des investisseurs", tvo(tvEU("EU", /^ZEW Economic Sentiment Index$/), 1, "", function (v) { return v > 0 ? "optimisme" : "pessimisme"; }));
-    add(S1, "sentix", "Sentix", "Confiance des investisseurs", null);
+    add(S1, "sentix", "Sentix", "Confiance des investisseurs", tvo(tvEU("EU", /^Sentix Investor Confidence$/), 1, "", function (v) { return v > 0 ? "optimisme" : "pessimisme"; }));
     var ttf = AUTO && AUTO.geo && AUTO.geo.mkt && AUTO.geo.mkt["TTF=F"];
     add(S1, "ttf", "Prix du gaz TTF (€/MWh)", "Choc d'énergie européen", ttf ? { v: ttf.c, prev: ttf.sp && ttf.sp.length > 21 ? ttf.sp[ttf.sp.length - 22] : null, d: ttf.d, dec: 2, unit: " €", hist: null, read: (ttf.c20 >= 0 ? "+" : "−") + fmt(Math.abs(ttf.c20 || 0), 1) + " % sur 20 séances", src: "contrat à terme TTF (Yahoo Finance)", url: "https://finance.yahoo.com/quote/TTF%3DF/" } : null);
     /* 3.5 */
@@ -3240,11 +3254,13 @@ html.lkon body{overflow:hidden}
     return R;
   }
   function gtVal(o) { return o ? (o.text !== undefined ? o.text : fmtN(o.v, o.dec) + o.unit) : "–"; }
-  function renderBce() {
-    var B = $("bceBody"); if (!B || !AUTO) return;
+  function renderBce() { renderGt("bceBody", null); renderGt("bce34Body", /^3\.4/); }
+  function renderGt(bodyId, only) {
+    var B = $(bodyId); if (!B || !AUTO) return;
     var R = gtRows(), secs = [], h = "";
     R.forEach(function (r) { GT[r.id] = r; if (secs.indexOf(r.sec) < 0) secs.push(r.sec); });
     secs.forEach(function (sec, si) {
+      if (only && !only.test(sec)) return;
       var rows = R.filter(function (r) { return r.sec === sec; });
       h += '<div class="subh" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>' + sec + '</span><button type="button" class="copybtn" data-copy-sec="' + si + '">Copier le tableau</button></div><div class="tbl"><table class="gtbl"><thead><tr><th>Quoi regarder</th><th class="r">Valeur</th><th class="r">Précédent</th><th class="r">Consensus</th><th>Date</th><th>Lecture</th></tr></thead><tbody>' +
         rows.map(function (r) {
@@ -3255,6 +3271,7 @@ html.lkon body{overflow:hidden}
         }).join("") + "</tbody></table></div>";
     });
     B.innerHTML = h;
+    if (bodyId !== "bceBody") return;
     var G = AUTO.eu_guide; $("bceMeta").innerHTML = G ? "robot · calendrier relu le " + shortD(G.full_day || iso(new Date())) + " " + badge("ok") : "robot";
   }
   function gtText(r) { var o = r.o; return r.l + " : " + (o ? (o.text !== undefined ? o.text.replace(/<[^>]+>/g, "") : fmtN(o.v, o.dec) + o.unit) : "non disponible") + (o && o.prev !== null && o.prev !== undefined ? " (précédent " + fmtN(o.prev, o.dec) + o.unit + ")" : "") + (o && o.f !== null && o.f !== undefined ? " (consensus " + fmtN(o.f, o.dec) + o.unit + ")" : "") + (o && o.d ? " · " + o.d : "") + (o && o.src ? " · source : " + o.src : ""); }
@@ -4199,7 +4216,7 @@ html.lkon body{overflow:hidden}
     { id: "calendrier", grp: "MARCHÉ", t: "Calendrier économique", ic: "▦", d: "Prochaines annonces avec compte à rebours, chiffres réels contre prévus, semaine passée, surprises et réactions du marché", blocks: ["next", "rel"], p: ["calendrier", "semaine", "surprises", "reactions"], g: { calendrier: "Calendrier complet", surprises: "Surprises et réactions" } },
     { id: "actus", grp: "MARCHÉ", t: "Actualités et analyses", ic: "✎", d: "Fil d'actualités avec urgences et mots-clés, notes des banques, consensus, communiqués, vidéos", blocks: ["essentiel", "flash", "articles"], p: ["analyses", "consensus", "actus", "videos"], g: { analyses: "Recherche des banques", actus: "Communiqués et vidéos" } },
     { id: "geo", grp: "MARCHÉ", t: "Géopolitique", ic: "⚑", d: "Moniteur de risque (crises, alertes, prédictions, énergie), trafic maritime et détroits", blocks: ["geoclair"], p: ["geopol", "maritime"], g: { geopol: "Détails techniques (pour aller plus loin)" } },
-    { id: "macro", grp: "MACRO", t: "Données macro", ic: "▤", d: "Indicateurs des 8 économies, cycle américain, déficits et dettes, projections Fed et BCE, indicateurs des desks, guide de lecture", p: ["indicateurs", "cycle", "deficits", "dotplot", "bceproj", "desk", "lecture"], g: { indicateurs: "Indicateurs", cycle: "Cycle et finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
+    { id: "macro", grp: "MACRO", t: "Données macro", ic: "▤", d: "Indicateurs des 8 économies, cycle américain, déficits et dettes, projections Fed et BCE, indicateurs des desks, guide de lecture", p: ["indicateurs", "bce34", "cycle", "deficits", "dotplot", "bceproj", "desk", "lecture"], g: { indicateurs: "Indicateurs", bce34: "Zone euro (étape 3.4)", cycle: "Cycle et finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
     { id: "carte", grp: "MACRO", t: "Carte du monde", ic: "◍", d: "En direct : devise, bourse, taux à 10 ans, taux directeur, inflation, news et prochaine annonce de chaque pays ; G8 : inflation, taux, croissance, chômage, dette, PMI avec classement et comparaison ; carte mondiale détaillée ; réserves", blocks: ["wlive", "g8"], p: ["monde", "reserves"] },
     { id: "banques", grp: "MACRO", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, zone euro", blocks: ["banques"], p: ["bce", "banques", "probas", "agenda", "comite"], g: { bce: "Zone euro", banques: "Taux et probabilités", agenda: "Réunions et comités" } },
     { id: "taux", grp: "MACRO", t: "Taux et courbes", ic: "%", d: "Pricing de la Fed, règle de Taylor, courbes US et zone euro, taux réels, VIX et dollar, écarts entre pays", p: ["pricing", "taylor", "courbe", "taux", "ezone", "ecarts"], g: { pricing: "Fed : où vont les taux", courbe: "Courbes et taux réels", ezone: "Zone euro et écarts" } },
@@ -4238,7 +4255,7 @@ html.lkon body{overflow:hidden}
   };
 
   /* Panneaux ouverts d'office dans chaque branche (les autres sont repliés) */
-  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], guide: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
+  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], guide: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs", "bce34"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
   function setFold(el, folded) {
     el.classList.toggle("fold", folded);
     var b = el.querySelector(":scope > .ph > .foldbtn"); if (b) { b.textContent = folded ? "Afficher ▾" : "Replier ▴"; b.setAttribute("aria-expanded", folded ? "false" : "true"); }
