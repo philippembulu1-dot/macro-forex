@@ -7024,6 +7024,41 @@ html.lkon body{overflow:hidden}
     [/Confidence|Sentiment/i, "Confiance", "Regardez surtout les anticipations d'inflation des ménages et la composante « avenir ».", 1],
     [/Trade Balance|Current Account/i, "Commerce extérieur", "Effet de marché souvent limité, sauf surprise forte ; l'or et le pétrole pèsent sur ces chiffres.", 1]
   ];
+  /* Historique d'un indicateur du calendrier (8 nov. 2026) : séries TradingView du robot (États-Unis : ism.series, autres : eu_guide.tv) + calendrier */
+  var EV_CC = { EUR: "EU", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" };
+  function evHist(e) {
+    var out = {}, add = function (x) { if (!x || !x.d) return; var a = numOf(x.a), f = numOf(x.f); var k = String(x.d).slice(0, 10); if (a === null && f === null) return; out[k] = { d: k, a: a, f: f, p: numOf(x.p) }; };
+    var tt = String(e.t).replace(/^\[([A-Z]{2})\]\s*/, ""), cc = (String(e.t).match(/^\[([A-Z]{2})\]/) || [])[1] || EV_CC[e.c];
+    if (e.c === "USD") (((AUTO && AUTO.ism && AUTO.ism.series) || {})["tv." + tt] || []).forEach(add);
+    else if (cc) (((AUTO && AUTO.eu_guide && AUTO.eu_guide.tv) || {})[cc + "|" + tt] || []).forEach(add);
+    ((AUTO && AUTO.calendar && AUTO.calendar.events) || []).forEach(function (x) { if (x.c === e.c && x.t === e.t) add(x); });
+    return Object.keys(out).sort().map(function (k) { return out[k]; });
+  }
+  function evDataAnalysis(e) {
+    var H = evHist(e), av = numOf(e.a), fv = numOf(e.f), pv = numOf(e.p), unit = (String(e.a || e.f || e.p || "").match(/[%KMBT]$/i) || [""])[0];
+    var u = unit === "%" ? " pt" : unit ? " " + unit : "", nd = Math.max.apply(null, [e.a, e.f, e.p].map(function (x) { var m = String(x || "").match(/[.,](\d+)/); return m ? Math.min(3, m[1].length) : 0; }).concat([0]));
+    var dec = function (x, d) { return x === null || x === undefined ? "–" : fmt(x, d === undefined ? nd : d); };
+    var pb = PB.filter(function (p) { return p[0].test(e.t); })[0], dir = pb ? pb[3] : (/Unemployment|Claims|Jobless/i.test(e.t) ? -1 : 1), isUSD = e.c === "USD";
+    var done = H.filter(function (x) { return x.a !== null && x.d < String(e.d).slice(0, 10); });
+    var sur = H.filter(function (x) { return x.a !== null && x.f !== null && x.d < String(e.d).slice(0, 10); }).map(function (x) { return x.a - x.f; });
+    var sd = sur.length >= 5 ? Math.sqrt(sur.reduce(function (a, x) { return a + x * x; }, 0) / sur.length) : null;
+    var L = [];
+    if (av === null) {
+      if (sd) L.push("Sur les " + sur.length + " dernières publications, l'écart habituel entre le chiffre et la prévision est d'environ <b>± " + dec(sd) + u + "</b> : au-delà, c'est une vraie surprise.");
+      if (done.length >= 3) { var l3 = done.slice(-3).map(function (x) { return x.a; }); L.push("Les 3 derniers chiffres : " + l3.map(function (x) { return dec(x) + unit; }).join(" → ") + (l3[2] > l3[0] ? " (tendance en hausse)." : l3[2] < l3[0] ? " (tendance en baisse)." : " (stable).")); }
+      return L.length ? '<h3>Avant la publication</h3><ul class="advice" style="padding-top:0">' + L.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>" : "";
+    }
+    var g = fv !== null ? calGood(e, av, fv) : 0, s = fv !== null ? av - fv : null, z = s !== null && sd ? Math.abs(s) / sd : null;
+    var force = z === null ? (s === null ? "" : Math.abs(s) <= Math.abs(fv) * 0.01 ? "conforme" : "") : z < 0.5 ? "conforme" : z < 1 ? "légère" : z < 2 ? "nette" : "forte";
+    var verdict = s === null ? "Pas de prévision publiée : on compare au chiffre précédent." : force === "conforme" ? "Chiffre <b>conforme à la prévision</b> (écart " + (s >= 0 ? "+" : "−") + dec(Math.abs(s)) + u + ")." : "Surprise <b>" + (force || "") + " " + (g > 0 ? "favorable" : "défavorable") + " pour " + esc(e.c) + "</b> : " + dec(av) + unit + " contre " + dec(fv) + unit + " prévu (écart " + (s >= 0 ? "+" : "−") + dec(Math.abs(s)) + u + (z !== null ? ", soit " + fmt(z, 1) + " fois l'écart habituel" : "") + ").";
+    L.push(verdict);
+    if (pv !== null) L.push("Par rapport à la fois précédente (" + dec(pv) + unit + ") : " + (av > pv ? "en <b>hausse</b>" : av < pv ? "en <b>baisse</b>" : "<b>stable</b>") + (av !== pv ? " de " + dec(Math.abs(av - pv)) + u : "") + ".");
+    var pa = numOf(e._prevA); if (pa !== null && pv !== null && Math.abs(pa - pv) > 1e-9) { var gr = calGood(e, pv, pa); L.push("Le chiffre précédent a été <b>révisé</b> de " + dec(pa) + unit + " à " + dec(pv) + unit + " (" + (gr > 0 ? "révision favorable" : "révision défavorable") + ") : à ajouter à la lecture."); }
+    if (done.length >= 6) { var vals = done.slice(-12).map(function (x) { return x.a; }), mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals); L.push("Sur les " + vals.length + " publications d'avant : plus haut " + dec(mx) + unit + ", plus bas " + dec(mn) + unit + (av > mx ? " : ce chiffre est un <b>nouveau plus haut</b>." : av < mn ? " : ce chiffre est un <b>nouveau plus bas</b>." : ".")); }
+    if (g !== 0 && force !== "conforme") L.push("Effet attendu : " + esc(e.c) + " plutôt " + (g > 0 ? "<b>en hausse</b>" : "<b>en baisse</b>") + (isUSD ? " ; or plutôt " + (g > 0 ? "<b>sous pression</b> (dollar et taux plus hauts)" : "<b>soutenu</b> (dollar et taux plus bas)") : "") + ".");
+    if (isUSD && state.gold && g !== 0 && force !== "conforme") { var dk = new Date(e.d).toISOString().slice(0, 10), gk = state.gold.filter(function (k) { return new Date(k.t).toISOString().slice(0, 10) === dk; })[0]; if (gk) { var r = (gk.c / gk.o - 1) * 100, exp = g > 0 ? -1 : 1; L.push("Le marché a-t-il suivi ? Or " + pct(r) + " ce jour-là : " + ((r > 0 ? 1 : -1) === exp ? "<b>oui</b>, dans le sens attendu." : "<b>non</b> : un autre facteur a dominé (autres nouvelles, positionnement, géopolitique).")); } }
+    return '<h3>Analyse du chiffre publié</h3><ul class="advice" style="padding-top:0">' + L.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>";
+  }
   function evAnalysis(e) {
     var pb = PB.filter(function (p) { return p[0].test(e.t); })[0] || [null, "Publication", "Comparez le chiffre publié à la prévision : c'est l'écart (la surprise) qui fait bouger le marché, pas le niveau.", 1];
     var t = new Date(e.d), past = t.getTime() < Date.now(), fv = numOf(e.f), pv = numOf(e.p), av = numOf(e.a), dir = pb[3];
@@ -7032,6 +7067,7 @@ html.lkon body{overflow:hidden}
     var gold = isUSD ? [dir > 0 ? "or plutôt en baisse (taux et dollar plus hauts)" : "or plutôt en hausse", dir > 0 ? "or plutôt en hausse" : "or plutôt en baisse"] : ["", ""];
     var dec = function (x) { return esc(String(x || "").replace(/(\d)\.(\d)/g, "$1,$2")); };
     var extra = '<h3>Chiffres</h3><div class="stats"><div class="stat"><small>Prévu</small><b>' + (dec(e.f) || "–") + '</b></div><div class="stat"><small>Précédent</small><b>' + (dec(e.p) || "–") + '</b></div><div class="stat"><small>Réel</small><b>' + (dec(e.a) || (past ? "voir la source" : "à venir")) + '</b></div><div class="stat"><small>Impact attendu</small><b>' + ({ High: "fort", Medium: "moyen", Low: "faible", Holiday: "férié" }[e.i] || esc(e.i)) + "</b></div></div>";
+    extra += evDataAnalysis(e);
     if (fv !== null && pv !== null) extra += '<p class="hint" style="max-width:none;margin-top:8px">Le consensus attend ' + (fv > pv ? "une <b>hausse</b>" : fv < pv ? "une <b>baisse</b>" : "un chiffre <b>stable</b>") + " par rapport au précédent (" + dec(e.p) + " → " + dec(e.f) + ").</p>";
     /* Historique officiel et taille d'une vraie surprise */
     var C = AUTO && AUTO.cycle_src, hist = null, unit = "", note_ = "";
@@ -7062,10 +7098,11 @@ html.lkon body{overflow:hidden}
     }
     var rst = reactStats(cur, react_type(e.t));
     if (rst) extra += '<h3>Les fois précédentes (' + rst.n + ')</h3><p>Une heure après, en moyenne : ' + RA.map(function (a) { return rst[a[0]] && rst[a[0]].n ? a[1] + " " + mv(rst[a[0]].avg1, a[0]) + " (± " + (a[0] === "us10" ? fmt(rst[a[0]].abs1, 1) + " pb" : fmt(rst[a[0]].abs1, 2) + " %") + ")" : ""; }).filter(Boolean).join(" · ") + '. <span class="more" style="cursor:pointer" data-det="rx:' + cur + "|" + react_type(e.t) + '">Voir chaque fois ›</span></p>';
-    var rr = SURP && SURP.results ? SURP.results.filter(function (x) { return x.c === cur && x.d === iso(t); })[0] : null;
+    var kOf = function (k) { k = String(k).split("|")[1] || ""; return k === "nfp" ? /Non ?Farm|Employment Change/i : k === "unemp" ? /Unemployment Rate/i : k === "core" ? /Core/i : k === "cpi" ? /^(?!.*Core).*(CPI|Inflation Rate)/i : /^$/; };
+    var rr = SURP && SURP.results ? SURP.results.filter(function (x) { return x.c === cur && x.d === iso(t) && kOf(x.k).test(e.t); })[0] : null;
     if (rr) extra += '<p class="hint" style="max-width:none">Registre des surprises : réel ' + fmt(rr.a, 2) + rr.u + " contre " + fmt(rr.f, 2) + rr.u + ' prévu, <b class="' + (rr.good ? "up" : "down") + '">surprise ' + (rr.s >= 0 ? "+" : "−") + fmt(Math.abs(rr.s), 2) + rr.u + "</b>.</p>";
     return openDetail({ t: frEvent(e.t).t + " · " + cur, val: t.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) + " " + t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }), sub: pb[1] + " · titre original : " + esc(e.t),
-      chart: hist && hist.length > 3 ? hist.slice(-24).map(function (p) { return [MOIS[parseInt(String(p[0]).slice(5, 7), 10) - 1] + " " + String(p[0]).slice(2, 4), p[1]]; }) : null, zero: hist && /Non-Farm|Employment Change/i.test(e.t), extra: extra + (note_ ? '<h3>Taille d\'une vraie surprise</h3><p>' + note_ + "</p>" : "") + react +
+      chart: hist && hist.length > 3 ? hist.slice(-24).map(function (p) { return [MOIS[parseInt(String(p[0]).slice(5, 7), 10) - 1] + " " + String(p[0]).slice(2, 4), p[1]]; }) : (function () { var H = evHist(e).filter(function (x) { return x.a !== null; }); return H.length > 3 ? H.slice(-24).map(function (x) { return [x.d, x.a]; }) : null; })(), zero: hist && /Non-Farm|Employment Change/i.test(e.t), extra: extra + (note_ ? '<h3>Taille d\'une vraie surprise</h3><p>' + note_ + "</p>" : "") + react +
         '<h3>Scénarios</h3><div class="tbl"><table><thead><tr><th>Si le chiffre est…</th><th>Réaction habituelle</th></tr></thead><tbody><tr><td><b>au-dessus</b> de la prévision</td><td>' + up + (gold[0] ? " ; " + gold[0] : "") + (isUSD && dir > 0 ? " ; taux à 2 ans en hausse" : "") + "</td></tr><tr><td><b>en dessous</b> de la prévision</td><td>" + dn + (gold[1] ? " ; " + gold[1] : "") + (isUSD && dir > 0 ? " ; taux à 2 ans en baisse" : "") + "</td></tr><tr><td><b>proche</b> de la prévision</td><td>réaction limitée ; le marché regarde les détails et les révisions</td></tr></tbody></table></div>",
       now: pb[2], how: "Méthode des desks : 1) connaître la prévision et la fourchette des économistes avant ; 2) mesurer l'écart au moment de la publication ; 3) lire les détails (sous-jacent, révisions) ; 4) vérifier si le marché confirme (taux à 2 ans, dollar) avant d'agir. Réduisez la taille des positions juste avant les publications à fort impact.", src: "https://www.forexfactory.com/calendar", srcTxt: "calendrier Forex Factory, chiffres officiels BLS" });
   }
