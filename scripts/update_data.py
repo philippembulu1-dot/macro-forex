@@ -4588,6 +4588,152 @@ def merge_previous(data):
                     cur[kk] = vv
 
 
+def _sentences(txt):
+    return [x.strip() for x in re.split(r"(?<=[.;])\s+", txt) if len(x.strip()) > 25]
+
+
+def do_guide_auto(data):
+    """Guide XAUUSD (8 nov. 2026) : ce qui était en saisie manuelle et qui a une source gratuite.
+    Chaque partie est isolée : une panne n'empêche pas les autres. Les sources incertaines sont sondées (DIAG["sonde"])."""
+    G = {}
+    fed = "https://www.federalreserve.gov"
+    cal = ""
+    try:
+        cal = http("fomc_cal.html", fed + "/monetarypolicy/fomccalendars.htm", timeout=40)
+    except Exception as e:
+        DIAG["guide_cal"] = fr_err(e)[:80]
+    # 1. Communiqué du FOMC : phrases ajoutées / retirées par rapport au précédent, ton
+    try:
+        st = sorted(set(re.findall(r"/newsevents/pressreleases/monetary(\d{8})a\.htm", cal)))
+        st = [d for d in st if d <= NOW.strftime("%Y%m%d")]
+        if len(st) < 2:
+            raise ValueError("communiqués introuvables")
+        def body(d8):
+            h = http("fomc_st_%s.html" % d8, fed + "/newsevents/pressreleases/monetary%sa.htm" % d8, timeout=30)
+            m = re.search(r'(?is)<div[^>]+id="article"[^>]*>(.*?)<div[^>]+(?:class="[^"]*(?:lastUpdate|footer)|id="lastUpdate")', h) or re.search(r'(?is)id="article"(.*)', h)
+            t = strip_html(m.group(1) if m else h)
+            t = re.split(r"Voting for the monetary policy action|For media inquiries|Implementation Note", t)[0]
+            return t.strip()
+        a, b = body(st[-1]), body(st[-2])
+        sa, sb = _sentences(a), _sentences(b)
+        norm = lambda x: re.sub(r"\W+", " ", x.lower()).strip()
+        nb, na = set(norm(x) for x in sb), set(norm(x) for x in sa)
+        added = [x for x in sa if norm(x) not in nb][:6]
+        removed = [x for x in sb if norm(x) not in na][:6]
+        HAWK = r"elevated|firming|further increases|additional increases|upside risks to inflation|tighten|restrictive|raise the target|increase the target"
+        DOVE = r"easing|lower the target|decrease the target|reduce the target|downside risks to employment|moderated|cooling|cut"
+        hk = len(re.findall(HAWK, " ".join(added), re.I)) - len(re.findall(HAWK, " ".join(removed), re.I))
+        dv = len(re.findall(DOVE, " ".join(added), re.I)) - len(re.findall(DOVE, " ".join(removed), re.I))
+        G["fomc"] = {"d": "%s-%s-%s" % (st[-1][:4], st[-1][4:6], st[-1][6:]), "prev": "%s-%s-%s" % (st[-2][:4], st[-2][4:6], st[-2][6:]),
+                     "url": fed + "/newsevents/pressreleases/monetary%sa.htm" % st[-1], "add": added, "rem": removed, "hawk": hk, "dove": dv,
+                     "ton": "hawkish" if hk - dv >= 1 else "dovish" if dv - hk >= 1 else "neutre"}
+        note("guide.fomc", "Communiqué du FOMC : phrases ajoutées et retirées (Fed)", "monthly", True, G["fomc"]["d"], url=G["fomc"]["url"])
+    except Exception as e:
+        note("guide.fomc", "Communiqué du FOMC : phrases ajoutées et retirées (Fed)", "monthly", False, err=e, url=fed + "/monetarypolicy/fomccalendars.htm")
+    # 2. Minutes : dernière publication
+    try:
+        mins = sorted(set(re.findall(r"fomcminutes(\d{8})\.htm", cal)))
+        if not mins:
+            raise ValueError("minutes introuvables")
+        d8 = mins[-1]
+        G["minutes"] = {"d": "%s-%s-%s" % (d8[:4], d8[4:6], d8[6:]), "url": fed + "/monetarypolicy/fomcminutes%s.htm" % d8}
+        note("guide.minutes", "Minutes du FOMC (réunion de référence)", "monthly", True, G["minutes"]["d"], url=G["minutes"]["url"])
+    except Exception as e:
+        note("guide.minutes", "Minutes du FOMC", "monthly", False, err=e)
+    # 3. Beige Book : dernière édition et première phrase de la synthèse
+    try:
+        bb = http("beige.html", fed + "/monetarypolicy/beige-book-default.htm", timeout=30)
+        eds = sorted(set(re.findall(r"beigebook(\d{6})\.htm", bb)))
+        if not eds:
+            raise ValueError("éditions introuvables")
+        ym = eds[-1]
+        url = fed + "/monetarypolicy/beigebook%s.htm" % ym
+        t = strip_html(http("beige_%s.html" % ym, url, timeout=30))
+        m = re.search(r"Overall Economic Activity\s+(.{40,600}?\.)\s", t)
+        G["beige"] = {"ym": ym[:4] + "-" + ym[4:], "url": url, "x": (m.group(1) if m else "")[:500]}
+        note("guide.beige", "Beige Book de la Fed (synthèse)", "monthly", True, G["beige"]["ym"] + "-01", url=url)
+    except Exception as e:
+        note("guide.beige", "Beige Book de la Fed", "monthly", False, err=e)
+    # 4. Discours des membres de la Fed (flux officiel)
+    try:
+        items = parse_feed(http("fed_speeches.xml", fed + "/feeds/speeches.xml", timeout=30))[:6]
+        if not items:
+            raise ValueError("flux vide")
+        G["speeches"] = items
+        note("guide.speech", "Discours des membres de la Fed (flux officiel)", "daily", True, items[0]["d"], url=fed + "/newsevents/speeches.htm")
+    except Exception as e:
+        note("guide.speech", "Discours des membres de la Fed", "daily", False, err=e)
+    # 5. €STR (BCE)
+    try:
+        rows = list(csv.DictReader(io.StringIO(http("estr.csv", "https://data-api.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?format=csvdata&lastNObservations=40", timeout=30))))
+        h = [[r["TIME_PERIOD"], float(r["OBS_VALUE"])] for r in rows if r.get("OBS_VALUE")]
+        if not h:
+            raise ValueError("série vide")
+        G["estr"] = {"v": h[-1][1], "d": h[-1][0], "hist": h}
+        note("guide.estr", "€STR, taux au jour le jour de la zone euro (BCE)", "daily", True, h[-1][0], url="https://data.ecb.europa.eu/")
+    except Exception as e:
+        note("guide.estr", "€STR (BCE)", "daily", False, err=e)
+    # 6. Dette fédérale américaine (Trésor, « debt to the penny »)
+    try:
+        j = json.loads(http("debt.json", "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=400&fields=record_date,tot_pub_debt_out_amt", timeout=30))
+        rows = j.get("data") or []
+        if not rows:
+            raise ValueError("vide")
+        cur = rows[0]
+        yr = [r for r in rows if r["record_date"] <= (datetime.strptime(cur["record_date"], "%Y-%m-%d") - timedelta(days=365)).strftime("%Y-%m-%d")]
+        G["debt"] = {"v": float(cur["tot_pub_debt_out_amt"]), "d": cur["record_date"], "y1": float(yr[0]["tot_pub_debt_out_amt"]) if yr else None}
+        note("guide.debt", "Dette fédérale américaine (Trésor, debt to the penny)", "daily", True, cur["record_date"], url="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/")
+    except Exception as e:
+        note("guide.debt", "Dette fédérale américaine (Trésor)", "daily", False, err=e)
+    # 7. Marchés de prédiction : récession, BCE
+    try:
+        found = []
+        for q in ("recession", "ECB"):
+            try:
+                j = json.loads(http("pm_s_%s.json" % q, "https://gamma-api.polymarket.com/public-search?" + urllib.parse.urlencode({"q": q, "limit_per_type": "8", "events_status": "active"}), timeout=25))
+                for ev in (j.get("events") or [])[:8]:
+                    for mk in (ev.get("markets") or [])[:6]:
+                        try:
+                            pr = json.loads(mk.get("outcomePrices") or "[]")
+                        except Exception:
+                            pr = []
+                        if pr and not mk.get("closed"):
+                            found.append({"q": q, "ev": ev.get("title"), "m": mk.get("question"), "p": float(pr[0]), "end": (mk.get("endDate") or "")[:10], "vol": ev.get("volume")})
+            except Exception as e:
+                DIAG["pm_s_" + q] = fr_err(e)[:80]
+        if not found:
+            raise ValueError("aucun marché trouvé")
+        G["pm"] = found[:30]
+        note("guide.pm", "Polymarket : récession, BCE (probabilités)", "daily", True, TODAY, url="https://polymarket.com/")
+    except Exception as e:
+        note("guide.pm", "Polymarket : récession, BCE", "daily", False, err=e)
+    # 8. Sondes (sources incertaines) : code HTTP et début de réponse, pour décider au passage suivant
+    probe = {}
+    for k, u in (("putcall_cboe", "https://cdn.cboe.com/api/global/us_indices/daily_prices/PUT_CALL_RATIO.json"),
+                 ("putcall_cboe2", "https://www.cboe.com/us/options/market_statistics/daily/"),
+                 ("aaii", "https://www.aaii.com/files/surveys/sentiment.xls"),
+                 ("aaii_page", "https://www.aaii.com/sentimentsurvey/sent_results"),
+                 ("acm", "https://www.newyorkfed.org/medialibrary/media/research/data_indicators/ACMTermPremium.xls"),
+                 ("sge", "https://en.sge.com.cn/data_DelayedQuotes"),
+                 ("ig", "https://www.ig.com/en/ig-client-sentiment"),
+                 ("blackrock", "https://www.blackrock.com/corporate/insights/blackrock-investment-institute/publications/weekly-commentary"),
+                 ("wage_ecb", "https://data-api.ecb.europa.eu/service/data/WTS?lastNObservations=2&format=csvdata")):
+        try:
+            req = urllib.request.Request(u, headers={"User-Agent": UA, "Accept": "*/*"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                b = r.read(400)
+                probe[k] = "%d %s" % (r.status, re.sub(r"\s+", " ", b.decode("utf-8", "replace"))[:160])
+        except urllib.error.HTTPError as e:
+            probe[k] = "HTTP %d" % e.code
+        except Exception as e:
+            probe[k] = fr_err(e)[:80]
+    DIAG["sonde"] = probe
+    old = PREVIOUS.get("guide") or {}
+    for k, v in old.items():
+        G.setdefault(k, v)
+    data["guide"] = G
+
+
 def do_access():
     """Code d'accès du site (8 nov. 2026) : lu dans le secret GitHub ACCESS_CODE, jamais écrit ni affiché.
     Seule une empreinte PBKDF2-SHA256 salée (200 000 tours) est publiée dans data/acces.json ; secret vide = site ouvert."""
@@ -4620,7 +4766,7 @@ def main():
     data = {"fred": {}, "derived": {}, "oecd": {}, "national": {}, "cot": {}, "news": []}
     steps = [("fred", do_fred), ("oecd", do_oecd), ("national", do_national), ("cot", do_cot), ("fng", do_fng),
              ("rss", do_rss), ("calendar", do_calendar), ("markets", do_markets), ("world", do_world), ("videos", do_videos), ("shipping", do_shipping), ("curves", do_curves), ("analyses", do_analyses), ("g8", do_g8), ("flash", do_flash), ("retail", do_retail), ("reserves", do_reserves), ("daily", do_daily), ("policy", do_policy), ("intraday", do_intraday), ("crosses", do_crosses), ("goldetf", do_goldetf), ("cot2", do_cot_detail), ("zq", do_zq), ("ofr", do_ofr), ("bea", do_bea), ("oecdsdmx", do_oecd_sdmx), ("fredapi", do_fred_api), ("fomc", do_fomc_dates), ("consensus", do_consensus_news), ("cbnews", do_cb_news), ("kei", do_kei),
-             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl), ("bankcot", do_bank_cot), ("euguide", do_euro_guide)]
+             ("wgcproj", lambda d: (do_wgc(d), do_wgc_figures(d))), ("ecbproj", lambda d: (do_projections(d), do_ecb_proj_table(d))), ("geo", do_geo), ("euro", do_euro), ("deficits", do_deficits), ("move", do_move), ("ism", do_ism), ("blsinfl", do_bls_infl), ("bankcot", do_bank_cot), ("euguide", do_euro_guide), ("guideauto", do_guide_auto)]
     # Widget Dukascopy : testé le 30 oct. 2026, le site refuse les serveurs de GitHub (403) ; non affiché faute de vérification.
     def run(step):
         name, fn = step

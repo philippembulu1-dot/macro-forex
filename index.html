@@ -5753,18 +5753,30 @@ html.lkon body{overflow:hidden}
     }
     return out.join("").replace(/(<li>[\s\S]*?<\/li>)+/g, function (m) { return "<ul>" + m + "</ul>"; });
   }
-  function rdReader(it) {
+  function rdReader(it, tryN) {
     var box = $("rdFull"); if (!box) return;
-    LN.art = LN.art || {};
+    LN.art = LN.art || {}; tryN = tryN || 0;
+    if (!tryN) { try { var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"); if (cache[it.l]) LN.art[it.l] = cache[it.l].h; } catch (e) { /* stockage indisponible */ } }
     var show = function (h, how) { if (!$("rdFull") || $("reader")._it !== it) return; box.innerHTML = '<h4>Article complet</h4><div class="rdbody">' + h + '</div><p class="hint">' + how + "</p>"; box.hidden = false; var s = $("rdSum"); if (s) s.hidden = true; };
     if (LN.art[it.l]) return show(LN.art[it.l], "Mode lecture (texte de la page publique, traduit automatiquement).");
     if (/news\.google\.com/.test(it.l) && !it.u) { box.hidden = false; box.innerHTML = '<p class="hint">L\'adresse de cet article sera retrouvée au prochain passage du robot ; en attendant, la fiche ci-dessous résume la prévision.</p>'; return; }
-    box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Chargement de l\'article complet…</p>';
-    var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, 20000);
-    fetch("https://r.jina.ai/" + (it.u || it.l), { signal: c ? c.signal : undefined, headers: { "X-Retain-Images": "none", "X-Target-Selector": "article, [itemprop=articleBody], .ArticleBody-articleBody, .article-body, .wysiwyg, main", "X-Remove-Selector": "nav, header, footer, aside, figure, form, .newsletter, .related, .RelatedContent, .social, .share" } })
+    box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Chargement de l\'article complet' + (tryN ? " (nouvel essai " + (tryN + 1) + " sur 3)" : "") + "…</p>";
+    var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, 25000);
+    /* 1er essai : extraction ciblée ; essais suivants : page entière sans en-tête (pas de pré-vérification CORS) */
+    var opt = tryN === 0 ? { signal: c ? c.signal : undefined, headers: { "X-Retain-Images": "none", "X-Target-Selector": "article, [itemprop=articleBody], .ArticleBody-articleBody, .article-body, .wysiwyg, main", "X-Remove-Selector": "nav, header, footer, aside, figure, form, .newsletter, .related, .RelatedContent, .social, .share" } } : { signal: c ? c.signal : undefined };
+    fetch("https://r.jina.ai/" + (it.u || it.l), opt)
       .then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); })
-      .then(function (md) { var h = rdMdHtml(md); if ((h.match(/<p>/g) || []).length < 2) throw new Error("vide"); LN.art[it.l] = h; show(h, "Mode lecture : texte de la page publique de " + esc(it.src || "la source") + ", traduit automatiquement. Si la page est réservée aux abonnés, seul le début public apparaît."); })
-      .catch(function () { if ($("rdFull") && $("reader")._it === it) { box.innerHTML = '<p class="hint">Article complet indisponible pour ce site (page protégée ou service de lecture saturé) : le résumé et la fiche détaillée restent ci-dessous.</p>'; } });
+      .then(function (md) {
+        var h = rdMdHtml(md); if ((h.match(/<p>/g) || []).length < 2) throw new Error("vide");
+        LN.art[it.l] = h;
+        try { var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"), ks = Object.keys(cache); cache[it.l] = { h: h, t: Date.now() }; if (ks.length > 40) ks.sort(function (a, b) { return cache[a].t - cache[b].t; }).slice(0, ks.length - 40).forEach(function (k) { delete cache[k]; }); localStorage.setItem("mf-art", JSON.stringify(cache)); } catch (e) { /* stockage plein */ }
+        show(h, "Mode lecture : texte de la page publique de " + esc(it.src || "la source") + ", traduit automatiquement. Si la page est réservée aux abonnés, seul le début public apparaît.");
+      })
+      .catch(function () {
+        if (!$("rdFull") || $("reader")._it !== it) return;
+        if (tryN < 2) { setTimeout(function () { rdReader(it, tryN + 1); }, tryN ? 6000 : 2500); return; }
+        box.innerHTML = '<p class="hint">Le service de lecture est momentanément saturé pour cet article. <button type="button" class="chip" data-rdretry="1">Réessayer</button> En attendant, le résumé et la fiche détaillée sont ci-dessous.</p>';
+      });
   }
   function rdLoadFull(it) {
     var box = $("rdFull"); if (!box) return;
@@ -5814,8 +5826,8 @@ html.lkon body{overflow:hidden}
   function rdClose() { var box = $("reader"); if (!box || box.hidden) return; box.hidden = true; box.innerHTML = ""; document.body.classList.remove("rdon"); if (box._back && box._back.focus) try { box._back.focus(); } catch (e) { /* élément disparu */ } }
   document.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
-    var c = e.target.closest && e.target.closest("[data-rdclose],[data-rdtr]");
-    if (c) { if (c.dataset.rdtr) rdDoTr(); else rdClose(); return; }
+    var c = e.target.closest && e.target.closest("[data-rdclose],[data-rdtr],[data-rdretry]");
+    if (c) { if (c.dataset.rdretry) { var bx = $("reader"); if (bx && bx._it) rdReader(bx._it, 0); } else if (c.dataset.rdtr) rdDoTr(); else rdClose(); return; }
     var a = e.target.closest && e.target.closest("a[href]"); if (!a || a.dataset.ext || (a.closest(".rdpan") && !a.closest(".rdrel")) || a.closest(".tradingview-widget-container")) return; /* « Sur le même sujet » s'ouvre aussi dans le lecteur */
     var h = a.getAttribute("href") || ""; if (!/^https?:\/\//i.test(h)) return;
     if (/philippembulu1-dot\.github\.io\/macro-forex/i.test(h)) return;
