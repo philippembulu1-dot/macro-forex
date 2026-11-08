@@ -928,6 +928,9 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
 .rdsrcl{margin-top:14px;font-size:.78rem;color:#8a8577}.rdsrcl a{color:#a8a294}
 
 .rdbody p{margin:0 0 10px;line-height:1.7;color:#e4dfd2}.rdbody ul{margin:0 0 10px;padding-left:20px;line-height:1.65}.rdbody li{margin-bottom:4px}.rdbody h5{margin:12px 0 6px;font-size:.95rem;color:#f6e3b0}
+
+.rdload{display:flex;gap:6px;padding:10px 0}.rdload i{width:8px;height:8px;border-radius:50%;background:#f2b01e;animation:rdl 1s infinite ease-in-out}.rdload i:nth-child(2){animation-delay:.15s}.rdload i:nth-child(3){animation-delay:.3s}
+@keyframes rdl{0%,80%,100%{opacity:.2;transform:scale(.7)}40%{opacity:1;transform:none}}
 </style>
 
 </head><body><div class="shell">
@@ -5125,6 +5128,36 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     if (!out.length) { var t = d.body.textContent.replace(/\s+/g, " ").trim(); if (t) out.push("<p>" + esc(t) + "</p>"); }
     return out.join("").replace(/(<li>[\s\S]*?<\/li>)+/g, function (m) { return "<ul>" + m + "</ul>"; });
   }
+  /* Mode lecture : le navigateur demande la page publique de l'article à un service de lecture gratuit (r.jina.ai, CORS ouvert,
+     vérifié le 8 nov. 2026) qui renvoie le texte propre. Rien n'est stocké dans le dépôt ; pas de contournement d'abonnement :
+     si la page est réservée aux abonnés, seul le début public s'affiche. */
+  function rdMdHtml(md) {
+    var body = String(md).split(/Markdown Content:\s*/)[1] || md, out = [], stop = /^(Subscribe|Sign up|Related|Read more|More from|Watch:|WATCH:|Get this delivered|Advertisement|Recommended|Share this|Follow us|©|Copyright)/i;
+    var lines = body.split(/\n+/), n = 0;
+    for (var i = 0; i < lines.length && n < 80; i++) {
+      var l = lines[i].trim(); if (!l) continue;
+      if (stop.test(l) && out.length > 3) break;
+      l = l.replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[*_]{1,3}([^*_]+)[*_]{1,3}/g, "$1").trim();
+      if (!l || /^(watch now|skip navigation|key points|listen|share|close|menu|advertisement)$/i.test(l) || /^[-=_*]{3,}$/.test(l)) continue;
+      if (/^#{1,6}\s/.test(l)) { var h = l.replace(/^#+\s*/, ""); if (h.length > 3 && out.length) out.push("<h5>" + esc(h) + "</h5>"); continue; }
+      if (/^[-*+]\s|^\d+\.\s/.test(l)) { var li = l.replace(/^([-*+]|\d+\.)\s*/, ""); if (li.length > 20) { out.push("<li>" + esc(li) + "</li>"); n++; } continue; }
+      if (l.length < 40 && !/[.!?»"]$/.test(l)) continue;
+      out.push("<p>" + esc(l) + "</p>"); n++;
+    }
+    return out.join("").replace(/(<li>[\s\S]*?<\/li>)+/g, function (m) { return "<ul>" + m + "</ul>"; });
+  }
+  function rdReader(it) {
+    var box = $("rdFull"); if (!box) return;
+    LN.art = LN.art || {};
+    var show = function (h, how) { if (!$("rdFull") || $("reader")._it !== it) return; box.innerHTML = '<h4>Article complet</h4><div class="rdbody">' + h + '</div><p class="hint">' + how + "</p>"; box.hidden = false; var s = $("rdSum"); if (s) s.hidden = true; };
+    if (LN.art[it.l]) return show(LN.art[it.l], "Mode lecture (texte de la page publique, traduit automatiquement).");
+    box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Chargement de l\'article complet…</p>';
+    var c = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (c) c.abort(); }, 20000);
+    fetch("https://r.jina.ai/" + it.l, { signal: c ? c.signal : undefined, headers: { "X-Retain-Images": "none", "X-Target-Selector": "article, [itemprop=articleBody], .ArticleBody-articleBody, .article-body, .wysiwyg, main", "X-Remove-Selector": "nav, header, footer, aside, figure, form, .newsletter, .related, .RelatedContent, .social, .share" } })
+      .then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("http " + r.status); return r.text(); })
+      .then(function (md) { var h = rdMdHtml(md); if ((h.match(/<p>/g) || []).length < 2) throw new Error("vide"); LN.art[it.l] = h; show(h, "Mode lecture : texte de la page publique de " + esc(it.src || "la source") + ", traduit automatiquement. Si la page est réservée aux abonnés, seul le début public apparaît."); })
+      .catch(function () { if ($("rdFull") && $("reader")._it === it) { box.innerHTML = '<p class="hint">Article complet indisponible pour ce site (page protégée ou service de lecture saturé) : le résumé et la fiche détaillée restent ci-dessous.</p>'; } });
+  }
   function rdLoadFull(it) {
     var box = $("rdFull"); if (!box) return;
     var show = function (raw) { if (!$("rdFull") || $("reader")._it !== it) return; var h = rdFullHtml(raw); if (!h) return; box.innerHTML = '<h4>Article complet</h4><div class="rdbody">' + h + '</div><p class="hint">Texte complet publié par ' + esc(it.src) + " dans son propre fil d'actualité, affiché ici comme dans un lecteur de flux (traduit automatiquement).</p>"; box.hidden = false; var s = $("rdSum"); if (s) s.hidden = true; };
@@ -5132,8 +5165,8 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     box.hidden = false; box.innerHTML = '<p class="hint">Chargement de l\'article complet…</p>';
     lnGet("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://investinglive.com/feed/news"), 10000).then(function (x) {
       var j = JSON.parse(x); LN.full = LN.full || {}; (j.items || []).forEach(function (i) { if (i.link && i.content) LN.full[i.link] = i.content; });
-      if (LN.full[it.l]) show(LN.full[it.l]); else if ($("rdFull")) { box.innerHTML = '<p class="hint">Cet article est trop ancien : il n\'est plus dans le fil de la source, seul le résumé reste disponible.</p>'; }
-    }).catch(function () { if ($("rdFull")) box.innerHTML = '<p class="hint">Article complet momentanément indisponible ; le résumé est affiché.</p>'; });
+      if (LN.full[it.l]) show(LN.full[it.l]); else rdReader(it);
+    }).catch(function () { rdReader(it); });
   }
   function rdOpen(href, label) {
     var box = $("reader"); if (!box) return;
@@ -5147,11 +5180,12 @@ ul.flash p.fx,#anList p.fx,.rdrel p.fx{margin:4px 0 2px;color:#b9b3a3;font-size:
     box.innerHTML = '<div class="rdbg" data-rdclose="1"></div><div class="rdpan" role="document"><div class="rdtop"><span class="rdsrc">' + esc(it.src || host) + (when ? " · " + when + " (Kinshasa)" : "") + '</span><button type="button" class="btn rdx-close" data-rdclose="1" aria-label="Fermer">✕</button></div>' +
       '<h2 class="rdt" id="rdT">' + esc(it.t) + "</h2>" + (it.a && it.a.length ? '<div class="rdtags">' + it.a.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") +
       '<p class="rdfr" id="rdFr" hidden></p>' + body +
-      '' + rdRelated(it) + '<p class="rdsrcl">' + (yt ? "Vidéo lue dans le terminal. " : (/investinglive\.com/i.test(orig) ? "Article complet affiché ci-dessus. Page d'origine : " : "Cette source ne diffuse que le résumé ; le texte intégral reste sur son site (droits d'auteur) : ")) + '<a data-ext="1" href="' + esc(orig) + '" target="_blank" rel="noopener">' + (yt ? "voir sur YouTube" : "le lire là-bas") + "</a>.</p>" + '<p class="hint" hidden>' + (yt ? "Vidéo lue dans le terminal." : "Vous restez dans le terminal. Le bouton « Ouvrir » affiche la page d'origine dans un nouvel onglet ; revenez ici en fermant cet onglet.") + "</p></div>";
+      '' + rdRelated(it) + '<p class="rdsrcl">' + (yt ? "Vidéo lue dans le terminal. " : (/financialjuice/i.test(orig) ? "FinancialJuice ne publie que des flashs d'une ligne. Page d'origine : " : "Page d'origine : ")) + '<a data-ext="1" href="' + esc(orig) + '" target="_blank" rel="noopener">' + (yt ? "voir sur YouTube" : "le lire là-bas") + "</a>.</p>" + '<p class="hint" hidden>' + (yt ? "Vidéo lue dans le terminal." : "Vous restez dans le terminal. Le bouton « Ouvrir » affiche la page d'origine dans un nouvel onglet ; revenez ici en fermant cet onglet.") + "</p></div>";
     box.hidden = false; document.body.classList.add("rdon");
     box._back = document.activeElement; var c = box.querySelector(".rdx-close"); if (c) c.focus();
     box._it = it;
-    if (!yt && /investinglive\.com/i.test(orig)) rdLoadFull(it);
+    if (!yt && /investinglive\.com/i.test(orig) && !/financialjuice/i.test(orig)) rdLoadFull(it);
+    else if (!yt && /^https?:\/\//i.test(orig) && !/financialjuice\.com|translate\.google/i.test(orig)) rdReader(it);
   }
   function rdDoTr() {
     var box = $("reader"), it = box && box._it; if (!it) return;
