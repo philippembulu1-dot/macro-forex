@@ -5,6 +5,8 @@ require('fs').mkdirSync('audit-out', { recursive: true });
   const b = await chromium.launch(); const out = 'audit-out/';
   for (const [name, vp] of [['PC', { width: 1400, height: 1000 }], ['TEL', { width: 390, height: 844 }]]) {
     const p = await b.newPage({ viewport: vp }); const errs = [];
+    /* le site a un code d'accès : l'audit du propriétaire pose l'empreinte publiée (data/acces.json) comme si le code avait été tapé */
+    try { const A = JSON.parse(require('fs').readFileSync('data/acces.json', 'utf8')); if (A.on && A.h) await p.addInitScript(h => { try { localStorage.setItem('mf-acces', h); localStorage.setItem('mf-lockon', '1'); } catch (e) { } }, A.h); } catch (e) { }
     p.on('pageerror', e => errs.push('JS: ' + e.message));
     p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|ERR_|net::/.test(m.text())) errs.push('console: ' + m.text().slice(0, 160)); });
     const fails = []; p.on('requestfailed', r => fails.push(r.url().slice(0, 90) + ' → ' + (r.failure() || {}).errorText)); p.on('response', r => { if (r.status() >= 400) fails.push(r.url().slice(0, 90) + ' → ' + r.status()); });

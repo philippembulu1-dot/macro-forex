@@ -969,6 +969,36 @@ html.lkon body{overflow:hidden}
 .shake{animation:shake .4s}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Géopolitique en clair */
+.gchead{display:grid;grid-template-columns:220px 1fr;gap:12px;align-items:stretch}
+.gclvl{border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px;border:1px solid rgba(255,255,255,.1)}
+.gclvl small{color:#a8a294;font-size:.76rem}.gclvl b{font-size:1.7rem;letter-spacing:.04em}.gclvl span{font-size:.76rem;color:#c9c3b3}
+.gclvl.lo{background:rgba(61,220,151,.08);border-color:rgba(61,220,151,.35)}.gclvl.lo b{color:#3ddc97}
+.gclvl.md{background:rgba(242,176,30,.08);border-color:rgba(242,176,30,.4)}.gclvl.md b{color:#f2b01e}
+.gclvl.hi{background:rgba(255,92,79,.08);border-color:rgba(255,92,79,.45)}.gclvl.hi b{color:#ff6f63}
+.gcsum{padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07)}.gcsum p{margin:0 0 6px;line-height:1.55}
+.gch4{margin:16px 0 8px;color:#f2b01e;font-size:.92rem}.gch4 small{color:#8a8577;font-weight:400}
+.gcms{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.gcm{padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:2px}
+.gcm small{color:#a8a294;font-size:.74rem}.gcm b{font-size:1rem}.gcm span{font-size:.74rem;color:#8a8577}
+.gcregs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.gcreg{padding:12px;border-radius:14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08)}
+.gcreg.i3{border-color:rgba(255,92,79,.5);background:rgba(255,92,79,.05)}.gcreg.i2{border-color:rgba(242,176,30,.4)}
+.gcrh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.gcrh b{font-size:1rem}
+.gcint{color:#ff6f63;letter-spacing:2px}.gcint i{color:#3a3730;font-style:normal}
+.gckv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:.84rem;line-height:1.4}.gckv span{color:#8a8577}.gckv b{font-weight:500}
+.gcimp{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.gcimp>small{width:100%;color:#8a8577;font-size:.74rem}
+.gci{display:inline-flex;flex-direction:column;padding:4px 9px;border-radius:9px;background:rgba(255,255,255,.04);font-weight:700;font-size:.84rem}.gci small{font-weight:400;font-size:.68rem;color:#a8a294}
+.gcsp{display:block;color:#6f6a5c;font-size:.68rem}
+.gcpm{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.gcpm li{position:relative;display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:9px;background:rgba(255,255,255,.025);overflow:hidden;font-size:.86rem}
+.gcpm li i{position:absolute;left:0;bottom:0;height:3px;background:#4da3ff}
+.gccal{list-style:none;margin:0;padding:0}.gccal li{display:grid;grid-template-columns:120px 1fr;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.86rem}.gccal time{color:#f2b01e}
+.gcq{margin-top:14px}.gcq summary{cursor:pointer;color:#f2b01e;font-weight:600}.gcq ol{padding-left:20px}.gcq li{margin:10px 0}
+.gcq textarea{width:100%;box-sizing:border-box;margin-top:4px;background:#0f0e0b;color:#ece8dc;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;font:inherit;font-size:.86rem}
+.gcsug{display:block;color:#a8a294;margin-top:2px}
+@media (max-width:640px){.gchead{grid-template-columns:1fr}.gccal li{grid-template-columns:1fr}}
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -4138,7 +4168,7 @@ html.lkon body{overflow:hidden}
     { id: "analyse", grp: "MARCHÉ", t: "Analyse technique", ic: "∿", d: "Graphique de chaque paire, de l'or et des indices avec moyennes mobiles 20/50/100, Bollinger, RSI, MACD ; indices des deux devises ; unités 1 h, 4 h, jour, semaine", blocks: ["ta"], p: [] },
     { id: "calendrier", grp: "MARCHÉ", t: "Calendrier économique", ic: "▦", d: "Prochaines annonces avec compte à rebours, chiffres réels contre prévus, semaine passée, surprises et réactions du marché", blocks: ["next", "rel"], p: ["calendrier", "semaine", "surprises", "reactions"], g: { calendrier: "Calendrier complet", surprises: "Surprises et réactions" } },
     { id: "actus", grp: "MARCHÉ", t: "Actualités et analyses", ic: "✎", d: "Fil d'actualités avec urgences et mots-clés, notes des banques, consensus, communiqués, vidéos", blocks: ["essentiel", "flash", "articles"], p: ["analyses", "consensus", "actus", "videos"], g: { analyses: "Recherche des banques", actus: "Communiqués et vidéos" } },
-    { id: "geo", grp: "MARCHÉ", t: "Géopolitique", ic: "⚑", d: "Moniteur de risque (crises, alertes, prédictions, énergie), trafic maritime et détroits", blocks: ["geo"], p: ["geopol", "maritime"] },
+    { id: "geo", grp: "MARCHÉ", t: "Géopolitique", ic: "⚑", d: "Moniteur de risque (crises, alertes, prédictions, énergie), trafic maritime et détroits", blocks: ["geoclair"], p: ["geopol", "maritime"], g: { geopol: "Détails techniques (pour aller plus loin)" } },
     { id: "macro", grp: "MACRO", t: "Données macro", ic: "▤", d: "Indicateurs des 8 économies, cycle américain, déficits et dettes, projections Fed et BCE, indicateurs des desks, guide de lecture", p: ["indicateurs", "cycle", "deficits", "dotplot", "bceproj", "desk", "lecture"], g: { indicateurs: "Indicateurs", cycle: "Cycle et finances publiques", dotplot: "Projections officielles", lecture: "Guide" } },
     { id: "carte", grp: "MACRO", t: "Carte du monde", ic: "◍", d: "En direct : devise, bourse, taux à 10 ans, taux directeur, inflation, news et prochaine annonce de chaque pays ; G8 : inflation, taux, croissance, chômage, dette, PMI avec classement et comparaison ; carte mondiale détaillée ; réserves", blocks: ["wlive", "g8"], p: ["monde", "reserves"] },
     { id: "banques", grp: "MACRO", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, zone euro", blocks: ["banques"], p: ["bce", "banques", "probas", "agenda", "comite"], g: { bce: "Zone euro", banques: "Taux et probabilités", agenda: "Réunions et comités" } },
@@ -4178,7 +4208,7 @@ html.lkon body{overflow:hidden}
   };
 
   /* Panneaux ouverts d'office dans chaque branche (les autres sont repliés) */
-  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], calendrier: ["calendrier"], actus: ["analyses"], geo: ["geopol"], macro: ["indicateurs"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
+  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
   function setFold(el, folded) {
     el.classList.toggle("fold", folded);
     var b = el.querySelector(":scope > .ph > .foldbtn"); if (b) { b.textContent = folded ? "Afficher ▾" : "Replier ▴"; b.setAttribute("aria-expanded", folded ? "false" : "true"); }
@@ -5199,6 +5229,78 @@ html.lkon body{overflow:hidden}
     var a = e.target.closest && e.target.closest("a[href^='http']");
     if (a && !a.dataset.ext && !a.closest(".rdpan")) { var h = a.getAttribute("href"); if (!ART.read[h]) { ART.read[h] = 1; artSave(); setTimeout(function () { renderDashBlock("articles"); renderDashBlock("essentiel"); }, 50); } }
   }, true);
+  /* ---------- Géopolitique en clair (8 nov. 2026) : étape 1.10 du guide, lisible par un débutant ---------- */
+  var GC_REG = [
+    { n: "Moyen-Orient", c: ["ISR", "PSE", "LBN", "SYR", "IRN", "IRQ", "YEM", "SAU", "ARE", "QAT", "KWT", "OMN", "JOR", "TUR", "EGY", "BHR"], kw: ["iran", "israël", "israel", "gaza", "liban", "hezbollah", "houthi", "yémen", "yemen", "ormuz", "hormuz", "saoudi", "saudi", "riyad", "riyadh", "syrie", "irak", "mer rouge", "red sea"], imp: { or: [1, "monte souvent (refuge)"], usd: [1, "plutôt soutenu"], eur: [-1, "pénalisé si le pétrole monte"] }, canal: "pétrole et gaz, détroits d'Ormuz et de Bab el-Mandeb", st: ["Strait of Hormuz", "Bab el-Mandeb Strait", "Suez Canal"], nrj: "BZ=F" },
+    { n: "Europe de l'Est", c: ["UKR", "RUS", "BLR", "POL", "MDA", "GEO", "ARM", "AZE", "ROU", "BGR", "SRB", "HUN", "LTU", "LVA", "EST", "FIN"], kw: ["ukraine", "russie", "russia", "kiev", "kyiv", "moscou", "moscow", "poutine", "putin", "zelensky", "pologne", "poland", "otan", "nato", "biélorussie"], imp: { or: [1, "monte souvent (refuge)"], usd: [1, "plutôt soutenu"], eur: [-1, "pénalisé (guerre aux portes de l'UE, gaz)"] }, canal: "gaz européen, sanctions, défense", st: ["Bosporus Strait", "Kerch Strait"], nrj: "TTF=F" },
+    { n: "Asie-Pacifique", c: ["CHN", "TWN", "JPN", "KOR", "PRK", "IND", "PAK", "PHL", "VNM", "AUS", "IDN", "MMR", "AFG", "THA"], kw: ["chine", "china", "taïwan", "taiwan", "pékin", "beijing", "corée", "korea", "japon", "japan", "inde", "india", "pakistan", "mer de chine", "south china sea"], imp: { or: [1, "monte si la tension est forte"], usd: [1, "plutôt soutenu"], eur: [0, "effet indirect"] }, canal: "commerce mondial, semi-conducteurs, détroit de Taïwan", st: ["Taiwan Strait", "Malacca Strait"], nrj: null },
+    { n: "Afrique", c: ["SDN", "SSD", "ETH", "SOM", "COD", "NGA", "LBY", "MLI", "NER", "BFA", "KEN", "ZAF", "DZA", "MAR", "TCD", "CAF", "MOZ", "ERI", "DJI"], kw: ["soudan", "sudan", "congo", "rdc", "sahel", "mali", "niger", "libye", "libya", "éthiopie", "ethiopia", "somalie", "somalia", "nigeria"], imp: { or: [0, "effet faible en général"], usd: [0, "effet faible"], eur: [0, "effet faible"] }, canal: "matières premières (or, cuivre, cobalt, cacao), pétrole libyen", st: [], nrj: null },
+    { n: "Amériques", c: ["USA", "MEX", "VEN", "COL", "BRA", "ARG", "CAN", "CUB", "HTI", "PER", "ECU", "CHL", "PRY", "GUY"], kw: ["venezuela", "maduro", "mexique", "mexico", "cuba", "haïti", "brésil", "brazil", "colombie", "canada", "washington", "trump"], imp: { or: [1, "monte si les États-Unis sont impliqués"], usd: [0, "dépend du rôle des États-Unis"], eur: [0, "effet indirect"] }, canal: "pétrole (Venezuela), politique américaine, droits de douane", st: ["Panama Canal"], nrj: "CL=F" }
+  ];
+  var GC_Q = ["Quel est l'événement dominant ?", "Par quel canal touche-t-il les marchés (énergie, commerce, refuge, sanctions) ?", "Des flux physiques sont-ils touchés (pétrole, gaz, fret, détroits) ?", "Le pétrole ou le gaz confirment-ils ?", "Quel marché réagit le plus (or, dollar, euro, actions) ?", "Quelles institutions sont impliquées (ONU, OTAN, G7, OPEP) ?", "Y a-t-il escalade ou désescalade ?", "Qui sont les acteurs clés ?", "Refuge (l'or et le dollar montent ensemble) ou défiance (l'or monte, le dollar baisse) ?", "Quel scénario n'est pas encore pricé, et qu'est-ce qui l'invaliderait ?"];
+  var gcAns = {}; try { gcAns = JSON.parse(localStorage.getItem("mf-geoq") || "{}") || {}; } catch (e) { gcAns = {}; }
+  function gcRegion(R, G) {
+    var C = G.c || {}, TS = G.ts || {}, ser = null;
+    R.c.forEach(function (a) { if (TS[a]) { if (!ser) ser = TS[a].slice(); else TS[a].forEach(function (v, i) { ser[i] = (ser[i] || 0) + v; }); } });
+    var tr = null; if (ser && ser.length >= 14) { var l7 = ser.slice(-7), p = ser.slice(-30, -7), a = l7.reduce(function (s, x) { return s + x; }, 0) / 7, b = p.reduce(function (s, x) { return s + x; }, 0) / (p.length || 1); tr = b ? (a / b - 1) * 100 : null; }
+    var lv = R.c.filter(function (a) { return C[a]; }).map(function (a) { return C[a][0]; }), z = R.c.filter(function (a) { return C[a] && C[a][1] !== null; }).map(function (a) { return C[a][1]; });
+    var top = R.c.filter(function (a) { return C[a]; }).sort(function (a, b) { return C[b][3] - C[a][3]; }).slice(0, 2);
+    var drop = R.st.map(function (n) { var x = AUTO && AUTO.shipping ? straitStats(n) : null; return x && x.ch !== null ? [shipName(n).fr, x.ch] : null; }).filter(Boolean);
+    var flows = drop.filter(function (d) { return d[1] <= -15; });
+    var HOT = /attaque|frappe|missile|guerre|war|strike|attack|military|armée|drone|tué|killed|bombard|invasion|offensive|ceasefire|cessez-le-feu|sanction|blocus|blockade|détroit|strait/i;
+    var news = allNews().concat(G.news || []).filter(function (n) { return kwHit(n.t, R.kw) && Date.now() - (flashTime(n) || Date.parse((n.d || "") + "T12:00:00Z")) < 3 * 864e5; })
+      .sort(function (a, b) { return ((HOT.test(b.t) ? 2 : 0) + (b.u ? 1 : 0)) - ((HOT.test(a.t) ? 2 : 0) + (a.u ? 1 : 0)) || (flashTime(b) || 0) - (flashTime(a) || 0); });
+    var mx = lv.length ? Math.max.apply(null, lv) : 0, zmx = z.length ? Math.max.apply(null, z) : null;
+    /* intensité : escalade statistique, flux physiques coupés, hausse des incidents, news chaudes (le rang des pays seul ne suffit pas : il y a toujours un premier) */
+    var hotN = news.filter(function (n) { return HOT.test(n.t); }).length;
+    var inten = flows.length || (zmx !== null && zmx >= 2 && (tr === null || tr > 0)) ? 3 : (tr !== null && tr > 25) || (zmx !== null && zmx >= 1.5) || hotN >= 3 ? 2 : 1;
+    var type = /attaque|frappe|missile|guerre|war|strike|attack|military|armée|drone|tué|killed/i.test(news.slice(0, 6).map(function (n) { return n.t; }).join(" ")) ? "conflit armé" : /sanction|tarif|douane|tariff/i.test(news.slice(0, 6).map(function (n) { return n.t; }).join(" ")) ? "sanctions, commerce" : /élection|election|vote|gouvernement|government/i.test(news.slice(0, 6).map(function (n) { return n.t; }).join(" ")) ? "politique, élections" : "tensions";
+    return { R: R, tr: tr, inten: inten, type: type, top: top, flows: flows, drop: drop, news: news.slice(0, 3), ser: ser, hotN: hotN };
+  }
+  function gcHtml() {
+    var G = geoData(); if (!G || !G.c) return '<p class="hint">Données géopolitiques en attente du robot.</p>';
+    var mk = G.mkt || {}, Rs = GC_REG.map(function (R) { return gcRegion(R, G); });
+    /* niveau global */
+    var gp = G.gpr && G.gpr.d || [], g7 = gp.slice(-7).map(function (r) { return r[1]; }), all = gp.map(function (r) { return r[1]; }).sort(function (a, b) { return a - b; });
+    var gAvg = g7.length ? g7.reduce(function (s, x) { return s + x; }, 0) / g7.length : null, gPct = gAvg !== null && all.length ? Math.round(all.filter(function (x) { return x <= gAvg; }).length / all.length * 100) : null;
+    var hi = Rs.filter(function (r) { return r.inten === 3; }), mid = Rs.filter(function (r) { return r.inten === 2; });
+    var lvl = hi.length >= 2 || (gPct !== null && gPct >= 85) ? ["ÉLEVÉ", "hi"] : hi.length || mid.length >= 2 || (gPct !== null && gPct >= 60) ? ["MODÉRÉ", "md"] : ["FAIBLE", "lo"];
+    var dom = Rs.slice().sort(function (a, b) { return (b.inten + b.hotN * 0.6) - (a.inten + a.hotN * 0.6); })[0];
+    var rc = G.react && G.react.d5, rcTxt = rc && rc.code ? { R1: "refuge classique : l'or et le dollar montent ensemble", R2: "défiance envers le dollar : l'or monte, le dollar baisse", R3: "choc d'inflation : pétrole et taux montent", R4: "fuite vers la sécurité : or et obligations montent" }[rc.code] || rc.lecture : rc ? rc.lecture : null;
+    var mv = function (k, n) { var m = mk[k]; return m ? '<div class="gcm"><small>' + n + '</small><b class="num ' + cls(m.c5) + '">' + (k === "^TNX" ? (m.c5 >= 0 ? "+" : "−") + Math.abs(m.c5) + " pb" : pct(m.c5)) + "</b><span>1 j : " + (k === "^TNX" ? (m.c1 >= 0 ? "+" : "−") + Math.abs(m.c1) + " pb" : pct(m.c1)) + "</span></div>" : ""; };
+    var head = '<div class="gchead"><div class="gclvl ' + lvl[1] + '"><small>Risque géopolitique aujourd\'hui</small><b>' + lvl[0] + "</b>" + (gPct !== null ? "<span>Indice mondial GPR au " + gPct + "<sup>e</sup> centile sur 3 ans</span>" : "") + "</div>" +
+      '<div class="gcsum"><p><b>Ce qui compte :</b> ' + esc(dom.R.n) + " — " + esc(dom.type) + (dom.news[0] ? ", « " + esc(String(dom.news[0].t).replace(/ - [^-]+$/, "")) + " »" : "") + ".</p><p><b>Canal vers les marchés :</b> " + esc(dom.R.canal) + ".</p>" +
+      (rcTxt ? "<p><b>Le marché sur 5 séances :</b> " + esc(rcTxt) + ".</p>" : "") + (G.note ? '<p><b>Note du pilier Risque et refuge :</b> <span class="' + (G.note.v > 0 ? "up" : G.note.v < 0 ? "down" : "") + '">' + (G.note.v > 0 ? "+" : G.note.v < 0 ? "−" : "") + Math.abs(G.note.v) + "</span> sur une échelle de −2 à +2 (positif = soutien pour l'or).</p>" : "") + "</div></div>";
+    var conf = '<h4 class="gch4">Le marché confirme-t-il ? <small>(variation sur 5 séances)</small></h4><div class="gcms">' + mv("BZ=F", "Pétrole Brent") + mv("TTF=F", "Gaz européen") + mv("GC=F", "Or") + mv("DX-Y.NYB", "Dollar") + mv("^TNX", "Taux US 10 ans") + mv("ITA", "Défense (ETF ITA)") + "</div>";
+    var tr = function (v) { return v === null ? "→ stable" : v > 20 ? "↑ en hausse" : v < -20 ? "↓ en baisse" : "→ stable"; };
+    var chip = function (x, lab) { return '<span class="gci ' + (x[0] > 0 ? "up" : x[0] < 0 ? "down" : "") + '">' + lab + " " + (x[0] > 0 ? "▲" : x[0] < 0 ? "▼" : "=") + "<small>" + esc(x[1]) + "</small></span>"; };
+    var regs = '<h4 class="gch4">Tableau par région</h4><div class="gcregs">' + Rs.map(function (r) {
+      return '<div class="gcreg i' + r.inten + '"><div class="gcrh"><b>' + esc(r.R.n) + '</b><span class="gcint" title="Intensité de 1 (calme) à 3 (crise active)">' + "●".repeat(r.inten) + '<i>' + "●".repeat(3 - r.inten) + "</i></span></div>" +
+        '<div class="gckv"><span>Situation</span><b>' + (r.news[0] ? esc(String(r.news[0].t).replace(/ - [^-]+$/, "")) : "rien de marquant ces 3 derniers jours") + "</b><span>Type</span><b>" + esc(r.type) + '</b><span>Tendance</span><b class="' + (r.tr > 20 ? "down" : r.tr < -20 ? "up" : "") + '">' + tr(r.tr) + (r.tr !== null ? " (" + pct(r.tr) + " d'incidents en 7 j)" : "") + "</b>" +
+        (r.top.length ? "<span>Pays les plus touchés</span><b>" + r.top.map(function (a) { return esc(ctyName(a)); }).join(", ") + "</b>" : "") + (r.drop.length ? "<span>Détroits (trafic 7 j)</span><b>" + r.drop.map(function (d) { return esc(d[0]) + ' <span class="' + cls(d[1]) + '">' + pct(d[1]) + "</span>"; }).join(" · ") + "</b>" : "") + "</div>" +
+        '<div class="gcimp"><small>Si la tension monte, effet habituel :</small>' + chip(r.R.imp.or, "Or") + chip(r.R.imp.usd, "Dollar") + chip(r.R.imp.eur, "Euro") + "</div>" + (r.ser ? geoSpark(r.ser, 220, 30) + '<small class="gcsp">incidents par jour, 30 jours</small>' : "") + "</div>";
+    }).join("") + "</div>";
+    /* événements actifs */
+    var ev = Rs.filter(function (r) { return r.inten >= 2 || r.news.length >= 2; }).map(function (r) {
+      var e = r.R.nrj && mk[r.R.nrj], oilUp = e && e.c5 > 2, note = r.inten === 3 ? (oilUp || (mk["GC=F"] && mk["GC=F"].c5 > 1) ? 2 : 1) : r.inten === 2 ? 1 : 0;
+      if (r.R.n === "Afrique" || r.R.imp.or[0] === 0) note = Math.min(note, 1);
+      return "<tr><td><b>" + esc(r.R.n) + "</b><br><small>" + esc(r.type) + "</small></td><td>" + esc(r.R.canal) + '</td><td class="num">' + r.inten + " / 3</td><td>" + (r.flows.length ? '<b class="down">oui</b> (' + r.flows.map(function (f) { return esc(f[0]) + " " + pct(f[1]); }).join(", ") + ")" : "non") + "</td><td>" + tr(r.tr) + '</td><td class="num"><b class="' + (note > 0 ? "up" : note < 0 ? "down" : "") + '">' + (note > 0 ? "+" : "") + note + "</b></td></tr>";
+    });
+    var evt = '<h4 class="gch4">Événements actifs</h4>' + (ev.length ? '<div class="tbl"><table class="mini"><thead><tr><th>Événement</th><th>Canal</th><th class="r">Intensité</th><th>Flux physiques touchés ?</th><th>Tendance</th><th class="r">Note or</th></tr></thead><tbody>' + ev.join("") + "</tbody></table></div><p class=\"hint\">Note or de −2 à +2 : +2 = crise active confirmée par le pétrole ou l'or, +1 = tension qui peut soutenir l'or, 0 = sans effet. Proposition automatique à valider par vous.</p>" : '<p class="hint">Aucun événement actif fort en ce moment.</p>');
+    /* marchés de prédiction */
+    var pm = (G.pm || []).filter(function (p) { return p.q === p.ev && p.p >= 0.01; }).slice(0, 5);
+    var pmh = pm.length ? '<h4 class="gch4">Ce que parient les marchés de prédiction (Polymarket)</h4><ul class="gcpm">' + pm.map(function (p) { return "<li><span>" + esc(p.q) + '</span><b class="num">' + Math.round(p.p * 100) + ' %</b><i style="width:' + Math.max(2, Math.round(p.p * 100)) + '%"></i></li>'; }).join("") + "</ul>" : "";
+    /* agenda */
+    var cal = (G.cal || []).concat(G.cal_auto_items || []).filter(function (c) { return c[1] >= iso(new Date()); }).sort(function (a, b) { return a[0] < b[0] ? -1 : 1; }).slice(0, 5);
+    var calh = cal.length ? '<h4 class="gch4">À venir</h4><ul class="gccal">' + cal.map(function (c) { return "<li><time>" + shortD(c[0]) + (c[1] !== c[0] ? " – " + shortD(c[1]) : "") + "</time><span>" + esc(c[2]) + " <small>(" + esc(c[3]) + ")</small></span></li>"; }).join("") + "</ul>" : "";
+    /* les 10 questions */
+    var sug = [dom.R.n + " : " + dom.type, dom.R.canal, Rs.some(function (r) { return r.flows.length; }) ? "oui : " + Rs.filter(function (r) { return r.flows.length; }).map(function (r) { return r.flows.map(function (f) { return f[0] + " " + pct(f[1]).replace(/<[^>]+>/g, ""); }).join(", "); }).join(" ; ") : "non, pas de baisse forte du trafic dans les détroits",
+      mk["BZ=F"] ? "Brent " + (mk["BZ=F"].c5 >= 0 ? "+" : "") + mk["BZ=F"].c5 + " % sur 5 séances" + (mk["TTF=F"] ? ", gaz TTF " + (mk["TTF=F"].c5 >= 0 ? "+" : "") + mk["TTF=F"].c5 + " %" : "") : "", "", "", dom.tr > 20 ? "escalade (incidents en hausse)" : dom.tr < -20 ? "désescalade (incidents en baisse)" : "stable", dom.top.map(ctyName).join(", "), rcTxt || "", ""];
+    var qs = '<details class="gcq"><summary>Les 10 questions du guide (étape 1.10) : réponses proposées et vos notes</summary><ol>' + GC_Q.map(function (q, i) { return "<li><b>" + q + "</b>" + (sug[i] ? '<small class="gcsug">Proposition du terminal : ' + esc(sug[i]) + "</small>" : "") + '<textarea data-gcq="' + i + '" rows="2" placeholder="Votre réponse (enregistrée sur cet appareil)">' + esc(gcAns[i] || "") + "</textarea></li>"; }).join("") + "</ol></details>";
+    return head + conf + regs + evt + pmh + calh + qs +
+      '<p class="hint">Sources : presse mondiale codée par GDELT (incidents et conflits, mis à jour toutes les 25 min), indice GPR Caldara-Iacoviello, trafic des détroits (FMI PortWatch), cours Yahoo Finance, Polymarket, actualités. « Effet habituel » = ce qui se passe le plus souvent, pas une prévision. Les détails techniques (pays, escalades statistiques, carte) sont plus bas.</p>';
+  }
+  document.addEventListener("input", function (e) { var t = e.target; if (t.dataset && t.dataset.gcq !== undefined) { gcAns[t.dataset.gcq] = t.value; try { localStorage.setItem("mf-geoq", JSON.stringify(gcAns)); } catch (x) { /* stockage indisponible */ } } });
   /* ---------- Fiche détaillée d'un article, rédigée par le terminal (8 nov. 2026) ----------
      On ne recopie pas le texte des journaux (droits d'auteur) : la fiche assemble le résumé publié par la source,
      les chiffres repérés dans le titre, l'annonce du calendrier correspondante, la réaction des marchés depuis
@@ -5657,6 +5759,7 @@ html.lkon body{overflow:hidden}
     { id: "risque", t: "Sentiment de risque", f: riskHtml },
     { id: "banques", t: "Banques centrales : prochaines réunions", f: banksHtml },
     { id: "geo", t: "Géopolitique", f: geoHtml },
+    { id: "geoclair", t: "Géopolitique en clair : où ça chauffe et ce que ça change", f: gcHtml, w: 1 },
     { id: "flash", t: "Actualités", f: function () { return flashHtml(18); }, w: 1 },
     { id: "essentiel", t: "L'essentiel du jour", f: essHtml, w: 1 },
     { id: "articles", t: "Articles : à lire et déjà lus", f: artsHtml, w: 1 },
@@ -5676,7 +5779,7 @@ html.lkon body{overflow:hidden}
   function renderDashBlock(id) {
     var b = DASH.filter(function (x) { return x.id === id; })[0]; if (!b) return;
     var anim = typeof UACT !== "undefined" && Date.now() - UACT < 900;
-    Array.prototype.forEach.call(document.querySelectorAll('.dblk[data-blk="' + id + '"] .dbody'), function (el) { if (el.closest(".branch") && !el.closest(".branch.on")) return; var y = window.scrollY; try { el.innerHTML = b.f(); } catch (e) { el.innerHTML = '<p class="hint">Bloc indisponible pour le moment.</p>'; } if (anim) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); } if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); });
+    Array.prototype.forEach.call(document.querySelectorAll('.dblk[data-blk="' + id + '"] .dbody'), function (el) { if (el.closest(".branch") && !el.closest(".branch.on")) return; if (document.activeElement && /TEXTAREA|INPUT/.test(document.activeElement.tagName) && el.contains(document.activeElement)) return; /* ne pas effacer une saisie en cours */ var y = window.scrollY; try { el.innerHTML = b.f(); } catch (e) { el.innerHTML = '<p class="hint">Bloc indisponible pour le moment.</p>'; } if (anim) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); } if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); });
   }
   function dashHtml() {
     var ord = dashOrder();
