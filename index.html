@@ -1900,8 +1900,9 @@ html.lkon body{overflow:hidden}
   function fmt(v, d) { return v.toFixed(d).replace(".", ","); }
   function pct(v) { return (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2).replace(".", ",") + " %"; }
   function parseD(s) { return new Date(s + "T00:00:00"); }
-  function shortD(s) { return parseD(s).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }); }
-  function longD(s) { return parseD(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long", year: "numeric" }); }
+  var SHORTD = {}, LONGD = {}; /* mémo : mêmes dates formatées des milliers de fois à chaque rendu */
+  function shortD(s) { var k = String(s); return SHORTD[k] || (SHORTD[k] = parseD(s).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })); }
+  function longD(s) { var k = String(s); return LONGD[k] || (LONGD[k] = parseD(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long", year: "numeric" })); }
   function cls(v) { return v >= 0 ? "up" : "down"; }
   function pairOf(p) { return PAIRS.filter(function (x) { return x.id === p; })[0]; }
   function dates() { return Object.keys(state.data).sort(); }
@@ -6980,7 +6981,8 @@ html.lkon body{overflow:hidden}
      CE MATIN (résumé de la veille) ET MÉMOIRE DES RÉACTIONS DU MARCHÉ (31 oct. 2026)
      ===================================================================== */
   var KIN = "Africa/Kinshasa", SCORE_OR = null, REACT = null;
-  function kinDay(d) { return (d || new Date()).toLocaleDateString("en-CA", { timeZone: KIN }); }
+  var KIN_FMT = null; /* formateur réutilisé : toLocaleDateString recréait un formateur à chaque appel (lent sur téléphone) */
+  function kinDay(d) { if (!KIN_FMT) { try { KIN_FMT = new Intl.DateTimeFormat("en-CA", { timeZone: KIN, year: "numeric", month: "2-digit", day: "2-digit" }); } catch (e) { return (d || new Date()).toLocaleDateString("en-CA", { timeZone: KIN }); } } return KIN_FMT.format(d || new Date()); }
   function kinTime(d) { return d.toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }); }
   var DL = { gold: ["Or", 2, ""], silver: ["Argent", 2, ""], nq: ["Nasdaq 100", 0, ""], es: ["S&P 500", 0, ""], dxy: ["Dollar (DXY)", 2, ""], us10: ["Taux US 10 ans", 2, " %"],
     eur: ["EUR/USD", 4, ""], gbp: ["GBP/USD", 4, ""], jpy: ["USD/JPY", 2, ""], oil: ["Pétrole WTI", 2, " $"], vix: ["VIX", 1, ""], btc: ["Bitcoin", 0, " $"] };
@@ -7944,7 +7946,7 @@ html.lkon body{overflow:hidden}
   function loadAuto() {
     var p = Promise.reject(new Error("start")), pick = function (u) { return function () { return getJson(u).then(function (j) { if (!validAuto(j)) throw new Error("format"); return j; }); }; };
     AUTO_URLS.forEach(function (u) { p = p.catch(pick(u)); });
-    return p.then(function (j) { AUTO = j; autoErr = ""; try { localStorage.setItem("mf-macro", JSON.stringify(j)); } catch (e) { } })
+    return p.then(function (j) { AUTO = j; autoErr = ""; var save = function () { try { localStorage.setItem("mf-macro", JSON.stringify(j)); } catch (e) { } }; if (window.requestIdleCallback) requestIdleCallback(save, { timeout: 20000 }); else setTimeout(save, 4000); })
       .catch(function (e) {
         autoErr = String(e && e.message || e);
         if (!AUTO) { try { var c = JSON.parse(localStorage.getItem("mf-macro")); if (validAuto(c)) AUTO = c; } catch (x) { } }

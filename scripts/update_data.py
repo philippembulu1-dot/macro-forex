@@ -2777,6 +2777,12 @@ FLASH_FEEDS = [
     ("BBC Business", "marchés", ["https://feeds.bbci.co.uk/news/business/rss.xml"]),
     ("BBC Monde", "monde", ["https://feeds.bbci.co.uk/news/world/rss.xml"]),
     ("Al Jazeera", "monde", ["https://www.aljazeera.com/xml/rss/all.xml"]),
+    # Ajout du 8 nov. 2026 : Bloomberg (flux RSS publics : titres et chapô) et Reuters (pas de flux public : titres via Google Actualités, lien réel résolu)
+    ("Bloomberg", "marchés", ["https://feeds.bloomberg.com/markets/news.rss"]),
+    ("Bloomberg Économie", "marchés", ["https://feeds.bloomberg.com/economics/news.rss"]),
+    ("Bloomberg Politique", "monde", ["https://feeds.bloomberg.com/politics/news.rss"]),
+    ("Reuters", "marchés", ["https://news.google.com/rss/search?q=site:reuters.com+(markets+OR+business+OR+economy+OR+gold+OR+dollar)+when:1d&hl=en-US&gl=US&ceid=US:en"]),
+    ("Reuters Monde", "monde", ["https://news.google.com/rss/search?q=site:reuters.com+world+when:1d&hl=en-US&gl=US&ceid=US:en"]),
 ]
 RX_URGENT = re.compile(r"\b(breaking|urgent|flash|alert|emergency|surprise[sd]?|unexpected(ly)?|shock|plunge[sd]?|soar(s|ed)?|surge[sd]?|crash(es|ed)?|tumble[sd]?|"
                        r"rate (cut|hike)|cuts? rates?|hikes? rates?|FOMC|Powell|Lagarde|Ueda|Bailey|intervention|"
@@ -2790,6 +2796,7 @@ RX_ASSET = [("XAU", re.compile(r"\b(gold|XAU|bullion|precious)\b", re.I)), ("USD
 
 def do_flash(data):
     items = []
+    GN_CACHE.update({k: v for k, v in ((PREVIOUS.get("gn_urls") or {}).items()) if v and k not in GN_CACHE})
 
     def one(feed):
         name, kind, urls = feed
@@ -2799,6 +2806,17 @@ def do_flash(data):
                 got = parse_feed(http("fl_%s_%d.xml" % (re.sub(r"\W", "", name), k), url, tries=1, timeout=20))[:40]
                 if not got:
                     raise ValueError("flux vide")
+                if name.startswith("Reuters"):
+                    got = [g for g in got if re.search(r"\s[-\u2013]\s*Reuters\s*$", g["t"])]
+                    end_ = time.time() + 45
+                    for g in got:
+                        g["t"] = re.sub(r"\s[-\u2013]\s*Reuters\s*$", "", g["t"]).strip()
+                        g["x"] = ""  # le résumé Google Actualités ne fait que répéter le titre
+                        u = gnews_resolve(g.get("l"), end_)
+                        if u:
+                            g["l"] = u
+                    if not got:
+                        raise ValueError("aucun titre Reuters")
                 for g in got:
                     g.update({"src": name, "k": kind, "u": bool(RX_URGENT.search(g["t"])),
                               "a": [code for code, rx in RX_ASSET if rx.search(g["t"])]})
@@ -2810,7 +2828,7 @@ def do_flash(data):
             except Exception as e:
                 err = "%s (%s)" % (fr_err(e), url)
         note("fl." + re.sub(r"\W", "", name).lower(), "Fil flash : " + name, "news", False, err=err, url=urls[0])
-    with ThreadPoolExecutor(5) as ex:
+    with ThreadPoolExecutor(6) as ex:
         list(ex.map(one, FLASH_FEEDS))
     seen, out = set(), []
     for it in sorted(items, key=lambda i: i.get("ts") or (i["d"] or "") + "T00:00Z", reverse=True):
@@ -2818,8 +2836,13 @@ def do_flash(data):
         if key and key not in seen:
             seen.add(key)
             out.append(it)
+    with LOCK:
+        gu = dict(PREVIOUS.get("gn_urls") or {})
+        gu.update(data.get("gn_urls") or {})
+        gu.update({k: v for k, v in GN_CACHE.items() if v})
+        data["gn_urls"] = dict(list(gu.items())[-600:])
     if out:
-        data["flash"] = out[:150]
+        data["flash"] = out[:200]
     elif PREVIOUS.get("flash"):
         data["flash"] = PREVIOUS["flash"]
 
@@ -3832,8 +3855,8 @@ def geo_extra(g):
                 raise ValueError("aucune réponse")
             r = j["chart"]["result"][0]
             cl = [(datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), c) for t, c in zip(r["timestamp"], r["indicators"]["quote"][0]["close"]) if c is not None]
-            if len(cl) < 25:
-                raise ValueError("historique trop court")
+            if len(cl) < 10:
+                raise ValueError("historique trop court (%d)" % len(cl))
             last = cl[-1][1]
             ch = lambda n: round((last / cl[-1 - n][1] - 1) * 100, 2) if len(cl) > n and cl[-1 - n][1] else None
             if sym == "^TNX":  # rendement : variation en points de base
@@ -4851,7 +4874,7 @@ def do_guide_auto(data):
                     S2.setdefault(k, {"k": k, "t": (r.get("TITLE") or "")[:160], "h": []})["h"].append([r["TIME_PERIOD"], round(float(r["OBS_VALUE"]), 2)])
             DIAG["inw_series"] = sorted(S2)[:8]
             if S2:
-                x = S2[sorted(S2)[0]]
+                x = S2[sorted(S2, key=lambda k: (".U2." not in k, ".I9." not in k, k))[0]]
                 x["h"].sort()
                 G["negw"] = x
         except Exception as e2:
