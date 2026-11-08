@@ -5872,6 +5872,8 @@ html.lkon body{overflow:hidden}
     var url = realU || it.l, pw = RD_PW.test(rdHost(url)), alt = pw ? (it.alt && it.alt.l ? it.alt : rdAltLocal(it)) : null;
     /* abonnés : l'article public équivalent d'abord (rapide et lisible), la page d'origine ensuite */
     var altL = alt ? [alt].concat(it.alt === alt ? (it.alts || []) : []) : [];
+    if (pw && it.alt) { var loc = rdAltLocal(it); if (loc && !altL.some(function (a) { return a.l === loc.l; })) altL.push(loc); } /* titre proche du fil en dernier recours */
+    var own = pw ? ' <a class="chip" data-ext="1" href="' + esc(url) + '" target="_blank" rel="noopener">Lire l\'original sur ' + esc((it.src || rdHost(url)).replace(/ (Monde|Politique|Économie)$/, "")) + " avec mon compte</a>" : "";
     var targets = altL.length ? altL.map(function (a) { return { u: a.l, alt: a }; }) : pw ? [] : [{ u: url }], ti = 0, list = [{ id: "tous", race: rdSvcOrder().filter(function (x) { return x.id !== "jina2"; }) }], i = 0;
     if (pw && !alt) tryN = 1; /* rien à lire : message tout de suite, sans attente */
     var step = function () {
@@ -5879,13 +5881,13 @@ html.lkon body{overflow:hidden}
       if (i >= list.length) { ti++; i = 0; }
       if (ti >= targets.length) {
         if (tryN < 1) { box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">Les services de lecture sont chargés, nouvel essai dans quelques secondes…</p>'; setTimeout(function () { rdReader(it, tryN + 1); }, 5000); return; }
-        box.innerHTML = '<p class="hint">' + (pw ? "Le texte de cet article est réservé aux abonnés de " + esc(it.src || "la source") + (alt ? "" : " et aucun média public n'a encore repris cette information") + " : le résumé et la fiche détaillée sont ci-dessous." : "Le texte complet de cet article n'a pas pu être lu (page protégée ou services de lecture indisponibles). Le résumé et la fiche détaillée sont ci-dessous.") + ' <button type="button" class="chip" data-rdretry="1">Réessayer</button></p>';
+        box.innerHTML = '<p class="hint">' + (pw ? "Le texte de cet article est réservé aux abonnés de " + esc(it.src || "la source") + (alt ? "" : " et aucun média public n'a encore repris cette information") + " : le résumé et la fiche détaillée sont ci-dessous." + own : "Le texte complet de cet article n'a pas pu être lu (page protégée ou services de lecture indisponibles). Le résumé et la fiche détaillée sont ci-dessous.") + ' <button type="button" class="chip" data-rdretry="1">Réessayer</button></p>';
         return;
       }
       var tg = targets[ti], svc = list[i++];
       box.hidden = false; box.innerHTML = '<div class="rdload"><i></i><i></i><i></i></div><p class="hint">' + (tg.alt ? "Article réservé aux abonnés de " + esc(it.src || "la source") + " : chargement de la même information publiée par " + esc(tg.alt.s) + (targets.length > 1 ? " (source " + (ti + 1) + " sur " + targets.length + ")" : "") + "…" : "Chargement de l'article complet…") + "</p>";
       rdFetchSvc(svc, tg.u).then(function (h) {
-        if (tg.alt) h = '<p class="rdalt"><b>Même information, article public de ' + esc(tg.alt.s) + "</b> : « " + esc(tg.alt.t) + " ». L'article d'origine de " + esc(it.src || "la source") + " est réservé à ses abonnés.</p>" + h;
+        if (tg.alt) h = '<p class="rdalt"><b>Même information, article public de ' + esc(tg.alt.s) + "</b> : « " + esc(tg.alt.t) + " ». L'article d'origine de " + esc(it.src || "la source") + " est réservé à ses abonnés." + own + "</p>" + h;
         LN.art[it.l] = h;
         try { localStorage.setItem("mf-rdsvc", RD_WIN || svc.id); var cache = JSON.parse(localStorage.getItem("mf-art") || "{}"), ks = Object.keys(cache); cache[it.l] = { h: h, t: Date.now() }; if (ks.length > 40) ks.sort(function (a, b) { return cache[a].t - cache[b].t; }).slice(0, ks.length - 40).forEach(function (k) { delete cache[k]; }); localStorage.setItem("mf-art", JSON.stringify(cache)); } catch (e) { /* stockage plein */ }
         show(h, "Mode lecture : texte de la page publique de " + esc(tg.alt ? tg.alt.s : (it.src || "la source")) + ", traduit automatiquement.");
