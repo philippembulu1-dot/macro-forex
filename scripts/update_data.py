@@ -5243,7 +5243,9 @@ def main():
     if not ONLY:
         with LOCK:
             have = set(x["id"] for x in SOURCES)
-            SOURCES.extend(x for x in (PREVIOUS.get("sources") or []) if x.get("id") not in have and not str(x.get("id", "")).startswith("robot."))
+            alive = set("fl." + re.sub(r"\W", "", f[0]).lower() for f in FLASH_FEEDS) | set("an." + re.sub(r"\W", "", f[0]).lower() for f in ANALYSIS_FEEDS)
+            SOURCES.extend(x for x in (PREVIOUS.get("sources") or []) if x.get("id") not in have and not str(x.get("id", "")).startswith("robot.")
+                           and not (str(x.get("id", "")).startswith(("fl.", "an.")) and x.get("id") not in alive))  # flux retirés : plus affichés
         for k, v in (PREVIOUS.get("diag") or {}).items():
             DIAG.setdefault(k, v)
     data["sched"] = SCHED
