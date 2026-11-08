@@ -1330,8 +1330,8 @@ def do_ism(data):
     # L'API renvoie un nombre limité d'événements par requête : fenêtres de 40 jours. Historique complet une fois par jour,
     # sinon seulement la fenêtre récente (les anciens chiffres viennent du passage précédent).
     old = PREVIOUS.get("ism") or {}
-    full = old.get("full_day") != TODAY or not old.get("series")
-    start = NOW - timedelta(days=400 if full else 45)
+    full = old.get("full_day") != TODAY or not old.get("series") or not any("jobless" in k.lower() for k in (old.get("series") or {}))
+    start = NOW - timedelta(days=480 if full else 45)  # 8 nov. 2026 : 16 mois pour la règle de Sahm
     url = "https://economic-calendar.tradingview.com/events?countries=US"
     try:
         rows = []
@@ -1349,7 +1349,7 @@ def do_ism(data):
             t = (e.get("title") or "").strip()
             titles.add(t)
             # Autres publications d'inflation (guide de l'utilisateur, étape 1.3) : chiffre réel ET consensus
-            if re.search(r"inflation|\bcpi\b|\bpce\b|\bppi\b|producer price|michigan|import price|export price|average hourly|employment cost|core price", t, re.I) and not re.match(r"^ISM\b", t, re.I):
+            if re.search(r"inflation|\bcpi\b|\bpce\b|\bppi\b|producer price|michigan|import price|export price|average hourly|employment cost|core price|jobless claims|jolts|retail sales|gdp growth|non farm payrolls|nonfarm payrolls|unemployment rate|durable goods|consumer confidence", t, re.I) and not re.match(r"^ISM\b", t, re.I):
                 series.setdefault("tv." + t, []).append({"d": (e.get("date") or "").replace(".000Z", "Z"), "a": e.get("actual"), "f": e.get("forecast"), "p": e.get("previous"), "t": t})
                 continue
             if not re.match(r"^ISM\b", t, re.I):
