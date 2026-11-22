@@ -1049,6 +1049,37 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
 .evhmini td,.evhmini th{padding:4px 6px}.evgraph{width:100%;height:auto;background:rgba(255,255,255,.02);border-radius:6px}.calxctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.calxf{margin:10px 0 0}
 .calbtn[aria-expanded="true"]{border-color:var(--amber);background:rgba(242,176,30,.12)}
 @media (max-width:600px){tr.calxrow td{display:table-cell!important}.calx{padding:10px 8px}}
+/* Analyste IA (débriefing du matin) : styles limités à #ia, aucun effet sur le reste du site */
+#ia .iaagent{padding:12px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(242,176,30,.07),transparent)}
+#ia .iaag-h{display:flex;gap:8px;align-items:center;margin-bottom:8px;font:600 11px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+#ia .iaag-in{display:flex;gap:8px}
+#ia .iaag-in input{flex:1;min-width:0;padding:9px 10px;font:13px var(--font-body);background:var(--bg);color:var(--muted);border:1px solid var(--line);border-radius:6px}
+#ia .iaag-in button{padding:9px 14px;font:600 11px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:6px}
+#ia .iaag-in input:disabled,#ia .iaag-in button:disabled{opacity:.55;cursor:not-allowed}
+#ia .iast{margin:10px 12px 0;padding:8px 10px;border:1px solid #6b5214;background:var(--amber-soft);font-size:12px;line-height:1.45}
+#ia .iast.bad{border-color:#6b2a24;background:rgba(255,92,79,.07)}
+#ia .iatitre{padding:14px 12px 2px;font:600 17px/1.35 var(--font-body)}
+#ia .iagen{padding:0 12px 4px;font:11px var(--font-mono);color:var(--muted)}
+#ia ol.ialines{margin:0;padding:8px 14px 12px 34px}#ia ol.ialines li{margin:7px 0;line-height:1.5;font-size:14px}
+#ia .iah{margin:0;padding:10px 12px 4px;font:600 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber);border-top:1px solid var(--line2)}
+#ia .pcard p{margin:0 0 6px;font-size:13px;line-height:1.5}
+#ia ul.iap{margin:0;padding-left:18px}#ia ul.iap li{margin:4px 0;font-size:13px;line-height:1.45}
+#ia table.iat{width:100%;border-collapse:collapse;font-size:12.5px}#ia table.iat th{font:600 10px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line2)}
+#ia table.iat td{padding:7px 8px;border-bottom:1px solid var(--line2);vertical-align:top;line-height:1.4}
+#ia .iad{white-space:nowrap;font:12px var(--font-mono)}#ia .iamut{color:var(--muted)}
+#ia .iatiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1px;background:var(--line2)}
+#ia .iatiles .tile b{font:600 15px var(--font-mono)}#ia .iatiles .tile span{font-size:12px;line-height:1.4;color:var(--fg)}
+#ia .iasc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line2);margin-top:8px}
+#ia .iasc>div{background:var(--panel);padding:8px 10px;font-size:12.5px;line-height:1.45}#ia .iasc b{display:block;margin-bottom:4px;font:600 10px var(--font-mono);letter-spacing:.08em;text-transform:uppercase}
+#ia .iaev{padding:10px 12px;border-top:1px solid var(--line2)}#ia .iaev h4{margin:0 0 4px;font:600 13px var(--font-body)}
+#ia .iaev .iaen{font:11px var(--font-mono);color:var(--muted);margin-bottom:6px}
+#ia .iaan{padding:2px 12px 8px}#ia .iaan p{margin:6px 0;font-size:14px;line-height:1.55}
+#ia .iachain{margin:6px 0;padding:8px 10px;border-left:3px solid var(--amber);background:rgba(242,176,30,.05)}
+#ia .iachain small{display:block;margin-bottom:4px;font:600 10px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+#ia .iachain ol{margin:0;padding-left:18px}#ia .iachain li{margin:4px 0;font-size:13px;line-height:1.45}
+#ia .iaconc{margin:0;padding:8px 12px 12px;font:600 14px/1.5 var(--font-body)}
+#ia .iawarn{margin:6px 12px;padding:6px 10px;border:1px dashed #6b5214;color:var(--amber);font-size:12px}
+@media (max-width:700px){#ia .iasc{grid-template-columns:1fr}#ia .iatitre{font-size:15px}#ia table.iat{min-width:520px}}
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -1626,6 +1657,17 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
         <div class="pcard"><h3>Scénarios de risque de la BCE (conflit au Moyen-Orient)</h3><div class="tbl"><table id="bpScn"></table></div></div>
       </div>
       <p class="note">Projections des services de la BCE (en % ; chômage en % de la population active). Le robot repère chaque nouvelle publication sur le site de la BCE et lit son tableau automatiquement (croissance, inflation, inflation sous-jacente, chômage) ; prochaine publication attendue en décembre.</p>
+    </section>
+
+    <section class="panel" id="ia">
+      <div class="ph"><h2>Débriefing IA et agent</h2><span class="meta" id="iaMeta">chargé à l'ouverture</span></div>
+      <div class="iaagent" id="iaAgent">
+        <div class="iaag-h"><span>Agent IA</span><span class="badge">bientôt</span></div>
+        <div class="iaag-in"><input type="text" disabled placeholder="Pose ta question à l'analyste (bientôt disponible)" aria-label="Question à l'agent IA (bientôt disponible)"><button type="button" disabled>Envoyer</button></div>
+        <p class="hint" style="margin-top:6px">L'agent répondra en direct à partir des données du terminal. Il demande un petit relais sécurisé (étape suivante) pour garder ta clé secrète.</p>
+      </div>
+      <div id="iaBody"><p class="hint" style="padding:12px">Chargement de l'analyse…</p></div>
+      <p class="note" id="iaNote">Analyse indicative générée par IA, pas un conseil financier. L'IA ne lit que les données du robot de ce terminal (aucune source nouvelle) et peut se tromper : vérifiez les chiffres avant toute décision. Les mouvements de séance sont calculés par le terminal, pas par l'IA.</p>
     </section>
 
     <section class="panel" id="scenarios">
@@ -4270,7 +4312,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
      ===================================================================== */
   var BR = [
     { id: "guide", grp: "MON BIAIS", t: "Mon biais XAUUSD", ic: "◎", d: "Le guide en 8 parties : macro, Fed, marchés, positionnement, géopolitique, annonces et sentiment, États-Unis contre Europe, conclusion avec score S", blocks: ["guide"], p: [] },
-    { id: "matin", grp: "MARCHÉ", t: "Briefing du matin", ic: "☀", d: "Résumé de la veille, alertes, publications du jour à l'heure de Kinshasa, biais, scénarios et régime macro", blocks: ["recap"], p: ["matin", "scenarios", "regime"], g: { matin: "Résumé du jour", scenarios: "Lecture du marché" } },
+    { id: "matin", grp: "MARCHÉ", t: "Briefing du matin", ic: "☀", d: "Débriefing IA (géopolitique, budgets, macro, catalyseurs, drivers), résumé de la veille, alertes, publications du jour à l'heure de Kinshasa, biais, scénarios et régime macro", blocks: ["recap"], p: ["ia", "matin", "scenarios", "regime"], g: { ia: "Débriefing IA", matin: "Résumé du jour", scenarios: "Lecture du marché" } },
     { id: "direct", grp: "MARCHÉ", t: "En direct", ic: "◉", d: "Cours en direct, Bloomberg TV, graphiques, moniteur multi-actifs, sessions", blocks: ["cours", "tv"], p: ["marches", "multi", "sessions"], g: { marches: "Graphiques", multi: "Multi-actifs et sessions" } },
     { id: "or", grp: "MARCHÉ", t: "Or", ic: "◆", d: "XAU/USD, tableau à 6 piliers, flux de l'or (ETF, banques centrales), volatilité", p: ["or", "scorecard", "flux", "orvol"], g: { or: "Cours", scorecard: "Analyse fondamentale", orvol: "Volatilité" } },
     { id: "drivers", grp: "MARCHÉ", t: "Drivers et devises", ic: "⇄", d: "Drivers et biais par marché, moteurs du marché, force des devises sur tous les horizons, paires, carte thermique", blocks: ["drivers", "force"], p: ["moteurs", "fstr", "force", "heat", "paires", "selPanel", "~duo"], g: { moteurs: "Moteurs", fstr: "Force des devises", paires: "Paires et graphique" } },
@@ -4317,7 +4359,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   };
 
   /* Panneaux ouverts d'office dans chaque branche (les autres sont repliés) */
-  var ESS = { matin: ["matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], guide: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs", "bce34"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
+  var ESS = { matin: ["ia", "matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], guide: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs", "bce34"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
   function setFold(el, folded) {
     el.classList.toggle("fold", folded);
     var b = el.querySelector(":scope > .ph > .foldbtn"); if (b) { b.textContent = folded ? "Afficher ▾" : "Replier ▴"; b.setAttribute("aria-expanded", folded ? "false" : "true"); }
@@ -4328,10 +4370,11 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     var b = e.target.closest && e.target.closest(".foldbtn"); if (b) { var el = b.closest(".panel"); setFold(el, !el.classList.contains("fold")); return; }
     var h = e.target.closest && e.target.closest(".panel.fold > .ph"); if (h && !e.target.closest("a,button,select,input")) setFold(h.parentNode, false);
   });
-  var WIDE = { bce: 1, e19: 1, consensus: 1, ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
+  var WIDE = { ia: 1, bce: 1, e19: 1, consensus: 1, ezone: 1, deficits: 1, scenarios: 1, fstr: 1, flux: 1, multi: 1, regime: 1, moteurs: 1, matin: 1, reactions: 1, dotplot: 1, bceproj: 1, cycle: 1, orvol: 1, reserves: 1, force: 1, indicateurs: 1, calendrier: 1, monde: 1, geopol: 1, maritime: 1, marches: 1, pricing: 1, analyses: 1, videos: 1, robot: 1, saison: 1, heat: 1, or: 1, banques: 1 };
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   /* Nature des données de chaque panneau (demandée par l'audit) : EN DIRECT, DIFFÉRÉ, QUOTIDIEN, HEBDO, MENSUEL, ANNUEL, MANUEL, CALCUL */
   var NATURE = {
+    ia: ["CALCUL", "texte généré par IA à partir des données du robot (jamais un conseil financier) ; mouvements de séance calculés par le terminal"],
     lecture: ["GUIDE", "texte explicatif fixe"], calc: ["CALCUL", "calcul dans votre navigateur"], check: ["OUTIL", "cases enregistrées sur cet appareil"], conseils: ["GUIDE", "règles de gestion du risque"], notes: ["OUTIL", "notes enregistrées sur cet appareil"], liens: ["LIENS", "sites officiels et gratuits"],
     ezone: ["DIFFÉRÉ", "rendements CNBC relus à chaque passage du robot ; BCE et Bundesbank (officiel, quotidien et mensuel)"], deficits: ["MENSUEL", "Trésor US et ONS (mensuel), Eurostat (trimestriel, annuel), OCDE (annuel + prévisions)"],
     paires: ["QUOTIDIEN", "fixings de la BCE, 1 fois par jour ; graphique relu toutes les 15 min"], sessions: ["EN DIRECT", "horloges calculées dans votre navigateur"],
@@ -4412,6 +4455,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
       var cur = document.querySelector('#bnav a[aria-current="page"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest", inline: "center" });
       if (id === "taux" && !rateMinisDone) { rateMinisDone = true; initRateMinis(); }
       if (id === "or") { initGoldSilver(); renderOrVol(); }
+      if (id === "matin") loadIA(); /* l'analyse IA n'est téléchargée qu'à l'ouverture de cette branche : zéro coût au démarrage */
       var bb = BR.filter(function (x) { return x.id === id; })[0]; if (bb && bb.blocks) setTimeout(function () { bb.blocks.forEach(renderDashBlock); }, 0);
       if (id === "taux") renderPricing();
       if (id === "taux" || id === "direct") setTimeout(refreshMinis, 80);
@@ -7447,6 +7491,93 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "reactions.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.events) throw new Error("format"); return j; }); }); });
     return p.then(function (j) { REACT = j; }).catch(function () { REACT = null; }).then(function () { renderReact(); renderMatin(); });
+  }
+  /* ---------- Analyste IA : débriefing du matin (9 nov. 2026) ----------
+     Données : data/ai-analyst.json, écrit par scripts/ai_analyst.py (workflow « Analyste IA »). Fichier séparé et petit,
+     téléchargé seulement à l'ouverture de la branche « Briefing du matin » : aucun coût au démarrage du site.
+     Sans fichier (clé non configurée) ou en cas d'erreur réseau : message clair, le reste du terminal n'est pas touché. */
+  var IAD = null, IAT = 0, IAERR = "";
+  function loadIA() {
+    if (IAT && Date.now() - IAT < 240000 && (IAD || IAERR)) { renderIA(); return; } /* pas plus d'une relecture toutes les 4 minutes */
+    IAT = Date.now();
+    var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "ai-analyst.json"); }), p = Promise.reject(new Error("start"));
+    urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || typeof j !== "object" || !(j.debrief || j.sessions || j.releases || j.scenarios || j.status)) throw new Error("format"); return j; }); }); });
+    p.then(function (j) { IAD = j; IAERR = ""; }).catch(function (e) { IAERR = String((e && e.message) || e); }).then(renderIA);
+  }
+  /* Heure lisible dans le fuseau de l'appareil ; une date sans fuseau est lue comme UTC (c'est le cas du robot) */
+  function iaWhen(s) {
+    var x = String(s == null ? "" : s).trim(), m = /^(\d{4}-\d\d-\d\d)[ T](\d\d:\d\d)(?::\d\d)?(?:\.\d+)?(Z|[+-]\d\d:?\d\d)?$/.exec(x);
+    if (!m) return x;
+    var z = m[3] || "Z"; if (z !== "Z" && z.indexOf(":") < 0) z = z.slice(0, 3) + ":" + z.slice(3);
+    var t = Date.parse(m[1] + "T" + m[2] + ":00" + z);
+    return isNaN(t) ? x : new Date(t).toLocaleString("fr-FR", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function iaDir(v) {
+    v = String(v || "").toLowerCase();
+    return /hausse|haussier/.test(v) ? '<span class="up">▲ ' + esc(v) + "</span>" : /baisse|baissier/.test(v) ? '<span class="down">▼ ' + esc(v) + "</span>" : '<span class="iamut">' + esc(v || "–") + "</span>";
+  }
+  function iaUl(a) { a = (a || []).filter(Boolean); return a.length ? '<ul class="iap">' + a.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : ""; }
+  function iaWarn(o) { return o && o.a_verifier && o.a_verifier.length ? '<div class="iawarn">Chiffres cités par l\'IA et absents des données du terminal, à vérifier : ' + o.a_verifier.map(esc).join(", ") + ".</div>" : ""; }
+  function renderIA() {
+    var body = $("iaBody"), meta = $("iaMeta"); if (!body) return;
+    var D = IAD, h = [];
+    if (!D) {
+      var nf = /404|format/.test(IAERR);
+      body.innerHTML = '<div class="iast' + (nf ? "" : " bad") + '">' + (nf
+        ? "<b>Analyste IA pas encore activé.</b> Pour l'activer : sur GitHub, Settings → Secrets and variables → Actions → New repository secret, nom <b>GEMINI_API_KEY</b> (clé gratuite de Google AI Studio), puis onglet Actions → « Analyste IA » → Run workflow. Le reste du terminal fonctionne normalement."
+        : "Impossible de charger l'analyse pour le moment (" + esc(IAERR) + "). Le reste du terminal n'est pas touché : rouvrez cette branche pour réessayer.") + "</div>";
+      if (meta) meta.textContent = nf ? "non activé" : "indisponible";
+      return;
+    }
+    var deb = D.debrief, gen = (deb && deb.gen) || D.generated, tg = gen ? Date.parse(String(gen).replace(/Z?$/, "Z")) : NaN, ageH = isNaN(tg) ? null : (Date.now() - tg) / 36e5;
+    if (D.status && D.status !== "ok") h.push('<div class="iast">' + ({ quota: "Quota de l'IA atteint pour le moment : la dernière analyse reste affichée, la suivante reprendra automatiquement.", plafond: "Plafond d'appels du jour atteint (économie de quota) : la dernière analyse reste affichée.", erreur: "L'IA est injoignable pour le moment : la dernière analyse reste affichée." }[D.status] || "L'IA est en pause : la dernière analyse reste affichée.") + "</div>");
+    if (IAERR) h.push('<div class="iast">Relecture impossible à l\'instant : l\'analyse déjà chargée reste affichée.</div>');
+    if (ageH !== null && ageH > 14) h.push('<div class="iast">Cette analyse date d\'environ ' + Math.round(ageH) + " h : elle peut ne plus refléter le marché.</div>");
+    if (deb) {
+      h.push('<div class="iatitre">' + esc(deb.titre) + "</div>");
+      h.push('<div class="iagen">Débriefing généré le ' + esc(iaWhen(deb.gen)) + " (heure de votre appareil) · modèle " + esc(deb.model || "?") + (deb.donnees_du ? " · données du robot du " + esc(iaWhen(deb.donnees_du)) : "") + "</div>");
+      h.push(iaWarn(deb));
+      h.push('<ol class="ialines">' + (deb.lignes || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ol>");
+      var an = deb.analyse;
+      if (an) {
+        h.push('<h3 class="iah">Analyse : ce qui se passe et pourquoi</h3><div class="iaan">' + (an.situation ? "<p>" + esc(an.situation) + "</p>" : "") +
+          ((an.chaine_causale || []).length ? '<div class="iachain"><small>Enchaînement des causes</small><ol>' + an.chaine_causale.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ol></div>" : "") + "</div>");
+        var scn = function (t, o, k) { return o ? '<div class="pcard"><h3>' + t + "</h3><p>" + esc(o.description) + "</p>" + (o.conditions ? '<p class="iamut"><b>Conditions :</b> ' + esc(o.conditions) + "</p>" : "") + (o.effet ? iaUl(["Or : " + (o.effet.or || "n.d."), "Dollar : " + (o.effet.dollar || "n.d."), "Euro : " + (o.effet.euro || "n.d.")]) : "") + "</div>" : ""; };
+        if (an.scenario_central || an.scenario_alternatif) h.push('<div class="pgrid">' + scn("Scénario central", an.scenario_central) + scn("Scénario alternatif", an.scenario_alternatif) + "</div>");
+        if ((an.ce_qui_changerait_la_vue || []).length) h.push('<div class="iaan"><div class="iachain"><small>Ce qui changerait cette lecture</small>' + iaUl(an.ce_qui_changerait_la_vue) + "</div></div>");
+        if (an.conclusion) h.push('<p class="iaconc">' + esc(an.conclusion) + "</p>");
+      }
+      if ((deb.sections || []).length) h.push('<h3 class="iah">Les sujets qui font bouger le marché</h3><div class="pgrid">' + deb.sections.map(function (s) { return '<div class="pcard"><h3>' + esc(s.titre) + "</h3><p>" + esc(s.resume) + "</p>" + iaUl(s.points) + "</div>"; }).join("") + "</div>");
+      if ((deb.catalyseurs || []).length) h.push('<h3 class="iah">Catalyseurs à venir (heure de votre appareil)</h3><div class="tbl"><table class="iat"><thead><tr><th>Quand</th><th>Événement</th><th>Pourquoi</th><th>Devise</th></tr></thead><tbody>' + deb.catalyseurs.map(function (c) { return '<tr><td class="iad">' + esc(iaWhen(c.quand)) + "</td><td>" + esc(c.evenement) + "</td><td>" + esc(c.pourquoi) + '</td><td class="iad">' + esc((c.devises || []).join(", ")) + "</td></tr>"; }).join("") + "</tbody></table></div>");
+      if ((deb.drivers || []).length) h.push('<h3 class="iah">Drivers : ce qui fait bouger le marché</h3><div class="tbl"><table class="iat"><thead><tr><th>Moteur</th><th>Or</th><th>Dollar</th><th>Euro</th><th>Pourquoi</th></tr></thead><tbody>' + deb.drivers.map(function (r) { return "<tr><td><b>" + esc(r.nom) + "</b></td><td>" + iaDir(r.or) + "</td><td>" + iaDir(r.dollar) + "</td><td>" + iaDir(r.euro) + "</td><td>" + esc(r.pourquoi) + "</td></tr>"; }).join("") + "</tbody></table></div>");
+      var A = deb.actifs || {};
+      if (A.or || A.dollar || A.euro) h.push('<h3 class="iah">Biais indicatif (jamais un ordre)</h3><div class="iatiles">' + [["or", "Or"], ["dollar", "Dollar"], ["euro", "Euro"]].filter(function (k) { return A[k[0]]; }).map(function (k) { return '<div class="tile"><small>' + k[1] + "</small><b>" + iaDir(A[k[0]].biais) + "</b><span>" + esc(A[k[0]].pourquoi) + "</span></div>"; }).join("") + "</div>");
+      if ((deb.a_surveiller || []).length) h.push('<h3 class="iah">À surveiller aujourd\'hui</h3><div style="padding:0 12px 8px">' + iaUl(deb.a_surveiller) + "</div>");
+      if (deb.limites) h.push('<p class="hint" style="padding:4px 12px 10px;max-width:none"><b>Limites :</b> ' + esc(deb.limites) + "</p>");
+    } else h.push('<p class="hint" style="padding:12px">Pas encore de débriefing : il est généré chaque matin à partir des données du robot.</p>');
+    var S = D.sessions || {}, so = ["asia", "europe", "us"].filter(function (k) { return S[k]; });
+    if (so.length) h.push('<h3 class="iah">Récap par séance</h3><div class="pgrid">' + so.map(function (k) {
+      var s = S[k], mv = s.mouvements || [];
+      return '<div class="pcard"><h3>' + esc(s.label) + " · " + esc(s.jour) + "</h3>" +
+        (mv.length ? '<div class="tbl"><table class="iat"><tbody>' + mv.map(function (m) { return "<tr><td>" + esc(m.actif) + '</td><td class="iad ' + cls(m.pct) + '">' + (m.pct >= 0 ? "+" : "−") + fmt(Math.abs(m.pct), 2) + " %</td></tr>"; }).join("") + '</tbody></table></div><div class="m" style="margin:4px 0 6px">Mouvements calculés par le terminal (bougies horaires du robot).</div>' : "") +
+        "<p>" + esc(s.resume) + "</p>" + iaUl(s.points) + (s.lecture ? '<p class="iamut">' + esc(s.lecture) + "</p>" : "") + iaWarn(s) + "</div>";
+    }).join("") + "</div>");
+    var R = D.releases || [];
+    if (R.length) h.push('<h3 class="iah">Publications récentes : réel contre prévu</h3>' + R.map(function (r) {
+      var ec = r.ecart_calcule || r.ecart || "", im = r.impact || {};
+      return '<div class="iaev"><h4>' + esc(r.devise) + " · " + esc(r.titre) + ' <span class="badge">' + esc(ec) + '</span></h4><div class="iaen">' + esc(iaWhen(r.date)) + " · réel " + esc(r.reel || "n.d.") + " · prévu " + esc(r.prevu || "n.d.") + " · précédent " + esc(r.precedent || "n.d.") + "</div><p>" + esc(r.lecture) + "</p>" +
+        iaUl([im.dollar && "Dollar : " + im.dollar, im.euro && "Euro : " + im.euro, im.or && "Or : " + im.or]) + (r.reaction_marche ? '<p class="iamut">Réaction du marché : ' + esc(r.reaction_marche) + "</p>" : "") + iaWarn(r) + "</div>";
+    }).join(""));
+    var C = D.scenarios || [];
+    if (C.length) h.push('<h3 class="iah">Scénarios avant les grosses annonces</h3>' + C.map(function (c) {
+      var s = c.scenarios || {};
+      function col(k, t) { var x = s[k] || {}; return "<div><b>" + t + "</b>" + (x.condition ? '<span class="iamut">' + esc(x.condition) + "</span><br>" : "") + "Dollar : " + esc(x.dollar) + "<br>Euro : " + esc(x.euro) + "<br>Or : " + esc(x.or) + "</div>"; }
+      return '<div class="iaev"><h4>' + esc(c.devise) + " · " + esc(c.titre) + '</h4><div class="iaen">' + esc(iaWhen(c.date)) + " · prévu " + esc(c.prevu || "n.d.") + " · précédent " + esc(c.precedent || "n.d.") + "</div><p>" + esc(c.enjeu) + '</p><div class="iasc">' + col("au_dessus", "Au-dessus") + col("dans_les_attentes", "Dans les attentes") + col("en_dessous", "En dessous") + "</div>" + iaWarn(c) + "</div>";
+    }).join(""));
+    if (!deb && !so.length && !R.length && !C.length) h.push('<p class="hint" style="padding:12px">L\'analyste est activé mais n\'a encore rien produit : la première analyse arrive au prochain passage (toutes les 30 minutes environ).</p>');
+    if (typeof D.calls_today === "number") h.push('<div class="iagen" style="padding:8px 12px">Appels à l\'IA aujourd\'hui : ' + D.calls_today + " sur " + (D.cap || "?") + " (plafond réglable dans ai/config.json).</div>");
+    body.innerHTML = h.join("");
+    if (meta) meta.textContent = "IA · " + (gen ? iaWhen(gen) : "en attente") + (ageH !== null && ageH > 14 ? " · ancien" : "");
   }
   function aggr(evs, k, w) {
     var v = evs.map(function (e) { return e.r && e.r[k] ? e.r[k][w] : null; }).filter(function (x) { return x !== null && x !== undefined; });

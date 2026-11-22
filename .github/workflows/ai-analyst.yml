@@ -1,0 +1,59 @@
+name: Analyste IA
+# Débriefing du matin, récaps de séance, résumés de publications et scénarios, générés par IA à partir des données du robot.
+# Workflow séparé du robot de données : une panne de l'IA ne peut jamais gêner la mise à jour du site.
+# Sans clé API (secret GEMINI_API_KEY), le script s'arrête proprement et le site affiche « non activé ».
+on:
+  schedule:
+    - cron: "7,37 * * * *"   # le script décide seul s'il y a quelque chose de nouveau ; sinon aucun appel à l'IA
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Forcer des tâches (facultatif) : debrief, asia, europe, us, releases, scenarios (séparées par des virgules)"
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - "scripts/ai_analyst.py"
+      - "ai/config.json"
+      - ".github/workflows/ai-analyst.yml"
+permissions:
+  contents: write
+concurrency:
+  group: ai-analyst
+  cancel-in-progress: false
+jobs:
+  analyse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Analyser (un appel à l'IA seulement si une tâche est due)
+        env:
+          PYTHONUNBUFFERED: "1"
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AI_FORCE: ${{ github.event.inputs.force }}
+        run: python scripts/ai_analyst.py
+      - name: Publier les résultats
+        run: |
+          git config user.name "macro-forex-robot"
+          git config user.email "actions@users.noreply.github.com"
+          mkdir -p /tmp/ai-out && rm -f /tmp/ai-out/*.json
+          for f in ai-analyst ai-state; do [ -f data/$f.json ] && cp data/$f.json /tmp/ai-out/ || true; done
+          if [ -z "$(ls -A /tmp/ai-out)" ]; then echo "Aucun résultat à publier"; exit 0; fi
+          for i in 1 2 3 4; do
+            # On repart de la dernière version du dépôt (le robot de données y publie toutes les 12 minutes) puis on y pose nos deux fichiers
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp /tmp/ai-out/*.json data/
+            git add data/ai-analyst.json data/ai-state.json 2>/dev/null || true
+            if git diff --staged --quiet; then echo "Rien de nouveau"; exit 0; fi
+            git commit -q -m "Analyste IA : mise à jour"
+            if git push -q origin HEAD:main; then echo "Publié"; exit 0; fi
+            echo "Envoi refusé, nouvel essai ($i)"; sleep 6
+          done
+          # Un échec de publication ne doit jamais faire échouer le site : on le signale sans bloquer
+          echo "Publication impossible ce passage-ci"; exit 0
