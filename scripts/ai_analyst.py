@@ -391,7 +391,7 @@ def http_post(url, headers, body, timeout):
         if e.code in (401, 403):
             raise ApiDown("clé refusée (HTTP %d)" % e.code)
         if e.code in (500, 502, 503, 504):
-            raise TransientError("HTTP %d : service surchargé ou indisponible" % e.code)
+            raise TransientError("HTTP %d : %s" % (e.code, re.sub(r"\s+", " ", txt)[:220] or "service surchargé ou indisponible"))
         raise ApiDown("HTTP %d" % e.code)
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         raise ApiDown("réseau : %s" % str(e)[:100])
@@ -632,18 +632,27 @@ class Runner:
         return True
 
     def generate(self, kind, tier, system, prompt, ctx):
-        """Un appel (compté). Retourne (objet JSON, modèle, chiffres à vérifier) ou None."""
+        """Un appel à l'IA. Retourne (objet JSON, modèle, chiffres à vérifier) ou None.
+        Les modèles du palier demandé sont essayés d'abord, puis ceux de l'autre palier en dernier recours.
+        Une erreur de surcharge (503) ne compte pas dans le plafond du jour : seule une réponse reçue compte."""
         if not self.can_call():
             return None
-        self.state["calls"] += 1
         if MOCK:
+            self.state["calls"] += 1
             self.made += 1
             return mock_reply(kind, prompt), "mock", []
-        models = self.cfg["providers"][self.prov][tier]
+        pc = self.cfg["providers"][self.prov]
+        other = "fast" if tier == "strong" else "strong"
+        models = list(pc[tier]) + [m for m in pc[other] if m not in pc[tier]]
+        cap = self.cfg["limits"]["max_calls_per_day"]
         last, transients = None, 0
         for m in models:
+            if self.state["calls"] >= cap:
+                self.stop = "plafond du jour atteint (%d appels)" % cap
+                return None
             try:
                 txt = PROVIDERS[self.prov](m, system, prompt, self.key, self.cfg)
+                self.state["calls"] += 1
                 obj = parse_json(txt)
                 if not isinstance(obj, dict):
                     raise ModelError("JSON inattendu")
@@ -651,6 +660,7 @@ class Runner:
                 self.model_used[kind] = m
                 return obj, m, unverified_numbers(obj, ctx)
             except QuotaError as e:
+                self.state["calls"] += 1
                 self.stop = str(e)
                 self.state["backoff_until"] = iso(NOW + timedelta(minutes=self.cfg["limits"]["backoff_minutes_quota"]))
                 self.state["last_error"] = "quota : " + str(e)
@@ -661,11 +671,12 @@ class Runner:
                 self.state["last_error"] = "API : " + str(e)
                 return None
             except (ModelError, ValueError) as e:
-                last = str(e)
-                transients += isinstance(e, TransientError)
-                if self.state["calls"] >= self.cfg["limits"]["max_calls_per_day"]:
-                    break
-                self.state["calls"] += 1  # chaque essai compte dans le plafond
+                last = "%s : %s" % (m, e)
+                print("  essai %s : %s" % (m, e))
+                if isinstance(e, TransientError):
+                    transients += 1
+                else:
+                    self.state["calls"] += 1
                 continue
         self.state["last_error"] = "%s : %s" % (kind, last)
         if models and transients == len(models):   # tous les modèles surchargés : on s'arrête et on réessaie plus tard
