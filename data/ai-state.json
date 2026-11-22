@@ -1,1 +1,1 @@
-{"day":"2026-11-22","calls":1,"debriefs_today":1,"done":{},"debrief_fp":"a385284fbce0","last_error":null}
+{"day":"2026-11-22","calls":4,"debriefs_today":0,"done":{},"last_error":"API : HTTP 503 : service surchargé ou indisponible","backoff_until":"2026-11-23T00:27Z"}
