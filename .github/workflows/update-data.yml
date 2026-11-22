@@ -40,7 +40,7 @@ jobs:
           git config user.name "macro-forex-robot"
           git config user.email "actions@users.noreply.github.com"
           publish() {
-            mkdir -p /tmp/out && rm -f /tmp/out/*.json && cp data/macro.json data/seasonal.json /tmp/out/ && for f in macro-history surprises reactions gold-etf geo-history acces; do cp data/$f.json /tmp/out/ 2>/dev/null || true; done
+            mkdir -p /tmp/out && rm -f /tmp/out/*.json && cp data/macro.json data/seasonal.json /tmp/out/ && for f in macro-history surprises reactions gold-etf geo-history acces robot-cache; do cp data/$f.json /tmp/out/ 2>/dev/null || true; done
             for i in 1 2 3; do
               # On repart de la dernière version du dépôt et on y pose les nouvelles données (évite les conflits entre deux passages)
               git fetch -q origin main && git reset -q --hard origin/main

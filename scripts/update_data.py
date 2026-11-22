@@ -27,6 +27,18 @@ try:  # fichier précédent : sert à conserver les dernières données valides 
         PREVIOUS = json.load(_f)
 except Exception:
     PREVIOUS = {}
+# Mémoires internes du robot (adresses d'articles, équivalents publics) : gardées dans un fichier à part, JAMAIS dans macro.json,
+# car le site ne les lit pas et elles pesaient plus de la moitié du fichier téléchargé par chaque visiteur (nov. 2026).
+OUT_CACHE = os.environ.get("MF_OUT_CACHE", os.path.join(os.path.dirname(os.path.abspath(OUT)), "robot-cache.json"))
+CACHE_KEYS = ("gn_urls", "alt_cache")
+try:  # le fichier à part prime ; à défaut (première fois), on reprend ce qui restait dans l'ancien macro.json
+    with open(OUT_CACHE, encoding="utf-8") as _f:
+        _rc = json.load(_f)
+    for _k in CACHE_KEYS:
+        if isinstance(_rc.get(_k), dict):
+            PREVIOUS[_k] = _rc[_k]
+except Exception:
+    pass
 MOCK = os.environ.get("MF_MOCK_DIR")
 ONLY = set(x for x in os.environ.get("MF_ONLY", "").split(",") if x)
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
@@ -5260,7 +5272,11 @@ def main():
         return  # mode diagnostic : on n'écrase pas le fichier complet
     os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
     with LOCK:
+        cache = {k: out.pop(k, None) or (PREVIOUS.get(k) or {}) for k in CACHE_KEYS}  # sortis de macro.json (allègement du site)
         txt = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
+        ctxt = json.dumps(cache, ensure_ascii=False, separators=(",", ":"))
+    with open(OUT_CACHE, "w", encoding="utf-8") as f:  # d'abord la mémoire, puis le fichier du site
+        f.write(ctxt)
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(txt)
 
