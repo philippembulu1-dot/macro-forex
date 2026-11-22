@@ -369,6 +369,10 @@ class ModelError(Exception):
     pass
 
 
+class TransientError(ModelError):
+    """Service surchargé ou en panne passagère (HTTP 500/502/503/504) : on essaie le modèle suivant."""
+
+
 def http_post(url, headers, body, timeout):
     req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=dict(headers, **{"Content-Type": "application/json"}), method="POST")
     try:
@@ -386,6 +390,8 @@ def http_post(url, headers, body, timeout):
             raise ModelError("HTTP %d : %s" % (e.code, re.sub(r"\s+", " ", txt)[:160]))
         if e.code in (401, 403):
             raise ApiDown("clé refusée (HTTP %d)" % e.code)
+        if e.code in (500, 502, 503, 504):
+            raise TransientError("HTTP %d : service surchargé ou indisponible" % e.code)
         raise ApiDown("HTTP %d" % e.code)
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         raise ApiDown("réseau : %s" % str(e)[:100])
@@ -634,7 +640,7 @@ class Runner:
             self.made += 1
             return mock_reply(kind, prompt), "mock", []
         models = self.cfg["providers"][self.prov][tier]
-        last = None
+        last, transients = None, 0
         for m in models:
             try:
                 txt = PROVIDERS[self.prov](m, system, prompt, self.key, self.cfg)
@@ -656,11 +662,16 @@ class Runner:
                 return None
             except (ModelError, ValueError) as e:
                 last = str(e)
+                transients += isinstance(e, TransientError)
                 if self.state["calls"] >= self.cfg["limits"]["max_calls_per_day"]:
                     break
                 self.state["calls"] += 1  # chaque essai compte dans le plafond
                 continue
         self.state["last_error"] = "%s : %s" % (kind, last)
+        if models and transients == len(models):   # tous les modèles surchargés : on s'arrête et on réessaie plus tard
+            self.stop = "service d'IA surchargé (%s)" % last
+            self.state["backoff_until"] = iso(NOW + timedelta(minutes=self.cfg["limits"]["backoff_minutes_error"]))
+            self.state["last_error"] = "API : " + last
         return None
 
 
@@ -830,7 +841,7 @@ def main():
         save_json(OUT_PATH, out)
         state["last_error"] = None if status == "ok" else state.get("last_error")
         print("Écrit %s (%d appel(s) réussi(s))." % (os.path.relpath(OUT_PATH, ROOT), run.made))
-    elif out and any(out.get(k) != v for k, v in meta.items() if k != "calls_today"):
+    elif (out or run.stop) and any(out.get(k) != v for k, v in meta.items() if k != "calls_today"):
         out.update(meta)
         save_json(OUT_PATH, out)
         print("Statut mis à jour : %s." % status)
