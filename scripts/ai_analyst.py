@@ -851,6 +851,8 @@ def main():
         out.update(meta)
         save_json(OUT_PATH, out)
         state["last_error"] = None if status == "ok" else state.get("last_error")
+        if status == "ok":
+            state["backoff_until"] = None   # une réussite efface toute pause restée enregistrée
         print("Écrit %s (%d appel(s) réussi(s))." % (os.path.relpath(OUT_PATH, ROOT), run.made))
     elif (out or run.stop) and any(out.get(k) != v for k, v in meta.items() if k != "calls_today"):
         out.update(meta)

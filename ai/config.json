@@ -39,7 +39,7 @@
     "backoff_minutes_error": 30,
     "timeout_seconds": 90,
     "temperature": 0.3,
-    "max_output_tokens": 8192
+    "max_output_tokens": 16384
   },
   "sessions_utc": {
     "asia": {
