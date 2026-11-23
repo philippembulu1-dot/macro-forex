@@ -43,13 +43,13 @@ jobs:
           git config user.name "macro-forex-robot"
           git config user.email "actions@users.noreply.github.com"
           mkdir -p /tmp/ai-out && rm -f /tmp/ai-out/*.json
-          for f in ai-analyst ai-state; do [ -f data/$f.json ] && cp data/$f.json /tmp/ai-out/ || true; done
+          for f in ai-analyst ai-state ai-context; do [ -f data/$f.json ] && cp data/$f.json /tmp/ai-out/ || true; done
           if [ -z "$(ls -A /tmp/ai-out)" ]; then echo "Aucun résultat à publier"; exit 0; fi
           for i in 1 2 3 4; do
             # On repart de la dernière version du dépôt (le robot de données y publie toutes les 12 minutes) puis on y pose nos deux fichiers
             git fetch -q origin main && git reset -q --hard origin/main
             cp /tmp/ai-out/*.json data/
-            for f in ai-analyst ai-state; do [ -f data/$f.json ] && git add data/$f.json; done
+            for f in ai-analyst ai-state ai-context; do [ -f data/$f.json ] && git add data/$f.json; done
             if git diff --staged --quiet; then echo "Rien de nouveau"; exit 0; fi
             git commit -q -m "Analyste IA : mise à jour"
             if git push -q origin HEAD:main; then echo "Publié"; exit 0; fi

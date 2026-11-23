@@ -1056,6 +1056,14 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
 #ia .iaag-in input{flex:1;min-width:0;padding:9px 10px;font:13px var(--font-body);background:var(--bg);color:var(--muted);border:1px solid var(--line);border-radius:6px}
 #ia .iaag-in button{padding:9px 14px;font:600 11px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:6px}
 #ia .iaag-in input:disabled,#ia .iaag-in button:disabled{opacity:.55;cursor:not-allowed}
+#ia .iaag-log{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow:auto;margin-bottom:8px}
+#ia .iaag-log:empty{display:none}
+#ia .iam{padding:8px 10px;border-radius:6px;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+#ia .iam.u{align-self:flex-end;max-width:88%;background:var(--amber-soft);border:1px solid #6b5214}
+#ia .iam.a{align-self:flex-start;max-width:96%;background:var(--bg);border:1px solid var(--line)}
+#ia .iam.e{align-self:flex-start;border:1px solid #6b2a24;background:rgba(255,92,79,.07)}
+#ia .iaag-in input:not(:disabled){color:var(--text,inherit)}
+#ia .iaag-in button:not(:disabled){color:var(--amber);border-color:var(--amber);cursor:pointer}
 #ia .iast{margin:10px 12px 0;padding:8px 10px;border:1px solid #6b5214;background:var(--amber-soft);font-size:12px;line-height:1.45}
 #ia .iast.bad{border-color:#6b2a24;background:rgba(255,92,79,.07)}
 #ia .iatitre{padding:14px 12px 2px;font:600 17px/1.35 var(--font-body)}
@@ -1662,9 +1670,13 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     <section class="panel" id="ia">
       <div class="ph"><h2>Débriefing IA et agent</h2><span class="meta" id="iaMeta">chargé à l'ouverture</span></div>
       <div class="iaagent" id="iaAgent">
-        <div class="iaag-h"><span>Agent IA</span><span class="badge">bientôt</span></div>
-        <div class="iaag-in"><input type="text" disabled placeholder="Pose ta question à l'analyste (bientôt disponible)" aria-label="Question à l'agent IA (bientôt disponible)"><button type="button" disabled>Envoyer</button></div>
-        <p class="hint" style="margin-top:6px">L'agent répondra en direct à partir des données du terminal. Il demande un petit relais sécurisé (étape suivante) pour garder ta clé secrète.</p>
+        <div class="iaag-h"><span>Agent IA</span><span class="badge" id="iaagBadge">bientôt</span></div>
+        <div class="iaag-log" id="iaagLog" aria-live="polite"></div>
+        <form class="iaag-in" id="iaagForm" autocomplete="off">
+          <input type="text" id="iaagQ" maxlength="600" disabled placeholder="Pose ta question à l'analyste (bientôt disponible)" aria-label="Question à l'agent IA">
+          <button type="submit" id="iaagBtn" disabled>Envoyer</button>
+        </form>
+        <p class="hint" id="iaagHint" style="margin-top:6px">L'agent répond à partir des données du terminal, sans inventer de chiffre. Il demande un petit relais sécurisé pour garder la clé secrète.</p>
       </div>
       <div id="iaBody"><p class="hint" style="padding:12px">Chargement de l'analyse…</p></div>
       <p class="note" id="iaNote">Analyse indicative générée par IA, pas un conseil financier. L'IA ne lit que les données du robot de ce terminal (aucune source nouvelle) et peut se tromper : vérifiez les chiffres avant toute décision. Les mouvements de séance sont calculés par le terminal, pas par l'IA.</p>
@@ -7498,12 +7510,62 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
      Sans fichier (clé non configurée) ou en cas d'erreur réseau : message clair, le reste du terminal n'est pas touché. */
   var IAD = null, IAT = 0, IAERR = "";
   function loadIA() {
+    iaagLoadCfg();
     if (IAT && Date.now() - IAT < 240000 && (IAD || IAERR)) { renderIA(); return; } /* pas plus d'une relecture toutes les 4 minutes */
     IAT = Date.now();
     var urls = AUTO_URLS.map(function (u) { return u.replace("macro.json", "ai-analyst.json"); }), p = Promise.reject(new Error("start"));
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || typeof j !== "object" || !(j.debrief || j.sessions || j.releases || j.scenarios || j.status)) throw new Error("format"); return j; }); }); });
     p.then(function (j) { IAD = j; IAERR = ""; }).catch(function (e) { IAERR = String((e && e.message) || e); }).then(renderIA);
   }
+  /* ---------- Agent IA (chat) : relais Cloudflare lu dans ai/agent.json ; code d'accès gardé dans ce navigateur seulement ---------- */
+  var IAG = { url: null, hist: [], busy: false };
+  function iaagLoadCfg() {
+    if (IAG.url !== null) return;
+    IAG.url = "";
+    var urls = AUTO_URLS.map(function (u) { return u.replace("data/macro.json", "ai/agent.json").replace("macro.json", "agent.json"); }), p = Promise.reject(new Error("start"));
+    urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || typeof j !== "object") throw new Error("format"); return j; }); }); });
+    p.then(function (j) {
+      var u = String((j && j.url) || "").trim();
+      if (/^https:\/\/[^\s]+$/.test(u)) { IAG.url = u; iaagReady(); }
+    }).catch(function () {});
+  }
+  function iaagReady() {
+    var q = document.getElementById("iaagQ"), b = document.getElementById("iaagBtn"), g = document.getElementById("iaagBadge"), h = document.getElementById("iaagHint");
+    if (!q || !IAG.url) return;
+    q.disabled = false; b.disabled = false; g.textContent = "en ligne"; q.placeholder = "Pose ta question (ex. : pourquoi l'or baisse ce matin ?)";
+    if (h) h.textContent = "Réponses fondées sur les données du terminal (mises à jour toutes les ~15 min). Analyse indicative, pas un conseil financier.";
+  }
+  function iaagAdd(cls, txt) {
+    var l = document.getElementById("iaagLog"); if (!l) return;
+    var d = document.createElement("div"); d.className = "iam " + cls; d.textContent = txt; l.appendChild(d); l.scrollTop = l.scrollHeight;
+  }
+  function iaagCode(force) {
+    var c = "";
+    try { c = localStorage.getItem("mf_agent_code") || ""; } catch (e) {}
+    if (!c || force) {
+      c = (window.prompt("Code d'accès de l'agent :") || "").trim();
+      if (c) { try { localStorage.setItem("mf_agent_code", c); } catch (e) {} }
+    }
+    return c;
+  }
+  function iaagSend(ev) {
+    ev.preventDefault();
+    var q = document.getElementById("iaagQ"), btn = document.getElementById("iaagBtn"), text = q.value.trim();
+    if (!text || IAG.busy || !IAG.url) return;
+    var code = iaagCode(false); if (!code) return;
+    IAG.busy = true; btn.disabled = true; q.value = ""; iaagAdd("u", text); iaagAdd("a", "…");
+    var wait = document.getElementById("iaagLog").lastChild;
+    fetch(IAG.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code, question: text, history: IAG.hist.slice(-6) }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (x) {
+        if (x.s === 401) { try { localStorage.removeItem("mf_agent_code"); } catch (e) {} }
+        if (x.j && x.j.answer) { wait.textContent = x.j.answer; IAG.hist.push({ r: "u", t: text }, { r: "a", t: x.j.answer }); IAG.hist = IAG.hist.slice(-12); }
+        else { wait.className = "iam e"; wait.textContent = (x.j && x.j.error) || "Réponse inattendue du relais."; }
+      })
+      .catch(function () { wait.className = "iam e"; wait.textContent = "Relais injoignable. Vérifie ta connexion et réessaie."; })
+      .then(function () { IAG.busy = false; btn.disabled = false; var l = document.getElementById("iaagLog"); if (l) l.scrollTop = l.scrollHeight; });
+  }
+  (function () { var f = document.getElementById("iaagForm"); if (f) f.addEventListener("submit", iaagSend); })();
   /* Heure lisible dans le fuseau de l'appareil ; une date sans fuseau est lue comme UTC (c'est le cas du robot) */
   function iaWhen(s) {
     var x = String(s == null ? "" : s).trim(), m = /^(\d{4}-\d\d-\d\d)[ T](\d\d:\d\d)(?::\d\d)?(?:\.\d+)?(Z|[+-]\d\d:?\d\d)?$/.exec(x);

@@ -25,6 +25,7 @@ MACRO_PATH = os.environ.get("AI_MACRO", os.path.join(ROOT, "data", "macro.json")
 REACT_PATH = os.environ.get("AI_REACT", os.path.join(ROOT, "data", "reactions.json"))
 OUT_PATH = os.environ.get("AI_OUT", os.path.join(ROOT, "data", "ai-analyst.json"))
 STATE_PATH = os.environ.get("AI_STATE", os.path.join(ROOT, "data", "ai-state.json"))
+CTX_PATH = os.environ.get("AI_CTX", os.path.join(ROOT, "data", "ai-context.json"))
 MOCK = os.environ.get("AI_MOCK") == "1"
 DRY = os.environ.get("AI_DRY") == "1"
 FORCE = set(x for x in os.environ.get("AI_FORCE", "").split(",") if x)
@@ -313,6 +314,31 @@ def build_context(d, cfg, parts):
         elif p in fn:
             blocks.append((titles[p], fn[p](d)))
     return "\n\n".join("## %s\n%s" % (t, "\n".join(l) if l else "(aucune donnée)") for t, l in blocks)
+
+
+def agent_context(d, cfg):
+    """Contexte de l'agent de discussion : tout ce que le terminal sait, en texte compact (le relais Cloudflare le lit)."""
+    base = build_context(d, cfg, ["prix", "taux", "fed", "budget", "positionnement", "geo", "titres", "banques_centrales", "avis_banques"])
+    ups = ["- " + ev_line(e) for t, e in upcoming_events(d, cfg, 24 * 14)
+           if e.get("i") == "High" or (e.get("i") == "Medium" and e.get("c") == "USD")][:70]
+    lim = NOW - timedelta(days=3)
+    past = []
+    for e in (d.get("calendar") or {}).get("events") or []:
+        t = parse_ts(e.get("d"))
+        if t and lim <= t <= NOW and e.get("i") == "High" and e.get("a") not in (None, "") and e.get("c") in cfg["event_currencies"]:
+            past.append((t, "- " + ev_line(e)))
+    past = [x[1] for x in sorted(past)][-30:]
+    return "%s\n\n## CALENDRIER À VENIR (14 jours, heure UTC ; importance forte, et moyenne pour l'USD)\n%s\n\n## PUBLICATIONS FORTES DES 3 DERNIERS JOURS (réel contre prévu)\n%s" % (
+        base, "\n".join(ups) or "(aucune)", "\n".join(past) or "(aucune)")
+
+
+def write_agent_context(d, cfg):
+    """Écrit data/ai-context.json une seule fois par version des données du robot (aucun appel à l'IA, aucune clé)."""
+    old = load_json(CTX_PATH, {})
+    if old.get("generated") == d.get("generated") and old.get("v") == 1:
+        return False
+    save_json(CTX_PATH, {"v": 1, "generated": d.get("generated"), "built": iso(NOW), "text": agent_context(d, cfg)})
+    return True
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -696,6 +722,12 @@ def main():
         print("data/macro.json absent : rien à faire.")
         return 0
     react = load_json(REACT_PATH, {})
+    if not DRY:
+        try:   # le contexte de l'agent ne demande ni clé ni quota : il est préparé même si l'analyste IA est en pause
+            if write_agent_context(d, cfg):
+                print("Contexte de l'agent mis à jour (%s)." % os.path.relpath(CTX_PATH, ROOT))
+        except Exception as e:
+            print("Contexte de l'agent non mis à jour : %s" % e)
     state = load_json(STATE_PATH, {})
     if state.get("day") != TODAY:
         state.update({"day": TODAY, "calls": 0, "debriefs_today": 0})
