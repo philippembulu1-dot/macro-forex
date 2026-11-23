@@ -1,6 +1,6 @@
 {
   "name": "macro-agent",
-  "main": "agent.js",
+  "main": "worker/agent.js",
   "compatibility_date": "2026-11-01",
   "workers_dev": true
 }
