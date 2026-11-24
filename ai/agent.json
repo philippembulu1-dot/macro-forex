@@ -1,4 +1,4 @@
 {
   "_aide": "Adresse du relais Cloudflare de l agent IA (aucun secret ici). Vide = agent désactivé, le site affiche « bientôt ».",
-  "url": ""
+  "url": "https://macro-agent.philippembulu1.workers.dev/"
 }
