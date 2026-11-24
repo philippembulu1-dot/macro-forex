@@ -775,6 +775,22 @@ ol.g8rank .dt { height: 7px; background: var(--line2); border-radius: 4px; overf
 .branch .brblk { margin-bottom: 12px; }
 
 /* Analyse technique (6 nov. 2026) */
+
+/* Outils de dessin et onglet TradingView (24 nov. 2026) */
+.taviews{display:flex;gap:6px;margin:0 0 8px}
+.taviews button{padding:6px 12px;border:1px solid var(--line,#2a2822);background:transparent;color:inherit;font:inherit;font-size:.85rem;border-radius:6px;cursor:pointer}
+.taviews button[aria-pressed="true"]{background:rgba(242,176,30,.16);border-color:#f2b01e;color:#f2d38a}
+.tatools{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+.tatools .chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;border:1px solid var(--line,#2a2822);background:transparent;color:inherit;font:inherit;font-size:.82rem;cursor:pointer;line-height:1.2}
+.tatools .chip[aria-pressed="true"]{background:rgba(242,176,30,.16);border-color:#f2b01e;color:#f2d38a}
+.tatools .chip.sec{opacity:.85}
+.tachart.tadraw-on{cursor:copy;touch-action:none}
+.tachart.tadraw-del{cursor:not-allowed}
+.tadrw text,.tapv text{font-size:10px;paint-order:stroke;stroke:#0e0d0b;stroke-width:3px;font-variant-numeric:tabular-nums}
+.tatvbox{position:relative;width:100%;height:min(78vh,720px);min-height:420px;border:1px solid var(--line,#2a2822);border-radius:8px;overflow:hidden;background:#0e0d0b}
+.tatvbox .tradingview-widget-container,.tatvbox .tradingview-widget-container__widget{height:100%;width:100%}
+.tatvfb{padding:14px;font-size:.88rem;color:#c9c3b3}
+.tatvnote{font-size:.8rem;color:#8a8577;margin:6px 0}
 .tachips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .tachips .chip{display:inline-flex;flex-direction:row;line-height:1.2;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line,#2a2822);background:transparent;color:inherit;font:inherit;font-size:.82rem;cursor:pointer;min-height:32px}
 .tachips .chip[aria-pressed="true"]{background:rgba(242,176,30,.14);border-color:#f2b01e;color:#f2d38a}
@@ -4843,6 +4859,88 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   function taDec(sym, x) { return /JPY$/.test(sym) ? 3 : TA_OTHER[sym] ? (x > 1000 ? 0 : x > 50 ? 2 : 3) : 5; }
   function taLbl(t, tf) { var d = new Date(t.length > 10 ? t : t + "T12:00:00Z"); return tf === "H1" || tf === "H4" ? d.toLocaleString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString("fr-FR", { timeZone: KIN, day: "numeric", month: "short", year: "2-digit" }); }
   var TA_LAST = null, taZoom = "120";
+  /* Dessins : ancrés sur l'horodatage de la bougie et le prix, rangés par marché et unité de temps, gardés dans ce navigateur */
+  var taView = "own", taTool = "cur", taPend = null, taForce = false, taDraws = {};
+  try { taView = localStorage.getItem("mf-taview") === "tv" ? "tv" : "own"; taDraws = JSON.parse(localStorage.getItem("mf-tadraw") || "{}") || {}; } catch (e) { taDraws = {}; }
+  function taDrawSave() { try { var ks = Object.keys(taDraws); ks.forEach(function (k) { if (!taDraws[k].length) delete taDraws[k]; }); localStorage.setItem("mf-tadraw", JSON.stringify(taDraws)); } catch (e) { /* stockage indisponible */ } }
+  function taKey() { return taSym + "|" + taTf; }
+  function taList() { return taDraws[taKey()] || (taDraws[taKey()] = []); }
+  var TA_TOOLS = [["cur", "✥ Curseur", "Lire les bougies sans dessiner"], ["tl", "╱ Tendance", "Deux touches : début et fin de la ligne"], ["hl", "― Horizontale", "Une touche : niveau de prix"], ["rect", "▭ Zone", "Deux touches : coins du rectangle"], ["fib", "ƒ Fibonacci", "Deux touches : bas et haut du mouvement"], ["txt", "T Texte", "Une touche, puis la note"], ["meas", "↔ Mesure", "Deux touches : écart en prix, pips, % et bougies"], ["del", "⌫ Gomme", "Touchez un dessin pour l'effacer"]];
+  var TA_FIB = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+  function taDrawSvg(R, G, mn, mx, W, list, pv) { /* dessins déjà posés + aperçu en cours */
+    var idx = {}; R.S.c.forEach(function (r, i) { idx[r[0]] = i; });
+    var Y = function (y) { return G.top + (mx - y) / (mx - mn) * G.h; }, d = taDec(taSym, R.v[R.v.length - 1]), out = "", pip = /JPY$/.test(taSym) ? 0.01 : TA_OTHER[taSym] ? 0 : 0.0001;
+    var pt = function (a) { var i = idx[a.t]; return i === undefined ? null : { x: G.X(i), y: Y(a.p), i: i }; };
+    var one = function (o, tmp) {
+      var A = o.a && pt(o.a), B = o.b && pt(o.b), c = o.c || "#f2b01e", op = tmp ? ' stroke-dasharray="4 3"' : "", r = G.pl + G.w, tag = "";
+      if (o.k === "hl") { var yy = Y(o.p); return '<line x1="' + G.pl + '" x2="' + r + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="' + c + '" stroke-width="1.2"' + op + '/><text x="' + (r - 4) + '" y="' + (yy - 4).toFixed(1) + '" text-anchor="end" fill="' + c + '">' + fmtN(o.p, d) + "</text>"; }
+      if (o.k === "txt") { if (!A) return ""; return '<text x="' + A.x.toFixed(1) + '" y="' + A.y.toFixed(1) + '" fill="#e8e4d8" font-size="12" style="font-size:12px">' + esc(o.s || "") + "</text>"; }
+      if (!A || !B) return "";
+      if (o.k === "tl") return '<line x1="' + A.x.toFixed(1) + '" y1="' + A.y.toFixed(1) + '" x2="' + B.x.toFixed(1) + '" y2="' + B.y.toFixed(1) + '" stroke="' + c + '" stroke-width="1.6"' + op + '/><circle cx="' + A.x.toFixed(1) + '" cy="' + A.y.toFixed(1) + '" r="3" fill="' + c + '"/><circle cx="' + B.x.toFixed(1) + '" cy="' + B.y.toFixed(1) + '" r="3" fill="' + c + '"/>';
+      if (o.k === "rect") return '<rect x="' + Math.min(A.x, B.x).toFixed(1) + '" y="' + Math.min(A.y, B.y).toFixed(1) + '" width="' + Math.abs(B.x - A.x).toFixed(1) + '" height="' + Math.abs(B.y - A.y).toFixed(1) + '" fill="#c77dff" fill-opacity=".14" stroke="#c77dff" stroke-width="1.2"' + op + "/>";
+      if (o.k === "fib") { var x0 = Math.min(A.x, B.x), g = ""; TA_FIB.forEach(function (f) { var pr = o.b.p + (o.a.p - o.b.p) * f, yy = Y(pr); g += '<line x1="' + x0.toFixed(1) + '" x2="' + r + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="#4da3ff" stroke-width="1" stroke-opacity="' + (f === 0.5 || f === 0.618 ? 1 : 0.65) + '"' + op + '/><text x="' + (x0 + 4).toFixed(1) + '" y="' + (yy - 3).toFixed(1) + '" fill="#8fc4ff">' + f + " · " + fmtN(pr, d) + "</text>"; }); return g + '<line x1="' + A.x.toFixed(1) + '" y1="' + A.y.toFixed(1) + '" x2="' + B.x.toFixed(1) + '" y2="' + B.y.toFixed(1) + '" stroke="#4da3ff" stroke-width="1" stroke-dasharray="2 3"/>'; }
+      if (o.k === "meas") { var dp = o.b.p - o.a.p, up = dp >= 0, col = up ? "#3ddc97" : "#ff5c4f", lab = (up ? "+" : "") + fmtN(dp, d) + (pip ? " · " + (up ? "+" : "") + fmtN(dp / pip, 1) + " pips" : "") + " · " + pct(dp / o.a.p * 100) + " · " + Math.abs(B.i - A.i) + " bougies";
+        var lx = Math.max(G.pl + 4, Math.min(G.pl + G.w - 4, (A.x + B.x) / 2));
+        return '<rect x="' + Math.min(A.x, B.x).toFixed(1) + '" y="' + Math.min(A.y, B.y).toFixed(1) + '" width="' + Math.abs(B.x - A.x).toFixed(1) + '" height="' + Math.abs(B.y - A.y).toFixed(1) + '" fill="' + col + '" fill-opacity=".1" stroke="' + col + '" stroke-width="1"/><line x1="' + A.x.toFixed(1) + '" y1="' + A.y.toFixed(1) + '" x2="' + B.x.toFixed(1) + '" y2="' + B.y.toFixed(1) + '" stroke="' + col + '" stroke-width="1.4"/><text x="' + lx.toFixed(1) + '" y="' + (Math.min(A.y, B.y) - 5).toFixed(1) + '" text-anchor="middle" fill="' + col + '">' + lab + "</text>"; }
+      return tag;
+    };
+    list.forEach(function (o) { out += one(o, false); });
+    if (pv) out += one(pv, true);
+    return out;
+  }
+  function taRedrawDraw(pv) { /* ne redessine que la couche des dessins : pas de clignotement */
+    var sv = document.querySelector("[data-tachart]"), L = TA_LAST; if (!sv || !L || !L.mn) return;
+    var g = sv.querySelector(".tadrw"), q = sv.querySelector(".tapv"); if (!g) return;
+    g.innerHTML = taDrawSvg(L.R, L.G, L.mn, L.mx, L.W, taList(), null); if (q) q.innerHTML = pv ? taDrawSvg(L.R, L.G, L.mn, L.mx, L.W, [], pv) : "";
+  }
+  function taEvPoint(e) { /* position du doigt ou de la souris -> bougie + prix */
+    var sv = e.target.closest && e.target.closest("[data-tachart]"), L = TA_LAST; if (!sv || !L || !L.mn) return null;
+    var r = sv.getBoundingClientRect(), vb = sv.viewBox.baseVal, x = (e.clientX - r.left) / r.width * vb.width, y = (e.clientY - r.top) / r.height * vb.height, G = L.G;
+    var i = Math.max(G.s0, Math.min(G.n - 1, G.s0 + Math.floor((x - G.pl) / G.step))); if (y < G.top - 4 || y > G.top + G.h + 4) return null;
+    return { t: L.R.S.c[i][0], p: L.mx - (Math.max(G.top, Math.min(G.top + G.h, y)) - G.top) / G.h * (L.mx - L.mn), x: x, y: y };
+  }
+  function taDrawDown(e) {
+    if (taTool === "cur" || taView !== "own") return; var sv = e.target.closest && e.target.closest("[data-tachart]"); if (!sv) return;
+    var P = taEvPoint(e); if (!P) return; e.preventDefault(); var list = taList(), L = TA_LAST;
+    if (taTool === "hl") { list.push({ k: "hl", p: P.p }); taDrawSave(); taRedrawDraw(null); return; }
+    if (taTool === "txt") { var s = window.prompt("Texte de la note :"); if (s && s.trim()) { list.push({ k: "txt", a: { t: P.t, p: P.p }, s: s.trim().slice(0, 80) }); taDrawSave(); taRedrawDraw(null); } return; }
+    if (taTool === "del") { /* efface le dessin le plus proche (à moins de 14 px) */
+      var idx = {}; L.R.S.c.forEach(function (r, i) { idx[r[0]] = i; }); var Yf = function (y) { return L.G.top + (L.mx - y) / (L.mx - L.mn) * L.G.h; }, best = -1, bd = 14;
+      var dseg = function (px, py, ax, ay, bx, by) { var dx = bx - ax, dy = by - ay, t = dx || dy ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy))) : 0; return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)); };
+      list.forEach(function (o, k) { var dd = 1e9, A = o.a && idx[o.a.t] !== undefined ? [L.G.X(idx[o.a.t]), Yf(o.a.p)] : null, B = o.b && idx[o.b.t] !== undefined ? [L.G.X(idx[o.b.t]), Yf(o.b.p)] : null;
+        if (o.k === "hl") dd = Math.abs(P.y - Yf(o.p)); else if (o.k === "txt" && A) dd = Math.hypot(P.x - A[0], P.y - A[1]); else if (A && B) { if (o.k === "tl" || o.k === "meas") dd = dseg(P.x, P.y, A[0], A[1], B[0], B[1]); else { var inx = P.x >= Math.min(A[0], B[0]) - 6 && P.x <= Math.max(A[0], B[0]) + 6, iny = P.y >= Math.min(A[1], B[1]) - 6 && P.y <= Math.max(A[1], B[1]) + 6; dd = inx && iny ? 0 : 1e9; } }
+        if (dd < bd) { bd = dd; best = k; } });
+      if (best >= 0) { list.splice(best, 1); taDrawSave(); taRedrawDraw(null); } return; }
+    /* outils à deux points : première touche = départ, seconde = fin */
+    if (!taPend) { taPend = { k: taTool, a: { t: P.t, p: P.p } }; taRedrawDraw({ k: taTool, a: taPend.a, b: { t: P.t, p: P.p } }); var tp = document.querySelector(".tatip"); if (tp) tp.textContent = "Touchez le second point (Échap pour annuler)."; return; }
+    var o = { k: taPend.k, a: taPend.a, b: { t: P.t, p: P.p } }; taPend = null;
+    if (o.k === "meas") { taRedrawDraw(o); return; } /* la mesure reste affichée jusqu'à la prochaine touche */
+    list.push(o); taDrawSave(); taRedrawDraw(null);
+  }
+  function taDrawMove(e) { if (taPend && taView === "own") { var P = taEvPoint(e); if (P) taRedrawDraw({ k: taPend.k, a: taPend.a, b: { t: P.t, p: P.p } }); } }
+  document.addEventListener("pointerdown", taDrawDown);
+  document.addEventListener("pointermove", taDrawMove);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && taPend) { taPend = null; taRedrawDraw(null); } });
+  /* Onglet TradingView complet : le vrai graphique TradingView gratuit, chargé une seule fois (jamais rechargé par les mises à jour du terminal) */
+  var TA_TVSYM = { XAUUSD: "OANDA:XAUUSD", XAGUSD: "OANDA:XAGUSD", DXY: "TVC:DXY", NAS100: "OANDA:NAS100USD", SPX500: "OANDA:SPX500USD", US30: "OANDA:US30USD", WTI: "TVC:USOIL", BTCUSD: "BITSTAMP:BTCUSD", US10Y: "TVC:US10Y" };
+  function taTvSym() { return TA_TVSYM[taSym] || "FX:" + taSym; }
+  function taMountTv() {
+    var box = null; Array.prototype.forEach.call(document.querySelectorAll(".tatvbox:not([data-m])"), function (b) { if (!box && b.offsetParent) box = b; }); if (!box) return; box.setAttribute("data-m", "1");
+    var sym = taTvSym(), fb = function () { if (box.querySelector("iframe") || box.querySelector(".tatvfb")) return; var m = document.createElement("div"); m.className = "tatvfb"; m.innerHTML = 'TradingView ne s\'est pas chargé (bloqueur de publicités, réseau ou aperçu protégé). <a href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(sym) + '" target="_blank" rel="noopener">Ouvrir ' + esc(sym) + " sur tradingview.com</a>. Les outils de dessin du terminal restent dans « Mon graphique »."; box.appendChild(m); };
+    var wrap = document.createElement("div"); wrap.className = "tradingview-widget-container";
+    var w = document.createElement("div"); w.className = "tradingview-widget-container__widget"; wrap.appendChild(w);
+    var sc = document.createElement("script"); sc.async = true; sc.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    sc.innerHTML = JSON.stringify({ autosize: true, symbol: sym, interval: { H1: "60", H4: "240", D: "D", W: "W" }[taTf] || "D", timezone: "Africa/Kinshasa", theme: "dark", style: "1", locale: "fr", backgroundColor: "#0e0d0b", allow_symbol_change: true, hide_side_toolbar: false, withdateranges: true, details: false, hotlist: false, calendar: false, save_image: true, support_host: "https://www.tradingview.com" });
+    sc.onerror = fb; wrap.appendChild(sc); box.appendChild(wrap); setTimeout(fb, 10000);
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("[data-tatool],[data-taview],[data-taundo],[data-taclear]"); if (!t) return;
+    if (t.dataset.taview) { taView = t.dataset.taview === "tv" ? "tv" : "own"; try { localStorage.setItem("mf-taview", taView); } catch (x) { /* stockage indisponible */ } taPend = null; taForce = true; renderDashBlock("ta"); taForce = false; return; }
+    if (t.dataset.tatool) { taTool = t.dataset.tatool; taPend = null; taForce = true; renderDashBlock("ta"); taForce = false; return; }
+    if (t.dataset.taundo !== undefined) { var l = taList(); if (l.length) { l.pop(); taDrawSave(); } taPend = null; taRedrawDraw(null); return; }
+    if (t.dataset.taclear !== undefined) { if (taList().length && window.confirm("Effacer tous les dessins de " + taName(taSym) + " (" + taTf + ") ?")) { taDraws[taKey()] = []; taDrawSave(); } taPend = null; taRedrawDraw(null); }
+  });
+
   try { taZoom = localStorage.getItem("mf-tazoom") || "120"; } catch (e) { /* stockage indisponible */ }
   function taGeom(R, W, H, top, bot) { var n = R.v.length, s0 = taZoom === "all" ? 0 : Math.max(0, n - +taZoom), cnt = n - s0, pl = 6, pr = 64, w = W - pl - pr, step = w / cnt; return { n: n, s0: s0, cnt: cnt, pl: pl, pr: pr, w: w, step: step, X: function (i) { return pl + (i - s0 + 0.5) * step; }, top: top, h: H - top - bot }; }
   function taChart(R, W) {
@@ -4866,9 +4964,11 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     }
     var last = R.v[n - 1], lc = K[n - 1][3] >= K[n - 1][0] ? "#3ddc97" : "#ff5c4f";
     var xl = [s0, Math.floor((s0 + n - 1) / 2), n - 1].map(function (i, j) { return '<text x="' + X(i).toFixed(1) + '" y="' + (H - 6) + '" class="tax" text-anchor="' + (j === 0 ? "start" : j === 2 ? "end" : "middle") + '">' + taLbl(R.S.c[i][0], taTf) + "</text>"; }).join("");
-    return '<svg class="tachart" data-tachart="1" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + taName(taSym) + ' en chandeliers">' + g + band + cs +
+    TA_LAST.mn = mn; TA_LAST.mx = mx; TA_LAST.W = W;
+    return '<svg class="tachart' + (taTool !== "cur" ? (taTool === "del" ? " tadraw-on tadraw-del" : " tadraw-on") : "") + '" data-tachart="1" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + taName(taSym) + ' en chandeliers">' + g + band + cs +
       (taOn.ma20 ? line(R.ma20, "#f2b01e", 1.4) : "") + (taOn.ma50 ? line(R.ma50, "#4da3ff", 1.4) : "") + (taOn.ma100 ? line(R.ma100, "#c77dff", 1.4) : "") +
       '<line x1="' + G.pl + '" x2="' + (W - G.pr) + '" y1="' + Y(last).toFixed(1) + '" y2="' + Y(last).toFixed(1) + '" stroke="' + lc + '" stroke-dasharray="2 3" stroke-width="1"/><rect x="' + (W - G.pr + 2) + '" y="' + (Y(last) - 10).toFixed(1) + '" width="' + (G.pr - 4) + '" height="20" rx="4" fill="' + lc + '"/><text x="' + (W - G.pr + 6) + '" y="' + (Y(last) + 4).toFixed(1) + '" class="tax" style="fill:#14130f;font-weight:700">' + fmtN(last, dec) + "</text>" + xl +
+      '<clipPath id="tacl"><rect x="' + G.pl + '" y="' + G.top + '" width="' + G.w + '" height="' + G.h + '"/></clipPath><g clip-path="url(#tacl)" class="tadrw">' + taDrawSvg(R, G, mn, mx, W, taList(), null) + '</g><g clip-path="url(#tacl)" class="tapv"></g>' +
       '<line class="tacross" x1="0" x2="0" y1="' + G.top + '" y2="' + (H - 22) + '" stroke="#f2b01e" stroke-width="1" stroke-dasharray="3 3" style="display:none"/></svg>';
   }
   function taSub(arr, W, kind, extra, R) {
@@ -4904,8 +5004,11 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   function taHtml() {
     var R = taCalc(taSym, taTf);
     var opts = '<optgroup label="Devises">' + TA_PAIRS.map(function (p) { return '<option value="' + p + '"' + (p === taSym ? " selected" : "") + ">" + taName(p) + "</option>"; }).join("") + '</optgroup><optgroup label="Autres marchés">' + Object.keys(TA_OTHER).map(function (p) { return '<option value="' + p + '"' + (p === taSym ? " selected" : "") + ">" + TA_OTHER[p][2] + "</option>"; }).join("") + "</optgroup>";
-    var head = '<div class="cfhead"><select data-tasym="1" aria-label="Marché">' + opts + '</select><div class="seg" role="group" aria-label="Unité de temps">' + TA_TF.map(function (t) { return '<button type="button" data-tatf="' + t[0] + '" aria-pressed="' + (taTf === t[0]) + '">' + t[1] + "</button>"; }).join("") + '</div><div class="seg" role="group" aria-label="Nombre de bougies">' + [["60", "60"], ["120", "120"], ["all", "Tout"]].map(function (z) { return '<button type="button" data-tazoom="' + z[0] + '" aria-pressed="' + (taZoom === z[0]) + '">' + z[1] + "</button>"; }).join("") + "</div></div>" +
-      '<div class="tachips" role="group" aria-label="Indicateurs (graphique propre par défaut)"><small class="talab">Indicateurs (touchez pour afficher) :</small>' + TA_IND.map(function (i) { return '<button type="button" class="chip" data-taind="' + i[0] + '" title="' + i[3] + '" aria-pressed="' + !!taOn[i[0]] + '">' + (i[2] ? '<i style="background:' + i[2] + '"></i>' : "") + i[1] + "</button>"; }).join("") + "</div>";
+    var views = '<div class="taviews" role="group" aria-label="Type de graphique"><button type="button" data-taview="own" aria-pressed="' + (taView === "own") + '">Mon graphique</button><button type="button" data-taview="tv" aria-pressed="' + (taView === "tv") + '">TradingView complet</button></div>';
+    if (taView === "tv") { setTimeout(taMountTv, 0); return views + '<div class="tatvbox"></div><p class="tatvnote">Vrai graphique TradingView (gratuit) : outils de dessin à gauche, changement de paire et d\'unité de temps en haut. TradingView ne garde pas tes dessins ici sans compte : pour des dessins conservés, utilise « Mon graphique ».</p>'; }
+    var head = views + '<div class="cfhead"><select data-tasym="1" aria-label="Marché">' + opts + '</select><div class="seg" role="group" aria-label="Unité de temps">' + TA_TF.map(function (t) { return '<button type="button" data-tatf="' + t[0] + '" aria-pressed="' + (taTf === t[0]) + '">' + t[1] + "</button>"; }).join("") + '</div><div class="seg" role="group" aria-label="Nombre de bougies">' + [["60", "60"], ["120", "120"], ["all", "Tout"]].map(function (z) { return '<button type="button" data-tazoom="' + z[0] + '" aria-pressed="' + (taZoom === z[0]) + '">' + z[1] + "</button>"; }).join("") + "</div></div>" +
+      '<div class="tachips" role="group" aria-label="Indicateurs (graphique propre par défaut)"><small class="talab">Indicateurs (touchez pour afficher) :</small>' + TA_IND.map(function (i) { return '<button type="button" class="chip" data-taind="' + i[0] + '" title="' + i[3] + '" aria-pressed="' + !!taOn[i[0]] + '">' + (i[2] ? '<i style="background:' + i[2] + '"></i>' : "") + i[1] + "</button>"; }).join("") + "</div>" +
+      '<div class="tatools" role="group" aria-label="Outils de dessin">' + TA_TOOLS.map(function (t) { return '<button type="button" class="chip" data-tatool="' + t[0] + '" title="' + t[2] + '" aria-pressed="' + (taTool === t[0]) + '">' + t[1] + "</button>"; }).join("") + '<button type="button" class="chip sec" data-taundo="1" title="Retire le dernier dessin">↶ Annuler</button><button type="button" class="chip sec" data-taclear="1" title="Efface tous les dessins de ce marché et de cette unité de temps">Tout effacer</button></div>';
     if (!R) return head + '<p class="hint">' + (TA_OTHER[taSym] && (taTf === "H1" || taTf === "H4") && !TA_OTHER[taSym][1] ? "Pas de cotations horaires gratuites pour " + taName(taSym) + " : choisissez Jour ou Semaine." : "Cotations en attente du robot.") + "</p>";
     var n = R.v.length, W = Math.round(Math.max(340, Math.min(1200, (window.innerWidth || 800) - 60))), c5 = n > 5 ? (R.v[n - 1] / R.v[n - 6] - 1) * 100 : null, G = taGeom(R, W, 300, 10, 22), ct = (R.v[n - 1] / R.v[G.s0] - 1) * 100, K = R.S.k[n - 1], dec = taDec(taSym, R.v[n - 1]);
     TA_LAST = { R: R, tf: taTf, sym: taSym, G: G };
@@ -6408,7 +6511,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   function renderDashBlock(id) {
     var b = DASH.filter(function (x) { return x.id === id; })[0]; if (!b) return;
     var anim = typeof UACT !== "undefined" && Date.now() - UACT < 900;
-    Array.prototype.forEach.call(document.querySelectorAll('.dblk[data-blk="' + id + '"] .dbody'), function (el) { if (el.closest(".branch") && !el.closest(".branch.on")) return; if (document.activeElement && /TEXTAREA|INPUT/.test(document.activeElement.tagName) && el.contains(document.activeElement)) return; /* ne pas effacer une saisie en cours */ var y = window.scrollY; try { el.innerHTML = b.f(); } catch (e) { el.innerHTML = '<p class="hint">Bloc indisponible pour le moment.</p>'; } if (anim) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); } if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); });
+    Array.prototype.forEach.call(document.querySelectorAll('.dblk[data-blk="' + id + '"] .dbody'), function (el) { if (el.closest(".branch") && !el.closest(".branch.on")) return; if (id === "ta" && taView === "tv" && !taForce && el.querySelector(".tatvbox[data-m]")) return; if (document.activeElement && /TEXTAREA|INPUT/.test(document.activeElement.tagName) && el.contains(document.activeElement)) return; /* ne pas effacer une saisie en cours */ var y = window.scrollY; try { el.innerHTML = b.f(); } catch (e) { el.innerHTML = '<p class="hint">Bloc indisponible pour le moment.</p>'; } if (anim) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); } if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); });
   }
   function dashHtml() {
     var ord = dashOrder();
