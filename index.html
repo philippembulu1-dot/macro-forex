@@ -1,6 +1,7 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Macro Forex</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"></noscript>
 <style>
 /* Terminal sombre : barre latérale, bandeau de cours, trois colonnes de panneaux (marchés, analyse, agenda), puis outils de trading. Fond noir, ambre pour la structure, vert/rouge réservés aux hausses/baisses. */
 :root {
@@ -2809,7 +2810,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     if (m && r) u.unshift("https://raw.githubusercontent.com/" + m[1] + "/" + r + "/main/data/macro.json");
     return u;
   })();
-  var AUTO = null, autoErr = "";
+  var AUTO = null, autoErr = "", autoSame = false;
   var MAXAGE = { daily: 6, weekly: 12, monthly: 80, quarterly: 140, news: 21, calendar: 8, annual: 800 };
   var MANUAL = [
     { n: "Banques centrales (taux, inflation)", d: "2026-10-24" }, { n: "Tableau des indicateurs macro", d: "2026-10-25" },
@@ -2974,7 +2975,8 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     });
   }
   function initMinis() { buildMinis($("miniGrid"), MINIS); }
-  function refreshMinis() { MINI_BOXES.forEach(function (b) { if (b.offsetParent) { if (!CHARTS[b.__m.s] || (CHARTS[b.__m.s].rows && Date.now() - CHARTS[b.__m.s].at > 15 * 6e4)) cnbcHist(b.__m.s).then(function () { drawMini(b); }, function () { drawMini(b); }); drawMini(b); } }); }
+  var MINIS_ON = false;
+  function refreshMinis() { if (!MINIS_ON) { var mg = $("miniGrid"); if (!mg || !mg.offsetParent) return; MINIS_ON = true; initMinis(); } MINI_BOXES.forEach(function (b) { if (b.offsetParent) { if (!CHARTS[b.__m.s] || (CHARTS[b.__m.s].rows && Date.now() - CHARTS[b.__m.s].at > 15 * 6e4)) cnbcHist(b.__m.s).then(function () { drawMini(b); }, function () { drawMini(b); }); drawMini(b); } }); }
   var FGR = { "extreme fear": "Peur extrême", fear: "Peur", neutral: "Neutre", greed: "Avidité", "extreme greed": "Avidité extrême" };
   function fgLabel(v) { return v < 25 ? "Peur extrême" : v < 45 ? "Peur" : v <= 55 ? "Neutre" : v < 75 ? "Avidité" : "Avidité extrême"; }
   function renderFG() {
@@ -8488,11 +8490,11 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   function loadAuto() {
     var p = Promise.reject(new Error("start")), pick = function (u) { return function () { return getJson(u).then(function (j) { if (!validAuto(j)) throw new Error("format"); return j; }); }; };
     AUTO_URLS.forEach(function (u) { p = p.catch(pick(u)); });
-    return p.then(function (j) { AUTO = j; autoErr = ""; var save = function () { try { localStorage.setItem("mf-macro", JSON.stringify(j)); } catch (e) { } }; if (window.requestIdleCallback) requestIdleCallback(save, { timeout: 20000 }); else setTimeout(save, 4000); })
+    return p.then(function (j) { if (AUTO && AUTO.generated === j.generated && !autoErr) { autoSame = true; return; } autoSame = false; AUTO = j; autoErr = ""; var save = function () { try { localStorage.setItem("mf-macro", JSON.stringify(j)); } catch (e) { } }; clearTimeout(loadAuto.sv); loadAuto.sv = setTimeout(function () { if (window.requestIdleCallback) requestIdleCallback(save, { timeout: 10000 }); else save(); }, 15000); /* copie de secours : jamais pendant l'ouverture du site */ })
       .catch(function (e) {
-        autoErr = String(e && e.message || e);
+        autoErr = String(e && e.message || e); autoSame = false;
         if (!AUTO) { try { var c = JSON.parse(localStorage.getItem("mf-macro")); if (validAuto(c)) AUTO = c; } catch (x) { } }
-      }).then(renderAuto);
+      }).then(function () { if (!autoSame) renderAuto(); });
   }
 
   $("agendaMore").addEventListener("click", function () { agendaAll = !agendaAll; renderAgenda(); });
@@ -8500,7 +8502,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   loadChecks(); renderChecks(); loadCache(); renderAll(); initCalc();
   buildBranches(); tagNature(); initMotion();
   initCmd(); initCal(); initCalViews(); initEz(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
-  initTV(); refreshGold(); initMinis(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(loadAuto, 5 * 60 * 1000); pollLive(); setInterval(pollLive, 60000); pollNews(); setInterval(pollNews, 60000); setInterval(function () { if (!document.hidden) renderTicker(); }, 60000); setInterval(function () { if (!document.hidden) renderBrStatus(); }, 15000);
+  setTimeout(initTV, 3500); refreshGold(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(function () { if (!document.hidden) loadAuto(); }, 5 * 60 * 1000); pollLive(); setInterval(function () { if (!document.hidden) pollLive(); }, 60000); setTimeout(pollNews, 3000); setInterval(function () { if (!document.hidden) pollNews(); }, 60000); setInterval(function () { if (!document.hidden) renderTicker(); }, 60000); setInterval(function () { if (!document.hidden) renderBrStatus(); }, 15000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) { refreshGold(); pollLive(); pollNews(); if (!AUTO || !AUTO.generated || Date.now() - Date.parse(AUTO.generated) > 30 * 6e4) loadAuto(); } });
   $("gChart").addEventListener("pointermove", function (e) { if (gCur) gShow(idx(e, $("gChart"), gCur.W, gCur.L, gCur.Rm, gCur.s.length), false); });
