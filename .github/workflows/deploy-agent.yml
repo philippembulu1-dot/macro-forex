@@ -1,0 +1,40 @@
+name: Déployer le relais de l'agent IA
+# Met en ligne worker/agent.js sur Cloudflare (Worker « macro-agent »). Se lance à chaque modification du relais, ou à la main.
+# Secrets GitHub nécessaires : CLOUDFLARE_API_TOKEN (jeton « Edit Cloudflare Workers »), AGENT_CODE (code d'accès du chat) ; GEMINI_API_KEY existe déjà.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "worker/**"
+      - "wrangler.jsonc"
+      - ".github/workflows/deploy-agent.yml"
+permissions:
+  contents: read
+concurrency:
+  group: deploy-agent
+  cancel-in-progress: false
+jobs:
+  deploiement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 019f525f7c8e7d8eeed256c9a4c52c6f
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Vérifier les secrets
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "Secret CLOUDFLARE_API_TOKEN absent : rien déployé."; exit 1; }
+      - name: Mettre le relais en ligne
+        run: npx --yes wrangler@4 deploy
+      - name: Envoyer les deux secrets au relais (sans jamais les afficher)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AGENT_CODE: ${{ secrets.AGENT_CODE }}
+        run: |
+          if [ -n "$GEMINI_API_KEY" ]; then printf '%s' "$GEMINI_API_KEY" | npx --yes wrangler@4 secret put GEMINI_API_KEY; else echo "GEMINI_API_KEY absent"; fi
+          if [ -n "$AGENT_CODE" ]; then printf '%s' "$AGENT_CODE" | npx --yes wrangler@4 secret put AGENT_CODE; else echo "AGENT_CODE absent : à créer dans les secrets GitHub"; fi
