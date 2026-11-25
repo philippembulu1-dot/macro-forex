@@ -9,7 +9,8 @@ Règles :
 
 Test hors ligne : MF_MOCK_DIR=<dossier> lit des fichiers au lieu d'Internet.
 Diagnostic : MF_ONLY=fred,cot,... ne lance que certaines sources."""
-import csv, io, json, os, re, sys, time, statistics, threading, urllib.request, urllib.parse
+import csv
+import gzip, io, json, os, re, sys, time, statistics, threading, urllib.request, urllib.parse
 import html as _html
 from concurrent.futures import ThreadPoolExecutor, wait
 import xml.etree.ElementTree as ET
@@ -77,7 +78,10 @@ def http(key, url, tries=2, headers=None, timeout=20):
                     buf.extend(chunk)
                     if time.time() > end:
                         raise TimeoutError("réponse trop lente (> %d s)" % (timeout * 3))
-            return bytes(buf).decode("utf-8-sig", "replace")
+            raw = bytes(buf)
+            if raw[:2] == b"\x1f\x8b":   # réponse compressée (BCE, Polymarket) : on décompresse
+                raw = gzip.decompress(raw)
+            return raw.decode("utf-8-sig", "replace")
         except urllib.error.HTTPError as e:  # 4xx : inutile d'insister (sauf 429)
             last = e
             if e.code in (400, 401, 403, 404, 410, 418):
@@ -197,7 +201,7 @@ def yoy(o):
 def poly_get(key, url, tries=2, timeout=25):
     """Polymarket (API gamma) refuse parfois (406) selon l'identité du client : on réessaie avec d'autres en-têtes."""
     last = None
-    for hd in ({"Accept": "application/json"}, {"Accept": "application/json", "User-Agent": "macro-forex/1.0 (+https://github.com/philippembulu1-dot/macro-forex)", "Accept-Language": ""}, {"Accept": "application/json", "User-Agent": "curl/8.5.0"}):
+    for hd in ({"Accept": "application/json", "Accept-Encoding": "gzip"}, {"Accept": "application/json", "Accept-Encoding": "gzip", "User-Agent": "macro-forex/1.0 (+https://github.com/philippembulu1-dot/macro-forex)", "Accept-Language": ""}, {"Accept": "application/json", "User-Agent": "curl/8.5.0"}):
         try:
             return http(key, url, tries=1, headers=hd, timeout=timeout)
         except urllib.error.HTTPError as e:
