@@ -3477,7 +3477,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   }
   /* ---------- Courbes : historiques du robot, sans rien inventer ---------- */
   var CV_PER = "1A", CV_PERS = [["3M", "3 mois", 92], ["6M", "6 mois", 183], ["1A", "1 an", 366], ["MAX", "Maximum", 0]];
-  var CV_DATA = {};
+  var CV_DATA = {}, cvKey = "";
   function cvD(k) { var x = AUTO && AUTO.daily && AUTO.daily[k]; return x && x.c; }
   function cvF(k) { var f = fred(k); return f && f.hist; }
   function cvL(k) { var l = AUTO && AUTO.signals && AUTO.signals.long; return l && l[k]; }
@@ -3602,7 +3602,8 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   }
   function renderCourbes() {
     var host = $("courbes"); if (!host) return;
-    var bar = $("cvBar"), body = $("cvBody"); if (!AUTO) { $("cvMeta").textContent = "en attente des données du robot"; return; }
+    var bar = $("cvBar"), body = $("cvBody"), key = (AUTO && AUTO.generated) + "|" + CV_PER; if (AUTO && cvKey === key && body.firstChild) return; if (AUTO) cvKey = key;
+    if (!AUTO) { $("cvMeta").textContent = "en attente des données du robot"; return; }
     if (!bar.firstChild) {
       bar.innerHTML = CV_PERS.map(function (x) { return '<button type="button" data-per="' + x[0] + '" aria-pressed="' + (x[0] === CV_PER) + '">' + x[1] + "</button>"; }).join("");
       bar.addEventListener("click", function (e) { var b = e.target.closest("button[data-per]"); if (!b) return; CV_PER = b.getAttribute("data-per"); Array.prototype.forEach.call(bar.children, function (c) { c.setAttribute("aria-pressed", c === b ? "true" : "false"); }); renderCourbes(); });
@@ -4676,6 +4677,8 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
       var cur = document.querySelector('#bnav a[aria-current="page"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest", inline: "center" });
       if (id === "taux" && !rateMinisDone) { rateMinisDone = true; initRateMinis(); }
       if (id === "or") { initGoldSilver(); renderOrVol(); }
+      if (id === "analyse") loadTa();
+      if (id === "courbes") renderCourbes();
       if (id === "matin") loadIA(); /* l'analyse IA n'est téléchargée qu'à l'ouverture de cette branche : zéro coût au démarrage */
       var bb = BR.filter(function (x) { return x.id === id; })[0]; if (bb && bb.blocks) setTimeout(function () { bb.blocks.forEach(renderDashBlock); }, 0);
       if (id === "taux") renderPricing();
@@ -5012,11 +5015,21 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   }
   var TA_MAJ = { EURUSD: ["eur", "EURUSD", "EUR="], GBPUSD: ["gbp", "GBPUSD", "GBP="], USDJPY: ["jpy", "USDJPY", "JPY="], AUDUSD: ["aud", "AUDUSD", "AUD="], USDCAD: ["cad", "USDCAD", "CAD="], USDCHF: ["chf", "USDCHF", "CHF="], NZDUSD: ["nzd", "NZDUSD", "NZD="] };
   var TA_LIVE = { XAUUSD: "@GC.1", DXY: ".DXY", XAGUSD: "@SI.1", NAS100: "@ND.1", SPX500: "@SP.1", WTI: "@CL.1", BTCUSD: "BTC.CM=", US10Y: "US10Y", AUDJPY: "AUDJPY=" };
+  /* Bougies des paires croisées : fichier à part (0,5 Mo), téléchargé seulement à l'ouverture de « Analyse technique » */
+  var TA_X = null, taXAt = 0, taXBusy = false;
+  function loadTa() {
+    if (taXBusy || (TA_X && Date.now() - taXAt < 15 * 60 * 1000)) return; taXBusy = true;
+    var p = Promise.reject(new Error("start")), pick = function (u) { return function () { return getJson(u); }; };
+    AUTO_URLS.forEach(function (u) { p = p.catch(pick(u.replace("macro.json", "macro-ta.json"))); });
+    p.then(function (j) {
+      if (j && j.crosses) { TA_X = j.crosses; taXAt = Date.now(); var bb = BR.filter(function (x) { return x.id === "analyse"; })[0]; if (bb && bb.blocks && curBr === "analyse") bb.blocks.forEach(renderDashBlock); }
+    }).catch(function () { /* les croisées restent recalculées depuis les paires contre dollar */ }).then(function () { taXBusy = false; });
+  }
   function taSeries(sym, tf) {
     var intra = tf === "H1" || tf === "H4", rows = null, ohl = null, src = "", node = null;
     if (TA_OTHER[sym]) { var k = TA_OTHER[sym][intra ? 1 : 0], S = intra ? AUTO && AUTO.intraday : AUTO && AUTO.daily; node = k && S && S[k]; }
     else if (TA_MAJ[sym]) { var S2 = intra ? AUTO && AUTO.intraday : AUTO && AUTO.daily; node = S2 && S2[TA_MAJ[sym][intra ? 1 : 0]]; }
-    else { var X = AUTO && AUTO.crosses && AUTO.crosses[intra ? "h" : "d"]; node = X && X[sym]; }
+    else { var X = TA_X && TA_X[intra ? "h" : "d"]; node = X && X[sym]; }
     if (node && node.c && node.c.length >= 10) { rows = node.c.map(function (r) { return [r[0], r[1]]; }); ohl = node.ohl && node.ohl.length === node.c.length ? node.ohl : null; src = (node.sym || "") + " · Yahoo Finance, non officiel" + (ohl ? "" : " (clôtures seules : bougies sans mèches)"); }
     else if (!TA_OTHER[sym]) {
       var U = taUsdMaps(intra), b = sym.slice(0, 3), q = sym.slice(3);
@@ -8783,7 +8796,72 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
       '<span class="bs">Sources : ' + (tot ? (tot - bad) + "/" + tot + " OK" : "–") + "</span>" + '<span class="bs">Site relu toutes les 5 min</span>';
     Array.prototype.forEach.call(document.querySelectorAll(".bstat"), function (e) { e.innerHTML = txt; });
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderSignaux(); renderE19(); renderBce(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); renderCourbes(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); else { var cb_ = BR.filter(function (x) { return x.id === curBr; })[0]; if (cb_ && cb_.blocks) cb_.blocks.forEach(renderDashBlock); } }
+  /* Rendu des panneaux par petites tranches : la page reste réactive pendant que les données arrivent
+     (avant : un seul calcul de plusieurs centaines de ms sur téléphone). Une erreur dans un panneau n'arrête plus les suivants. */
+  var AQ = { steps: [], timer: null };
+  function runAQ() {
+    clearTimeout(AQ.timer); AQ.timer = null; var t0 = performance.now();
+    while (AQ.steps.length) {
+      var f = AQ.steps.shift(); try { f(); } catch (e) { if (window.console) console.error("renderAuto", e); }
+      if (AQ.steps.length && performance.now() - t0 > 12) { AQ.timer = setTimeout(runAQ, 0); return; }
+    }
+  }
+  function renderAuto() {
+    AQ.steps = [
+    function () { applyFomc(); },
+    function () { preferRealDxy(); },
+    function () { if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); },
+    function () { renderFG(); },
+    function () { renderTaux(); },
+    function () { renderCot(); },
+    function () { renderNews(); },
+    function () { renderRobot(); },
+    function () { renderReserves(); },
+    function () { renderTerminal(); },
+    function () { renderInd(); },
+    function () { renderWeek(); },
+    function () { renderVid(); },
+    function () { renderShip(); },
+    function () { renderSentWidget(); },
+    function () { renderGeo(); },
+    function () { renderGeo2(); },
+    function () { if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); },
+    function () { renderAnalyses(); },
+    function () { renderRetail(); },
+    function () { renderOrVol(); },
+    function () { fillTaylor(); },
+    function () { renderDotPlot(); },
+    function () { renderBceProj(); },
+    function () { renderCycle(); },
+    function () { renderCycle4(); },
+    function () { renderDrivers(); },
+    function () { renderRegime(); },
+    function () { renderCurveIntel(); },
+    function () { renderFStr(); },
+    function () { renderFlux(); },
+    function () { renderMulti(); },
+    function () { renderSignaux(); },
+    function () { renderE19(); },
+    function () { renderBce(); },
+    function () { renderScenarios(); },
+    function () { renderGoldFut(); },
+    function () { renderFedWatch(); },
+    function () { renderGoldDemand(); },
+    function () { renderReact(); },
+    function () { renderMatin(); },
+    function () { renderEzone(); },
+    function () { renderDeficits(); },
+    function () { renderMove(); },
+    function () { renderMtEz(); },
+    function () { if (curBr === "courbes") renderCourbes(); },
+    function () { liveOverlay(); },
+    function () { renderBrStatus(); },
+    function () { tagNature(); },
+    function () { if (curBr === "taux") renderPricing(); },
+    function () { if (!curBr) renderHub(); else { var cb_ = BR.filter(function (x) { return x.id === curBr; })[0]; if (cb_ && cb_.blocks) cb_.blocks.forEach(renderDashBlock); } }
+    ];
+    runAQ();
+  }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })

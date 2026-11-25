@@ -21,6 +21,7 @@ OUT = os.environ.get("MF_OUT", os.path.join(ROOT, "data", "macro.json"))
 OUT_SEAS = os.environ.get("MF_OUT_SEAS", os.path.join(ROOT, "data", "seasonal.json"))
 OUT_HIST = os.environ.get("MF_OUT_HIST", os.path.join(ROOT, "data", "macro-history.json"))
 OUT_SURP = os.environ.get("MF_OUT_SURP", os.path.join(ROOT, "data", "surprises.json"))
+OUT_TA = os.environ.get("MF_OUT_TA", os.path.join(ROOT, "data", "macro-ta.json"))   # bougies des paires croisées : chargées par le site à la demande
 DIAG = {}
 PREVIOUS = {}
 try:  # fichier précédent : sert à conserver les dernières données valides d'une source instable
@@ -32,6 +33,13 @@ except Exception:
 # car le site ne les lit pas et elles pesaient plus de la moitié du fichier téléchargé par chaque visiteur (nov. 2026).
 OUT_CACHE = os.environ.get("MF_OUT_CACHE", os.path.join(os.path.dirname(os.path.abspath(OUT)), "robot-cache.json"))
 CACHE_KEYS = ("gn_urls", "alt_cache")
+try:  # les paires croisées vivent dans macro-ta.json (sorties de macro.json) : on les reprend comme dernière donnée valide
+    with open(OUT_TA, encoding="utf-8") as _f:
+        _ta = json.load(_f)
+    if isinstance(_ta.get("crosses"), dict) and not PREVIOUS.get("crosses"):
+        PREVIOUS["crosses"] = _ta["crosses"]
+except Exception:
+    pass
 try:  # le fichier à part prime ; à défaut (première fois), on reprend ce qui restait dans l'ancien macro.json
     with open(OUT_CACHE, encoding="utf-8") as _f:
         _rc = json.load(_f)
@@ -5306,10 +5314,14 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
     with LOCK:
         cache = {k: out.pop(k, None) or (PREVIOUS.get(k) or {}) for k in CACHE_KEYS}  # sortis de macro.json (allègement du site)
+        ta = {"generated": out["generated"], "crosses": out.pop("crosses", None) or (PREVIOUS.get("crosses") or {})}
+        ttxt = json.dumps(ta, ensure_ascii=False, separators=(",", ":"))
         txt = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
         ctxt = json.dumps(cache, ensure_ascii=False, separators=(",", ":"))
     with open(OUT_CACHE, "w", encoding="utf-8") as f:  # d'abord la mémoire, puis le fichier du site
         f.write(ctxt)
+    with open(OUT_TA, "w", encoding="utf-8") as f:
+        f.write(ttxt)
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(txt)
 
