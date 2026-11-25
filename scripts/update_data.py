@@ -194,6 +194,17 @@ def yoy(o):
     return {"v": round((o[-1][1] / ya - 1) * 100, 2), "prev": round((o[-2][1] / ya2 - 1) * 100, 2) if ya2 else None, "asof": o[-1][0]}
 
 
+def poly_get(key, url, tries=2, timeout=25):
+    """Polymarket (API gamma) refuse parfois (406) selon l'identité du client : on réessaie avec d'autres en-têtes."""
+    last = None
+    for hd in ({"Accept": "application/json"}, {"Accept": "application/json", "User-Agent": "macro-forex/1.0 (+https://github.com/philippembulu1-dot/macro-forex)", "Accept-Language": ""}, {"Accept": "application/json", "User-Agent": "curl/8.5.0"}):
+        try:
+            return http(key, url, tries=1, headers=hd, timeout=timeout)
+        except Exception as e:
+            last = e
+    raise last
+
+
 FRED_OK = {"v": None}
 
 
@@ -421,7 +432,8 @@ def fallbacks(data):
             data["cycle_src"] = {"unemp": ser.get("LNS14000000", [])[-36:], "nfp": ser.get("CES0000000001", [])[-36:],
                                  "cpi": ser.get("CUSR0000SA0", [])[-48:], "core": ser.get("CUSR0000SA0L1E", [])[-48:]}
             for sid, key in (("CUSR0000SA0", "us_cpi"), ("CUSR0000SA0L1E", "us_core")):
-                y = yoy(ser.get(sid))
+                o_ = ser.get(sid) or []
+                y = yoy(o_) or yoy(o_[:-1]) or yoy(o_[:-2])   # octobre 2025 n'existe pas (arrêt de l'administration) : octobre 2026 n'a pas de glissement annuel
                 if y:
                     D[key] = y
             u = ser.get("LNS14000000")
@@ -2305,7 +2317,7 @@ def do_markets(data):
             note("pm.kalshi." + series, "Probabilités Fed (Kalshi, " + series + ")", "daily", False, err=e, url="https://kalshi.com/markets/kxfeddecision")
     try:
         url = "https://gamma-api.polymarket.com/events?" + urllib.parse.urlencode({"closed": "false", "limit": "100", "tag_slug": "fed-rates"})
-        evs = json.loads(http("poly.json", url, tries=2))
+        evs = json.loads(poly_get("poly.json", url))
         n = 0
         for ev in evs if isinstance(evs, list) else []:
             for m in ev.get("markets") or []:
@@ -4345,7 +4357,7 @@ def ecb_rows(fname, path, timeout=60):
     """Séries BCE (CSV, sans clé) : dictionnaire clé de série → [(période, valeur)] triés."""
     url = ECB_API + path + ("&" if "?" in path else "?") + "format=csvdata&detail=dataonly"
     out = {}
-    rd = csv.DictReader(io.StringIO(http(fname, url, timeout=timeout)))
+    rd = csv.DictReader(http(fname, url, timeout=timeout).splitlines())
     for r in rd:
         v = num(r.get("OBS_VALUE"))
         if v is None:
@@ -4972,7 +4984,7 @@ def do_guide_auto(data):
         found = []
         for q in ("recession", "ECB"):
             try:
-                j = json.loads(http("pm_s_%s.json" % q, "https://gamma-api.polymarket.com/public-search?" + urllib.parse.urlencode({"q": q, "limit_per_type": "8", "events_status": "active"}), timeout=25))
+                j = json.loads(poly_get("pm_s_%s.json" % q, "https://gamma-api.polymarket.com/public-search?" + urllib.parse.urlencode({"q": q, "limit_per_type": "8", "events_status": "active"})))
                 for ev in (j.get("events") or [])[:8]:
                     for mk in (ev.get("markets") or [])[:6]:
                         try:
