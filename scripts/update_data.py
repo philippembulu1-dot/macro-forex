@@ -4131,7 +4131,7 @@ def geo_extra(g):
         pm = []
         for tag in ("geopolitics", "world"):
             url = "https://gamma-api.polymarket.com/events?" + urllib.parse.urlencode({"closed": "false", "limit": "60", "tag_slug": tag, "order": "volume", "ascending": "false"})
-            evs = json.loads(http("poly_geo_%s.json" % tag, url, tries=2, timeout=25))
+            evs = json.loads(poly_get("poly_geo_%s.json" % tag, url))
             for ev in evs if isinstance(evs, list) else []:
                 for m in ev.get("markets") or []:
                     try:
