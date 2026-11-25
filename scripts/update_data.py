@@ -4990,12 +4990,15 @@ def do_guide_auto(data):
         note("guide.estr", "€STR (BCE)", "daily", False, err=e)
     # 6. Dette fédérale américaine (Trésor, « debt to the penny »)
     try:
-        j = json.loads(http("debt.json", "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=400&fields=record_date,tot_pub_debt_out_amt", tries=3, timeout=45))
-        rows = j.get("data") or []
-        if not rows:
+        base_ = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?fields=record_date,tot_pub_debt_out_amt&sort=-record_date&page%5Bsize%5D=1"
+        cur = (json.loads(http("debt.json", base_, tries=3, timeout=60)).get("data") or [None])[0]
+        if not cur:
             raise ValueError("vide")
-        cur = rows[0]
-        yr = [r for r in rows if r["record_date"] <= (datetime.strptime(cur["record_date"], "%Y-%m-%d") - timedelta(days=365)).strftime("%Y-%m-%d")]
+        d1 = (datetime.strptime(cur["record_date"], "%Y-%m-%d") - timedelta(days=365)).strftime("%Y-%m-%d")
+        try:   # une seule ligne un an plus tôt (requête légère) au lieu de 400 lignes
+            yr = (json.loads(http("debt_y1.json", base_ + "&filter=record_date:lte:" + d1, tries=2, timeout=60)).get("data") or [])
+        except Exception:
+            yr = []
         G["debt"] = {"v": float(cur["tot_pub_debt_out_amt"]), "d": cur["record_date"], "y1": float(yr[0]["tot_pub_debt_out_amt"]) if yr else None}
         note("guide.debt", "Dette fédérale américaine (Trésor, debt to the penny)", "daily", True, cur["record_date"], url="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/")
     except Exception as e:
