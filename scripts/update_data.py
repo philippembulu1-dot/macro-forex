@@ -4722,8 +4722,8 @@ def do_deficits(data):
     try:
         base = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/mts/mts_table_1?"
         # Attention : demander seulement certains champs fait additionner les lignes par l'API ; on lit les lignes complètes.
-        last = json.loads(http("mts_last.json", base + "sort=-record_date&page[size]=1", timeout=30))["data"][0]["record_date"]
-        rows = json.loads(http("mts_m.json", base + "filter=record_date:eq:%s&page[size]=60" % last, timeout=30))["data"]
+        last = json.loads(http("mts_last.json", base + "sort=-record_date&page[size]=1", tries=3, timeout=45))["data"][0]["record_date"]
+        rows = json.loads(http("mts_m.json", base + "filter=record_date:eq:%s&page[size]=60" % last, tries=3, timeout=45))["data"]
         heads = {x["classification_id"]: x["classification_desc"] for x in rows if str(x.get("parent_id")) == "null" and str(x.get("classification_desc", "")).startswith("FY ")}
         if len(heads) < 1:
             raise ValueError("exercices introuvables")
@@ -4753,6 +4753,8 @@ def do_deficits(data):
         D["us"] = U
         note("ust.mts", "Déficit fédéral américain, mensuel (Trésor US, Monthly Treasury Statement)", "monthly", True, last, url="https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/")
     except Exception as e:
+        if (PREVIOUS.get("deficits") or {}).get("us") and not D.get("us"):
+            D["us"] = PREVIOUS["deficits"]["us"]   # dernière lecture valide, avec sa date, en attendant que le site du Trésor réponde
         note("ust.mts", "Déficit fédéral américain (Trésor US)", "monthly", False, err=e, url="https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/")
     try:
         txt = http("ons_psnb.csv", "https://www.ons.gov.uk/generator?format=csv&uri=/economy/governmentpublicsectorandtaxes/publicsectorfinance/timeseries/dzls/pusf", timeout=30)
@@ -4988,7 +4990,7 @@ def do_guide_auto(data):
         note("guide.estr", "€STR (BCE)", "daily", False, err=e)
     # 6. Dette fédérale américaine (Trésor, « debt to the penny »)
     try:
-        j = json.loads(http("debt.json", "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=400&fields=record_date,tot_pub_debt_out_amt", timeout=30))
+        j = json.loads(http("debt.json", "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=400&fields=record_date,tot_pub_debt_out_amt", tries=3, timeout=45))
         rows = j.get("data") or []
         if not rows:
             raise ValueError("vide")
@@ -4997,6 +4999,8 @@ def do_guide_auto(data):
         G["debt"] = {"v": float(cur["tot_pub_debt_out_amt"]), "d": cur["record_date"], "y1": float(yr[0]["tot_pub_debt_out_amt"]) if yr else None}
         note("guide.debt", "Dette fédérale américaine (Trésor, debt to the penny)", "daily", True, cur["record_date"], url="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/")
     except Exception as e:
+        if (PREVIOUS.get("guide") or {}).get("debt") and not G.get("debt"):
+            G["debt"] = PREVIOUS["guide"]["debt"]   # dernière lecture valide, avec sa date
         note("guide.debt", "Dette fédérale américaine (Trésor)", "daily", False, err=e)
     # 7. Marchés de prédiction : récession, BCE
     try:
