@@ -1215,8 +1215,8 @@ def do_bea(data):
                 y0 = "%04d-%s" % (int(d[:4]) - 1, d[5:])
                 if y0 in by:
                     yo.append([d, round((v / by[y0] - 1) * 100, 2)])
-            if len(yo) < 3:
-                raise ValueError("série %s absente" % code)
+            if len(yo) < 2:
+                raise ValueError("série %s : %d points lus, %d glissements annuels ; dernier point %s ; début du fichier %r" % (code, len(ser), len(yo), ser[-1][0] if ser else "-", txt[:80]))
             out[key] = yo
         data["derived"]["us_pce"] = {"v": out["us_pce"][-1][1], "prev": out["us_pce"][-2][1], "asof": out["us_pce"][-1][0]}
         data["derived"]["us_pce_core"] = {"v": out["us_pce_core"][-1][1], "prev": out["us_pce_core"][-2][1], "asof": out["us_pce_core"][-1][0]}
