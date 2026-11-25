@@ -374,6 +374,17 @@ def session_moves(d, t0, t1):
     return out
 
 
+def session_calendar(d, cfg, t0, t1):
+    """Publications importantes sorties pendant la séance (avec écart calculé) et événements des 24 h suivantes."""
+    got = []
+    for e in (d.get("calendar") or {}).get("events") or []:
+        t = parse_ts(e.get("d"))
+        if t and t0 <= t <= t1 and e.get("c") in cfg["event_currencies"] and e.get("i") in ("High", "Medium") and e.get("a") not in (None, ""):
+            got.append((t, "- %s | écart calculé : %s" % (ev_line(e), surprise(e))))
+    nxt = ["- " + ev_line(e) for t, e in upcoming_events(d, cfg, 26) if e.get("i") == "High" or (e.get("i") == "Medium" and e.get("c") == "USD")][:14]
+    return [x[1] for x in sorted(got)][:14], nxt
+
+
 def session_headlines(d, t0, t1, n=18):
     sel = [x for x in (d.get("flash") or []) if t0 <= (parse_ts(x.get("ts")) or t0 - timedelta(days=9)) <= t1 + timedelta(minutes=20)]
     sel.sort(key=lambda x: (not x.get("u"), x.get("ts") or ""), reverse=False)
@@ -506,8 +517,17 @@ DEBRIEF_SCHEMA = """Schéma JSON exact à produire :
 }
 Contraintes : 3 à 6 catalyseurs (les plus proches d'abord, jamais d'événement absent du calendrier), 3 à 6 drivers classés par importance, biais « indicatif »."""
 
-SESSION_SCHEMA = """Schéma JSON exact à produire :
-{"resume": "2 à 3 phrases sur ce qui a dominé la séance", "points": ["2 à 4 faits ou titres qui expliquent les mouvements (avec leur heure UTC si connue)"], "lecture": "1 phrase : ce que cela change pour la séance suivante", "limites": "1 phrase sur ce qui manque"}
+SESSION_SCHEMA = """Schéma JSON exact à produire (récap COMPLET de la séance : tu couvres tous les plans qui ont fait bouger le marché) :
+{"resume": "3 à 4 phrases : ce qui a dominé la séance et POURQUOI (relie les causes aux effets)",
+ "marches": {"or": "1 à 2 phrases : mouvement de l'or et sa cause", "dollar": "1 à 2 phrases", "devises": "1 à 2 phrases : euro, yen, livre et autres devises", "actions": "1 à 2 phrases : indices boursiers", "taux": "1 à 2 phrases : rendements obligataires, anticipations de la Fed", "energie": "1 à 2 phrases : pétrole et énergie"},
+ "geopolitique": ["0 à 3 faits géopolitiques de la séance qui ont touché les marchés (heure UTC si connue)"],
+ "macro": ["0 à 4 publications économiques ou faits macro de la séance : réel contre prévu quand ils sont donnés, et l'effet sur le marché"],
+ "banques_centrales": ["0 à 3 faits : décisions, discours, communiqués, anticipations de taux"],
+ "catalyseurs": ["2 à 4 événements précis qui ont déclenché les mouvements, avec leur heure UTC"],
+ "lecture": "2 phrases : ce que la séance change pour la suivante (scénario central)",
+ "a_surveiller": ["2 à 4 événements à venir à surveiller (heure UTC), pris dans le calendrier fourni"],
+ "limites": "1 phrase sur ce qui manque"}
+Règles : n'écris la date de la séance que sous la forme exacte donnée dans la consigne ; une rubrique sans donnée = une liste vide ou « pas de donnée sur cette séance » (jamais d'invention).
 Les mouvements chiffrés de la séance te sont donnés : tu les commentes, tu ne les recalcules pas."""
 
 RELEASE_SCHEMA = """Pour CHAQUE publication listée, produis un élément. Schéma JSON exact :
@@ -630,7 +650,7 @@ def mock_reply(kind, prompt):
                 "drivers": [{"nom": "[TEST] Driver", "or": "baisse", "dollar": "hausse", "euro": "baisse", "pourquoi": "[TEST] Pourquoi"}],
                 "actifs": {k: {"biais": "incertain", "pourquoi": "[TEST]"} for k in ("or", "dollar", "euro")}, "a_surveiller": ["[TEST] Point"], "limites": "[TEST] Réponse factice."}
     if kind == "session":
-        return {"resume": "[TEST] Résumé de séance.", "points": ["[TEST] Point"], "lecture": "[TEST] Lecture.", "limites": "[TEST]"}
+        return {"resume": "[TEST] Résumé de séance.", "marches": {k: "[TEST] " + k for k in ("or", "dollar", "devises", "actions", "taux", "energie")}, "geopolitique": ["[TEST] Fait"], "macro": ["[TEST] Publication"], "banques_centrales": [], "catalyseurs": ["[TEST] 14:00 UTC Événement"], "lecture": "[TEST] Lecture.", "a_surveiller": ["[TEST] Point"], "limites": "[TEST]"}
     if kind == "releases":
         return {"publications": [{"id": i, "lecture": "[TEST] Lecture", "ecart": "conforme", "impact": {"dollar": "[TEST]", "euro": "[TEST]", "or": "[TEST]"}, "reaction_marche": "non mesurée", "confiance": "faible"} for i in ids]}
     sc = {"condition": "[TEST]", "dollar": "[TEST]", "euro": "[TEST]", "or": "[TEST]"}
@@ -820,14 +840,22 @@ def main():
             t0, t1 = session_window(sid, cfg, day)
             mv = session_moves(d, t0, t1)
             hl = session_headlines(d, t0, t1)
-            ctx = build_context(d, cfg, ["prix", "fed", "geo", "titres"]) + "\n\n## MOUVEMENTS CALCULÉS PAR LE SCRIPT (séance %s, %s à %s UTC)\n%s\n\n## TITRES PENDANT LA SÉANCE\n%s" % (
-                cfg["sessions_utc"][sid]["label"], t0.strftime("%H:%M"), t1.strftime("%H:%M"), "\n".join("- %s : %s → %s (%+.2f %%)" % (m["actif"], m["debut"], m["fin"], m["pct"]) for m in mv) or "(aucun mouvement mesurable)", "\n".join(hl) or "(aucun)")
-            prompt = "Rédige le RÉCAP DE LA SÉANCE « %s » du %s (de %s à %s UTC).\n\n%s\n\n# CONTEXTE\n%s" % (cfg["sessions_utc"][sid]["label"], day, t0.strftime("%H:%M"), t1.strftime("%H:%M"), SESSION_SCHEMA, ctx)
-            r = run.generate("session", "fast", SYSTEM, prompt, ctx)
+            got, nxt = session_calendar(d, cfg, t0, t1)
+            ctx = build_context(d, cfg, ["prix", "taux", "fed", "budget", "geo", "banques_centrales", "titres"]) + "\n\n## MOUVEMENTS CALCULÉS PAR LE SCRIPT (séance %s, %s à %s UTC)\n%s\n\n## TITRES PENDANT LA SÉANCE\n%s\n\n## PUBLICATIONS SORTIES PENDANT LA SÉANCE\n%s\n\n## CALENDRIER : ÉVÉNEMENTS DES 24 PROCHAINES HEURES\n%s" % (
+                cfg["sessions_utc"][sid]["label"], t0.strftime("%H:%M"), t1.strftime("%H:%M"), "\n".join("- %s : %s → %s (%+.2f %%)" % (m["actif"], m["debut"], m["fin"], m["pct"]) for m in mv) or "(aucun mouvement mesurable)", "\n".join(hl) or "(aucun)", "\n".join(got) or "(aucune)", "\n".join(nxt) or "(aucun)")
+            when = datetime.strptime(day, "%Y-%m-%d")
+            mois = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"][when.month - 1]
+            prompt = "Rédige le RÉCAP COMPLET DE LA SÉANCE « %s » du %d %s %d (de %s à %s UTC). La date exacte est « %d %s %d » : ne l'écris jamais autrement.\n\n%s\n\n# CONTEXTE\n%s" % (cfg["sessions_utc"][sid]["label"], when.day, mois, when.year, t0.strftime("%H:%M"), t1.strftime("%H:%M"), when.day, mois, when.year, SESSION_SCHEMA, ctx)
+            r = run.generate("session", "strong", SYSTEM, prompt, ctx)
             if r:
                 obj, model, bad = r
-                obj.update({"gen": stamp, "model": model, "a_verifier": bad, "jour": day, "label": cfg["sessions_utc"][sid]["label"], "mouvements": mv})
+                txt = json.dumps(obj, ensure_ascii=False)
+                if any(y not in ctx for y in re.findall(r"(?<!\d)(20\d\d)(?!\d)", txt) if y != str(when.year)):   # une année absente du contexte est une invention
+                    bad = list(bad) + ["année incohérente dans le texte"]
+                obj.update({"gen": stamp, "model": model, "a_verifier": bad, "jour": day, "sid": sid, "label": cfg["sessions_utc"][sid]["label"], "mouvements": mv})
                 out.setdefault("sessions", {})[sid] = obj
+                hist = [x for x in (out.get("sessions_hist") or []) if not (x.get("sid") == sid and x.get("jour") == day)]
+                out["sessions_hist"] = ([obj] + hist)[:12]
                 done[key] = stamp
                 changed = True
         elif kind == "releases":

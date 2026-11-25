@@ -1086,6 +1086,10 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
 #ia .iatitre{padding:14px 12px 2px;font:600 17px/1.35 var(--font-body)}
 #ia .iagen{padding:0 12px 4px;font:11px var(--font-mono);color:var(--muted)}
 #ia ol.ialines{margin:0;padding:8px 14px 12px 34px}#ia ol.ialines li{margin:7px 0;line-height:1.5;font-size:14px}
+#ia .iasess{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:10px;padding:0 12px 6px}
+#ia .iasess .pcard,#ia .iahist .pcard{min-width:0}
+#ia .iah2{margin:10px 0 2px;font:600 10.5px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+#ia .iahist{margin:6px 12px 10px}#ia .iahist summary{cursor:pointer;font-size:12px;color:var(--amber);padding:6px 0}#ia .iahist .pcard{margin:8px 0}
 #ia .iah{margin:0;padding:10px 12px 4px;font:600 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber);border-top:1px solid var(--line2)}
 #ia .pcard p{margin:0 0 6px;font-size:13px;line-height:1.5}
 #ia ul.iap{margin:0;padding-left:18px}#ia ul.iap li{margin:4px 0;font-size:13px;line-height:1.45}
@@ -7723,12 +7727,21 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
       if (deb.limites) h.push('<p class="hint" style="padding:4px 12px 10px;max-width:none"><b>Limites :</b> ' + esc(deb.limites) + "</p>");
     } else h.push('<p class="hint" style="padding:12px">Pas encore de débriefing : il est généré chaque matin à partir des données du robot.</p>');
     var S = D.sessions || {}, so = ["asia", "europe", "us"].filter(function (k) { return S[k]; });
-    if (so.length) h.push('<h3 class="iah">Récap par séance</h3><div class="pgrid">' + so.map(function (k) {
-      var s = S[k], mv = s.mouvements || [];
-      return '<div class="pcard"><h3>' + esc(s.label) + " · " + esc(s.jour) + "</h3>" +
+    function iaSess(s) { /* récap complet d'une séance : marchés, géopolitique, macro, banques centrales, catalyseurs, suite */
+      var mv = s.mouvements || [], M = s.marches || {}, rows = [["or", "Or"], ["dollar", "Dollar"], ["devises", "Devises"], ["actions", "Actions"], ["taux", "Taux"], ["energie", "Énergie"]].filter(function (r) { return M[r[0]] && !/^pas de donn/i.test(M[r[0]]); });
+      function sec(t, a) { a = (a || []).filter(Boolean); return a.length ? '<h4 class="iah2">' + t + "</h4>" + iaUl(a) : ""; }
+      return '<div class="pcard"><h3>' + esc(s.label) + " · " + esc(s.jour) + (s.gen ? ' <span class="m">généré ' + esc(iaWhen(s.gen)) + "</span>" : "") + "</h3>" +
         (mv.length ? '<div class="tbl"><table class="iat"><tbody>' + mv.map(function (m) { return "<tr><td>" + esc(m.actif) + '</td><td class="iad ' + cls(m.pct) + '">' + (m.pct >= 0 ? "+" : "−") + fmt(Math.abs(m.pct), 2) + " %</td></tr>"; }).join("") + '</tbody></table></div><div class="m" style="margin:4px 0 6px">Mouvements calculés par le terminal (bougies horaires du robot).</div>' : "") +
-        "<p>" + esc(s.resume) + "</p>" + iaUl(s.points) + (s.lecture ? '<p class="iamut">' + esc(s.lecture) + "</p>" : "") + iaWarn(s) + "</div>";
-    }).join("") + "</div>");
+        "<p>" + esc(s.resume) + "</p>" +
+        (rows.length ? '<h4 class="iah2">Marchés</h4><ul class="iap">' + rows.map(function (r) { return "<li><b>" + r[1] + " :</b> " + esc(M[r[0]]) + "</li>"; }).join("") + "</ul>" : "") +
+        sec("Géopolitique", s.geopolitique) + sec("Macro et publications", s.macro) + sec("Banques centrales", s.banques_centrales) + sec("Ce qui a déclenché les mouvements", s.catalyseurs) +
+        (s.points && !s.marches ? iaUl(s.points) : "") +
+        (s.lecture ? '<p class="iamut"><b>Pour la suite :</b> ' + esc(s.lecture) + "</p>" : "") + sec("À surveiller", s.a_surveiller) +
+        (s.limites ? '<p class="hint" style="max-width:none"><b>Limites :</b> ' + esc(s.limites) + "</p>" : "") + iaWarn(s) + "</div>";
+    }
+    if (so.length) h.push('<h3 class="iah">Récap par séance</h3><div class="iasess">' + so.map(function (k) { return iaSess(S[k]); }).join("") + "</div>");
+    var HS = (D.sessions_hist || []).filter(function (x) { return x && !so.some(function (k) { return S[k] && S[k].gen === x.gen; }); });
+    if (HS.length) h.push('<details class="iahist"><summary>Récaps des séances précédentes (' + HS.length + ")</summary>" + HS.map(iaSess).join("") + "</details>");
     var R = D.releases || [];
     if (R.length) h.push('<h3 class="iah">Publications récentes : réel contre prévu</h3>' + R.map(function (r) {
       var ec = r.ecart_calcule || r.ecart || "", im = r.impact || {};
