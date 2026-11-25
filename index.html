@@ -1109,6 +1109,24 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
 #ia .iaconc{margin:0;padding:8px 12px 12px;font:600 14px/1.5 var(--font-body)}
 #ia .iawarn{margin:6px 12px;padding:6px 10px;border:1px dashed #6b5214;color:var(--amber);font-size:12px}
 @media (max-width:700px){#ia .iasc{grid-template-columns:1fr}#ia .iatitre{font-size:15px}#ia table.iat{min-width:520px}}
+
+/* ---------- Courbes ---------- */
+#cvBar { display: flex; gap: 6px; flex-wrap: wrap; }
+#cvBar button { background: var(--panel2); color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px; font: inherit; cursor: pointer; min-height: 32px; }
+#cvBar button[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); background: var(--amber-soft); }
+.cvg { margin: 14px 0 6px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--amber); }
+.cvgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px; }
+.cvc { background: var(--panel2); border: 1px solid var(--line2); border-radius: 8px; padding: 10px 10px 6px; position: relative; min-width: 0; }
+.cvh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cvh b { font-size: 13px; font-weight: 600; }
+.cvv { font-family: var(--font-mono, monospace); font-size: 15px; white-space: nowrap; }
+.cvs { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 1px; gap: 6px; }
+.cvs .up { color: var(--up); } .cvs .down { color: var(--down); }
+.cvsvg { width: 100%; height: auto; display: block; touch-action: pan-y; margin-top: 6px; }
+.cvsvg text { fill: #8d8878; font-size: 9.5px; font-family: var(--font-mono, monospace); }
+.cvtip { position: absolute; left: 10px; right: 10px; top: 52px; font-size: 11px; color: var(--fg); background: rgba(6,6,7,.85); border: 1px solid var(--line); border-radius: 5px; padding: 2px 6px; display: none; pointer-events: none; }
+.cvleg { font-size: 10px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+.cvleg i { display: inline-block; width: 10px; height: 2px; vertical-align: middle; margin-right: 4px; }
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -1405,6 +1423,13 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
       <div class="tbl"><table id="seasTbl"></table></div>
       <div id="seasWeek"></div>
       <p class="note">Rendement moyen de chaque mois sur les 20 dernières années complètes, et part des années où le mois a été positif. Sources : clôtures quotidiennes de la Fed (série H.10) pour les paires, moyennes mensuelles de la Banque mondiale pour l'or. Une saisonnalité est une tendance passée, pas une prévision.</p>
+    </section>
+
+    <section class="panel" id="courbes">
+      <div class="ph"><h2>Courbes : marchés, taux, inflation, positionnement</h2><span class="meta" id="cvMeta">chargement…</span></div>
+      <div class="toolbar" id="cvBar" role="group" aria-label="Période des courbes"></div>
+      <div class="pb" id="cvBody"></div>
+      <p class="note">Toutes les courbes viennent des historiques relevés par le robot (Fed, Trésor US, CBOE, BLS, BEA, CFTC, Yahoo Finance) : rien n'est inventé. Passez le doigt ou la souris sur une courbe pour lire la valeur et la date. Les séries mensuelles (inflation, chômage) ont peu de points sur 3 mois. L'inflation est le glissement sur 12 mois calculé par le terminal ; le COT est la position nette des spéculateurs (longs − courts), publiée le vendredi pour le mardi précédent.</p>
     </section>
 
     <section class="panel" id="calendrier">
@@ -3450,6 +3475,165 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     urls.forEach(function (u) { p = p.catch(function () { return getJson(u).then(function (j) { if (!j || !j.series) throw new Error("format"); return j; }); }); });
     return p.then(function (j) { SEAS = j; }).catch(function (e) { seasErr = String(e && e.message || e); }).then(function () { renderSeas(); renderReserves(); if (!curBr) renderDashBlock("conf"); });
   }
+  /* ---------- Courbes : historiques du robot, sans rien inventer ---------- */
+  var CV_PER = "1A", CV_PERS = [["3M", "3 mois", 92], ["6M", "6 mois", 183], ["1A", "1 an", 366], ["MAX", "Maximum", 0]];
+  var CV_DATA = {};
+  function cvD(k) { var x = AUTO && AUTO.daily && AUTO.daily[k]; return x && x.c; }
+  function cvF(k) { var f = fred(k); return f && f.hist; }
+  function cvL(k) { var l = AUTO && AUTO.signals && AUTO.signals.long; return l && l[k]; }
+  function cvLF(k) { var l = cvL(k), f = cvF(k); return l && l.length > (f ? f.length : 0) ? l : f; }
+  function cvCot(k) { var c = AUTO && AUTO.cot && AUTO.cot[k]; return c && c.h52 && c.h52.map(function (r) { return [r[0], r[1] - r[2]]; }); }
+  function cvYoy(a) {
+    if (!a) return null; var by = {}; a.forEach(function (r) { by[r[0]] = r[1]; }); var o = [];
+    a.forEach(function (r) { var y0 = (+r[0].slice(0, 4) - 1) + r[0].slice(4); if (by[y0]) o.push([r[0], Math.round((r[1] / by[y0] - 1) * 1e4) / 100]); });
+    return o;
+  }
+  function cvDiff(a) { if (!a) return null; var o = []; for (var i = 1; i < a.length; i++) o.push([a[i][0], Math.round(a[i][1] - a[i - 1][1])]); return o; }
+  function cvCS(k) { return AUTO && AUTO.cycle_src && AUTO.cycle_src[k]; }
+  function cvRebase(a, from) { if (!a || !a.length) return null; var b = a.filter(function (r) { return r[0] >= from; }); if (b.length < 2) return null; var v0 = b[0][1]; return b.map(function (r) { return [r[0], Math.round(r[1] / v0 * 1e4) / 100]; }); }
+  var CV = [
+    ["Or et dollar", [
+      { n: "Or (contrat à terme)", u: "$", d: 0, s: function () { return [{ p: cvD("gold") }]; } },
+      { n: "Indice dollar (DXY)", u: "", d: 2, s: function () { return [{ p: cvD("dxy") }]; } },
+      { n: "Or et taux réel 10 ans (base 100 au début)", u: "", d: 1, s: function () { var g = cvD("gold"), r = cvF("DFII10"), f = g && r ? (g[0][0] > r[0][0] ? g[0][0] : r[0][0]) : ""; return [{ p: cvRebase(g, f), nm: "Or", c: "#f2b01e" }, { p: cvRebase(r, f), nm: "Taux réel 10 ans", c: "#4da3ff" }]; } },
+      { n: "Argent (contrat à terme)", u: "$", d: 2, s: function () { return [{ p: cvD("silver") }]; } }
+    ]],
+    ["Taux et pente", [
+      { n: "Taux US 2 ans", u: " %", d: 2, s: function () { return [{ p: cvF("DGS2") }]; } },
+      { n: "Taux US 10 ans", u: " %", d: 2, s: function () { return [{ p: cvF("DGS10") }]; } },
+      { n: "Taux réel 10 ans (TIPS)", u: " %", d: 2, s: function () { return [{ p: cvF("DFII10") }]; } },
+      { n: "Pente 2 ans / 10 ans", u: " pt", d: 2, s: function () { return [{ p: cvLF("T10Y2Y") }]; }, zero: 1 },
+      { n: "Fed : borne haute du taux directeur", u: " %", d: 2, s: function () { return [{ p: cvF("DFEDTARU") }]; } }
+    ]],
+    ["Peur et volatilité", [
+      { n: "VIX (actions)", u: "", d: 1, s: function () { return [{ p: cvF("VIXCLS") }]; } },
+      { n: "GVZ (volatilité de l'or)", u: "", d: 1, s: function () { return [{ p: cvF("GVZCLS") }]; } },
+      { n: "MOVE (volatilité des taux)", u: "", d: 1, s: function () { return [{ p: AUTO && AUTO.move && AUTO.move.hist }]; } },
+      { n: "Fear & Greed (CNN)", u: "", d: 0, s: function () { return [{ p: AUTO && AUTO.fng && AUTO.fng.hist }]; } }
+    ]],
+    ["Conditions financières et crédit", [
+      { n: "NFCI (Fed de Chicago)", u: "", d: 2, s: function () { return [{ p: cvLF("NFCI") }]; }, zero: 1 },
+      { n: "Stress financier OFR (crédit)", u: "", d: 2, s: function () { return [{ p: cvF("OFRCREDIT") }]; }, zero: 1 },
+      { n: "Écart de crédit High Yield", u: " pt", d: 2, s: function () { return [{ p: cvL("BAMLH0A0HYM2") || cvF("BAMLH0A0HYM2") }]; } }
+    ]],
+    ["Inflation et emploi (États-Unis)", [
+      { n: "Inflation IPC (sur 12 mois)", u: " %", d: 2, s: function () { return [{ p: cvYoy(cvCS("cpi")) }]; } },
+      { n: "Inflation IPC sous-jacente (sur 12 mois)", u: " %", d: 2, s: function () { return [{ p: cvYoy(cvCS("core")) }]; } },
+      { n: "PCE sous-jacent (sur 12 mois)", u: " %", d: 2, s: function () { return [{ p: cvF("PCEPILFE") }]; } },
+      { n: "Taux de chômage", u: " %", d: 1, s: function () { return [{ p: cvCS("unemp") }]; } },
+      { n: "Emplois créés (NFP, variation mensuelle)", u: " k", d: 0, s: function () { return [{ p: cvDiff(cvCS("nfp")) }]; }, zero: 1 }
+    ]],
+    ["Devises (clôtures quotidiennes)", [
+      { n: "EUR/USD", u: "", d: 4, s: function () { return [{ p: cvD("eur") }]; } },
+      { n: "GBP/USD", u: "", d: 4, s: function () { return [{ p: cvD("gbp") }]; } },
+      { n: "USD/JPY", u: "", d: 2, s: function () { return [{ p: cvD("jpy") }]; } },
+      { n: "USD/CHF", u: "", d: 4, s: function () { return [{ p: cvD("chf") }]; } },
+      { n: "AUD/USD", u: "", d: 4, s: function () { return [{ p: cvD("aud") }]; } },
+      { n: "USD/CAD", u: "", d: 4, s: function () { return [{ p: cvD("cad") }]; } },
+      { n: "NZD/USD", u: "", d: 4, s: function () { return [{ p: cvD("nzd") }]; } }
+    ]],
+    ["Actions, énergie, bitcoin", [
+      { n: "Nasdaq 100", u: "", d: 0, s: function () { return [{ p: cvD("nq") }]; } },
+      { n: "S&P 500", u: "", d: 0, s: function () { return [{ p: cvD("es") }]; } },
+      { n: "Pétrole WTI", u: " $", d: 2, s: function () { return [{ p: cvD("oil") }]; } },
+      { n: "Bitcoin", u: " $", d: 0, s: function () { return [{ p: cvD("btc") }]; } }
+    ]],
+    ["Positionnement COT (position nette des spéculateurs)", [
+      { n: "Or", u: "", d: 0, s: function () { return [{ p: cvCot("XAU") }]; }, zero: 1 },
+      { n: "Euro", u: "", d: 0, s: function () { return [{ p: cvCot("EUR") }]; }, zero: 1 },
+      { n: "Livre sterling", u: "", d: 0, s: function () { return [{ p: cvCot("GBP") }]; }, zero: 1 },
+      { n: "Yen", u: "", d: 0, s: function () { return [{ p: cvCot("JPY") }]; }, zero: 1 },
+      { n: "Franc suisse", u: "", d: 0, s: function () { return [{ p: cvCot("CHF") }]; }, zero: 1 },
+      { n: "Dollar australien", u: "", d: 0, s: function () { return [{ p: cvCot("AUD") }]; }, zero: 1 },
+      { n: "Dollar canadien", u: "", d: 0, s: function () { return [{ p: cvCot("CAD") }]; }, zero: 1 },
+      { n: "Dollar néo-zélandais", u: "", d: 0, s: function () { return [{ p: cvCot("NZD") }]; }, zero: 1 }
+    ]]
+  ];
+  function cvCut(p) {
+    var per = CV_PERS.filter(function (x) { return x[0] === CV_PER; })[0], days = per ? per[2] : 0;
+    if (!p || !p.length) return [];
+    if (!days) return p;
+    var last = Date.parse(p[p.length - 1][0].slice(0, 10) + "T00:00:00Z"), cut = last - days * 864e5;
+    var q = p.filter(function (r) { return Date.parse(r[0].slice(0, 10) + "T00:00:00Z") >= cut; });
+    return q.length >= 4 ? q : p.slice(-4);
+  }
+  function cvNice(lo, hi, n) {
+    var sp = (hi - lo) || 1, raw = sp / n, mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), f = raw / mag, st = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, o = [];
+    for (var v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) o.push(Math.round(v / st) * st);
+    return o;
+  }
+  function cvFmt(v, dec) { var a = Math.abs(v); return fmt(v, a >= 1000 ? 0 : dec); }
+  function cvDraw(id, ser, zero, dec) {
+    var W = 360, H = 156, L = 6, R = 46, T = 10, B = 20, lo = Infinity, hi = -Infinity, t0 = Infinity, t1 = -Infinity;
+    ser.forEach(function (x) { x.p.forEach(function (r) { var t = Date.parse(r[0].slice(0, 10) + "T00:00:00Z"); r[2] = t; lo = Math.min(lo, r[1]); hi = Math.max(hi, r[1]); t0 = Math.min(t0, t); t1 = Math.max(t1, t); }); });
+    if (zero) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    var sp0 = (hi - lo) || 1, ts = (t1 - t0) || 1; lo -= sp0 * .08; hi += sp0 * .08; var sp = hi - lo;
+    var X = function (t) { return L + (t - t0) / ts * (W - L - R); }, Y = function (v) { return T + (hi - v) / sp * (H - T - B); };
+    var g = '<defs>', col0 = ser[0].c || "#f2b01e";
+    g += '<linearGradient id="gr' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + col0 + '" stop-opacity=".30"/><stop offset="1" stop-color="' + col0 + '" stop-opacity="0"/></linearGradient></defs>';
+    cvNice(lo, hi, 4).forEach(function (v) {
+      var y = Y(v).toFixed(1);
+      var near = ser.some(function (x) { return Math.abs(Y(x.p[x.p.length - 1][1]) - Y(v)) < 11; });   /* pas de repère sous l'étiquette de la dernière valeur */
+      g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="#26231a" stroke-width="1"/>' + (near ? "" : '<text x="' + (W - R + 5) + '" y="' + (+y + 3) + '">' + cvFmt(v, dec) + '</text>');
+    });
+    /* repères de temps : début de chaque mois (ou trimestre si la période est longue) */
+    var d0 = new Date(t0), step = ts > 400 * 864e5 ? 3 : ts > 150 * 864e5 ? 2 : 1, mo = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + 1, 1)), M = ["janv", "févr", "mars", "avr", "mai", "juin", "juil", "août", "sept", "oct", "nov", "déc"], k = 0;
+    if (ts > 20 * 864e5) for (; mo.getTime() < t1; mo = new Date(Date.UTC(mo.getUTCFullYear(), mo.getUTCMonth() + step, 1)), k++) {
+      var x0 = X(mo.getTime()); if (x0 < L + 14 || x0 > W - R - 14) continue;
+      g += '<line x1="' + x0.toFixed(1) + '" x2="' + x0.toFixed(1) + '" y1="' + T + '" y2="' + (H - B) + '" stroke="#1c1a12"/><text x="' + x0.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + M[mo.getUTCMonth()] + (mo.getUTCMonth() === 0 ? " " + String(mo.getUTCFullYear()).slice(2) : "") + '</text>';
+    } else g += '<text x="' + L + '" y="' + (H - 6) + '">' + ser[0].p[0][0].slice(0, 10) + '</text>';
+    if (zero) g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="#8d8878" stroke-width="1" stroke-dasharray="4 3"/>';
+    ser.forEach(function (x, i) {
+      var c = x.c || "#f2b01e", pts = x.p.map(function (r) { return X(r[2]).toFixed(1) + "," + Y(r[1]).toFixed(1); }), lp = x.p[x.p.length - 1], mn = x.p[0], mx = x.p[0];
+      if (i === 0 && ser.length === 1) g += '<polygon points="' + X(x.p[0][2]).toFixed(1) + "," + (H - B) + " " + pts.join(" ") + " " + X(lp[2]).toFixed(1) + "," + (H - B) + '" fill="url(#gr' + id + ')"/>';
+      g += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>';
+      var ly = Y(lp[1]).toFixed(1);
+      g += '<line x1="' + X(lp[2]).toFixed(1) + '" x2="' + (W - R) + '" y1="' + ly + '" y2="' + ly + '" stroke="' + c + '" stroke-opacity=".5" stroke-dasharray="2 3"/><circle cx="' + X(lp[2]).toFixed(1) + '" cy="' + ly + '" r="3" fill="' + c + '" stroke="#060607" stroke-width="1.2"/>';
+      g += '<rect x="' + (W - R + 1) + '" y="' + (ly - 8) + '" width="' + (R - 2) + '" height="14" rx="3" fill="' + c + '"/><text x="' + (W - R + 3) + '" y="' + (+ly + 2.5) + '" style="fill:#060607;font-weight:600">' + cvFmt(lp[1], dec) + '</text>';
+      if (ser.length === 1) {
+        x.p.forEach(function (r) { if (r[1] < mn[1]) mn = r; if (r[1] > mx[1]) mx = r; });
+        [[mx, -5], [mn, 11]].forEach(function (q) { var xx = Math.max(L + 18, Math.min(W - R - 18, X(q[0][2]))); g += '<circle cx="' + X(q[0][2]).toFixed(1) + '" cy="' + Y(q[0][1]).toFixed(1) + '" r="2" fill="#060607" stroke="' + c + '"/><text x="' + xx.toFixed(1) + '" y="' + (Y(q[0][1]) + q[1]).toFixed(1) + '" text-anchor="middle" style="fill:#c9c2ad">' + cvFmt(q[0][1], dec) + '</text>'; });
+      }
+    });
+    g += '<line class="cvx" x1="0" x2="0" y1="' + T + '" y2="' + (H - B) + '" stroke="#ece8dc" stroke-opacity=".55" style="display:none"/>';
+    ser.forEach(function (x, i) { g += '<circle class="cvd" r="3.5" fill="' + (x.c || "#f2b01e") + '" stroke="#ece8dc" stroke-width="1.2" style="display:none"/>'; });
+    CV_DATA[id] = { ser: ser, X: X, Y: Y, t0: t0, ts: ts, W: W, L: L, R: R, dec: dec };
+    return '<svg class="cvsvg" data-cv="' + id + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Courbe">' + g + "</svg>";
+  }
+  function renderCourbes() {
+    var host = $("courbes"); if (!host) return;
+    var bar = $("cvBar"), body = $("cvBody"); if (!AUTO) { $("cvMeta").textContent = "en attente des données du robot"; return; }
+    if (!bar.firstChild) {
+      bar.innerHTML = CV_PERS.map(function (x) { return '<button type="button" data-per="' + x[0] + '" aria-pressed="' + (x[0] === CV_PER) + '">' + x[1] + "</button>"; }).join("");
+      bar.addEventListener("click", function (e) { var b = e.target.closest("button[data-per]"); if (!b) return; CV_PER = b.getAttribute("data-per"); Array.prototype.forEach.call(bar.children, function (c) { c.setAttribute("aria-pressed", c === b ? "true" : "false"); }); renderCourbes(); });
+      var tipFor = function (e) {
+        var sv = e.target.closest && e.target.closest(".cvsvg"); if (!sv) return;
+        var D = CV_DATA[sv.getAttribute("data-cv")], card = sv.closest(".cvc"), tip = card.querySelector(".cvtip"), ln = sv.querySelector(".cvx"); if (!D) return;
+        var bb = sv.getBoundingClientRect(), fx = Math.max(0, Math.min(1, (e.clientX - bb.left) / bb.width)), t = D.t0 + ((fx * D.W - D.L) / (D.W - D.L - D.R)) * D.ts, parts = [];
+        var dots = sv.querySelectorAll(".cvd"); D.ser.forEach(function (x, i) { var best = x.p[0]; x.p.forEach(function (r) { if (Math.abs(r[2] - t) < Math.abs(best[2] - t)) best = r; }); parts.push((x.nm ? x.nm + " " : "") + cvFmt(best[1], D.dec) + " · " + best[0].slice(0, 10)); if (dots[i]) { dots[i].setAttribute("cx", D.X(best[2])); dots[i].setAttribute("cy", D.Y(best[1])); dots[i].style.display = ""; } if (x === D.ser[0]) { ln.setAttribute("x1", D.X(best[2])); ln.setAttribute("x2", D.X(best[2])); ln.style.display = ""; } });
+        tip.textContent = parts.join("  |  "); tip.style.display = "block";
+      };
+      body.addEventListener("pointermove", tipFor); body.addEventListener("pointerdown", tipFor);
+      body.addEventListener("pointerleave", function () { Array.prototype.forEach.call(body.querySelectorAll(".cvtip"), function (t) { t.style.display = "none"; }); Array.prototype.forEach.call(body.querySelectorAll(".cvx,.cvd"), function (t) { t.style.display = "none"; }); });
+    }
+    var h = "", n = 0, miss = [], lastD = "";
+    CV.forEach(function (grp) {
+      var cards = "";
+      grp[1].forEach(function (c, ci) {
+        var raw = c.s(), ser = [];
+        raw.forEach(function (x) { var p = cvCut(x.p); if (p && p.length >= 3) ser.push({ p: p.map(function (r) { return [r[0], r[1]]; }), nm: x.nm, c: x.c }); });
+        if (!ser.length) { miss.push(c.n); return; }
+        n++; var f = ser[0].p, a = f[0][1], z = f[f.length - 1][1], ch = z - a, id = "cv" + CV.indexOf(grp) + "_" + ci;
+        if (f[f.length - 1][0] > lastD) lastD = f[f.length - 1][0];
+        var chTxt = c.u === " %" || c.u === " pt" || c.u === "" && Math.abs(a) < 20 && c.zero ? (ch >= 0 ? "+" : "−") + fmt(Math.abs(ch), c.d < 1 ? 1 : 2) + (c.u === " %" ? " pt" : c.u) : (a ? (ch >= 0 ? "+" : "−") + fmt(Math.abs(ch / Math.abs(a)) * 100, 1) + " %" : "–");
+        var leg = ser.length > 1 ? '<div class="cvleg">' + ser.map(function (x) { return '<span><i style="background:' + x.c + '"></i>' + x.nm + "</span>"; }).join("") + "</div>" : "";
+        cards += '<div class="cvc"><div class="cvh"><b>' + esc(c.n) + '</b><span class="cvv">' + (ser.length > 1 ? "" : cvFmt(z, c.d) + esc(c.u.charAt(0) === " " || !c.u ? c.u : " " + c.u)) + '</span></div><div class="cvs"><span>' + f[f.length - 1][0].slice(0, 10) + '</span><span class="' + (ch >= 0 ? "up" : "down") + '">' + (ser.length > 1 ? "" : chTxt + " sur la période") + "</span></div>" + leg + cvDraw(id, ser, c.zero, c.d) + '<div class="cvtip"></div></div>';
+      });
+      if (cards) h += '<h3 class="cvg">' + esc(grp[0]) + '</h3><div class="cvgrid">' + cards + "</div>";
+    });
+    body.innerHTML = h || '<p class="note">Aucune série disponible pour le moment.</p>';
+    $("cvMeta").textContent = n + " courbes · robot " + (AUTO.generated || "").slice(0, 16).replace("T", " ") + " UTC" + (miss.length ? " · indisponibles : " + miss.join(", ") : "");
+  }
   function renderSeas() {
     var sel = $("seasSel");
     if (!SEAS) { $("seasMeta").textContent = "indisponible"; $("seasBars").innerHTML = '<p class="note">Fichier de saisonnalité introuvable (' + esc(seasErr) + ").</p>"; return; }
@@ -4358,6 +4542,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     { id: "carte", grp: "MACRO", t: "Carte du monde", ic: "◍", d: "En direct : devise, bourse, taux à 10 ans, taux directeur, inflation, news et prochaine annonce de chaque pays ; G8 : inflation, taux, croissance, chômage, dette, PMI avec classement et comparaison ; carte mondiale détaillée ; réserves", blocks: ["wlive", "g8"], p: ["monde", "reserves"] },
     { id: "banques", grp: "MACRO", t: "Banques centrales", ic: "⌂", d: "Taux directeurs, probabilités de taux, prochaines réunions, comités, zone euro", blocks: ["banques"], p: ["bce", "banques", "probas", "agenda", "comite"], g: { bce: "Zone euro", banques: "Taux et probabilités", agenda: "Réunions et comités" } },
     { id: "taux", grp: "MACRO", t: "Taux et courbes", ic: "%", d: "Pricing de la Fed, règle de Taylor, courbes US et zone euro, taux réels, VIX et dollar, écarts entre pays", p: ["pricing", "taylor", "courbe", "taux", "ezone", "ecarts"], g: { pricing: "Fed : où vont les taux", courbe: "Courbes et taux réels", ezone: "Zone euro et écarts" } },
+    { id: "courbes", grp: "MACRO", t: "Courbes", ic: "∿", d: "Toutes les courbes : or, dollar, taux, volatilité, inflation, emploi, devises, positionnement COT (3 mois à maximum)", p: ["courbes"] },
     { id: "saison", grp: "MACRO", t: "Saisonnalité", ic: "◔", d: "Rendement moyen par mois et par semaine sur 20 ans, taux de réussite (or et paires)", p: ["saison"] },
     { id: "cot", grp: "POSITIONNEMENT", t: "COT", ic: "⚖", d: "16 actifs : extrêmes sur 3 ans, direction par catégorie, résumé ; flux de l'or, de l'euro et du dollar ; COT des banques", blocks: ["cot"], p: ["e19", "cot"] },
     { id: "dmx", grp: "POSITIONNEMENT", t: "Particuliers", ic: "☺", d: "Sentiment des particuliers : répartition, prix moyens, pips latents, extrêmes", blocks: ["dmx"], p: ["sentiment"] },
@@ -4382,6 +4567,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     carte: "comparer les 8 grandes économies : qui a le plus d'inflation, les taux les plus hauts, la croissance la plus forte.",
     banques: "les banques centrales : leurs taux, leurs prochaines réunions et ce que le marché attend.",
     taux: "que va faire la Fed et que disent les taux ? Des taux réels en hausse pèsent souvent sur l'or ; en baisse, ils le soutiennent.",
+    courbes: "l'évolution dans le temps des chiffres qui comptent : choisissez la période, puis passez le doigt sur une courbe pour lire la valeur et la date.",
     saison: "comment l'or et les paires se comportent en moyenne chaque mois depuis 20 ans. Une tendance, pas une garantie.",
     cot: "comment les gros acteurs sont placés. Une position extrême peut annoncer un retournement.",
     dmx: "ce que font les petits traders. Quand ils sont presque tous du même côté, le marché part souvent dans l'autre sens.",
@@ -4393,7 +4579,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   };
 
   /* Panneaux ouverts d'office dans chaque branche (les autres sont repliés) */
-  var ESS = { matin: ["ia", "matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], guide: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs", "bce34"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
+  var ESS = { matin: ["ia", "matin", "scenarios"], direct: ["marches"], or: ["or", "scorecard"], drivers: ["moteurs", "fstr"], analyse: [], guide: [], calendrier: ["calendrier"], actus: ["analyses"], geo: [], macro: ["indicateurs", "bce34"], carte: ["monde"], banques: ["bce", "banques"], taux: ["pricing", "courbe"], saison: ["saison"], courbes: ["courbes"], cot: ["e19"], dmx: ["sentiment"], correl: ["correl"], conf: [], alertes: [], outils: ["calc", "check"], donnees: ["robot"] };
   function setFold(el, folded) {
     el.classList.toggle("fold", folded);
     var b = el.querySelector(":scope > .ph > .foldbtn"); if (b) { b.textContent = folded ? "Afficher ▾" : "Replier ▴"; b.setAttribute("aria-expanded", folded ? "false" : "true"); }
@@ -4408,6 +4594,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   var PANEL_BR = {}, curBr = "", rateMinisDone = false;
   /* Nature des données de chaque panneau (demandée par l'audit) : EN DIRECT, DIFFÉRÉ, QUOTIDIEN, HEBDO, MENSUEL, ANNUEL, MANUEL, CALCUL */
   var NATURE = {
+    courbes: ["QUOTIDIEN", "historiques relevés par le robot : prix et taux quotidiens, inflation et emploi mensuels, COT hebdomadaire"],
     ia: ["CALCUL", "texte généré par IA à partir des données du robot (jamais un conseil financier) ; mouvements de séance calculés par le terminal"],
     lecture: ["GUIDE", "texte explicatif fixe"], calc: ["CALCUL", "calcul dans votre navigateur"], check: ["OUTIL", "cases enregistrées sur cet appareil"], conseils: ["GUIDE", "règles de gestion du risque"], notes: ["OUTIL", "notes enregistrées sur cet appareil"], liens: ["LIENS", "sites officiels et gratuits"],
     ezone: ["DIFFÉRÉ", "rendements CNBC relus à chaque passage du robot ; BCE et Bundesbank (officiel, quotidien et mensuel)"], deficits: ["MENSUEL", "Trésor US et ONS (mensuel), Eurostat (trimestriel, annuel), OCDE (annuel + prévisions)"],
@@ -8596,7 +8783,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
       '<span class="bs">Sources : ' + (tot ? (tot - bad) + "/" + tot + " OK" : "–") + "</span>" + '<span class="bs">Site relu toutes les 5 min</span>';
     Array.prototype.forEach.call(document.querySelectorAll(".bstat"), function (e) { e.innerHTML = txt; });
   }
-  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderSignaux(); renderE19(); renderBce(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); else { var cb_ = BR.filter(function (x) { return x.id === curBr; })[0]; if (cb_ && cb_.blocks) cb_.blocks.forEach(renderDashBlock); } }
+  function renderAuto() { applyFomc(); preferRealDxy(); if (!state.goldLive && goldFromRobot()) { renderGold(); renderPiv(); } renderMacro(); renderFG(); renderTaux(); renderCot(); renderNews(); renderRobot(); renderReserves(); renderTerminal(); renderInd(); renderWeek(); renderVid(); renderShip(); renderSentWidget(); renderGeo(); renderGeo2(); if (WMAP && ["geo", "gpr", "adv"].indexOf(MAPIND[+$("mapInd").value][0]) >= 0) drawMap(); renderAnalyses(); renderRetail(); renderOrVol(); fillTaylor(); renderDotPlot(); renderBceProj(); renderCycle(); renderCycle4(); renderDrivers(); renderRegime(); renderCurveIntel(); renderFStr(); renderFlux(); renderMulti(); renderSignaux(); renderE19(); renderBce(); renderScenarios(); renderGoldFut(); renderFedWatch(); renderGoldDemand(); renderReact(); renderMatin(); renderEzone(); renderDeficits(); renderMove(); renderMtEz(); renderCourbes(); liveOverlay(); renderBrStatus(); tagNature(); if (curBr === "taux") renderPricing(); if (!curBr) renderHub(); else { var cb_ = BR.filter(function (x) { return x.id === curBr; })[0]; if (cb_ && cb_.blocks) cb_.blocks.forEach(renderDashBlock); } }
   function getJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
     return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 120000), ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" })
