@@ -36,8 +36,8 @@
     "keep_releases": 12,
     "keep_scenarios": 10,
     "backoff_minutes_quota": 180,
-    "backoff_minutes_error": 30,
-    "timeout_seconds": 90,
+    "backoff_minutes_error": 15,
+    "timeout_seconds": 120,
     "temperature": 0.3,
     "max_output_tokens": 16384
   },

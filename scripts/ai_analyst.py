@@ -420,7 +420,8 @@ def http_post(url, headers, body, timeout):
             raise TransientError("HTTP %d : %s" % (e.code, re.sub(r"\s+", " ", txt)[:220] or "service surchargé ou indisponible"))
         raise ApiDown("HTTP %d" % e.code)
     except (urllib.error.URLError, TimeoutError, OSError) as e:
-        raise ApiDown("réseau : %s" % str(e)[:100])
+        # Délai dépassé ou coupure passagère : on essaie le modèle suivant avant d'abandonner (ce n'est pas une panne de l'API)
+        raise TransientError("réseau : %s" % str(e)[:100])
 
 
 def call_gemini(model, system, prompt, key, cfg):
