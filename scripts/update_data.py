@@ -5287,6 +5287,12 @@ def main():
                            and not (str(x.get("id", "")).startswith(("fl.", "an.")) and x.get("id") not in alive))  # flux retirés : plus affichés
         for k, v in (PREVIOUS.get("diag") or {}).items():
             DIAG.setdefault(k, v)
+    # Même nettoyage après la fusion avec l'état précédent (sinon d'anciennes pannes FRED reviennent)
+    with LOCK:
+        d_ = data.get("derived") or {}
+        repl = {"fred.CPIAUCSL": "us_cpi", "fred.CPILFESL": "us_core", "fred.UNRATE": "us_unemp", "fred.PAYEMS": "us_nfp", "fred.DTWEXBGS": "dxy"}
+        SOURCES[:] = [x for x in SOURCES if not (x["id"].startswith("fred.") and not x["ok"] and x["id"][5:] in (data.get("fred") or {}))
+                      and not (x["id"] in repl and not x["ok"] and (d_.get(repl[x["id"]]) or (data.get("fred") or {}).get("DXY")))]
     data["sched"] = SCHED
     out = {"generated": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": SOURCES, "diag": DIAG}
     out.update(data)
