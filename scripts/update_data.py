@@ -200,6 +200,12 @@ def poly_get(key, url, tries=2, timeout=25):
     for hd in ({"Accept": "application/json"}, {"Accept": "application/json", "User-Agent": "macro-forex/1.0 (+https://github.com/philippembulu1-dot/macro-forex)", "Accept-Language": ""}, {"Accept": "application/json", "User-Agent": "curl/8.5.0"}):
         try:
             return http(key, url, tries=1, headers=hd, timeout=timeout)
+        except urllib.error.HTTPError as e:
+            try:
+                body = e.read()[:120].decode("utf-8", "replace")
+            except Exception:
+                body = ""
+            last = ValueError("HTTP %s (%s)" % (e.code, body.replace("\n", " ")))
         except Exception as e:
             last = e
     raise last
@@ -4357,7 +4363,8 @@ def ecb_rows(fname, path, timeout=60):
     """Séries BCE (CSV, sans clé) : dictionnaire clé de série → [(période, valeur)] triés."""
     url = ECB_API + path + ("&" if "?" in path else "?") + "format=csvdata&detail=dataonly"
     out = {}
-    rd = csv.DictReader(http(fname, url, timeout=timeout).splitlines())
+    txt_ = http(fname, url, timeout=timeout)
+    rd = csv.DictReader(txt_.splitlines())
     for r in rd:
         v = num(r.get("OBS_VALUE"))
         if v is None:
@@ -4370,7 +4377,7 @@ def ecb_rows(fname, path, timeout=60):
     for k in out:
         out[k].sort()
     if not out:
-        raise ValueError("réponse vide")
+        raise ValueError("réponse vide (début reçu : %r)" % (txt_[:160],))
     return out
 
 
@@ -5263,6 +5270,10 @@ def main():
     # Séries FRED remplacées par une autre source officielle (OFR, BEA…) : plus affichées comme des pannes
     with LOCK:
         SOURCES[:] = [x for x in SOURCES if not (x["id"].startswith("fred.") and not x["ok"] and x["id"][5:] in data["fred"])]
+        # Séries FRED (bloquées depuis GitHub) dont le chiffre vient d'une source officielle de remplacement : pas une panne
+        d_ = data.get("derived") or {}
+        repl = {"fred.CPIAUCSL": "us_cpi", "fred.CPILFESL": "us_core", "fred.UNRATE": "us_unemp", "fred.PAYEMS": "us_nfp", "fred.DTWEXBGS": "dxy"}
+        SOURCES[:] = [x for x in SOURCES if not (x["id"] in repl and not x["ok"] and (d_.get(repl[x["id"]]) or (data.get("fred") or {}).get("DXY")))]
     # sources des blocs non relancés : on garde leur dernier état (date de la dernière lecture réussie)
     if not ONLY:
         with LOCK:
