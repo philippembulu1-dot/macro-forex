@@ -1129,6 +1129,11 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
 .cvtip { position: absolute; left: 10px; right: 10px; top: 52px; font-size: 11px; color: var(--fg); background: rgba(6,6,7,.85); border: 1px solid var(--line); border-radius: 5px; padding: 2px 6px; display: none; pointer-events: none; }
 .cvleg { font-size: 10px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
 .cvleg i { display: inline-block; width: 10px; height: 2px; vertical-align: middle; margin-right: 4px; }
+
+.iaag-code { margin: 8px 0 0; padding: 10px; border: 1px solid var(--amber); border-radius: 8px; background: var(--amber-soft); }
+.iaag-code label { display: block; font-size: 13px; margin-bottom: 6px; }
+.iaag-code div { display: flex; gap: 8px; } .iaag-code input { flex: 1; min-width: 0; }
+.iaag-code button { background: var(--amber); color: #060607; border: 0; border-radius: 6px; padding: 6px 14px; font: inherit; font-weight: 600; cursor: pointer; }
 </style>
 
 </head><body><div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockT" hidden>
@@ -5027,6 +5032,17 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
       if (j && j.crosses) { TA_X = j.crosses; taXAt = Date.now(); var bb = BR.filter(function (x) { return x.id === "analyse"; })[0]; if (bb && bb.blocks && curBr === "analyse") bb.blocks.forEach(renderDashBlock); }
     }).catch(function () { /* les croisées restent recalculées depuis les paires contre dollar */ }).then(function () { taXBusy = false; });
   }
+  function mfAsk(label, cb) {
+    var old = document.getElementById("mfAsk"); if (old) old.remove();
+    var f = document.createElement("form"); f.id = "mfAsk"; f.setAttribute("role", "dialog"); f.setAttribute("aria-label", label);
+    f.style.cssText = "position:fixed;left:50%;top:30%;transform:translateX(-50%);z-index:99999;background:#131316;color:#ece8dc;border:1px solid #f2b01e;border-radius:8px;padding:14px;width:min(92vw,360px);font:14px system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)";
+    f.innerHTML = "<label style='display:block;margin-bottom:8px'></label><input maxlength='80' style='width:100%;box-sizing:border-box;padding:8px;background:#060607;color:#ece8dc;border:1px solid #2a2618;border-radius:6px;font:inherit'><div style='display:flex;gap:8px;margin-top:10px;justify-content:flex-end'><button type='button' data-x style='background:none;color:#8d8878;border:1px solid #2a2618;border-radius:6px;padding:6px 14px;font:inherit;cursor:pointer'>Annuler</button><button type='submit' style='background:#f2b01e;color:#060607;border:0;border-radius:6px;padding:6px 14px;font:inherit;font-weight:600;cursor:pointer'>OK</button></div>";
+    f.querySelector("label").textContent = label; document.body.appendChild(f);
+    var inp = f.querySelector("input"); inp.focus();
+    f.addEventListener("submit", function (e) { e.preventDefault(); var v = inp.value; f.remove(); cb(v); });
+    f.querySelector("[data-x]").addEventListener("click", function () { f.remove(); });
+    f.addEventListener("keydown", function (e) { if (e.key === "Escape") f.remove(); });
+  }
   function taSeries(sym, tf) {
     var intra = tf === "H1" || tf === "H4", rows = null, ohl = null, src = "", node = null;
     if (TA_OTHER[sym]) { var k = TA_OTHER[sym][intra ? 1 : 0], S = intra ? AUTO && AUTO.intraday : AUTO && AUTO.daily; node = k && S && S[k]; }
@@ -5109,7 +5125,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     if (taTool === "cur" || taView !== "own") return; var sv = e.target.closest && e.target.closest("[data-tachart]"); if (!sv) return;
     var P = taEvPoint(e); if (!P) return; e.preventDefault(); var list = taList(), L = TA_LAST;
     if (taTool === "hl") { list.push({ k: "hl", p: P.p }); taDrawSave(); taRedrawDraw(null); return; }
-    if (taTool === "txt") { var s = window.prompt("Texte de la note :"); if (s && s.trim()) { list.push({ k: "txt", a: { t: P.t, p: P.p }, s: s.trim().slice(0, 80) }); taDrawSave(); taRedrawDraw(null); } return; }
+    if (taTool === "txt") { mfAsk("Texte de la note :", function (s) { if (s && s.trim()) { list.push({ k: "txt", a: { t: P.t, p: P.p }, s: s.trim().slice(0, 80) }); taDrawSave(); taRedrawDraw(null); } }); return; }
     if (taTool === "del") { /* efface le dessin le plus proche (à moins de 14 px) */
       var idx = {}; L.R.S.c.forEach(function (r, i) { idx[r[0]] = i; }); var Yf = function (y) { return L.G.top + (L.mx - y) / (L.mx - L.mn) * L.G.h; }, best = -1, bd = 14;
       var dseg = function (px, py, ax, ay, bx, by) { var dx = bx - ax, dy = by - ay, t = dx || dy ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy))) : 0; return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)); };
@@ -7829,7 +7845,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     p.then(function (j) { IAD = j; IAERR = ""; }).catch(function (e) { IAERR = String((e && e.message) || e); }).then(renderIA);
   }
   /* ---------- Agent IA (chat) : relais Cloudflare lu dans ai/agent.json ; code d'accès gardé dans ce navigateur seulement ---------- */
-  var IAG = { url: null, hist: [], busy: false };
+  var IAG = { url: null, hist: [], busy: false, code: "", bad: false };
   function iaagLoadCfg() {
     if (IAG.url !== null) return;
     IAG.url = "";
@@ -7853,23 +7869,34 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   function iaagCode(force) {
     var c = "";
     try { c = localStorage.getItem("mf_agent_code") || ""; } catch (e) {}
-    if (!c || force) {
-      c = (window.prompt("Code d'accès de l'agent :") || "").trim();
-      if (c) { try { localStorage.setItem("mf_agent_code", c); } catch (e) {} }
+    return c;   /* pas de fenêtre prompt() : elle n'existe pas dans l'application Windows. Le code se saisit dans le cadre ci-dessous. */
+  }
+  function iaagAskCode(msg) {
+    var box = document.getElementById("iaagCode"), f = document.getElementById("iaagForm"); if (!f) return;
+    if (!box) {
+      box = document.createElement("form"); box.id = "iaagCode"; box.className = "iaag-code"; box.autocomplete = "off";
+      box.innerHTML = '<label for="iaagCodeIn"></label><div><input type="password" id="iaagCodeIn" autocomplete="off" aria-label="Code d\'accès de l\'agent" placeholder="Code d\'accès"><button type="submit">Valider</button></div>';
+      f.parentNode.insertBefore(box, f);
+      box.addEventListener("submit", function (e) {
+        e.preventDefault(); var v = document.getElementById("iaagCodeIn").value.trim(); if (!v) return;
+        try { localStorage.setItem("mf_agent_code", v); } catch (x) { IAG.code = v; }
+        box.remove(); iaagSend({ preventDefault: function () { } });
+      });
     }
-    return c;
+    box.querySelector("label").textContent = msg || "Entrez le code d'accès de l'agent (une seule fois sur cet appareil), puis validez : votre question partira ensuite.";
+    box.hidden = false; document.getElementById("iaagCodeIn").value = ""; document.getElementById("iaagCodeIn").focus();
   }
   function iaagSend(ev) {
     ev.preventDefault();
     var q = document.getElementById("iaagQ"), btn = document.getElementById("iaagBtn"), text = q.value.trim();
     if (!text || IAG.busy || !IAG.url) return;
-    var code = iaagCode(false); if (!code) return;
-    IAG.busy = true; btn.disabled = true; q.value = ""; iaagAdd("u", text); iaagAdd("a", "…");
+    var code = iaagCode(false) || IAG.code || ""; if (!code) { iaagAskCode(IAG.bad ? "Code refusé : entrez le bon code d'accès de l'agent, puis validez." : ""); return; }
+    IAG.busy = true; btn.disabled = true; q.value = ""; IAG.bad = false; iaagAdd("u", text); iaagAdd("a", "…");
     var wait = document.getElementById("iaagLog").lastChild;
     fetch(IAG.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code, question: text, history: IAG.hist.slice(-6) }) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
       .then(function (x) {
-        if (x.s === 401) { try { localStorage.removeItem("mf_agent_code"); } catch (e) {} }
+        if (x.s === 401) { IAG.bad = true; IAG.code = ""; try { localStorage.removeItem("mf_agent_code"); } catch (e) {} }
         if (x.j && x.j.answer) { wait.textContent = x.j.answer; IAG.hist.push({ r: "u", t: text }, { r: "a", t: x.j.answer }); IAG.hist = IAG.hist.slice(-12); }
         else { wait.className = "iam e"; wait.textContent = (x.j && x.j.error) || "Réponse inattendue du relais."; }
       })
