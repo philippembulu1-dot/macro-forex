@@ -1,5 +1,7 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Macro Forex</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#060607"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Macro Forex"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"></noscript>
 <style>
@@ -8885,6 +8887,21 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   initCmd(); initCal(); initCalViews(); initEz(); initMap(); initGeo(); initPop(); initConv(); initSearch(); initTaylor(); loadSurp(); loadReact();
   setTimeout(initTV, 3500); refreshGold(); renderAuto(); loadAuto(); loadSeas(); loadMap(); setInterval(function () { if (!document.hidden) loadAuto(); }, 5 * 60 * 1000); pollLive(); setInterval(function () { if (!document.hidden) pollLive(); }, 60000); setTimeout(pollNews, 3000); setInterval(function () { if (!document.hidden) pollNews(); }, 60000); setInterval(function () { if (!document.hidden) renderTicker(); }, 60000); setInterval(function () { if (!document.hidden) renderBrStatus(); }, 15000);
   setInterval(function () { if (!document.hidden) refreshGold(); }, 30000);
+  /* Application installable : mémoire de l'appareil (sw.js) + prévenir quand du neuf est arrivé */
+  (function () {
+    if (!("serviceWorker" in navigator) || !/^(https:|http:)$/.test(location.protocol) || (location.protocol === "http:" && location.hostname !== "localhost")) return;
+    window.addEventListener("load", function () { setTimeout(function () { navigator.serviceWorker.register("sw.js").catch(function () { }); }, 1500); });
+    navigator.serviceWorker.addEventListener("message", function (e) {
+      var m = e.data || {};
+      if (m.t === "data" && /\/macro\.json$/.test(m.url || "")) { loadAuto(); }
+      if (m.t === "page" && !document.getElementById("mfNew")) {
+        var b = document.createElement("div"); b.id = "mfNew"; b.setAttribute("role", "status");
+        b.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:#131316;color:#ece8dc;border:1px solid #f2b01e;border-radius:8px;padding:10px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;font:14px system-ui,sans-serif";
+        b.innerHTML = "<span>Nouvelle version du terminal disponible.</span><button type=\"button\" style=\"background:#f2b01e;color:#060607;border:0;border-radius:6px;padding:7px 14px;font:inherit;font-weight:600;cursor:pointer\">Mettre à jour</button>";
+        b.querySelector("button").addEventListener("click", function () { location.reload(); }); document.body.appendChild(b);
+      }
+    });
+  })();
   document.addEventListener("visibilitychange", function () { if (!document.hidden) { refreshGold(); pollLive(); pollNews(); if (!AUTO || !AUTO.generated || Date.now() - Date.parse(AUTO.generated) > 30 * 6e4) loadAuto(); } });
   $("gChart").addEventListener("pointermove", function (e) { if (gCur) gShow(idx(e, $("gChart"), gCur.W, gCur.L, gCur.Rm, gCur.s.length), false); });
   $("gChart").addEventListener("pointerleave", function () { if (gCur) gShow(gCur.s.length - 1, true); });
