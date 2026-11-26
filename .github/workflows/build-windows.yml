@@ -1,0 +1,38 @@
+name: Application Windows
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "desktop/**"
+      - ".github/workflows/build-windows.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Installer et construire
+        working-directory: desktop
+        shell: bash
+        run: |
+          npm install --no-audit --no-fund
+          npm run dist
+          ls -la dist
+      - name: Publier les fichiers (page Releases)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete app-windows -y --cleanup-tag -R "$GITHUB_REPOSITORY" || true
+          gh release create app-windows desktop/dist/Macro-Forex-Installation.exe desktop/dist/Macro-Forex-Portable.exe \
+            -R "$GITHUB_REPOSITORY" --target main \
+            --title "Macro Forex pour Windows" \
+            --notes "Application Windows de Macro Forex. Installation : Macro-Forex-Installation.exe. Sans installer : Macro-Forex-Portable.exe."

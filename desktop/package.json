@@ -1,0 +1,21 @@
+{
+  "name": "macro-forex-bureau",
+  "productName": "Macro Forex",
+  "version": "1.0.0",
+  "description": "Terminal macro et forex personnel (application Windows)",
+  "author": "Macro Forex",
+  "main": "main.js",
+  "private": true,
+  "scripts": { "dist": "electron-builder --win --publish never" },
+  "devDependencies": { "electron": "33.2.1", "electron-builder": "25.1.8" },
+  "build": {
+    "appId": "com.macroforex.bureau",
+    "productName": "Macro Forex",
+    "icon": "icon.ico",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "offline.html", "icon.png"],
+    "win": { "target": ["nsis", "portable"], "icon": "icon.ico" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true, "artifactName": "Macro-Forex-Installation.${ext}" },
+    "portable": { "artifactName": "Macro-Forex-Portable.${ext}" }
+  }
+}
