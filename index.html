@@ -2242,7 +2242,9 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
         if (pr.since && pr.prev !== null) { var dd = pr.v - pr.prev; dec = '<span class="tag' + (dd > 0 ? " hike" : "") + '">' + (dd > 0 ? "+" : "−") + fmt(Math.abs(dd), 2) + " pt</span> <small>" + (pr.recent ? "après le " + shortD(pr.since) : "effectif le " + shortD(pr.since)) + " · auto</small>"; }
       }
       var ci = m.c === "USD" ? AUTO && AUTO.derived && AUTO.derived.us_cpi : AUTO && AUTO.national && AUTO.national["cpi_" + ({ EUR: "EZ", GBP: "GB", CAD: "CA", CHF: "CH", AUD: "AU", JPY: "JP", NZD: "NZ" })[m.c]], cpiCell = m.cpi + ck.cpi;
-      if (ci && ageDays(ci.asof) <= 75) cpiCell = fmt(ci.v, 1) + ' %<br><small>auto · ' + MOIS[parseInt(String(ci.asof).slice(5, 7), 10) - 1] + "</small>";
+      if (ci && ageDays(ci.last_obs || ci.asof) <= 75) cpiCell = fmt(ci.v, 1) + ' %<br><small' + (ci.note ? ' title="' + esc(ci.note) + '"' : "") + '>auto · ' + MOIS[parseInt(String(ci.asof).slice(5, 7), 10) - 1] + (ci.note ? " ⓘ" : "") + "</small>";
+      else cpiCell += manTag(MANUAL[0].d);
+      if (!(pr && pr.auto)) rateCell += manTag(MANUAL[0].d);
       var cr = AUTO && AUTO.core && AUTO.core[({ USD: "US", EUR: "EZ", GBP: "GB", JPY: "JP", CHF: "CH", AUD: "AU", CAD: "CA", NZD: "NZ" })[m.c]], coreCell = m.core + (m.core !== "–" ? " <small>man.</small>" : "");
       if (cr && ageDays(cr.asof) <= 150) coreCell = fmt(cr.v, 1) + ' %<br><small title="' + esc(cr.via) + '">auto · ' + MOIS[parseInt(String(cr.asof).slice(5, 7), 10) - 1] + "</small>";
       else { var ia = indAuto("core", m.c); if (ia) coreCell = fmt(ia.v, 1) + ' %<br><small title="' + esc(ia.src) + '">auto · ' + esc(ia.per) + "</small>"; }
@@ -2516,7 +2518,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
         if (au && au.lvl) cl = au.lvl[1];
         if (!row.nt) { tally[c] += s; count[c] += 1; }
         var ar = flat ? "=" : dl > 0 ? "▲" : "▼";
-        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : ' <span class="ck" title="Aucune source gratuite automatique : relevé manuel du 25 oct. 2026, à vérifier">saisie</span>') + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + (au && au.lvl ? '<br><i class="lvl">' + au.lvl[0] + "</i>" : "") + (au && au.note ? '<br><i class="lvl" style="color:var(--amber,#f5b400)" title="' + esc(au.note) + '">ⓘ dernier glissement annuel officiel</i>' : "") + "</small></div></td>";
+        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : manTag(MANUAL[1].d)) + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + (au && au.lvl ? '<br><i class="lvl">' + au.lvl[0] + "</i>" : "") + (au && au.note ? '<br><i class="lvl" style="color:var(--amber,#f5b400)" title="' + esc(au.note) + '">ⓘ dernier glissement annuel officiel</i>' : "") + "</small></div></td>";
       });
       h += "</tr>";
     });
@@ -2881,6 +2883,11 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
 { n: "Calendrier des réunions", d: "2026-10-30" },
     { n: "Consensus des banques (relevé presse)", d: "2026-10-30" }
   ];
+  /* Étiquette d'une saisie manuelle, affichée à côté du chiffre : date, âge, et « périmée » au-delà de 14 jours. */
+  function manTag(d) {
+    var a = ageDays(d), old = a > 14;
+    return ' <span class="ck' + (old ? " bad" : "") + '" title="Saisie manuelle du ' + shortD(d) + " (" + a + " j) : aucune source gratuite automatique n'a fourni de chiffre récent. " + (old ? "Périmée : à vérifier avant usage." : "À vérifier.") + '">' + (old ? "saisie périmée · " + a + " j" : "saisie · " + a + " j") + "</span>";
+  }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function ageDays(d) { var t = Date.parse(String(d).slice(0, 10) + "T00:00:00Z"); return isNaN(t) ? Infinity : Math.floor((Date.now() - t) / 864e5); }
   function fnum(v, d) { return typeof v === "number" ? fmt(v, d) : "–"; }
