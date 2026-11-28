@@ -2477,10 +2477,14 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     if (k === "core" && c !== "USD" && AUTO.core) { var co = AUTO.core[cc === "EA" ? "EZ" : cc]; if (co && ageDays(co.asof) <= 120) x = co; else if (c === "JPY") { var fj = ff(/^National Core CPI y\/y$/); if (fj) return fj; } }
     if ((k === "cpi" || k === "core") && c === "USD") {
       var xo = k === "cpi" ? D.us_cpi : D.us_core;
-      if (xo && xo.v !== null && ageDays(xo.asof) <= 80) {
+      /* Octobre 2026 : le BLS ne publie pas de glissement annuel (octobre 2025 non collecté). L'âge se mesure alors
+         sur le dernier mois publié (last_obs), et la note du robot + la variation mensuelle sont affichées. */
+      if (xo && xo.v !== null && ageDays(xo.last_obs || xo.asof) <= 80) {
         var cons = tvSurprise(k === "cpi" ? /^(inflation rate|cpi) y\/?o\/?y$/i : /^core (inflation rate|cpi) y\/?o\/?y$/i), lv = inflLvl(xo.v);
         if (cons !== null) lv = [lv[0] + " · " + (Math.abs(cons) < 0.05 ? "conforme au consensus" : "vs consensus " + (cons >= 0 ? "+" : "−") + fmt(Math.abs(cons), 1) + " pt" + (Math.abs(cons) >= 0.1 ? " (surprise)" : "")), lv[1]];
-        return { v: xo.v, p: xo.prev === null || xo.prev === undefined ? xo.v : xo.prev, per: per(xo.asof), src: "BLS, mois de " + per(xo.asof) + " " + String(xo.asof).slice(0, 4), lvl: lv };
+        var src0 = "BLS, mois de " + per(xo.asof) + " " + String(xo.asof).slice(0, 4);
+        if (xo.last_obs) src0 += " · " + per(xo.last_obs) + " : " + (xo.mom ? (xo.mom.v >= 0 ? "+" : "−") + fmt(Math.abs(xo.mom.v), 2) + " % sur 1 mois, " : "") + "glissement annuel non publié par le BLS (mois de référence 2025 non collecté)";
+        return { v: xo.v, p: xo.prev === null || xo.prev === undefined ? xo.v : xo.prev, per: per(xo.asof), src: src0, lvl: lv, note: xo.note || null };
       }
     }
     if (k === "cpi") x = c === "USD" ? D.us_cpi : N["cpi_" + cc];
@@ -2511,7 +2515,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
         if (au && au.lvl) cl = au.lvl[1];
         if (!row.nt) { tally[c] += s; count[c] += 1; }
         var ar = flat ? "=" : dl > 0 ? "▲" : "▼";
-        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : ' <span class="ck" title="Aucune source gratuite automatique : relevé manuel du 25 oct. 2026, à vérifier">saisie</span>') + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + (au && au.lvl ? '<br><i class="lvl">' + au.lvl[0] + "</i>" : "") + "</small></div></td>";
+        h += '<td class="c"><div class="cell ' + cl + '"' + (au ? ' title="Chiffre automatique : ' + esc(au.src) + '"' : "") + '><b>' + fmtNum(x[0], row) + row.u + (au ? ' <span class="ck ok">auto</span>' : ' <span class="ck" title="Aucune source gratuite automatique : relevé manuel du 25 oct. 2026, à vérifier">saisie</span>') + '</b><small><span class="a ' + cl + '">' + ar + "</span> " + fmtNum(x[1], row) + " · " + x[2] + (au && au.lvl ? '<br><i class="lvl">' + au.lvl[0] + "</i>" : "") + (au && au.note ? '<br><i class="lvl" style="color:var(--amber,#f5b400)" title="' + esc(au.note) + '">ⓘ dernier glissement annuel officiel</i>' : "") + "</small></div></td>";
       });
       h += "</tr>";
     });

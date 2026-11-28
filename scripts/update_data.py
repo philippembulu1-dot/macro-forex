@@ -196,6 +196,31 @@ def year_ago(obs):
     return None
 
 
+def yoy_series(obs):
+    """Glissements sur 12 mois calculés PAR DATE (jamais par position) : chaque point est comparé au même mois
+    de l'année précédente. Si ce mois manque (octobre 2025, non collecté par le BLS pendant l'arrêt de
+    l'administration), le point est omis au lieu d'être comparé au mauvais mois."""
+    idx = {d[:7]: v for d, v in obs}
+    out = []
+    for d, v in obs:
+        base = idx.get("%d-%s" % (int(d[:4]) - 1, d[5:7]))
+        if base:
+            out.append((d, round((v / base - 1) * 100, 2)))
+    return out
+
+
+def mom(o):
+    """Variation sur 1 mois du dernier point, seulement si le mois précédent existe (calcul par date)."""
+    if not o or len(o) < 2:
+        return None
+    (d1, v1), (d0, v0) = o[-1], o[-2]
+    y, m = int(d1[:4]), int(d1[5:7])
+    py, pm = (y, m - 1) if m > 1 else (y - 1, 12)
+    if d0[:7] != "%d-%02d" % (py, pm) or not v0:
+        return None
+    return {"v": round((v1 / v0 - 1) * 100, 2), "asof": d1}
+
+
 def yoy(o):
     """Glissement annuel du dernier point et du précédent (séries d'indice mensuelles)."""
     if not o or len(o) < 14:
@@ -453,6 +478,15 @@ def fallbacks(data):
                 o_ = ser.get(sid) or []
                 y = yoy(o_) or yoy(o_[:-1]) or yoy(o_[:-2])   # octobre 2025 n'existe pas (arrêt de l'administration) : octobre 2026 n'a pas de glissement annuel
                 if y:
+                    if o_ and o_[-1][0] != y["asof"]:
+                        # Le BLS ne publie pas de glissement annuel pour ce mois : on garde le dernier officiel
+                        # et on ajoute la variation mensuelle du dernier mois publié, avec une explication.
+                        y["last_obs"] = o_[-1][0]
+                        y["note"] = ("Glissement annuel de %s non publié par le BLS (mois de référence de l'année précédente non collecté) : "
+                                     "dernier glissement officiel = %s." % (o_[-1][0][:7], y["asof"][:7]))
+                    m1 = mom(o_)
+                    if m1:
+                        y["mom"] = m1
                     D[key] = y
             u = ser.get("LNS14000000")
             if u and len(u) > 1:
@@ -1453,10 +1487,17 @@ def do_bls_infl(data):
                 elif per in ("Q01", "Q02", "Q03", "Q04"):
                     obs.append(("%s-%02d-01" % (o["year"], int(per[2]) * 3), v))
             obs.sort()
-            step = 4 if key == "eci" else 12
-            yy = [(obs[i][0], round((obs[i][1] / obs[i - step][1] - 1) * 100, 2)) for i in range(step, len(obs)) if obs[i - step][1]]
+            # Calcul par date (trimestriel pour l'ECI : même trimestre de l'année précédente) — voir yoy_series
+            yy = yoy_series(obs)
             if len(yy) >= 2:
                 out[key] = {"v": yy[-1][1], "prev": yy[-2][1], "asof": yy[-1][0], "hist": yy[-24:]}
+                if obs and obs[-1][0] != yy[-1][0]:
+                    # Le dernier mois publié n'a pas de glissement annuel (mois de référence manquant) : on le dit
+                    out[key]["last_obs"] = obs[-1][0]
+                    out[key]["note"] = "Glissement annuel de %s non calculable : mois de référence de l'année précédente non publié par le BLS." % obs[-1][0][:7]
+                m1 = mom(obs) if key != "eci" else None
+                if m1:
+                    out[key]["mom"] = m1
         if not out:
             raise ValueError("aucune série reçue")
         data["infl_us"] = {"day": TODAY, "s": out}

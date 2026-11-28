@@ -74,7 +74,7 @@ Classement : **P0** = fiabilité ou risque à corriger d'abord · **P1** = struc
 
 | # | Problème | Preuve | Conséquence |
 |---|---|---|---|
-| D1 | **Inflation US bloquée sur septembre.** Le BLS a publié l'IPC d'octobre 2026 le 10 nov., mais le robot calcule le glissement annuel lui-même ; octobre 2025 n'existe pas (shutdown), donc il retombe sur septembre (`yoy(o_[:-1])`). | `derived.us_cpi.asof = 2026-09-01` alors que le chômage et les NFP sont à octobre. Tableau « Indicateurs » : « 3,7 % saisie · sept. » | Le chiffre d'inflation le plus suivi du marché a un mois de retard, sans alerte. |
+| D1 | **Composantes de l'inflation US calculées par position au lieu de la date** *(corrigé le 28 nov.)*. Octobre 2025 manque (shutdown) : logement, supercore et prix à l'import de nov. 2025 à oct. 2026 étaient des hausses **sur 13 mois** présentées comme sur 12 mois. L'IPC global, lui, était juste (3,7 % en sept. = dernier glissement officiel : le BLS **ne publie pas** le glissement annuel d'octobre 2026), mais le tableau « Indicateurs » le jugeait trop ancien et affichait la saisie manuelle sans explication. | `do_bls_infl` : `obs[i - step]` ; tableau : « 3,7 % saisie · sept. » | Chiffres d'inflation faux d'environ un mois de hausse ; absence d'explication sur octobre. |
 | D2 | **« OK » ne veut pas dire « à jour ».** L'état d'une source est `ok = true` dès que l'appel réussit, même si la donnée a 7 mois. | NFCI arrêté au 24 avr. 2026 (217 j), projections BCE de sept., inflation Japon à sept., 13 séries annuelles à fin 2025 — toutes « OK ». Bandeau : « 157/157 OK ». | Fausse impression de fiabilité totale. |
 | D3 | **Étiquettes de nature fixes.** Le badge « EN DIRECT » est écrit en dur pour chaque panneau (`NATURE` dans le code), il ne change pas quand la source directe tombe. | Panneau Or : badge « EN DIRECT » + texte « Binance injoignable : dernière clôture du contrat à terme ». Le statut d'en-tête dit « EN DIRECT · taux BCE » pour des fixings **quotidiens**. | Viole la règle « ne jamais afficher une fausse donnée en temps réel ». |
 | D4 | **Même indicateur, valeurs différentes selon la page.** Le tableau « Indicateurs » mélange automatique, repli (« relevé du 25 oct. ») et saisie manuelle ; d'autres panneaux lisent la valeur du robot. | IPC US « saisie », IPC zone euro « auto » dans la même ligne. | Incohérences difficiles à repérer. |
@@ -176,7 +176,7 @@ Les 22 pages sont toutes construites dans la même page, même si elles ne sont 
 
 ## 6. Correctifs prioritaires
 
-1. **D1** : corriger l'IPC US (lire le glissement annuel publié par le BLS ou passer par la série non corrigée).
+1. **D1** : calcul par date des glissements BLS + explication d'octobre (fait le 28 nov.).
 2. **D2 + D3** : statut calculé = fréquence attendue + date de la dernière valeur → « à jour / en retard / périmé / échec », et badge de nature **dynamique**.
 3. **I1 + I2** : arrêter la croissance du dépôt et la boucle continue (voir `ARCHITECTURE.md` §5).
 4. **D5** : afficher l'alerte « périmé » directement sur le chiffre concerné.
