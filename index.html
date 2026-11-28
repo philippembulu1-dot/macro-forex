@@ -124,6 +124,7 @@ td small { color: var(--muted); font-family: var(--font-mono); }
 .badge.ok { color: var(--up); border-color: #1f5a41; }
 .badge.old { color: var(--amber); border-color: #6b5214; }
 .badge.ko { color: var(--down); border-color: #6b2a24; }
+.badge.st { color: #ff8a65; border-color: #6b3a24; }
 .ck { font: 11px var(--font-mono); margin-left: 6px; }
 .ck.ok { color: var(--up); } .ck.bad { color: var(--amber); }
 table.ind td.lab .ih { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; margin-top: 2px; white-space: normal; }
@@ -2868,7 +2869,11 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     return u;
   })();
   var AUTO = null, autoErr = "", autoSame = false;
-  var MAXAGE = { daily: 6, weekly: 12, monthly: 80, quarterly: 140, news: 21, calendar: 8, annual: 800 };
+  /* Fraîcheur calculée selon la fréquence de la source (âge = jours depuis la date de la donnée ; pour une série mensuelle,
+     la date est le début du mois de référence, publiée en général 2 à 7 semaines plus tard).
+     ≤ MAXAGE : à jour · ≤ STALE : en retard (une publication attendue manque) · au-delà : périmé (source arrêtée ou figée). */
+  var MAXAGE = { daily: 6, weekly: 12, monthly: 80, quarterly: 140, news: 3, calendar: 8, annual: 800 };
+  var STALE = { daily: 15, weekly: 30, monthly: 120, quarterly: 230, news: 10, calendar: 21, annual: 1100 };
   var MANUAL = [
     { n: "Banques centrales (taux, inflation)", d: "2026-10-24" }, { n: "Tableau des indicateurs macro", d: "2026-10-25" },
 { n: "Calendrier des réunions", d: "2026-10-30" },
@@ -2883,9 +2888,20 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     if (!s.ok && s.kind === "nofree") return "nf";
     if (!s.ok && s.kind === "config") return "cf";
     if (!s.ok) return "ko";
-    return ageDays(s.asof) <= (MAXAGE[s.kind] || 30) ? "ok" : "old";
+    if (!s.asof) return "old";
+    var a = ageDays(s.asof);
+    return a <= (MAXAGE[s.kind] || 30) ? "ok" : a <= (STALE[s.kind] || 90) ? "old" : "st";
   }
-  var BL = { ok: "à jour", old: "ancien", ko: "échec", nf: "non gratuit", cf: "à configurer" };
+  var BL = { ok: "à jour", old: "en retard", st: "périmé", ko: "échec", nf: "non gratuit", cf: "à configurer" };
+  /* Bilan des sources du robot : compte par état (utilisé par la barre d'état, la tuile « Données » et le panneau Fraîcheur) */
+  function srcTally() {
+    var c = { ok: 0, old: 0, st: 0, ko: 0, nf: 0, cf: 0, tot: 0 };
+    if (AUTO && AUTO.sources) AUTO.sources.forEach(function (x) { c[srcState(x)]++; c.tot++; });
+    return c;
+  }
+  function tallyTxt(c) {
+    return c.ok + " à jour" + (c.old ? " · " + c.old + " en retard" : "") + (c.st ? " · " + c.st + " périmée" + (c.st > 1 ? "s" : "") : "") + (c.ko ? " · " + c.ko + " en échec" : "");
+  }
   function badge(st, txt) { return '<span class="badge ' + st + '">' + (txt || BL[st]) + "</span>"; }
 
   /* Compare la saisie manuelle au chiffre automatique : ✓ concordant, ⚠ écart (le chiffre auto est affiché). */
@@ -2967,8 +2983,9 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     } else {
       var st = age <= 6 ? "ok" : age <= 36 ? "old" : "ko";
       meta = "robot : " + (age < 1 ? "il y a moins d'1 h" : age < 48 ? "il y a " + Math.round(age) + " h" : "il y a " + Math.round(age / 24) + " j");
-      var cnt = { ok: 0, old: 0, ko: 0, nf: 0, cf: 0 }; AUTO.sources.forEach(function (s) { cnt[srcState(s)]++; });
-      h += '<div class="pad">' + badge(st, st === "ok" ? "robot actif" : st === "old" ? "robot en retard" : "robot arrêté?") + " &nbsp;" + cnt.ok + " sources à jour · " + cnt.old + " anciennes · " + cnt.ko + " en échec" + (cnt.nf ? " · " + cnt.nf + " non disponibles gratuitement" : "") + "</div>";
+      var cnt = srcTally();
+      h += '<div class="pad">' + badge(st, st === "ok" ? "robot actif" : st === "old" ? "robot en retard" : "robot arrêté?") + " &nbsp;" + cnt.tot + " sources : " + tallyTxt(cnt) + (cnt.nf ? " · " + cnt.nf + " non disponibles gratuitement" : "") + "</div>" +
+        '<p class="note" style="margin:0 12px 8px">« À jour » = la dernière valeur correspond au rythme de publication de la source. « En retard » = une publication attendue n\'a pas encore été relevée. « Périmé » = source arrêtée ou figée depuis longtemps : le chiffre est affiché avec sa date, à ne pas utiliser comme une donnée récente.</p>';
       if (st === "ko") h += '<p class="warn" style="margin:0 12px 8px">Le robot n\'a pas écrit de données depuis plus de 36 h : les chiffres automatiques ci-dessus peuvent être périmés. Vérifiez l\'onglet Actions du dépôt.</p>';
       h += '<details class="srcs"><summary>Détail des ' + AUTO.sources.length + ' sources</summary><ul class="src-list">' + AUTO.sources.map(function (s) {
         var q = srcState(s); return "<li><span>" + (/^https?:/.test(s.url || "") ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.label) + "</a>" : esc(s.label)) + (s.ok ? "" : ' <small title="' + esc(s.err) + '">· ' + esc((s.err || "").slice(0, 40)) + "</small>") + "</span><span>" + (s.asof ? shortD(s.asof) + " " : "") + badge(q) + "</span></li>";
@@ -6802,7 +6819,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     try { var tR = taCalc("EURUSD", "D"); if (tR) { var tn = tR.v.length, trs = tR.rsi[tn - 1]; T.analyse = ["EUR/USD RSI " + (trs === null ? "–" : Math.round(trs)), (tR.ma50[tn - 1] !== null ? (tR.v[tn - 1] >= tR.ma50[tn - 1] ? "au-dessus" : "sous") + " de la MM50" : "moyennes mobiles") + " · 1 h à 1 sem."]; } } catch (e) { /* données absentes */ }
     var calE = (AUTO && AUTO.calendar && AUTO.calendar.events) || [], nT = calE.filter(function (e) { var d = new Date(e.d); return !isNaN(d) && kinDay(d) === kinDay() && e.i === "High"; }).length;
     var gS = dSeries("gold"); T.matin = [nT ? nT + " publication" + (nT > 1 ? "s" : "") + " forte" + (nT > 1 ? "s" : "") : "Pas de publication forte",  gS ? 'or hier <span class="' + cls(gS.last[1] - gS.prev[1]) + '">' + pct((gS.last[1] / gS.prev[1] - 1) * 100) + "</span> · résumé en un écran" : "résumé en un écran"];
-    if (AUTO && AUTO.sources) { var ok = AUTO.sources.filter(function (x) { return x.ok; }).length; T.donnees = [ok + " / " + AUTO.sources.length, "sources à jour ou valides"]; }
+    if (AUTO && AUTO.sources) { var tl = srcTally(); T.donnees = [tl.ok + " / " + tl.tot, "sources à jour" + (tl.old + tl.st + tl.ko ? " · " + (tl.old + tl.st + tl.ko) + " à surveiller" : "")]; }
     hub.innerHTML = '<div class="dash" style="grid-column:1/-1">' + dashHtml() + '</div><div class="hubhead" style="grid-column:1/-1"><h1>TOUTES LES RUBRIQUES</h1><span>Touchez une rubrique pour le détail · ou tapez une recherche en haut (ex. zone euro, Ormuz, inflation)</span></div>' + BR.map(function (b, i) {
       var gh = i === 0 || BR[i - 1].grp !== b.grp ? '<h2 class="hubgrp" style="grid-column:1/-1">' + b.grp + "</h2>" : "";
       var x = T[b.id] || ["–", ""];
@@ -8827,7 +8844,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     var live = Object.keys(LIVE.q).length, fresh = liveOpen();
     var txt = '<span class="bs ' + (live ? (fresh ? "on" : "off") : "ko") + '">● Direct ' + (live ? (fresh ? "· relu il y a " + ago(Date.now() - LIVE.at) : "· marchés fermés") : "indisponible") + "</span>" +
       '<span class="bs ' + (gen && Date.now() - gen < 2 * 36e5 ? "on" : "old") + '">● Robot ' + (gen ? "· " + new Date(gen).toLocaleTimeString("fr-FR", { timeZone: KIN, hour: "2-digit", minute: "2-digit" }) + " (il y a " + ago(Date.now() - gen) + ")" : "· en attente") + "</span>" +
-      '<span class="bs">Sources : ' + (tot ? (tot - bad) + "/" + tot + " OK" : "–") + "</span>" + '<span class="bs">Site relu toutes les 5 min</span>';
+      (function () { var c = srcTally(); return '<span class="bs ' + (!c.tot ? "" : c.ko || c.st ? "old" : "on") + '" title="Fraîcheur calculée selon le rythme de publication de chaque source (détail : page Données)">Sources : ' + (c.tot ? tallyTxt(c) : "–") + "</span>"; })() + '<span class="bs">Site relu toutes les 5 min</span>';
     Array.prototype.forEach.call(document.querySelectorAll(".bstat"), function (e) { e.innerHTML = txt; });
   }
   /* Rendu des panneaux par petites tranches : la page reste réactive pendant que les données arrivent
