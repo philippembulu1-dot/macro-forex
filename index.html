@@ -2698,6 +2698,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     }
     var g = goldStats(k);
     meta.textContent = state.goldLive ? "EN DIRECT · PAXG · maj " + hhmm(state.goldTs) : state.goldRobot ? "CLÔTURE · contrat à terme · robot" : "HORS LIGNE · dernière maj " + tzDate(state.goldTs) + " " + hhmm(state.goldTs);
+    if (typeof liveNature === "function") liveNature();
     meta.style.color = state.goldLive ? "var(--up)" : "var(--amber)";
     if ($("gVia")) $("gVia").textContent = state.goldRobot ? "· contrat à terme" : "· via PAXG";
     gAsofText = state.goldRobot ? "Binance injoignable : dernière clôture du contrat à terme sur l'or (Yahoo, via le robot) · " + tzDate(g.t) + " · hauts et bas = extrêmes des clôtures." : (state.goldLive ? "Bougie du jour en cours · " : "Dernier cours connu · ") + tzDate(g.t) + " (UTC)";
@@ -2814,7 +2815,8 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   function setStatus() {
     var ds = dates(), last = ds[ds.length - 1], s = $("status");
     s.className = "status" + (state.live ? " live" : "");
-    $("statusText").textContent = state.live ? "EN DIRECT · taux BCE du " + shortD(last) : "INSTANTANÉ du " + shortD(last);
+    /* Les taux BCE sont des fixings quotidiens : jamais « EN DIRECT ». */
+    $("statusText").textContent = state.live ? "FIXINGS BCE du " + shortD(last) : "INSTANTANÉ INTÉGRÉ du " + shortD(last) + " (taux BCE injoignables)";
   }
   function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   function loadLive() {
@@ -4646,6 +4648,23 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
     Object.keys(NATURE).forEach(function (id) {
       var el = $(id), h = el && el.querySelector(".ph h2"); if (!h || h.querySelector(".nat")) return;
       var n = NATURE[id], sp = document.createElement("span"); sp.className = "nat nat-" + n[0].toLowerCase().replace(/[^a-z]/g, ""); sp.textContent = n[0]; sp.title = n[1]; h.appendChild(sp);
+      if (n[0] === "EN DIRECT") sp.setAttribute("data-live", id);
+    });
+    liveNature();
+  }
+  /* Badge « EN DIRECT » dynamique : il n'est affiché que si la source directe répond vraiment.
+     Sinon : « MARCHÉS FERMÉS » (week-end forex) ou « DIFFÉRÉ » (source injoignable → dernière valeur connue). */
+  function liveNature() {
+    Array.prototype.forEach.call(document.querySelectorAll(".nat[data-live]"), function (sp) {
+      var id = sp.getAttribute("data-live"), base = NATURE[id] ? NATURE[id][1] : "", on, why;
+      if (id === "sessions") { on = true; }
+      else if (id === "or") { on = !!(state && state.goldLive); why = state && state.goldRobot ? "Binance injoignable : dernière clôture du contrat à terme relevée par le robot" : "cours direct injoignable : dernière valeur connue"; }
+      else { var nq = typeof LIVE !== "undefined" && LIVE.q ? Object.keys(LIVE.q).length : 0; on = nq > 0 && typeof liveOpen === "function" && liveOpen(); why = nq ? "marchés fermés : dernières cotations connues" : "cotations directes (CNBC) injoignables : historique quotidien seulement"; }
+      var closed = !on && id !== "or" && typeof LIVE !== "undefined" && LIVE.q && Object.keys(LIVE.q).length && typeof liveOpen === "function" && !liveOpen();
+      var lab = on ? "EN DIRECT" : closed ? "MARCHÉS FERMÉS" : "DIFFÉRÉ";
+      if (sp.textContent !== lab) sp.textContent = lab;
+      sp.className = "nat nat-" + (on ? "endirect" : "diffr");
+      sp.title = on ? base : "Direct indisponible — " + why + ". (" + base + ")";
     });
   }
   function buildBranches() {
@@ -8840,6 +8859,7 @@ tr.calxrow>td{padding:0!important;background:rgba(0,0,0,.25)}.calx{padding:12px 
   }
   /* Barre d'état de chaque branche : direct, robot, relecture */
   function renderBrStatus() {
+    try { liveNature(); } catch (e) { /* badge seulement */ }
     var gen = AUTO && AUTO.generated ? Date.parse(AUTO.generated) : null, bad = AUTO && AUTO.sources ? AUTO.sources.filter(function (s) { return !s.ok; }).length : null, tot = AUTO && AUTO.sources ? AUTO.sources.length : 0;
     var live = Object.keys(LIVE.q).length, fresh = liveOpen();
     var txt = '<span class="bs ' + (live ? (fresh ? "on" : "off") : "ko") + '">● Direct ' + (live ? (fresh ? "· relu il y a " + ago(Date.now() - LIVE.at) : "· marchés fermés") : "indisponible") + "</span>" +
